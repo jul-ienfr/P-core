@@ -17,6 +17,7 @@ def score_market_from_question(
     resolution_source: str | None = None,
     description: str | None = None,
     rules: str | None = None,
+    market_data: dict[str, object] | None = None,
 ) -> dict[str, object]:
     structure = parse_market_question(question)
     resolution = parse_resolution_metadata(
@@ -27,7 +28,7 @@ def score_market_from_question(
     forecast_bundle = _default_forecast(structure)
     model_output = _default_model(structure, forecast_bundle)
     neighbor_context = build_neighbor_context(structure, list_fixture_weather_markets())
-    execution = _default_execution()
+    execution = build_execution_features(market_data or _default_execution_market_data())
     score = score_market(
         structure=structure,
         resolution=resolution,
@@ -42,6 +43,7 @@ def score_market_from_question(
         is_exact_bin=structure.is_exact_bin,
         spread=execution.spread,
         forecast_dispersion=forecast_bundle.dispersion,
+        execution=execution,
     )
     return {
         "market": structure.to_dict(),
@@ -79,6 +81,7 @@ def score_market_from_fixture_market_id(market_id: str) -> dict[str, object]:
         is_exact_bin=structure.is_exact_bin,
         spread=execution.spread,
         forecast_dispersion=forecast_bundle.dispersion,
+        execution=execution,
     )
     return {
         "market": structure.to_dict(),
@@ -139,17 +142,14 @@ def _default_model(structure: MarketStructure, forecast_bundle):
     )
 
 
-def _default_execution():
-    from weather_pm.models import ExecutionFeatures
-
-    return ExecutionFeatures(
-        spread=0.03,
-        hours_to_resolution=18.0,
-        volume_usd=14000.0,
-        fillable_size_usd=250.0,
-        execution_speed_required="low",
-        slippage_risk="low",
-    )
+def _default_execution_market_data() -> dict[str, object]:
+    return {
+        "best_bid": 0.42,
+        "best_ask": 0.45,
+        "volume": 14000.0,
+        "hours_to_resolution": 18.0,
+        "target_order_size_usd": 250.0,
+    }
 
 
 def _station_code_for_city(city: str) -> str:

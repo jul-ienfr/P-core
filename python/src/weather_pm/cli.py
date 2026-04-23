@@ -132,6 +132,7 @@ def _score_market_from_market_id(market_id: str, *, source: str) -> dict[str, An
         is_exact_bin=structure.is_exact_bin,
         spread=execution.spread,
         forecast_dispersion=forecast_bundle.dispersion,
+        execution=execution,
     )
     return {
         "market": structure.to_dict(),

@@ -8,6 +8,9 @@ version = "0.1.0"
 description = "Canonical Python packages for prediction_core"
 requires-python = ">=3.11"
 
+[project.scripts]
+prediction-core = "prediction_core.app:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

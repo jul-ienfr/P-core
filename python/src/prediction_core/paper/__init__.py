@@ -8,6 +8,7 @@ from .simulation import (
     PaperTradeSimulation,
     PaperTradeStatus,
 )
+from .sizing import derive_filled_execution, derive_requested_quantity
 
 __all__ = [
     "PaperExecutionSide",
@@ -16,4 +17,6 @@ __all__ = [
     "PaperTradePostmortem",
     "PaperTradeSimulation",
     "PaperTradeStatus",
+    "derive_filled_execution",
+    "derive_requested_quantity",
 ]

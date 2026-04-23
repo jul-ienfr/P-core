@@ -6,7 +6,7 @@ Cœur cible de la stack prediction.
 
 `prediction_core/` héberge la nouvelle architecture convergente sans casser `subprojects/prediction`.
 
-- `python/` : research, replay, paper, calibration, analytics, evaluation
+- `python/` : research, replay, paper, calibration, analytics, evaluation, plus bootstrap service HTTP local minimal
 - `rust/` : moteur live canonique
 - `contracts/` : formats d’échange communs entre moteurs et cockpit
 

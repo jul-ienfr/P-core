@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from weather_pm.models import DecisionResult, ScoreResult
+from weather_pm.models import DecisionResult, ExecutionFeatures, ScoreResult
 
 
 MIN_EDGE_TO_TRADE = 0.05
@@ -12,6 +12,7 @@ def build_decision(
     is_exact_bin: bool,
     spread: float,
     forecast_dispersion: float | None,
+    execution: ExecutionFeatures | None = None,
 ) -> DecisionResult:
     reasons: list[str] = []
 
@@ -21,6 +22,10 @@ def build_decision(
 
     if spread > 0.06:
         reasons.append("skip: spread too wide")
+        return DecisionResult(status="skip", max_position_pct_bankroll=0.0, reasons=reasons)
+
+    if execution is not None and execution.all_in_cost_bps >= (score.raw_edge * 10000.0) * 0.95:
+        reasons.append("skip: all-in costs exceed raw edge")
         return DecisionResult(status="skip", max_position_pct_bankroll=0.0, reasons=reasons)
 
     dispersion = forecast_dispersion if forecast_dispersion is not None else 99.0
