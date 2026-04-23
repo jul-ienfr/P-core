@@ -1,0 +1,7 @@
+[package]
+name = "pm_book"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+pm_types = { path = "../pm_types" }

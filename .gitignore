@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Rust
+target/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

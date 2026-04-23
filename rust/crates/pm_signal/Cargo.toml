@@ -1,0 +1,8 @@
+[package]
+name = "pm_signal"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+pm_book = { path = "../pm_book" }
+pm_types = { path = "../pm_types" }

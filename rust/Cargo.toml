@@ -1,0 +1,24 @@
+[workspace]
+members = [
+    "crates/live_engine",
+    "crates/pm_types",
+    "crates/pm_book",
+    "crates/pm_signal",
+    "crates/pm_storage",
+    "crates/pm_risk",
+    "crates/pm_executor",
+    "crates/pm_ledger",
+    "xtask",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "postgres"] }
+uuid = { version = "1", features = ["v4", "serde"] }
