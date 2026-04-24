@@ -14,6 +14,7 @@ from prediction_core.paper import (
 from weather_pm.cli import _score_market_from_market_id
 from weather_pm.market_parser import parse_market_question
 from weather_pm.pipeline import score_market_from_question
+from weather_pm.polymarket_client import list_weather_markets, normalize_market_record
 
 
 class PredictionCoreHandler(BaseHTTPRequestHandler):
@@ -37,6 +38,11 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
                 question = self._require_string(payload, "question")
                 result = parse_market_question(question).to_dict()
                 self._json_response(200, result)
+                return
+
+            if self.path == "/weather/fetch-markets":
+                result = fetch_markets_request(payload)
+                self._json_response(200, {"markets": result})
                 return
 
             if self.path == "/weather/score-market":
@@ -82,6 +88,23 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+
+def fetch_markets_request(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    source = payload.get("source", "fixture")
+    if source not in {"fixture", "live"}:
+        raise ValueError("source must be 'fixture' or 'live'")
+
+    limit = payload.get("limit", 100)
+    try:
+        limit_value = int(limit)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("limit must be an integer") from exc
+    if limit_value < 1:
+        raise ValueError("limit must be >= 1")
+
+    markets = [normalize_market_record(market) for market in list_weather_markets(source=source, limit=limit_value)]
+    return markets[:limit_value]
 
 
 def score_market_request(payload: dict[str, Any]) -> dict[str, Any]:

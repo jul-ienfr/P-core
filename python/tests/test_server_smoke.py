@@ -75,6 +75,24 @@ def test_score_market_endpoint_rejects_invalid_request_payload() -> None:
         thread.join(timeout=2)
 
 
+def test_fetch_markets_endpoint_returns_normalized_weather_market_list() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/fetch-markets",
+            method="POST",
+            payload={"source": "fixture", "limit": 2},
+        )
+        assert status == 200
+        assert len(payload["markets"]) == 2
+        assert payload["markets"][0]["id"] == "denver-high-64"
+        assert payload["markets"][0]["spread"] == 0.03
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def test_paper_cycle_endpoint_returns_simulation_and_postmortem() -> None:
     server, thread, port = _start_server()
     try:
