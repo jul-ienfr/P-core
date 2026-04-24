@@ -6,10 +6,13 @@ from typing import Any
 
 from weather_pm.decision import build_decision
 from weather_pm.execution_features import build_execution_features
+from weather_pm.forecast_client import build_forecast_bundle
 from weather_pm.market_parser import parse_market_question
+from weather_pm.models import ForecastBundle
 from weather_pm.neighbor_context import build_neighbor_context
-from weather_pm.pipeline import _default_forecast, _default_model, score_market_from_question
+from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import get_event_book_by_id, get_market_by_id, list_weather_markets, normalize_market_record
+from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
 
@@ -40,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     score_market_parser.add_argument("--resolution-source", required=False, help="Resolution source text")
     score_market_parser.add_argument("--description", required=False, help="Resolution description text")
     score_market_parser.add_argument("--rules", required=False, help="Resolution rules text")
+    score_market_parser.add_argument("--max-impact-bps", required=False, type=float, help="Override max executable price impact in bps")
 
     price_market = subparsers.add_parser("price-market", help="Produce a theoretical price for a market")
     price_market.add_argument("--market-id", required=False, help="Market identifier")
@@ -71,7 +75,7 @@ def main() -> int:
 
     if args.command == "score-market":
         if args.market_id:
-            print(json.dumps(_score_market_from_market_id(args.market_id, source=args.source)))
+            print(json.dumps(_score_market_from_market_id(args.market_id, source=args.source, max_impact_bps=args.max_impact_bps)))
             return 0
         if not args.question:
             parser.error("score-market requires --question or --market-id")
@@ -85,6 +89,7 @@ def main() -> int:
                     resolution_source=args.resolution_source,
                     description=args.description,
                     rules=args.rules,
+                    max_impact_bps=args.max_impact_bps,
                 )
             )
         )
@@ -106,16 +111,18 @@ def _normalize_event_book_payload(event_book: dict[str, Any]) -> dict[str, Any]:
     return {"event": event, "markets": markets}
 
 
-def _score_market_from_market_id(market_id: str, *, source: str) -> dict[str, Any]:
-    raw_market = get_market_by_id(market_id, source=source)
+def _score_market_from_market_id(market_id: str, *, source: str, max_impact_bps: float | None = None) -> dict[str, Any]:
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    if max_impact_bps is not None:
+        raw_market["max_impact_bps"] = max_impact_bps
     structure = parse_market_question(str(raw_market["question"]))
     resolution = parse_resolution_metadata(
         resolution_source=raw_market.get("resolution_source"),
         description=raw_market.get("description"),
         rules=raw_market.get("rules"),
     )
-    forecast_bundle = _default_forecast(structure)
-    model_output = _default_model(structure, forecast_bundle)
+    forecast_bundle = build_forecast_bundle(structure, live=(source == "live"))
+    model_output = build_model_output(structure, forecast_bundle)
     neighbor_context = build_neighbor_context(structure, list_weather_markets(source=source))
     execution = build_execution_features(raw_market)
     score = score_market(
@@ -137,6 +144,12 @@ def _score_market_from_market_id(market_id: str, *, source: str) -> dict[str, An
     return {
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
+        "model": model_output.to_dict(),
+        "edge": {
+            "market_implied_yes_probability": round(float(raw_market.get("yes_price", 0.0)), 2),
+            "probability_edge": round(score.raw_edge, 2),
+            "theoretical_yes_price": round(model_output.probability_yes, 2),
+        },
         "score": score.to_dict(),
         "decision": decision.to_dict(),
         "neighbors": neighbor_context.to_dict(),

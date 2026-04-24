@@ -114,6 +114,44 @@ def test_derive_filled_execution_from_tradeable_decision() -> None:
     assert fill_price == 0.53
 
 
+def test_derive_filled_execution_prefers_execution_cost_quote_when_available() -> None:
+    filled_quantity, fill_price = derive_filled_execution(
+        filled_quantity=None,
+        fill_price=None,
+        requested_quantity=20,
+        yes_price=0.43,
+        score_bundle={
+            "decision": {"status": "trade"},
+            "execution_costs": {
+                "estimated_filled_quantity": 20.0,
+                "estimated_avg_fill_price": 0.45,
+            },
+        },
+    )
+
+    assert filled_quantity == 20.0
+    assert fill_price == 0.45
+
+
+def test_derive_filled_execution_caps_execution_quote_fill_to_requested_quantity() -> None:
+    filled_quantity, fill_price = derive_filled_execution(
+        filled_quantity=None,
+        fill_price=None,
+        requested_quantity=10,
+        yes_price=0.53,
+        score_bundle={
+            "decision": {"status": "trade"},
+            "execution_costs": {
+                "estimated_filled_quantity": 80.0,
+                "estimated_avg_fill_price": 0.525,
+            },
+        },
+    )
+
+    assert filled_quantity == 10.0
+    assert fill_price == 0.525
+
+
 def test_derive_filled_execution_returns_zero_fill_for_non_tradeable_decision() -> None:
     filled_quantity, fill_price = derive_filled_execution(
         filled_quantity=None,

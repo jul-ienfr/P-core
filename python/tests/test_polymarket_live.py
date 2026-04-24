@@ -78,6 +78,20 @@ def test_normalize_gamma_market_maps_representative_gamma_payload_to_pipeline_sh
     assert normalized["hours_to_resolution"] is not None
 
 
+def test_normalize_gamma_market_falls_back_to_description_when_live_market_lacks_resolution_source_and_rules() -> None:
+    normalized = _normalize_gamma_market(
+        _sample_gamma_market(
+            description="Gamma market description with embedded resolution guidance.",
+            rules=None,
+            resolutionSource=None,
+        )
+    )
+
+    assert normalized["description"] == "Gamma market description with embedded resolution guidance."
+    assert normalized["rules"] == "Gamma market description with embedded resolution guidance."
+    assert normalized["resolution_source"] == "Gamma market description with embedded resolution guidance."
+
+
 def test_matches_requested_state_rejects_closed_or_archived_events_for_open_scan() -> None:
     assert _matches_requested_state({"active": True, "closed": False, "archived": False}, active=True, closed=False) is True
     assert _matches_requested_state({"active": True, "closed": True, "archived": False}, active=True, closed=False) is False

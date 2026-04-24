@@ -55,6 +55,74 @@ def test_score_market_command_outputs_score_and_decision() -> None:
     assert payload["resolution"]["provider"] == "wunderground"
 
 
+def test_score_market_command_question_accepts_max_impact_bps_override() -> None:
+    result = _run_cli(
+        "score-market",
+        "--question",
+        "Will the highest temperature in Denver be 64F or higher?",
+        "--yes-price",
+        "0.43",
+        "--max-impact-bps",
+        "75",
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["execution"]["max_impact_bps"] == 75.0
+
+
+def test_score_market_command_uses_calibrated_threshold_probability_surface() -> None:
+    result = _run_cli(
+        "score-market",
+        "--question",
+        "Will the highest temperature in Denver be 64F or higher?",
+        "--yes-price",
+        "0.43",
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["model"]["method"] == "calibrated_threshold_v1"
+    assert payload["model"]["probability_yes"] == 0.57
+    assert payload["model"]["confidence"] == 0.68
+    assert payload["edge"]["theoretical_yes_price"] == 0.57
+    assert payload["edge"]["probability_edge"] == 0.14
+
+
+def test_score_market_command_keeps_exact_bin_probability_more_conservative_than_threshold() -> None:
+    result = _run_cli(
+        "score-market",
+        "--question",
+        "Will the highest temperature in Denver be between 64F and 65F?",
+        "--yes-price",
+        "0.17",
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["model"]["method"] == "calibrated_bin_v1"
+    assert payload["model"]["probability_yes"] == 0.23
+    assert payload["model"]["confidence"] == 0.56
+    assert payload["edge"]["theoretical_yes_price"] == 0.23
+    assert payload["edge"]["probability_edge"] == 0.06
+
+
+def test_score_market_command_below_threshold_flips_probability_direction() -> None:
+    result = _run_cli(
+        "score-market",
+        "--question",
+        "Will the lowest temperature in Denver be 32F or below?",
+        "--yes-price",
+        "0.50",
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["model"]["method"] == "calibrated_threshold_v1"
+    assert payload["model"]["probability_yes"] == 0.57
+    assert payload["edge"]["probability_edge"] == 0.07
+
+
 def test_score_market_command_marks_ambiguous_resolution_for_manual_review() -> None:
     result = _run_cli(
         "score-market",
@@ -75,6 +143,40 @@ def test_score_market_command_marks_ambiguous_resolution_for_manual_review() -> 
     assert payload["resolution"]["manual_review_needed"] is True
     assert payload["score"]["total_score"] <= 59.0
     assert payload["decision"]["status"] in {"watchlist", "skip"}
+
+
+def test_score_market_command_live_source_uses_forecast_provider_when_available() -> None:
+    live_market = {
+        "id": "live-forecast-1",
+        "question": "Will the highest temperature in Denver be 64F or higher?",
+        "yes_price": 0.43,
+        "best_bid": 0.42,
+        "best_ask": 0.45,
+        "volume": 14000.0,
+        "hours_to_resolution": 12.0,
+        "resolution_source": "Resolution source: NOAA daily climate report for station KDEN",
+        "description": "Official observed high temperature at Denver International Airport station KDEN.",
+        "rules": "Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
+    }
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=live_market), patch(
+        "weather_pm.cli.list_weather_markets", return_value=[live_market]
+    ), patch(
+        "weather_pm.cli.build_forecast_bundle",
+        return_value=weather_cli.ForecastBundle(
+            source_count=1,
+            consensus_value=70.0,
+            dispersion=1.0,
+            historical_station_available=False,
+        ),
+    ):
+        payload = weather_cli._score_market_from_market_id("live-forecast-1", source="live")
+
+    assert payload["model"]["method"] == "calibrated_threshold_v1"
+    assert payload["model"]["probability_yes"] == 0.85
+    assert payload["model"]["confidence"] == 0.61
+    assert payload["edge"]["theoretical_yes_price"] == 0.85
+    assert payload["edge"]["probability_edge"] == 0.42
 
 
 def test_score_market_command_live_event_extracts_clean_resolution_metadata() -> None:
@@ -109,12 +211,72 @@ def test_score_market_command_live_event_extracts_clean_resolution_metadata() ->
     assert payload["resolution"]["station_type"] == "airport"
 
 
+def test_score_market_command_live_event_already_resolved_is_not_tradeable() -> None:
+    event_market = {
+        "id": "322442",
+        "question": "Highest temperature in Hong Kong on April 1?",
+        "yes_price": 0.0,
+        "best_bid": 0.0,
+        "best_ask": 0.0,
+        "volume": 221180.29265700004,
+        "hours_to_resolution": -550.51,
+        "resolution_source": "https://www.weather.gov.hk/en/cis/climat.htm",
+        "description": (
+            "This market will resolve to the temperature range that contains the highest "
+            "temperature recorded by the Hong Kong Observatory in degrees Celsius on 1 Apr '26.'"
+        ),
+        "rules": (
+            "The resolution source for this market will be information from the Hong Kong Observatory."
+        ),
+    }
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=event_market), patch(
+        "weather_pm.cli.list_weather_markets", return_value=[event_market]
+    ):
+        payload = weather_cli._score_market_from_market_id("322442", source="live")
+
+    assert payload["edge"]["market_implied_yes_probability"] == 0.0
+    assert payload["execution"]["best_effort_reason"] == "market_already_resolving_or_resolved"
+    assert payload["decision"]["status"] == "skip"
+    assert "already resolving or resolved" in " ".join(payload["decision"]["reasons"])
+
+
+def test_score_market_command_live_event_without_tradeable_quote_is_not_tradeable() -> None:
+    event_market = {
+        "id": "322443",
+        "question": "Highest temperature in Hong Kong on April 26?",
+        "yes_price": 0.0,
+        "best_bid": 0.0,
+        "best_ask": 0.0,
+        "volume": 221180.29265700004,
+        "hours_to_resolution": 12.0,
+        "resolution_source": "https://www.weather.gov.hk/en/cis/climat.htm",
+        "description": (
+            "This market will resolve to the temperature range that contains the highest "
+            "temperature recorded by the Hong Kong Observatory in degrees Celsius on 26 Apr '26.'"
+        ),
+        "rules": (
+            "The resolution source for this market will be information from the Hong Kong Observatory."
+        ),
+    }
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=event_market), patch(
+        "weather_pm.cli.list_weather_markets", return_value=[event_market]
+    ):
+        payload = weather_cli._score_market_from_market_id("322443", source="live")
+
+    assert payload["edge"]["market_implied_yes_probability"] == 0.0
+    assert payload["execution"]["best_effort_reason"] == "missing_tradeable_quote"
+    assert payload["decision"]["status"] == "skip"
+    assert "missing tradeable quote" in " ".join(payload["decision"]["reasons"])
+
+
 def test_build_parser_accepts_source_argument_for_fetch_event_book_and_score_commands() -> None:
     parser = weather_cli.build_parser()
 
     fetch_args = parser.parse_args(["fetch-markets", "--source", "live", "--limit", "5"])
     event_args = parser.parse_args(["fetch-event-book", "--market-id", "event-123", "--source", "live"])
-    score_args = parser.parse_args(["score-market", "--market-id", "abc", "--source", "live"])
+    score_args = parser.parse_args(["score-market", "--market-id", "abc", "--source", "live", "--max-impact-bps", "75"])
 
     assert fetch_args.source == "live"
     assert fetch_args.limit == 5
@@ -122,6 +284,7 @@ def test_build_parser_accepts_source_argument_for_fetch_event_book_and_score_com
     assert event_args.market_id == "event-123"
     assert score_args.source == "live"
     assert score_args.market_id == "abc"
+    assert score_args.max_impact_bps == 75.0
 
 
 def test_fetch_markets_command_keeps_stable_json_shape_for_live_source() -> None:
@@ -149,6 +312,7 @@ with patch('weather_pm.cli.list_weather_markets', return_value=[{
     'resolution_source': 'NOAA',
     'description': 'desc',
     'rules': 'rules',
+    'max_impact_bps': 75.0,
 }]):
     sys.argv = ['weather_pm.cli', 'fetch-markets', '--source', 'live', '--limit', '1']
     buffer = io.StringIO()
@@ -160,6 +324,7 @@ with patch('weather_pm.cli.list_weather_markets', return_value=[{
     assert payload[0]['id'] == 'live-1'
     assert payload[0]['spread'] == 0.02
     assert payload[0]['volume_usd'] == 12345.6
+    assert payload[0]['max_impact_bps'] == 75.0
 """
     result = subprocess.run(
         [sys.executable, "-c", inline],
@@ -170,6 +335,70 @@ with patch('weather_pm.cli.list_weather_markets', return_value=[{
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_score_market_command_live_market_exposes_max_impact_bps_in_execution() -> None:
+    live_market = {
+        "id": "live-impact-1",
+        "question": "Will the highest temperature in Denver be 64F or higher?",
+        "yes_price": 0.43,
+        "best_bid": 0.42,
+        "best_ask": 0.45,
+        "volume": 14000.0,
+        "hours_to_resolution": 12.0,
+        "resolution_source": "Resolution source: NOAA daily climate report for station KDEN",
+        "description": "Official observed high temperature at Denver International Airport station KDEN.",
+        "rules": "Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
+        "max_impact_bps": 75.0,
+        "asks": [
+            {"price": 0.45, "size": 120.0},
+            {"price": 0.46, "size": 120.0},
+        ],
+        "bids": [
+            {"price": 0.42, "size": 120.0},
+            {"price": 0.41, "size": 120.0},
+        ],
+    }
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=live_market), patch(
+        "weather_pm.cli.list_weather_markets", return_value=[live_market]
+    ):
+        payload = weather_cli._score_market_from_market_id("live-impact-1", source="live")
+
+    assert payload["execution"]["max_impact_bps"] == 75.0
+    assert payload["execution"]["order_book_depth_usd"] == 50.4
+
+
+def test_score_market_command_live_market_cli_override_reduces_depth() -> None:
+    live_market = {
+        "id": "live-impact-override-1",
+        "question": "Will the highest temperature in Denver be 64F or higher?",
+        "yes_price": 0.43,
+        "best_bid": 0.42,
+        "best_ask": 0.45,
+        "volume": 14000.0,
+        "hours_to_resolution": 12.0,
+        "resolution_source": "Resolution source: NOAA daily climate report for station KDEN",
+        "description": "Official observed high temperature at Denver International Airport station KDEN.",
+        "rules": "Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
+        "max_impact_bps": 150.0,
+        "asks": [
+            {"price": 0.45, "size": 120.0},
+            {"price": 0.455, "size": 120.0},
+        ],
+        "bids": [
+            {"price": 0.42, "size": 120.0},
+            {"price": 0.415, "size": 120.0},
+        ],
+    }
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=live_market), patch(
+        "weather_pm.cli.list_weather_markets", return_value=[live_market]
+    ):
+        payload = weather_cli._score_market_from_market_id("live-impact-override-1", source="live", max_impact_bps=75.0)
+
+    assert payload["execution"]["max_impact_bps"] == 75.0
+    assert payload["execution"]["order_book_depth_usd"] == 50.4
 
 
 def test_fetch_event_book_command_outputs_event_and_normalized_child_markets() -> None:

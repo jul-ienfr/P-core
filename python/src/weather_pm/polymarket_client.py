@@ -133,6 +133,7 @@ def normalize_market_record(raw: dict[str, Any]) -> dict[str, Any]:
         "spread": spread,
         "volume_usd": volume_usd,
         "hours_to_resolution": _as_float(raw.get("hours_to_resolution")),
+        "max_impact_bps": _as_float(raw.get("max_impact_bps")) or 150.0,
         "resolution_source": raw.get("resolution_source"),
         "description": raw.get("description"),
         "rules": raw.get("rules"),

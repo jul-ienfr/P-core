@@ -52,7 +52,8 @@ Cette zone réutilisera progressivement le Python utile déjà présent dans l�
 cd /home/jul/prediction_core/python
 PYTHONPATH=src pytest -q
 python3 -m weather_pm.cli --help
-PYTHONPATH=src python3 -m prediction_core.app serve --host 127.0.0.1 --port 8080
+./scripts/prediction-core serve --host 127.0.0.1 --port 8080
+./scripts/prediction-core consume-markets --base-url http://127.0.0.1:8080 --source live --limit 3 --min-status watchlist
 ```
 
 Après installation editable éventuelle :
@@ -60,6 +61,7 @@ Après installation editable éventuelle :
 ```bash
 cd /home/jul/prediction_core/python
 prediction-core serve --host 127.0.0.1 --port 8080
+prediction-core consume-markets --base-url http://127.0.0.1:8080 --source live --limit 3 --min-status watchlist
 ```
 
 ## Service HTTP local minimal

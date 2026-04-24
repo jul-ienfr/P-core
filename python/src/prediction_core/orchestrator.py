@@ -145,17 +145,24 @@ def consume_weather_markets(
     markets = client.fetch_markets(source=source, limit=limit)
 
     selected_markets: list[dict[str, Any]] = []
+    filtered_out = 0
     minimum_rank = _VALID_DECISION_STATUSES.index(min_status)
     for market in markets:
         market_id = market.get("id")
         if not isinstance(market_id, str) or not market_id.strip():
+            filtered_out += 1
             continue
         score_bundle = client.score_market(market_id=market_id, source=source)
         decision = score_bundle.get("decision")
         decision_status = decision.get("status") if isinstance(decision, dict) else None
         if decision_status not in _VALID_DECISION_STATUSES:
+            filtered_out += 1
             continue
         if _VALID_DECISION_STATUSES.index(decision_status) < minimum_rank:
+            filtered_out += 1
+            continue
+        if source == "live" and _should_filter_live_candidate(market=market, score_bundle=score_bundle):
+            filtered_out += 1
             continue
         selected_markets.append(
             {
@@ -163,10 +170,13 @@ def consume_weather_markets(
                 "question": market.get("question"),
                 "yes_price": market.get("yes_price"),
                 "decision": decision,
+                "model": _extract_model_payload(score_bundle),
+                "edge": _extract_edge_payload(market=market, score_bundle=score_bundle),
                 "score": score_bundle.get("score"),
                 "market": score_bundle.get("market"),
                 "resolution": score_bundle.get("resolution"),
                 "execution": score_bundle.get("execution"),
+                "execution_costs": score_bundle.get("execution_costs"),
             }
         )
 
@@ -184,10 +194,59 @@ def consume_weather_markets(
             "source": source,
             "fetched": len(markets),
             "selected": len(selected_markets),
+            "filtered_out": filtered_out,
             "min_status": min_status,
         },
         "markets": selected_markets,
     }
+
+
+def _extract_model_payload(score_bundle: dict[str, Any]) -> dict[str, Any] | None:
+    model = score_bundle.get("model")
+    return model if isinstance(model, dict) else None
+
+
+
+def _extract_edge_payload(*, market: dict[str, Any], score_bundle: dict[str, Any]) -> dict[str, Any] | None:
+    edge = score_bundle.get("edge")
+    if isinstance(edge, dict):
+        return edge
+
+    yes_price = market.get("yes_price")
+    score = score_bundle.get("score")
+    model = _extract_model_payload(score_bundle)
+    raw_edge = score.get("raw_edge") if isinstance(score, dict) else None
+    probability_yes = model.get("probability_yes") if isinstance(model, dict) else None
+
+    payload: dict[str, Any] = {}
+    if isinstance(yes_price, (int, float)):
+        payload["market_implied_yes_probability"] = round(float(yes_price), 2)
+    if isinstance(raw_edge, (int, float)):
+        payload["probability_edge"] = round(float(raw_edge), 2)
+    if isinstance(probability_yes, (int, float)):
+        payload["theoretical_yes_price"] = round(float(probability_yes), 2)
+    return payload or None
+
+
+
+def _should_filter_live_candidate(*, market: dict[str, Any], score_bundle: dict[str, Any]) -> bool:
+    yes_price = market.get("yes_price")
+    if isinstance(yes_price, (int, float)) and (float(yes_price) <= 0.01 or float(yes_price) >= 0.99):
+        return True
+
+    execution = score_bundle.get("execution")
+    if isinstance(execution, dict):
+        fillable_size = execution.get("fillable_size_usd")
+        if isinstance(fillable_size, (int, float)) and float(fillable_size) < 25.0:
+            return True
+        slippage_risk = execution.get("slippage_risk")
+        if slippage_risk == "high":
+            return True
+        spread = execution.get("spread")
+        if isinstance(spread, (int, float)) and float(spread) >= 0.07:
+            return True
+
+    return False
 
 
 def _request_json(base_url: str, path: str, *, method: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:

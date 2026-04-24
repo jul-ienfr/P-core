@@ -17,16 +17,26 @@ def derive_filled_execution(
     if filled_quantity is None:
         if score_bundle is None or yes_price is None:
             raise ValueError("filled_quantity and fill_price are required when no scored question is provided")
-        decision_info = score_bundle.get("decision")
-        decision_status = decision_info.get("status") if isinstance(decision_info, dict) else None
-        if not isinstance(decision_status, str) or not decision_status:
-            raise ValueError("decision status is required for auto fill")
-        if decision_status in {"trade", "trade_small"}:
-            filled_quantity = requested_quantity
-            fill_price = yes_price
+        execution_costs = score_bundle.get("execution_costs") if isinstance(score_bundle, dict) else None
+        estimated_filled_quantity = None
+        estimated_avg_fill_price = None
+        if isinstance(execution_costs, dict):
+            estimated_filled_quantity = execution_costs.get("estimated_filled_quantity")
+            estimated_avg_fill_price = execution_costs.get("estimated_avg_fill_price")
+        if isinstance(estimated_filled_quantity, (int, float)) and isinstance(estimated_avg_fill_price, (int, float)):
+            filled_quantity = min(float(requested_quantity), float(estimated_filled_quantity))
+            fill_price = float(estimated_avg_fill_price)
         else:
-            filled_quantity = 0.0
-            fill_price = yes_price
+            decision_info = score_bundle.get("decision")
+            decision_status = decision_info.get("status") if isinstance(decision_info, dict) else None
+            if not isinstance(decision_status, str) or not decision_status:
+                raise ValueError("decision status is required for auto fill")
+            if decision_status in {"trade", "trade_small"}:
+                filled_quantity = requested_quantity
+                fill_price = yes_price
+            else:
+                filled_quantity = 0.0
+                fill_price = yes_price
 
     if filled_quantity < 0:
         raise ValueError("filled_quantity must be >= 0")

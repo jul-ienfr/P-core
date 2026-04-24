@@ -76,6 +76,7 @@ class ExecutionFeatures:
     fillable_size_usd: float
     execution_speed_required: str
     slippage_risk: str
+    max_impact_bps: float = 150.0
     transaction_fee_bps: float = 0.0
     deposit_fee_usd: float = 0.0
     withdrawal_fee_usd: float = 0.0
@@ -83,6 +84,7 @@ class ExecutionFeatures:
     expected_slippage_bps: float = 0.0
     all_in_cost_bps: float = 0.0
     all_in_cost_usd: float = 0.0
+    best_effort_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

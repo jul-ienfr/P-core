@@ -41,6 +41,46 @@ def test_build_decision_returns_skip_for_weak_edge() -> None:
     assert decision.max_position_pct_bankroll == 0.0
 
 
+def test_build_decision_returns_trade_small_for_threshold_setup_with_small_but_actionable_edge() -> None:
+    score = ScoreResult(
+        raw_edge=0.04,
+        edge_theoretical=0.20,
+        data_quality=0.92,
+        resolution_clarity=1.0,
+        execution_friction=0.88,
+        competition_inefficiency=0.46,
+        total_score=60.5,
+        grade="C",
+    )
+    execution = ExecutionFeatures(
+        spread=0.03,
+        hours_to_resolution=18.0,
+        volume_usd=14000.0,
+        fillable_size_usd=250.0,
+        execution_speed_required="low",
+        slippage_risk="low",
+        transaction_fee_bps=0.0,
+        deposit_fee_usd=0.0,
+        withdrawal_fee_usd=0.0,
+        order_book_depth_usd=0.0,
+        expected_slippage_bps=60.0,
+        all_in_cost_bps=210.0,
+        all_in_cost_usd=5.25,
+    )
+
+    decision = build_decision(
+        score=score,
+        is_exact_bin=False,
+        spread=0.03,
+        forecast_dispersion=1.2,
+        execution=execution,
+    )
+
+    assert decision.status == "trade_small"
+    assert decision.max_position_pct_bankroll == 0.01
+
+
+
 def test_build_decision_skips_when_all_in_costs_consume_the_edge() -> None:
     score = ScoreResult(
         raw_edge=0.06,

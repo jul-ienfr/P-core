@@ -6,11 +6,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from prediction_core.app import build_parser
 from prediction_core.orchestrator import consume_weather_markets, run_weather_workflow
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PREDICTION_CORE_SCRIPT = PROJECT_ROOT / "scripts" / "prediction-core"
 
 
 def _env() -> dict[str, str]:
@@ -86,6 +89,17 @@ def test_module_help_exits_cleanly() -> None:
     assert "serve" in result.stdout
 
 
+def test_repo_script_help_exits_cleanly_without_manual_pythonpath() -> None:
+    result = subprocess.run(
+        [str(PREDICTION_CORE_SCRIPT), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "serve" in result.stdout
+
+
 def test_serve_help_exits_cleanly() -> None:
     result = subprocess.run(
         [sys.executable, "-m", "prediction_core.app", "serve", "--help"],
@@ -140,6 +154,31 @@ def test_serve_command_starts_server_and_answers_healthcheck() -> None:
 
         response = subprocess.run(
             ["curl", "-sS", "http://127.0.0.1:8091/health"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert response.returncode == 0
+        assert '"status": "ok"' in response.stdout
+        assert '"service": "prediction_core_python"' in response.stdout
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
+
+
+def test_repo_script_serve_command_starts_server_and_answers_healthcheck() -> None:
+    process = subprocess.Popen(
+        [str(PREDICTION_CORE_SCRIPT), "serve", "--host", "127.0.0.1", "--port", "8096"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        ready_line = process.stdout.readline()
+        assert "prediction_core server listening on http://127.0.0.1:8096" in ready_line
+
+        response = subprocess.run(
+            ["curl", "-sS", "http://127.0.0.1:8096/health"],
             capture_output=True,
             text=True,
             check=False,
@@ -215,12 +254,125 @@ def test_consume_weather_markets_filters_tradeable_candidates() -> None:
             min_status="trade",
         )
         assert payload["summary"]["fetched"] == 3
-        assert payload["summary"]["selected"] == 2
-        assert payload["markets"][0]["market_id"] == "denver-high-64"
+        assert payload["summary"]["selected"] == 1
+        assert payload["markets"][0]["market_id"] == "denver-high-65"
         assert payload["markets"][0]["decision"]["status"] == "trade"
+        assert payload["markets"][0]["model"]["probability_yes"] == 0.57
+        assert payload["markets"][0]["model"]["method"] == "calibrated_threshold_v1"
+        assert payload["markets"][0]["edge"]["market_implied_yes_probability"] == 0.37
+        assert payload["markets"][0]["edge"]["probability_edge"] == 0.2
     finally:
         process.terminate()
         process.wait(timeout=5)
+
+
+def test_consume_weather_markets_filters_extreme_or_illiquid_live_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeClient:
+        def __init__(self, base_url: str) -> None:
+            self.base_url = base_url
+
+        def health(self) -> dict[str, object]:
+            return {"status": "ok", "service": "prediction_core_python"}
+
+        def fetch_markets(self, *, source: str = "fixture", limit: int = 100) -> list[dict[str, object]]:
+            assert source == "live"
+            return [
+                {"id": "keep-1", "question": "Keep me", "yes_price": 0.42},
+                {"id": "drop-price", "question": "Drop extreme price", "yes_price": 0.001},
+                {"id": "drop-liquidity", "question": "Drop illiquid", "yes_price": 0.44},
+            ]
+
+        def score_market(self, *, market_id: str, source: str | None = None, **payload: object) -> dict[str, object]:
+            bundles = {
+                "keep-1": {
+                    "decision": {"status": "trade"},
+                    "score": {"total_score": 82.0, "raw_edge": 0.14},
+                    "model": {"probability_yes": 0.56, "confidence": 0.75, "method": "calibrated_threshold_v1"},
+                    "market": {"city": "Hong Kong"},
+                    "resolution": {"provider": "hong_kong_observatory"},
+                    "execution": {"fillable_size_usd": 180.0, "slippage_risk": "low", "spread": 0.02},
+                },
+                "drop-price": {
+                    "decision": {"status": "trade"},
+                    "score": {"total_score": 90.0, "raw_edge": 0.60},
+                    "model": {"probability_yes": 0.61, "confidence": 0.75, "method": "calibrated_threshold_v1"},
+                    "market": {"city": "Hong Kong"},
+                    "resolution": {"provider": "hong_kong_observatory"},
+                    "execution": {"fillable_size_usd": 180.0, "slippage_risk": "low", "spread": 0.02},
+                },
+                "drop-liquidity": {
+                    "decision": {"status": "trade_small"},
+                    "score": {"total_score": 78.0, "raw_edge": 0.12},
+                    "model": {"probability_yes": 0.56, "confidence": 0.7, "method": "calibrated_threshold_v1"},
+                    "market": {"city": "Hong Kong"},
+                    "resolution": {"provider": "hong_kong_observatory"},
+                    "execution": {"fillable_size_usd": 1.5, "slippage_risk": "high", "spread": 0.08},
+                },
+            }
+            return bundles[market_id]
+
+    monkeypatch.setattr("prediction_core.orchestrator.PredictionCoreClient", FakeClient)
+
+    payload = consume_weather_markets(
+        base_url="http://127.0.0.1:9999",
+        source="live",
+        limit=3,
+        min_status="watchlist",
+    )
+
+    assert payload["summary"]["fetched"] == 3
+    assert payload["summary"]["selected"] == 1
+    assert payload["summary"]["filtered_out"] == 2
+    assert payload["markets"][0]["market_id"] == "keep-1"
+    assert payload["markets"][0]["model"]["probability_yes"] == 0.56
+    assert payload["markets"][0]["edge"]["probability_edge"] == 0.14
+
+
+
+def test_consume_weather_markets_preserves_execution_costs_for_live_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeClient:
+        def __init__(self, base_url: str) -> None:
+            self.base_url = base_url
+
+        def health(self) -> dict[str, object]:
+            return {"status": "ok", "service": "prediction_core_python"}
+
+        def fetch_markets(self, *, source: str = "fixture", limit: int = 100) -> list[dict[str, object]]:
+            assert source == "live"
+            return [{"id": "keep-2", "question": "Keep me", "yes_price": 0.42}]
+
+        def score_market(self, *, market_id: str, source: str | None = None, **payload: object) -> dict[str, object]:
+            assert market_id == "keep-2"
+            return {
+                "decision": {"status": "trade"},
+                "score": {"total_score": 82.0, "raw_edge": 0.14},
+                "model": {"probability_yes": 0.56, "confidence": 0.75, "method": "calibrated_threshold_v1"},
+                "market": {"city": "Hong Kong"},
+                "resolution": {"provider": "hong_kong_observatory"},
+                "execution": {"fillable_size_usd": 180.0, "slippage_risk": "low", "spread": 0.02},
+                "execution_costs": {
+                    "quoted_best_bid": 0.42,
+                    "quoted_best_ask": 0.45,
+                    "estimated_filled_quantity": 20.0,
+                    "total_execution_cost": 0.4182,
+                    "total_all_in_cost": 3.4637,
+                    "effective_unit_price": 0.628185,
+                },
+            }
+
+    monkeypatch.setattr("prediction_core.orchestrator.PredictionCoreClient", FakeClient)
+
+    payload = consume_weather_markets(
+        base_url="http://127.0.0.1:9999",
+        source="live",
+        limit=1,
+        min_status="watchlist",
+    )
+
+    assert payload["summary"]["selected"] == 1
+    assert payload["markets"][0]["execution_costs"]["quoted_best_bid"] == 0.42
+    assert payload["markets"][0]["execution_costs"]["quoted_best_ask"] == 0.45
+    assert payload["markets"][0]["execution_costs"]["total_all_in_cost"] == 3.4637
 
 
 def test_weather_workflow_command_runs_against_live_server() -> None:
@@ -304,8 +456,8 @@ def test_consume_markets_command_runs_against_live_server() -> None:
         )
         assert result.returncode == 0
         payload = json.loads(result.stdout)
-        assert payload["summary"]["selected"] == 2
-        assert payload["markets"][0]["market_id"] == "denver-high-64"
+        assert payload["summary"]["selected"] == 1
+        assert payload["markets"][0]["market_id"] == "denver-high-65"
     finally:
         process.terminate()
         process.wait(timeout=5)

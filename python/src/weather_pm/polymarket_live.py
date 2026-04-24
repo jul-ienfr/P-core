@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 from weather_pm.market_parser import parse_market_question
 
 _GAMMA_BASE_URL = "https://gamma-api.polymarket.com"
+_CLOB_BASE_URL = "https://clob.polymarket.com"
 _DEFAULT_TIMEOUT_SECONDS = 20
 _NULL_STRINGS = {"", "null", "none", "n/a"}
 _WEATHER_TOKENS = (
@@ -55,6 +56,47 @@ def _fetch_gamma_json(path: str, params: dict[str, Any] | None = None) -> Any:
         return json.loads(payload)
     except json.JSONDecodeError as exc:
         raise RuntimeError(f"Gamma returned invalid JSON for {url}") from exc
+
+
+
+def _fetch_clob_json(path: str, params: dict[str, Any] | None = None) -> Any:
+    query = urlencode({key: value for key, value in (params or {}).items() if value is not None}, doseq=True)
+    url = f"{_CLOB_BASE_URL}{path}"
+    if query:
+        url = f"{url}?{query}"
+
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 weather-pm/0.1",
+        },
+    )
+    try:
+        with urlopen(request, timeout=_DEFAULT_TIMEOUT_SECONDS) as response:
+            payload = response.read().decode("utf-8")
+    except HTTPError as exc:
+        detail = ""
+        try:
+            detail = exc.read().decode("utf-8", errors="replace")
+        except Exception:
+            detail = ""
+        raise RuntimeError(f"CLOB request failed with HTTP {exc.code} for {url}: {detail[:200]}") from exc
+    except URLError as exc:
+        raise RuntimeError(f"CLOB request failed for {url}: {exc}") from exc
+
+    try:
+        return json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"CLOB returned invalid JSON for {url}") from exc
+
+
+
+def _fetch_clob_book(token_id: str) -> dict[str, Any]:
+    payload = _fetch_clob_json("/book", params={"token_id": token_id})
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"CLOB /book response for token {token_id} was not an object")
+    return payload
 
 
 def _fetch_gamma_markets(*, limit: int, active: bool, closed: bool) -> list[dict[str, Any]]:
@@ -267,14 +309,94 @@ def _pick_best_ask(raw: dict[str, Any], yes_index: int) -> float:
 
 
 
+def _pick_yes_token_id(raw: dict[str, Any], yes_index: int) -> str | None:
+    token_ids = _parse_jsonish_list(raw.get("clobTokenIds") or raw.get("clob_token_ids") or raw.get("tokenIds") or raw.get("token_ids"))
+    if yes_index >= len(token_ids):
+        return None
+    token_id = str(token_ids[yes_index]).strip()
+    return token_id or None
+
+
+
+def _normalize_book_levels(levels: Any) -> list[dict[str, float]]:
+    if not isinstance(levels, list):
+        return []
+
+    normalized: list[dict[str, float]] = []
+    for level in levels:
+        if not isinstance(level, dict):
+            continue
+        price = _as_float(level.get("price"))
+        size = _as_float(level.get("size"))
+        if price <= 0.0 or size <= 0.0:
+            continue
+        normalized.append({"price": price, "size": size})
+    return normalized
+
+
+
+def _sum_book_depth_usd(levels: list[dict[str, float]]) -> float:
+    return round(sum(level["price"] * level["size"] for level in levels), 2)
+
+
+
+def _extract_clob_book_metrics(raw: dict[str, Any], yes_index: int) -> dict[str, Any]:
+    token_id = _pick_yes_token_id(raw, yes_index)
+    if not token_id:
+        return {
+            "clob_token_id": None,
+            "bids": [],
+            "asks": [],
+            "best_bid": None,
+            "best_ask": None,
+            "best_bid_size": None,
+            "best_ask_size": None,
+            "bid_depth_usd": 0.0,
+            "ask_depth_usd": 0.0,
+        }
+
+    try:
+        book = _fetch_clob_book(token_id)
+    except RuntimeError as exc:
+        if "HTTP 404" in str(exc):
+            return {
+                "clob_token_id": token_id,
+                "bids": [],
+                "asks": [],
+                "best_bid": None,
+                "best_ask": None,
+                "best_bid_size": None,
+                "best_ask_size": None,
+                "bid_depth_usd": 0.0,
+                "ask_depth_usd": 0.0,
+            }
+        raise
+
+    bids = _normalize_book_levels(book.get("bids"))
+    asks = _normalize_book_levels(book.get("asks"))
+    return {
+        "clob_token_id": token_id,
+        "bids": bids,
+        "asks": asks,
+        "best_bid": bids[0]["price"] if bids else None,
+        "best_ask": asks[0]["price"] if asks else None,
+        "best_bid_size": bids[0]["size"] if bids else None,
+        "best_ask_size": asks[0]["size"] if asks else None,
+        "bid_depth_usd": _sum_book_depth_usd(bids),
+        "ask_depth_usd": _sum_book_depth_usd(asks),
+    }
+
+
+
 def _normalize_gamma_market(raw: dict[str, Any]) -> dict[str, Any]:
     question = str(raw.get("question") or raw.get("title") or "").strip()
     yes_index = _infer_yes_index(raw)
-    best_bid = _pick_best_bid(raw, yes_index)
-    best_ask = _pick_best_ask(raw, yes_index)
+    book_metrics = _extract_clob_book_metrics(raw, yes_index)
+    best_bid = book_metrics["best_bid"] if book_metrics["best_bid"] is not None else _pick_best_bid(raw, yes_index)
+    best_ask = book_metrics["best_ask"] if book_metrics["best_ask"] is not None else _pick_best_ask(raw, yes_index)
     description = raw.get("description") or raw.get("marketDescription") or raw.get("descriptionMarkdown")
-    rules = raw.get("rules") or raw.get("resolutionCriteria") or raw.get("resolution_criteria") or raw.get("clarification")
-    resolution_source = raw.get("resolutionSource") or raw.get("resolution_source") or raw.get("resolutionCriteria") or rules
+    rules = raw.get("rules") or raw.get("resolutionCriteria") or raw.get("resolution_criteria") or raw.get("clarification") or description
+    resolution_source = raw.get("resolutionSource") or raw.get("resolution_source") or raw.get("resolutionCriteria") or rules or description
     market_id = raw.get("id") or raw.get("conditionId") or raw.get("condition_id") or raw.get("slug") or ""
 
     return {
@@ -284,6 +406,13 @@ def _normalize_gamma_market(raw: dict[str, Any]) -> dict[str, Any]:
         "yes_price": _pick_yes_price(raw, yes_index),
         "best_bid": best_bid,
         "best_ask": best_ask,
+        "best_bid_size": book_metrics["best_bid_size"],
+        "best_ask_size": book_metrics["best_ask_size"],
+        "bid_depth_usd": book_metrics["bid_depth_usd"],
+        "ask_depth_usd": book_metrics["ask_depth_usd"],
+        "bids": book_metrics["bids"],
+        "asks": book_metrics["asks"],
+        "clob_token_id": book_metrics["clob_token_id"],
         "volume": _as_float(raw.get("volume") or raw.get("volumeNum") or raw.get("liquidityClob") or raw.get("liquidity")),
         "hours_to_resolution": _compute_hours_to_resolution(raw),
         "resolution_source": resolution_source,
@@ -348,13 +477,21 @@ def _normalize_gamma_series_event(raw: dict[str, Any]) -> dict[str, Any]:
     description = raw.get("description") or raw.get("marketDescription") or raw.get("descriptionMarkdown")
     resolution_source = raw.get("resolutionSource") or raw.get("resolution_source") or description
     yes_index = _infer_yes_index(raw)
+    book_metrics = _extract_clob_book_metrics(raw, yes_index)
     return {
         "id": str(raw.get("id") or raw.get("slug") or ""),
         "category": "weather",
         "question": str(raw.get("question") or raw.get("title") or "").strip(),
         "yes_price": _pick_yes_price(raw, yes_index),
-        "best_bid": _pick_best_bid(raw, yes_index),
-        "best_ask": _pick_best_ask(raw, yes_index),
+        "best_bid": book_metrics["best_bid"] if book_metrics["best_bid"] is not None else _pick_best_bid(raw, yes_index),
+        "best_ask": book_metrics["best_ask"] if book_metrics["best_ask"] is not None else _pick_best_ask(raw, yes_index),
+        "best_bid_size": book_metrics["best_bid_size"],
+        "best_ask_size": book_metrics["best_ask_size"],
+        "bid_depth_usd": book_metrics["bid_depth_usd"],
+        "ask_depth_usd": book_metrics["ask_depth_usd"],
+        "bids": book_metrics["bids"],
+        "asks": book_metrics["asks"],
+        "clob_token_id": book_metrics["clob_token_id"],
         "volume": _as_float(raw.get("volume") or raw.get("openInterest") or raw.get("liquidity")),
         "hours_to_resolution": _compute_hours_to_resolution(raw),
         "resolution_source": resolution_source,
@@ -505,6 +642,9 @@ __all__ = [
     "_compute_hours_to_resolution",
     "_infer_yes_index",
     "_looks_like_weather_market",
+    "_pick_yes_token_id",
+    "_normalize_book_levels",
+    "_fetch_clob_book",
     "_normalize_gamma_market",
     "_normalize_gamma_series_event",
 ]
