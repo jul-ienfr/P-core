@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from prediction_core.execution import (
     BookLevel,
@@ -27,8 +28,18 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
     server_version = "prediction_core_python/0.1"
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path == "/health":
+        parsed_url = urlparse(self.path)
+        if parsed_url.path == "/health":
             self._json_response(200, {"status": "ok", "service": "prediction_core_python"})
+            return
+        if parsed_url.path == "/weather/polymarket/markets":
+            try:
+                result = polymarket_weather_markets_query(parse_qs(parsed_url.query))
+                self._json_response(200, result)
+            except ValueError as exc:
+                self._json_response(400, {"status": "error", "message": str(exc)})
+            except Exception as exc:  # pragma: no cover - defensive boundary
+                self._json_response(500, {"status": "error", "message": f"internal error: {exc}"})
             return
         self._json_response(404, {"status": "error", "message": f"unknown path: {self.path}"})
 
@@ -97,20 +108,47 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
 
 
 def fetch_markets_request(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    source = payload.get("source", "fixture")
+    source = _coerce_source(payload.get("source", "fixture"))
+    limit_value = _coerce_limit(payload.get("limit", 100))
+    return _normalized_weather_markets(source=source, limit=limit_value)
+
+
+def polymarket_weather_markets_query(query: dict[str, list[str]]) -> dict[str, Any]:
+    source = _coerce_source(_first_query_value(query, "source") or "fixture")
+    limit_value = _coerce_limit(_first_query_value(query, "limit") or 100)
+    return {
+        "source": source,
+        "limit": limit_value,
+        "markets": _normalized_weather_markets(source=source, limit=limit_value),
+    }
+
+
+def _normalized_weather_markets(*, source: str, limit: int) -> list[dict[str, Any]]:
+    markets = [normalize_market_record(market) for market in list_weather_markets(source=source, limit=limit)]
+    return markets[:limit]
+
+
+def _first_query_value(query: dict[str, list[str]], field: str) -> str | None:
+    values = query.get(field)
+    if not values:
+        return None
+    return values[0]
+
+
+def _coerce_source(source: Any) -> str:
     if source not in {"fixture", "live"}:
         raise ValueError("source must be 'fixture' or 'live'")
+    return str(source)
 
-    limit = payload.get("limit", 100)
+
+def _coerce_limit(limit: Any) -> int:
     try:
         limit_value = int(limit)
     except (TypeError, ValueError) as exc:
         raise ValueError("limit must be an integer") from exc
     if limit_value < 1:
         raise ValueError("limit must be >= 1")
-
-    markets = [normalize_market_record(market) for market in list_weather_markets(source=source, limit=limit_value)]
-    return markets[:limit_value]
+    return limit_value
 
 
 def score_market_request(payload: dict[str, Any]) -> dict[str, Any]:

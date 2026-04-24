@@ -93,6 +93,54 @@ def test_fetch_markets_endpoint_returns_normalized_weather_market_list() -> None
         thread.join(timeout=2)
 
 
+def test_polymarket_weather_markets_get_endpoint_returns_normalized_markets() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/polymarket/markets?source=fixture&limit=2",
+        )
+        assert status == 200
+        assert payload["source"] == "fixture"
+        assert len(payload["markets"]) == 2
+        assert payload["markets"][0]["id"] == "denver-high-64"
+        assert payload["markets"][0]["question"] == "Will the highest temperature in Denver be 64F or higher?"
+        assert payload["markets"][0]["spread"] == 0.03
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_polymarket_weather_markets_get_endpoint_rejects_invalid_source() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/polymarket/markets?source=bad&limit=2",
+        )
+        assert status == 400
+        assert payload["status"] == "error"
+        assert payload["message"] == "source must be 'fixture' or 'live'"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_polymarket_weather_markets_get_endpoint_rejects_non_positive_limit() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/polymarket/markets?source=fixture&limit=0",
+        )
+        assert status == 400
+        assert payload["status"] == "error"
+        assert payload["message"] == "limit must be >= 1"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def test_paper_cycle_endpoint_returns_simulation_and_postmortem() -> None:
     server, thread, port = _start_server()
     try:
