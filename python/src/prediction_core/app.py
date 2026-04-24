@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from prediction_core.orchestrator import consume_weather_markets, run_weather_workflow
+from prediction_core.orchestrator import consume_weather_markets, run_weather_paper_batch, run_weather_workflow
 from prediction_core.server import build_server
 
 
@@ -60,6 +60,28 @@ def build_parser() -> argparse.ArgumentParser:
         default="watchlist",
         help="Minimum decision status to keep in the output",
     )
+    consume.add_argument(
+        "--explain-filtered",
+        action="store_true",
+        help="Include filtered markets with a filter_reason for live-candidate triage",
+    )
+
+    paper_batch = subparsers.add_parser(
+        "paper-batch",
+        help="Fetch/scored weather candidates, then run paper-cycle for selected markets",
+    )
+    paper_batch.add_argument("--base-url", default="http://127.0.0.1:8080", help="Base URL for the prediction_core server")
+    paper_batch.add_argument("--source", choices=("fixture", "live"), default="fixture", help="Market source")
+    paper_batch.add_argument("--limit", default=20, type=int, help="Maximum number of markets to inspect")
+    paper_batch.add_argument(
+        "--min-status",
+        choices=("skip", "watchlist", "trade_small", "trade"),
+        default="trade_small",
+        help="Minimum decision status to paper-trade",
+    )
+    paper_batch.add_argument("--run-id-prefix", default="weather-paper", help="Run id prefix for generated paper cycles")
+    paper_batch.add_argument("--bankroll-usd", type=float, help="Bankroll size to derive requested quantity")
+    paper_batch.add_argument("--requested-quantity", type=float, help="Explicit requested quantity for every selected market")
 
     return parser
 
@@ -118,6 +140,20 @@ def main() -> int:
             source=args.source,
             limit=args.limit,
             min_status=args.min_status,
+            explain_filtered=args.explain_filtered,
+        )
+        print(json.dumps(result))
+        return 0
+
+    if args.command == "paper-batch":
+        result = run_weather_paper_batch(
+            base_url=args.base_url,
+            source=args.source,
+            limit=args.limit,
+            min_status=args.min_status,
+            run_id_prefix=args.run_id_prefix,
+            bankroll_usd=args.bankroll_usd,
+            requested_quantity=args.requested_quantity,
         )
         print(json.dumps(result))
         return 0

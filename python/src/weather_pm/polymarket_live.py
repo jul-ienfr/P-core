@@ -59,7 +59,7 @@ def _fetch_gamma_json(path: str, params: dict[str, Any] | None = None) -> Any:
 
 
 
-def _fetch_clob_json(path: str, params: dict[str, Any] | None = None) -> Any:
+def _fetch_clob_json(path: str, params: dict[str, Any] | None = None, *, timeout_seconds: float = 2.0) -> Any:
     query = urlencode({key: value for key, value in (params or {}).items() if value is not None}, doseq=True)
     url = f"{_CLOB_BASE_URL}{path}"
     if query:
@@ -73,7 +73,7 @@ def _fetch_clob_json(path: str, params: dict[str, Any] | None = None) -> Any:
         },
     )
     try:
-        with urlopen(request, timeout=_DEFAULT_TIMEOUT_SECONDS) as response:
+        with urlopen(request, timeout=timeout_seconds) as response:
             payload = response.read().decode("utf-8")
     except HTTPError as exc:
         detail = ""
@@ -92,8 +92,8 @@ def _fetch_clob_json(path: str, params: dict[str, Any] | None = None) -> Any:
 
 
 
-def _fetch_clob_book(token_id: str) -> dict[str, Any]:
-    payload = _fetch_clob_json("/book", params={"token_id": token_id})
+def _fetch_clob_book(token_id: str, *, timeout_seconds: float = 2.0) -> dict[str, Any]:
+    payload = _fetch_clob_json("/book", params={"token_id": token_id}, timeout_seconds=timeout_seconds)
     if not isinstance(payload, dict):
         raise RuntimeError(f"CLOB /book response for token {token_id} was not an object")
     return payload
@@ -357,20 +357,20 @@ def _extract_clob_book_metrics(raw: dict[str, Any], yes_index: int) -> dict[str,
 
     try:
         book = _fetch_clob_book(token_id)
-    except RuntimeError as exc:
-        if "HTTP 404" in str(exc):
-            return {
-                "clob_token_id": token_id,
-                "bids": [],
-                "asks": [],
-                "best_bid": None,
-                "best_ask": None,
-                "best_bid_size": None,
-                "best_ask_size": None,
-                "bid_depth_usd": 0.0,
-                "ask_depth_usd": 0.0,
-            }
-        raise
+    except (RuntimeError, TimeoutError, OSError) as exc:
+        if isinstance(exc, RuntimeError) and "HTTP 404" not in str(exc) and "timed out" not in str(exc).lower():
+            raise
+        return {
+            "clob_token_id": token_id,
+            "bids": [],
+            "asks": [],
+            "best_bid": None,
+            "best_ask": None,
+            "best_bid_size": None,
+            "best_ask_size": None,
+            "bid_depth_usd": 0.0,
+            "ask_depth_usd": 0.0,
+        }
 
     bids = _normalize_book_levels(book.get("bids"))
     asks = _normalize_book_levels(book.get("asks"))

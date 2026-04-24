@@ -125,12 +125,104 @@ def run_weather_workflow(
     return result
 
 
+def run_weather_paper_batch(
+    *,
+    base_url: str,
+    source: str = "fixture",
+    limit: int = 20,
+    min_status: str = "trade_small",
+    run_id_prefix: str = "weather-paper",
+    bankroll_usd: float | None = None,
+    requested_quantity: float | None = None,
+) -> dict[str, Any]:
+    """Fetch markets, score/filter candidates, then run paper-cycle for each selected candidate."""
+
+    candidate_payload = consume_weather_markets(
+        base_url=base_url,
+        source=source,
+        limit=limit,
+        min_status=min_status,
+    )
+    client = PredictionCoreClient(base_url)
+    paper_cycles: list[dict[str, Any]] = []
+    for candidate in candidate_payload["markets"]:
+        market_id = str(candidate["market_id"])
+        question = str(candidate.get("question") or "")
+        yes_price = candidate.get("yes_price")
+        if not question or not isinstance(yes_price, (int, float)):
+            continue
+
+        score_bundle = {
+            key: value
+            for key, value in candidate.items()
+            if key in {"decision", "model", "edge", "score", "market", "resolution", "execution", "execution_costs"}
+        }
+        paper_payload = _compact_dict(
+            {
+                "question": question,
+                "yes_price": float(yes_price),
+                "source": source,
+                "bankroll_usd": bankroll_usd,
+                "requested_quantity": requested_quantity,
+            }
+        )
+        for market_key, payload_key in (
+            ("best_bid", "best_bid"),
+            ("best_ask", "best_ask"),
+            ("hours_to_resolution", "hours_to_resolution"),
+            ("volume_usd", "volume"),
+        ):
+            value = candidate.get(market_key)
+            if isinstance(value, (int, float)):
+                paper_payload[payload_key] = float(value)
+
+        execution_info = score_bundle.get("execution")
+        if isinstance(execution_info, dict):
+            for source_key, target_key in (
+                ("best_bid", "best_bid"),
+                ("best_ask", "best_ask"),
+                ("hours_to_resolution", "hours_to_resolution"),
+                ("volume_usd", "volume"),
+                ("transaction_fee_bps", "transaction_fee_bps"),
+                ("deposit_fee_usd", "deposit_fee_usd"),
+                ("withdrawal_fee_usd", "withdrawal_fee_usd"),
+            ):
+                value = execution_info.get(source_key)
+                if isinstance(value, (int, float)):
+                    paper_payload[target_key] = float(value)
+
+        simulation_bundle = client.paper_cycle(
+            run_id=f"{run_id_prefix}-{market_id}",
+            market_id=market_id,
+            **paper_payload,
+        )
+        paper_cycles.append(
+            {
+                "run_id": f"{run_id_prefix}-{market_id}",
+                "market_id": market_id,
+                "question": question,
+                "decision": candidate.get("decision"),
+                "simulation": simulation_bundle.get("simulation"),
+                "postmortem": simulation_bundle.get("postmortem"),
+                "score_bundle": simulation_bundle.get("score_bundle"),
+            }
+        )
+
+    result = dict(candidate_payload)
+    result["paper_cycles"] = paper_cycles
+    result["summary"] = dict(candidate_payload["summary"])
+    result["summary"]["paper_cycles"] = len(paper_cycles)
+    return result
+
+
+
 def consume_weather_markets(
     *,
     base_url: str,
     source: str = "fixture",
     limit: int = 20,
     min_status: str = "watchlist",
+    explain_filtered: bool = False,
 ) -> dict[str, Any]:
     if source not in _VALID_SOURCES:
         raise ValueError("source must be 'fixture' or 'live'")
@@ -145,40 +237,33 @@ def consume_weather_markets(
     markets = client.fetch_markets(source=source, limit=limit)
 
     selected_markets: list[dict[str, Any]] = []
+    filtered_markets: list[dict[str, Any]] = []
     filtered_out = 0
     minimum_rank = _VALID_DECISION_STATUSES.index(min_status)
     for market in markets:
         market_id = market.get("id")
         if not isinstance(market_id, str) or not market_id.strip():
             filtered_out += 1
+            if explain_filtered:
+                filtered_markets.append(_candidate_payload(market=market, score_bundle={}, filter_reason="missing_market_id"))
             continue
         score_bundle = client.score_market(market_id=market_id, source=source)
         decision = score_bundle.get("decision")
         decision_status = decision.get("status") if isinstance(decision, dict) else None
+        filter_reason: str | None = None
         if decision_status not in _VALID_DECISION_STATUSES:
+            filter_reason = "invalid_decision_status"
+        elif _VALID_DECISION_STATUSES.index(decision_status) < minimum_rank:
+            filter_reason = "decision_below_min_status"
+        elif source == "live":
+            filter_reason = _live_candidate_filter_reason(market=market, score_bundle=score_bundle)
+
+        if filter_reason is not None:
             filtered_out += 1
+            if explain_filtered:
+                filtered_markets.append(_candidate_payload(market=market, score_bundle=score_bundle, filter_reason=filter_reason))
             continue
-        if _VALID_DECISION_STATUSES.index(decision_status) < minimum_rank:
-            filtered_out += 1
-            continue
-        if source == "live" and _should_filter_live_candidate(market=market, score_bundle=score_bundle):
-            filtered_out += 1
-            continue
-        selected_markets.append(
-            {
-                "market_id": market_id,
-                "question": market.get("question"),
-                "yes_price": market.get("yes_price"),
-                "decision": decision,
-                "model": _extract_model_payload(score_bundle),
-                "edge": _extract_edge_payload(market=market, score_bundle=score_bundle),
-                "score": score_bundle.get("score"),
-                "market": score_bundle.get("market"),
-                "resolution": score_bundle.get("resolution"),
-                "execution": score_bundle.get("execution"),
-                "execution_costs": score_bundle.get("execution_costs"),
-            }
-        )
+        selected_markets.append(_candidate_payload(market=market, score_bundle=score_bundle))
 
     selected_markets.sort(
         key=lambda item: (
@@ -188,7 +273,7 @@ def consume_weather_markets(
         reverse=True,
     )
 
-    return {
+    result = {
         "health": health,
         "summary": {
             "source": source,
@@ -199,6 +284,33 @@ def consume_weather_markets(
         },
         "markets": selected_markets,
     }
+    if explain_filtered:
+        result["filtered_markets"] = filtered_markets
+    return result
+
+
+def _candidate_payload(
+    *,
+    market: dict[str, Any],
+    score_bundle: dict[str, Any],
+    filter_reason: str | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "market_id": market.get("id"),
+        "question": market.get("question"),
+        "yes_price": market.get("yes_price"),
+        "decision": score_bundle.get("decision"),
+        "model": _extract_model_payload(score_bundle),
+        "edge": _extract_edge_payload(market=market, score_bundle=score_bundle),
+        "score": score_bundle.get("score"),
+        "market": score_bundle.get("market"),
+        "resolution": score_bundle.get("resolution"),
+        "execution": score_bundle.get("execution"),
+        "execution_costs": score_bundle.get("execution_costs"),
+    }
+    if filter_reason is not None:
+        payload["filter_reason"] = filter_reason
+    return payload
 
 
 def _extract_model_payload(score_bundle: dict[str, Any]) -> dict[str, Any] | None:
@@ -229,24 +341,24 @@ def _extract_edge_payload(*, market: dict[str, Any], score_bundle: dict[str, Any
 
 
 
-def _should_filter_live_candidate(*, market: dict[str, Any], score_bundle: dict[str, Any]) -> bool:
+def _live_candidate_filter_reason(*, market: dict[str, Any], score_bundle: dict[str, Any]) -> str | None:
     yes_price = market.get("yes_price")
     if isinstance(yes_price, (int, float)) and (float(yes_price) <= 0.01 or float(yes_price) >= 0.99):
-        return True
+        return "extreme_yes_price"
 
     execution = score_bundle.get("execution")
     if isinstance(execution, dict):
         fillable_size = execution.get("fillable_size_usd")
         if isinstance(fillable_size, (int, float)) and float(fillable_size) < 25.0:
-            return True
+            return "insufficient_fillable_size"
         slippage_risk = execution.get("slippage_risk")
         if slippage_risk == "high":
-            return True
+            return "high_slippage_risk"
         spread = execution.get("spread")
         if isinstance(spread, (int, float)) and float(spread) >= 0.07:
-            return True
+            return "wide_spread"
 
-    return False
+    return None
 
 
 def _request_json(base_url: str, path: str, *, method: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:

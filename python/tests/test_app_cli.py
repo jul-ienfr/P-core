@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from prediction_core.app import build_parser
-from prediction_core.orchestrator import consume_weather_markets, run_weather_workflow
+from prediction_core.orchestrator import consume_weather_markets, run_weather_paper_batch, run_weather_workflow
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -68,6 +68,7 @@ def test_build_parser_accepts_consume_markets_command() -> None:
             "2",
             "--min-status",
             "watchlist",
+            "--explain-filtered",
         ]
     )
     assert args.command == "consume-markets"
@@ -75,6 +76,34 @@ def test_build_parser_accepts_consume_markets_command() -> None:
     assert args.source == "fixture"
     assert args.limit == 2
     assert args.min_status == "watchlist"
+    assert args.explain_filtered is True
+
+
+def test_build_parser_accepts_paper_batch_command() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "paper-batch",
+            "--base-url",
+            "http://127.0.0.1:8080",
+            "--source",
+            "live",
+            "--limit",
+            "10",
+            "--min-status",
+            "trade_small",
+            "--run-id-prefix",
+            "live-meteo",
+            "--bankroll-usd",
+            "1000",
+        ]
+    )
+    assert args.command == "paper-batch"
+    assert args.source == "live"
+    assert args.limit == 10
+    assert args.min_status == "trade_small"
+    assert args.run_id_prefix == "live-meteo"
+    assert args.bankroll_usd == 1000.0
 
 
 def test_module_help_exits_cleanly() -> None:
@@ -258,6 +287,40 @@ def test_consume_weather_markets_filters_tradeable_candidates() -> None:
         assert payload["markets"][0]["market_id"] == "denver-high-65"
         assert payload["markets"][0]["decision"]["status"] == "trade"
         assert payload["markets"][0]["model"]["probability_yes"] == 0.57
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
+
+
+def test_run_weather_paper_batch_fetches_scores_and_runs_paper_cycles_for_selected_candidates() -> None:
+    process = subprocess.Popen(
+        [sys.executable, "-m", "prediction_core.app", "serve", "--host", "127.0.0.1", "--port", "8097"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=_env(),
+    )
+    try:
+        ready_line = process.stdout.readline()
+        assert "prediction_core server listening on http://127.0.0.1:8097" in ready_line
+
+        payload = run_weather_paper_batch(
+            base_url="http://127.0.0.1:8097",
+            source="fixture",
+            limit=3,
+            min_status="trade",
+            run_id_prefix="batch-test",
+            bankroll_usd=1000,
+        )
+
+        assert payload["summary"]["fetched"] == 3
+        assert payload["summary"]["selected"] == 1
+        assert payload["summary"]["paper_cycles"] == 1
+        assert payload["paper_cycles"][0]["market_id"] == "denver-high-65"
+        assert payload["paper_cycles"][0]["run_id"] == "batch-test-denver-high-65"
+        assert payload["paper_cycles"][0]["simulation"]["status"] == "skipped"
+        assert payload["paper_cycles"][0]["score_bundle"]["decision"]["status"] == "skip"
+        assert payload["paper_cycles"][0]["decision"]["status"] == "trade"
         assert payload["markets"][0]["model"]["method"] == "calibrated_threshold_v1"
         assert payload["markets"][0]["edge"]["market_implied_yes_probability"] == 0.37
         assert payload["markets"][0]["edge"]["probability_edge"] == 0.2
@@ -326,6 +389,63 @@ def test_consume_weather_markets_filters_extreme_or_illiquid_live_candidates(mon
     assert payload["markets"][0]["market_id"] == "keep-1"
     assert payload["markets"][0]["model"]["probability_yes"] == 0.56
     assert payload["markets"][0]["edge"]["probability_edge"] == 0.14
+
+
+def test_consume_weather_markets_can_explain_filtered_live_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeClient:
+        def __init__(self, base_url: str) -> None:
+            self.base_url = base_url
+
+        def health(self) -> dict[str, object]:
+            return {"status": "ok", "service": "prediction_core_python"}
+
+        def fetch_markets(self, *, source: str = "fixture", limit: int = 100) -> list[dict[str, object]]:
+            assert source == "live"
+            return [
+                {"id": "drop-status", "question": "Drop status", "yes_price": 0.42},
+                {"id": "drop-price", "question": "Drop extreme price", "yes_price": 0.001},
+                {"id": "drop-spread", "question": "Drop spread", "yes_price": 0.44},
+            ]
+
+        def score_market(self, *, market_id: str, source: str | None = None, **payload: object) -> dict[str, object]:
+            bundles = {
+                "drop-status": {
+                    "decision": {"status": "skip"},
+                    "score": {"total_score": 54.0, "raw_edge": 0.03, "grade": "C"},
+                    "execution": {"fillable_size_usd": 180.0, "slippage_risk": "low", "spread": 0.02},
+                },
+                "drop-price": {
+                    "decision": {"status": "trade"},
+                    "score": {"total_score": 90.0, "raw_edge": 0.60, "grade": "A"},
+                    "execution": {"fillable_size_usd": 180.0, "slippage_risk": "low", "spread": 0.02},
+                },
+                "drop-spread": {
+                    "decision": {"status": "trade_small"},
+                    "score": {"total_score": 78.0, "raw_edge": 0.12, "grade": "B"},
+                    "execution": {"fillable_size_usd": 180.0, "slippage_risk": "low", "spread": 0.08},
+                },
+            }
+            return bundles[market_id]
+
+    monkeypatch.setattr("prediction_core.orchestrator.PredictionCoreClient", FakeClient)
+
+    payload = consume_weather_markets(
+        base_url="http://127.0.0.1:9999",
+        source="live",
+        limit=3,
+        min_status="watchlist",
+        explain_filtered=True,
+    )
+
+    assert payload["summary"]["selected"] == 0
+    assert payload["summary"]["filtered_out"] == 3
+    assert len(payload["filtered_markets"]) == 3
+    assert payload["filtered_markets"][0]["market_id"] == "drop-status"
+    assert payload["filtered_markets"][0]["filter_reason"] == "decision_below_min_status"
+    assert payload["filtered_markets"][1]["filter_reason"] == "extreme_yes_price"
+    assert payload["filtered_markets"][2]["filter_reason"] == "wide_spread"
+    assert payload["filtered_markets"][2]["score"]["total_score"] == 78.0
+    assert payload["filtered_markets"][2]["execution"]["spread"] == 0.08
 
 
 

@@ -73,3 +73,22 @@ def test_normalize_gamma_market_tolerates_missing_clob_book_with_404() -> None:
     assert normalized["best_ask_size"] is None
     assert normalized["bid_depth_usd"] == 0.0
     assert normalized["ask_depth_usd"] == 0.0
+
+
+def test_normalize_gamma_market_tolerates_clob_timeout_and_falls_back_to_gamma_quotes() -> None:
+    from weather_pm import polymarket_live
+
+    original_fetch_clob_book = polymarket_live._fetch_clob_book
+    polymarket_live._fetch_clob_book = lambda token_id: (_ for _ in ()).throw(TimeoutError("CLOB timed out"))
+    try:
+        normalized = _normalize_gamma_market(_sample_gamma_market())
+    finally:
+        polymarket_live._fetch_clob_book = original_fetch_clob_book
+
+    assert normalized["clob_token_id"] == "token-yes"
+    assert normalized["best_bid"] == 0.43
+    assert normalized["best_ask"] == 0.45
+    assert normalized["bids"] == []
+    assert normalized["asks"] == []
+    assert normalized["bid_depth_usd"] == 0.0
+    assert normalized["ask_depth_usd"] == 0.0
