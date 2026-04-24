@@ -69,3 +69,29 @@ def estimate_execution_costs(
         withdrawal_fee_cost=withdrawal_fee_cost,
         edge_gross=round(float(edge_gross), 6),
     )
+
+
+def build_execution_cost_breakdown(
+    *,
+    book: OrderBookSnapshot,
+    requested_quantity: float,
+    side: BookSide,
+    fair_probability: float,
+    trading_fees: TradingFeeSchedule | None,
+    liquidity_role: str = "taker",
+    transfer_fees: TransferFeeSchedule | None = None,
+) -> ExecutionCostBreakdown:
+    fill = estimate_fill_from_book(book=book, side=side, requested_quantity=requested_quantity)
+    edge_gross = 0.0
+    if fill.filled_quantity > 0 and fill.average_price is not None:
+        edge_gross = (float(fair_probability) - fill.average_price) * fill.filled_quantity
+    return estimate_execution_costs(
+        book=book,
+        side=side,
+        requested_quantity=requested_quantity,
+        trading_fee_schedule=trading_fees,
+        transfer_fee_schedule=transfer_fees,
+        is_maker=(liquidity_role or "taker").lower() == "maker",
+        edge_gross=edge_gross,
+        fill_estimate=fill,
+    )

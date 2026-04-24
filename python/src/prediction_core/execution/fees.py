@@ -68,3 +68,12 @@ def estimate_transfer_costs(*, amount: float, schedule: TransferFeeSchedule) -> 
         deposit_fee=deposit_fee,
         withdrawal_fee=withdrawal_fee,
     )
+
+
+def compute_trading_fee(*, notional: float, schedule: TradingFeeSchedule, liquidity_role: str = "taker") -> TradingFeeEstimate:
+    role = (liquidity_role or "taker").lower()
+    return estimate_trading_fee(notional=notional, schedule=schedule, is_maker=role == "maker")
+
+
+def compute_transfer_costs(*, schedule: TransferFeeSchedule, amount: float) -> TransferCostEstimate:
+    return estimate_transfer_costs(amount=amount, schedule=schedule)

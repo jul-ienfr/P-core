@@ -12,7 +12,11 @@ EXPECTED_PUBLIC_SYMBOLS = {
     "TradingFeeSchedule",
     "TransferCostEstimate",
     "TransferFeeSchedule",
+    "build_execution_cost_breakdown",
+    "compute_trading_fee",
+    "compute_transfer_costs",
     "estimate_execution_costs",
+    "estimate_fill",
     "estimate_fill_from_book",
     "estimate_order_cost",
     "estimate_trading_fee",
@@ -26,9 +30,13 @@ def test_execution_package_exports_expected_public_symbols() -> None:
 
 
 def test_execution_package_exposes_callable_entrypoints() -> None:
+    assert callable(execution.estimate_fill)
     assert callable(execution.estimate_fill_from_book)
+    assert callable(execution.compute_trading_fee)
     assert callable(execution.estimate_trading_fee)
+    assert callable(execution.compute_transfer_costs)
     assert callable(execution.estimate_transfer_costs)
+    assert callable(execution.build_execution_cost_breakdown)
     assert callable(execution.estimate_execution_costs)
     assert callable(execution.quote_execution_cost)
     assert callable(execution.estimate_order_cost)

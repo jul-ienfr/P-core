@@ -5,6 +5,8 @@ from prediction_core.execution.fees import (
     TradingFeeSchedule,
     TransferCostEstimate,
     TransferFeeSchedule,
+    compute_trading_fee,
+    compute_transfer_costs,
     estimate_trading_fee,
     estimate_transfer_costs,
 )
@@ -63,3 +65,25 @@ def test_fee_estimate_serializers_return_plain_dicts() -> None:
         "withdrawal_fee": 0.2,
         "total_fee": 0.3,
     }
+
+
+def test_compute_trading_fee_accepts_liquidity_role_and_defaults_unknown_to_taker() -> None:
+    schedule = TradingFeeSchedule(maker_bps=10.0, taker_bps=20.0, min_fee=0.0)
+
+    maker = compute_trading_fee(notional=500.0, schedule=schedule, liquidity_role="maker")
+    unknown = compute_trading_fee(notional=500.0, schedule=schedule, liquidity_role="weird")
+
+    assert maker.fee == 0.5
+    assert maker.is_maker is True
+    assert unknown.fee == 1.0
+    assert unknown.is_maker is False
+
+
+def test_compute_transfer_costs_alias_matches_estimator() -> None:
+    schedule = TransferFeeSchedule(deposit_fixed=1.0, withdrawal_fixed=2.0)
+
+    result = compute_transfer_costs(schedule=schedule, amount=100.0)
+
+    assert result.deposit_fee == 1.0
+    assert result.withdrawal_fee == 2.0
+    assert result.total_fee == 3.0
