@@ -1,0 +1,48 @@
+from __future__ import annotations
+
+import prediction_core.execution as execution
+
+
+EXPECTED_PUBLIC_SYMBOLS = {
+    "BookLevel",
+    "ExecutionCostBreakdown",
+    "FillEstimate",
+    "OrderBookSnapshot",
+    "TradingFeeEstimate",
+    "TradingFeeSchedule",
+    "TransferCostEstimate",
+    "TransferFeeSchedule",
+    "estimate_execution_costs",
+    "estimate_fill_from_book",
+    "estimate_order_cost",
+    "estimate_trading_fee",
+    "estimate_transfer_costs",
+    "quote_execution_cost",
+}
+
+
+def test_execution_package_exports_expected_public_symbols() -> None:
+    assert set(execution.__all__) == EXPECTED_PUBLIC_SYMBOLS
+
+
+def test_execution_package_exposes_callable_entrypoints() -> None:
+    assert callable(execution.estimate_fill_from_book)
+    assert callable(execution.estimate_trading_fee)
+    assert callable(execution.estimate_transfer_costs)
+    assert callable(execution.estimate_execution_costs)
+    assert callable(execution.quote_execution_cost)
+    assert callable(execution.estimate_order_cost)
+
+
+def test_execution_package_exposes_model_types() -> None:
+    for symbol in [
+        "BookLevel",
+        "ExecutionCostBreakdown",
+        "FillEstimate",
+        "OrderBookSnapshot",
+        "TradingFeeEstimate",
+        "TradingFeeSchedule",
+        "TransferCostEstimate",
+        "TransferFeeSchedule",
+    ]:
+        assert isinstance(getattr(execution, symbol), type)

@@ -89,3 +89,67 @@ def test_client_paper_cycle_returns_simulation_bundle() -> None:
         server.shutdown()
         server.server_close()
         thread.join(timeout=2)
+
+
+def test_client_score_market_live_question_exposes_execution_costs_quote() -> None:
+    server, thread, port = _start_server()
+    client = PredictionCoreClient(f"http://127.0.0.1:{port}")
+    try:
+        payload = client.score_market(
+            question="Will the highest temperature in Denver be 64F or higher?",
+            yes_price=0.43,
+            source="live",
+            best_bid=0.42,
+            best_ask=0.45,
+            transaction_fee_bps=20.0,
+            deposit_fee_usd=1.0,
+            withdrawal_fee_usd=2.0,
+            bids=[{"price": 0.42, "size": 200.0}],
+            asks=[{"price": 0.45, "size": 100.0}, {"price": 0.46, "size": 150.0}],
+            target_order_size_usd=40.0,
+        )
+        assert payload["execution"]["fillable_size_usd"] > 0
+        assert payload["execution_costs"]["quoted_best_bid"] == 0.42
+        assert payload["execution_costs"]["quoted_best_ask"] == 0.45
+        assert payload["execution_costs"]["estimated_filled_quantity"] > 0
+        assert payload["execution_costs"]["total_all_in_cost"] >= payload["execution_costs"]["total_execution_cost"]
+        assert payload["execution_costs"]["effective_unit_price"] is not None
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_client_paper_cycle_live_question_embeds_execution_quote_metadata() -> None:
+    server, thread, port = _start_server()
+    client = PredictionCoreClient(f"http://127.0.0.1:{port}")
+    try:
+        payload = client.paper_cycle(
+            run_id="run-client-live-1",
+            market_id="market-denver-live-64f",
+            question="Will the highest temperature in Denver be 64F or higher?",
+            yes_price=0.43,
+            source="live",
+            requested_quantity=20.0,
+            best_bid=0.42,
+            best_ask=0.45,
+            transaction_fee_bps=20.0,
+            deposit_fee_usd=1.0,
+            withdrawal_fee_usd=2.0,
+            bids=[{"price": 0.42, "size": 200.0}],
+            asks=[{"price": 0.45, "size": 100.0}, {"price": 0.46, "size": 150.0}],
+        )
+        execution = payload["simulation"]["metadata"]["execution"]
+        assert execution["quoted_best_bid"] == 0.42
+        assert execution["quoted_best_ask"] == 0.45
+        assert execution["estimated_filled_quantity"] > 0
+        assert execution["total_all_in_cost"] >= execution["total_execution_cost"]
+        assert payload["simulation"]["fee_paid"] == round(
+            execution["trading_fee_cost"] + execution["deposit_fee_cost"] + execution["withdrawal_fee_cost"],
+            6,
+        )
+        assert payload["simulation"]["status"] in {"filled", "partial"}
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)

@@ -142,7 +142,7 @@ def test_paper_cycle_endpoint_returns_scoring_bundle_when_question_and_yes_price
         assert status == 200
         assert payload["simulation"]["status"] == "filled"
         assert payload["score_bundle"]["market"]["city"] == "Denver"
-        assert payload["score_bundle"]["score"]["grade"] == "B"
+        assert payload["score_bundle"]["score"]["grade"] == "C"
         assert payload["score_bundle"]["decision"]["status"] == "trade_small"
         assert payload["postmortem"]["recommendation"] == "reprice"
     finally:
@@ -355,10 +355,13 @@ def test_paper_cycle_endpoint_applies_cost_inputs_to_score_bundle_and_auto_fee_p
         assert status == 200
         assert payload["score_bundle"]["execution"]["deposit_fee_usd"] == 1.5
         assert payload["score_bundle"]["execution"]["withdrawal_fee_usd"] == 2.0
-        assert payload["score_bundle"]["execution"]["order_book_depth_usd"] == 84.0
-        assert payload["score_bundle"]["execution"]["all_in_cost_bps"] == 577.5
-        assert payload["simulation"]["fee_paid"] == 3.547
-        assert payload["simulation"]["metadata"]["execution_costs"]["all_in_cost_bps"] == 577.5
+        assert payload["score_bundle"]["execution"]["order_book_depth_usd"] == 50.0
+        assert payload["score_bundle"]["execution"]["all_in_cost_bps"] == 840.0
+        assert payload["simulation"]["fee_paid"] == 3.5468
+        assert payload["simulation"]["metadata"]["execution"]["trading_fee_cost"] == 0.0468
+        assert payload["simulation"]["metadata"]["execution"]["deposit_fee_cost"] == 1.5
+        assert payload["simulation"]["metadata"]["execution"]["withdrawal_fee_cost"] == 2.0
+        assert payload["simulation"]["metadata"]["execution_costs"]["all_in_cost_bps"] == 840.0
     finally:
         server.shutdown()
         server.server_close()

@@ -7,6 +7,13 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, model_validator
 
+from prediction_core.execution import (
+    OrderBookSnapshot,
+    TradingFeeSchedule,
+    TransferFeeSchedule,
+    quote_execution_cost,
+)
+
 
 class PaperTradeStatus(str, Enum):
     filled = "filled"
@@ -76,6 +83,97 @@ class PaperTradePostmortem(BaseModel):
     recommendation: str = "hold"
     notes: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+def _derive_execution_slippage_bps(*, execution: Any, side: str) -> float:
+    if execution.estimated_filled_quantity <= 0:
+        return 0.0
+    top_price = execution.quoted_best_ask if side == "buy" else execution.quoted_best_bid
+    if top_price is None or top_price <= 0:
+        return 0.0
+    reference_notional = top_price * execution.estimated_filled_quantity
+    if reference_notional <= 0:
+        return 0.0
+    return round(execution.book_slippage_cost / reference_notional * 10000.0, 2)
+
+
+def simulate_paper_trade_from_execution(
+    *,
+    run_id: str,
+    market_id: str,
+    book: OrderBookSnapshot,
+    side: str,
+    size: float,
+    is_maker: bool,
+    trading_fees: TradingFeeSchedule | None,
+    transfer_fees: TransferFeeSchedule | None,
+    edge_gross: float = 0.0,
+    position_side: PaperPositionSide = PaperPositionSide.yes,
+    reference_price: float | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> "PaperTradeSimulation":
+    execution = quote_execution_cost(
+        book=book,
+        side=side,
+        size=size,
+        is_maker=is_maker,
+        trading_fees=trading_fees,
+        transfer_fees=transfer_fees,
+        edge_gross=edge_gross,
+    )
+    execution_payload = execution.to_dict()
+    fee_paid = round(
+        execution.trading_fee_cost + execution.deposit_fee_cost + execution.withdrawal_fee_cost,
+        6,
+    )
+    slippage_bps = _derive_execution_slippage_bps(execution=execution, side=side)
+    combined_metadata = dict(metadata or {})
+    combined_metadata["execution"] = execution_payload
+
+    fills: list[PaperTradeFill] = []
+    status = PaperTradeStatus.skipped
+    if execution.estimated_filled_quantity > 0:
+        status = (
+            PaperTradeStatus.filled
+            if execution.estimated_filled_quantity >= execution.requested_quantity
+            else PaperTradeStatus.partial
+        )
+        fills = [
+            PaperTradeFill(
+                trade_id=f"paper_{uuid4().hex[:12]}",
+                run_id=run_id,
+                market_id=market_id,
+                position_side=position_side,
+                execution_side=PaperExecutionSide(side),
+                requested_quantity=execution.requested_quantity,
+                filled_quantity=execution.estimated_filled_quantity,
+                fill_price=execution.estimated_avg_fill_price or 0.0,
+                gross_notional=round((execution.estimated_avg_fill_price or 0.0) * execution.estimated_filled_quantity, 6),
+                fee_paid=fee_paid,
+                slippage_bps=slippage_bps,
+            )
+        ]
+    else:
+        combined_metadata.setdefault("reason", "no_fill")
+
+    return PaperTradeSimulation(
+        run_id=run_id,
+        market_id=market_id,
+        position_side=position_side,
+        execution_side=PaperExecutionSide(side),
+        requested_quantity=execution.requested_quantity,
+        filled_quantity=execution.estimated_filled_quantity,
+        average_fill_price=execution.estimated_avg_fill_price,
+        reference_price=reference_price if reference_price is not None else execution.quoted_mid_price,
+        gross_notional=round((execution.estimated_avg_fill_price or 0.0) * execution.estimated_filled_quantity, 6),
+        fee_paid=fee_paid,
+        cash_flow=round((execution.estimated_avg_fill_price or 0.0) * execution.estimated_filled_quantity + fee_paid, 6),
+        slippage_bps=slippage_bps,
+        fill_count=len(fills),
+        status=status,
+        fills=fills,
+        metadata=combined_metadata,
+    )
 
 
 class PaperTradeSimulation(BaseModel):

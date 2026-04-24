@@ -4,10 +4,16 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
+from prediction_core.execution import (
+    BookLevel,
+    OrderBookSnapshot,
+    TradingFeeSchedule,
+    TransferFeeSchedule,
+    quote_execution_cost,
+)
 from prediction_core.paper import (
-    PaperTradeFill,
-    PaperTradeSimulation,
-    PaperTradeStatus,
+    PaperPositionSide,
+    simulate_paper_trade_from_execution,
     derive_filled_execution,
     derive_requested_quantity,
 )
@@ -128,7 +134,7 @@ def score_market_request(payload: dict[str, Any]) -> dict[str, Any]:
     except (TypeError, ValueError) as exc:
         raise ValueError("yes_price must be numeric") from exc
 
-    return score_market_from_question(
+    result = score_market_from_question(
         question.strip(),
         yes_price_value,
         resolution_source=_optional_string(payload.get("resolution_source")),
@@ -136,6 +142,10 @@ def score_market_request(payload: dict[str, Any]) -> dict[str, Any]:
         rules=_optional_string(payload.get("rules")),
         market_data=_market_data_from_payload(payload),
     )
+    execution_costs = _execution_quote_from_payload(payload)
+    if execution_costs is not None:
+        result["execution_costs"] = execution_costs
+    return result
 
 
 def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
@@ -160,6 +170,9 @@ def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
             rules=_optional_string(payload.get("rules")),
             market_data=_market_data_from_payload(payload),
         )
+        execution_quote = _execution_quote_from_payload(payload)
+        if execution_quote is not None:
+            score_bundle["execution_costs"] = execution_quote
 
     requested_quantity = derive_requested_quantity(
         requested_quantity=_optional_number(payload.get("requested_quantity")),
@@ -177,29 +190,96 @@ def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
     )
 
     reference_price = _optional_unit_price(payload.get("reference_price"), field="reference_price")
-
-    position_side = _string_with_default(payload, "position_side", default="yes")
-    execution_side = _string_with_default(payload, "execution_side", default="buy")
-
-    execution_costs = _execution_costs_from_score_bundle(score_bundle)
-    explicit_fee_paid = _optional_number(payload.get("fee_paid"))
-    if explicit_fee_paid is None:
-        fee_paid = _derive_fee_paid_from_execution_costs(
-            gross_notional=round(filled_quantity * fill_price, 6),
-            filled_quantity=filled_quantity,
-            execution_costs=execution_costs,
-        )
-    else:
-        fee_paid = explicit_fee_paid
-    if fee_paid < 0:
-        raise ValueError("fee_paid must be >= 0")
-
     if reference_price is None and score_bundle is not None:
         score_info = score_bundle.get("score")
         if isinstance(score_info, dict):
             edge_theoretical = score_info.get("edge_theoretical")
             if isinstance(edge_theoretical, (int, float)):
                 reference_price = round(float(edge_theoretical), 6)
+
+    position_side = _string_with_default(payload, "position_side", default="yes")
+    execution_side = _string_with_default(payload, "execution_side", default="buy")
+
+    execution_costs = _execution_costs_from_score_bundle(score_bundle)
+    explicit_fee_paid = _optional_number(payload.get("fee_paid"))
+    manual_fill_requested = payload.get("filled_quantity") is not None or payload.get("fill_price") is not None
+    bid_levels = _book_levels(payload.get("bids"))
+    ask_levels = _book_levels(payload.get("asks"))
+    has_book_liquidity = bool(bid_levels or ask_levels)
+    metadata = _paper_cycle_metadata(
+        question=question,
+        score_bundle=score_bundle,
+        auto_derived=not manual_fill_requested,
+        execution_costs=execution_costs,
+    )
+
+    if has_book_liquidity and explicit_fee_paid is None and not manual_fill_requested:
+        simulation = simulate_paper_trade_from_execution(
+            run_id=run_id,
+            market_id=market_id,
+            book=OrderBookSnapshot(bids=bid_levels, asks=ask_levels),
+            side=execution_side,
+            size=requested_quantity,
+            is_maker=False,
+            trading_fees=TradingFeeSchedule(
+                maker_bps=0.0,
+                taker_bps=_number_with_default(payload, "transaction_fee_bps", default=_number_with_default(payload, "taker_fee_bps", default=0.0)),
+                min_fee=0.0,
+            ),
+            transfer_fees=TransferFeeSchedule(
+                deposit_fixed=_number_with_default(payload, "deposit_fee_usd", default=0.0),
+                withdrawal_fixed=_number_with_default(payload, "withdrawal_fee_usd", default=0.0),
+            ),
+            edge_gross=0.0,
+            position_side=PaperPositionSide(position_side),
+            reference_price=reference_price,
+            metadata=metadata,
+        )
+    else:
+        if explicit_fee_paid is None:
+            fee_paid = _derive_fee_paid_from_execution_costs(
+                gross_notional=round(filled_quantity * fill_price, 6),
+                filled_quantity=filled_quantity,
+                execution_costs=execution_costs,
+            )
+        else:
+            fee_paid = explicit_fee_paid
+        if fee_paid < 0:
+            raise ValueError("fee_paid must be >= 0")
+        simulation = _manual_paper_trade_simulation(
+            run_id=run_id,
+            market_id=market_id,
+            requested_quantity=requested_quantity,
+            filled_quantity=filled_quantity,
+            fill_price=fill_price,
+            fee_paid=fee_paid,
+            reference_price=reference_price,
+            position_side=position_side,
+            execution_side=execution_side,
+            metadata=metadata,
+        )
+    postmortem = simulation.postmortem()
+    return {
+        "simulation": simulation.model_dump(mode="json"),
+        "postmortem": postmortem.model_dump(mode="json"),
+        "score_bundle": score_bundle,
+    }
+
+
+def _manual_paper_trade_simulation(
+    *,
+    run_id: str,
+    market_id: str,
+    requested_quantity: float,
+    filled_quantity: float,
+    fill_price: float,
+    fee_paid: float,
+    reference_price: float | None,
+    position_side: str,
+    execution_side: str,
+    metadata: dict[str, Any],
+):
+    from prediction_core.paper.simulation import PaperTradeFill, PaperTradeSimulation, PaperTradeStatus
 
     if filled_quantity == 0:
         status = PaperTradeStatus.skipped
@@ -226,7 +306,7 @@ def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
             )
         )
 
-    simulation = PaperTradeSimulation(
+    return PaperTradeSimulation(
         trade_id=f"paper_http_{run_id}",
         run_id=run_id,
         market_id=market_id,
@@ -241,19 +321,8 @@ def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
         stake=gross_notional,
         status=status,
         fills=fills,
-        metadata=_paper_cycle_metadata(
-            question=question,
-            score_bundle=score_bundle,
-            auto_derived=(payload.get("filled_quantity") is None and payload.get("fill_price") is None),
-            execution_costs=execution_costs,
-        ),
+        metadata=metadata,
     )
-    postmortem = simulation.postmortem()
-    return {
-        "simulation": simulation.model_dump(mode="json"),
-        "postmortem": postmortem.model_dump(mode="json"),
-        "score_bundle": score_bundle,
-    }
 
 
 def _paper_cycle_metadata(
@@ -272,20 +341,35 @@ def _paper_cycle_metadata(
             metadata["decision_status"] = decision_info["status"]
     if execution_costs:
         metadata["execution_costs"] = execution_costs
+        metadata["execution"] = execution_costs
     return metadata
 
 
 def _execution_costs_from_score_bundle(score_bundle: dict[str, Any] | None) -> dict[str, float]:
     if not isinstance(score_bundle, dict):
         return {}
-    execution_info = score_bundle.get("execution")
-    if not isinstance(execution_info, dict):
-        return {}
+
     result: dict[str, float] = {}
-    for key in ("transaction_fee_bps", "deposit_fee_usd", "withdrawal_fee_usd", "order_book_depth_usd", "expected_slippage_bps", "all_in_cost_bps", "all_in_cost_usd"):
-        value = execution_info.get(key)
-        if isinstance(value, (int, float)):
-            result[key] = float(value)
+    execution_info = score_bundle.get("execution")
+    if isinstance(execution_info, dict):
+        for key in (
+            "transaction_fee_bps",
+            "deposit_fee_usd",
+            "withdrawal_fee_usd",
+            "order_book_depth_usd",
+            "expected_slippage_bps",
+            "all_in_cost_bps",
+            "all_in_cost_usd",
+        ):
+            value = execution_info.get(key)
+            if isinstance(value, (int, float)):
+                result[key] = float(value)
+
+    execution_costs = score_bundle.get("execution_costs")
+    if isinstance(execution_costs, dict):
+        for key, value in execution_costs.items():
+            if isinstance(value, (int, float)):
+                result[key] = float(value)
     return result
 
 
@@ -310,6 +394,60 @@ def _market_data_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return market_data
 
 
+def _execution_quote_from_payload(payload: dict[str, Any]) -> dict[str, float] | None:
+    best_bid = _optional_number(payload.get("best_bid"))
+    best_ask = _optional_number(payload.get("best_ask"))
+    bids = payload.get("bids")
+    asks = payload.get("asks")
+    if best_bid is None and best_ask is None and not isinstance(bids, list) and not isinstance(asks, list):
+        return None
+
+    book = OrderBookSnapshot(
+        bids=_book_levels(bids),
+        asks=_book_levels(asks),
+    )
+    target_order_size = _optional_number(payload.get("target_order_size_usd"))
+    if target_order_size is None or target_order_size <= 0:
+        target_order_size = _required_positive_number(payload, "yes_price")
+    trading_fees = TradingFeeSchedule(
+        maker_bps=0.0,
+        taker_bps=_number_with_default(payload, "transaction_fee_bps", default=_number_with_default(payload, "taker_fee_bps", default=0.0)),
+        min_fee=0.0,
+    )
+    transfer_fees = TransferFeeSchedule(
+        deposit_fixed=_number_with_default(payload, "deposit_fee_usd", default=0.0),
+        withdrawal_fixed=_number_with_default(payload, "withdrawal_fee_usd", default=0.0),
+    )
+    execution_costs = quote_execution_cost(
+        book=book,
+        side=_string_with_default(payload, "execution_side", default="buy"),
+        size=target_order_size,
+        is_maker=False,
+        trading_fees=trading_fees,
+        transfer_fees=transfer_fees,
+        edge_gross=0.0,
+    )
+    return execution_costs.to_dict()
+
+
+
+def _book_levels(levels: Any) -> list[BookLevel]:
+    if not isinstance(levels, list):
+        return []
+    result: list[BookLevel] = []
+    for level in levels:
+        if not isinstance(level, dict):
+            continue
+        price = level.get("price")
+        size = level.get("size", level.get("quantity"))
+        if not isinstance(price, (int, float)) or not isinstance(size, (int, float)):
+            continue
+        if float(price) <= 0 or float(size) <= 0:
+            continue
+        result.append(BookLevel(price=float(price), quantity=float(size)))
+    return result
+
+
 def _derive_fee_paid_from_execution_costs(*, gross_notional: float, filled_quantity: float, execution_costs: dict[str, float]) -> float:
     if gross_notional <= 0 or filled_quantity <= 0:
         return 0.0
@@ -318,7 +456,7 @@ def _derive_fee_paid_from_execution_costs(*, gross_notional: float, filled_quant
     withdrawal_fee_usd = execution_costs.get("withdrawal_fee_usd", 0.0)
     variable_fee = gross_notional * (transaction_fee_bps / 10000.0)
     total_fee = variable_fee + deposit_fee_usd + withdrawal_fee_usd
-    return float(int(total_fee * 1000.0)) / 1000.0
+    return round(total_fee, 3)
 
 
 def _optional_string(value: Any) -> str | None:
