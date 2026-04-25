@@ -89,7 +89,18 @@ def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
         "latency_priority": _optional_number(row.get("source_latency_priority")),
         "blocker_detail": _blocker_detail(row),
         "execution_diagnostic": _execution_diagnostic(row),
+        **(_resolution_status_payload(row) if row.get("resolution_status") else {}),
     }
+
+
+def _resolution_status_payload(row: dict[str, Any]) -> dict[str, Any]:
+    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    payload = dict(status)
+    if row.get("resolution_latency") is not None:
+        payload["latency"] = row.get("resolution_latency")
+    if row.get("resolution_status_date") is not None:
+        payload["date"] = row.get("resolution_status_date")
+    return {"resolution_status": payload}
 
 
 def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:

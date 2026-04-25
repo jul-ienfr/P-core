@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from weather_pm.cli import build_strategy_shortlist_report_from_args, enrich_shortlist_with_resolution_status
 from weather_pm.operator_summary import build_profitable_accounts_operator_summary
 from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 
@@ -634,6 +635,181 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
     }
     assert report["watchlist"][2]["execution_diagnostic"]["liquidity_state"] == "executable_extreme_price"
     assert report["artifacts"] == {"source_shortlist_json": "/tmp/shortlist.json"}
+
+
+def test_strategy_shortlist_report_embeds_resolution_status_before_operator_snapshot(monkeypatch, tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    reverse_path.write_text(json.dumps({"accounts": []}))
+
+    def fake_paper_cycle_opportunity_report_request(payload):
+        assert payload["source"] == "live"
+        return {
+            "opportunities": [
+                {
+                    "market_id": "dallas-70",
+                    "question": "Will the highest temperature in Dallas be 70F or higher on April 27?",
+                    "decision_status": "trade_small",
+                    "source_direct": True,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        "prediction_core.server.paper_cycle_opportunity_report_request",
+        fake_paper_cycle_opportunity_report_request,
+    )
+    monkeypatch.setattr("weather_pm.cli.resolution_status_for_market_id", _fake_resolution_status_for_dallas)
+
+    args = type(
+        "Args",
+        (),
+        {
+            "reverse_engineering_json": reverse_path,
+            "run_id": "live-resolution-status",
+            "source": "live",
+            "limit": 1,
+            "requested_quantity": 1.0,
+            "include_skipped": False,
+            "tradeable_only": False,
+            "min_edge": None,
+            "max_cost_bps": None,
+            "min_depth_usd": None,
+            "event_surface_json": None,
+            "resolution_date": "2026-04-25",
+            "operator_limit": 1,
+        },
+    )()
+
+    report = build_strategy_shortlist_report_from_args(args)
+
+    row = report["shortlist"][0]
+    assert row["resolution_status_date"] == "2026-04-27"
+    assert row["source_history_url"] == "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27"
+    assert report["operator"]["watchlist"][0]["resolution_status"]["latency"]["official"]["expected_lag_seconds"] == 3600
+
+
+def _fake_resolution_status_for_dallas(market_id: str, *, source: str, date: str):
+    assert market_id == "dallas-70"
+    assert source == "live"
+    return {
+        "date": date,
+        "latest_direct": {"available": True, "value": 71.2, "timestamp": "2026-04-27T12:00:00Z", "latency_tier": "direct_latest"},
+        "official_daily_extract": {"available": False, "value": None, "timestamp": None, "latency_tier": "direct_history"},
+        "provisional_outcome": "yes",
+        "confirmed_outcome": "pending",
+        "action_operator": "monitor_until_official_daily_extract",
+        "source_route": {
+            "provider": "wunderground",
+            "station_code": "KDAL",
+            "direct": True,
+            "latency_tier": "direct_latest",
+            "latency_priority": 1,
+            "polling_focus": "station_history_page",
+            "latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+            "history_url": f"https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/{date}",
+        },
+        "latency": {
+            "latest": {"polling_focus": "station_history_page", "direct": True},
+            "official": {"polling_focus": "station_history_page", "expected_lag_seconds": 3600},
+        },
+    }
+
+
+def test_enrich_shortlist_with_resolution_status_preserves_full_source_route(monkeypatch) -> None:
+    calls: list[tuple[str, str, str]] = []
+
+    def fake_resolution_status_for_market_id(market_id: str, *, source: str, date: str):
+        calls.append((market_id, source, date))
+        return {
+            "date": date,
+            "latest_direct": {"available": True, "value": 71.2, "timestamp": "2026-04-27T12:00:00Z", "latency_tier": "direct_latest"},
+            "official_daily_extract": {"available": False, "value": None, "timestamp": None, "latency_tier": "direct_history"},
+            "provisional_outcome": "yes",
+            "confirmed_outcome": "pending",
+            "action_operator": "monitor_until_official_daily_extract",
+            "source_route": {
+                "provider": "wunderground",
+                "station_code": "KDAL",
+                "direct": True,
+                "latency_tier": "direct_latest",
+                "latency_priority": 1,
+                "polling_focus": "station_history_page",
+                "latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+                "history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+            },
+            "latency": {
+                "latest": {"polling_focus": "station_history_page", "direct": True},
+                "official": {"polling_focus": "station_history_page", "expected_lag_seconds": 3600},
+            },
+        }
+
+    monkeypatch.setattr("weather_pm.cli.resolution_status_for_market_id", fake_resolution_status_for_market_id)
+    report = {
+        "shortlist": [
+            {
+                "market_id": "dallas-70",
+                "date": "April 27",
+                "source_latency_priority": 99,
+                "source_polling_focus": "stale_focus",
+            }
+        ]
+    }
+
+    enriched = enrich_shortlist_with_resolution_status(report, source="live", date="2026-04-25")
+
+    row = enriched["shortlist"][0]
+    assert calls == [("dallas-70", "live", "2026-04-27")]
+    assert row["resolution_status_date"] == "2026-04-27"
+    assert row["source_direct"] is True
+    assert row["source_provider"] == "wunderground"
+    assert row["source_station_code"] == "KDAL"
+    assert row["source_latency_tier"] == "direct_latest"
+    assert row["source_latency_priority"] == 1
+    assert row["source_polling_focus"] == "station_history_page"
+    assert row["source_latest_url"] == "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    assert row["source_history_url"] == "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27"
+    assert row["resolution_status"]["confirmed_outcome"] == "pending"
+    assert row["resolution_latency"]["latest"]["polling_focus"] == "station_history_page"
+
+
+def test_operator_report_preserves_resolution_status_latency_diagnostics() -> None:
+    payload = {
+        "summary": {"shortlisted": 1, "action_counts": {"paper_trade_watch_direct_station": 1}, "execution_blocker_counts": {}},
+        "shortlist": [
+            {
+                "rank": 1,
+                "market_id": "dallas-70",
+                "city": "Dallas",
+                "date": "April 27",
+                "decision_status": "trade_small",
+                "source_direct": True,
+                "source_provider": "wunderground",
+                "source_station_code": "KDAL",
+                "source_polling_focus": "station_history_page",
+                "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+                "action": "paper_trade_watch_direct_station",
+                "next_actions": ["poll_direct_resolution_source"],
+                "resolution_status": {
+                    "latest_direct": {"available": True, "value": 71.2},
+                    "official_daily_extract": {"available": False},
+                    "provisional_outcome": "yes",
+                    "confirmed_outcome": "pending",
+                    "action_operator": "monitor_until_official_daily_extract",
+                },
+                "resolution_latency": {
+                    "latest": {"polling_focus": "station_history_page", "direct": True},
+                    "official": {"polling_focus": "station_history_page", "expected_lag_seconds": 3600},
+                },
+            }
+        ],
+    }
+
+    operator = build_operator_shortlist_report(payload, limit=1)
+
+    status = operator["watchlist"][0]["resolution_status"]
+    assert status["confirmed_outcome"] == "pending"
+    assert status["latency"]["latest"]["polling_focus"] == "station_history_page"
+    assert status["latency"]["official"]["expected_lag_seconds"] == 3600
 
 
 def test_profitable_accounts_operator_summary_bridges_accounts_to_live_watchlist(tmp_path: Path) -> None:

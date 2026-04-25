@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -119,6 +120,7 @@ def build_parser() -> argparse.ArgumentParser:
     strategy_shortlist_report.add_argument("--min-depth-usd", required=False, type=float, help="Minimum order book depth in USD")
     strategy_shortlist_report.add_argument("--event-surface-json", required=False, help="Optional prebuilt event surface JSON to reuse instead of deriving one from opportunities")
     strategy_shortlist_report.add_argument("--operator-limit", required=False, type=int, help="Embed a compact operator action snapshot limited to this many rows")
+    strategy_shortlist_report.add_argument("--resolution-date", required=False, help="Reference settlement date YYYY-MM-DD for enriching shortlist rows with resolution status")
     strategy_shortlist_report.add_argument("--output-json", required=False, help="Optional path to write the combined shortlist report")
 
     paper_cycle = subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
@@ -387,6 +389,82 @@ def compact_strategy_shortlist_report(payload: dict[str, Any]) -> dict[str, Any]
     return compact
 
 
+def enrich_shortlist_with_resolution_status(report: dict[str, Any], *, source: str, date: str) -> dict[str, Any]:
+    """Attach per-market resolution status while preserving each market's settlement date."""
+    for row in [item for item in report.get("shortlist", []) if isinstance(item, dict)]:
+        market_id = str(row.get("market_id") or "")
+        if not market_id:
+            continue
+        status_date = _resolution_status_date_for_row(row, fallback_date=date)
+        status = resolution_status_for_market_id(market_id, source=source, date=status_date)
+        row["resolution_status_date"] = status_date
+        row["resolution_status"] = _compact_resolution_status(status)
+        row["resolution_latency"] = status.get("latency")
+        route = status.get("source_route") if isinstance(status.get("source_route"), dict) else {}
+        _copy_source_route_to_row(row, route)
+    return report
+
+
+def _compact_resolution_status(status: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: status.get(key)
+        for key in (
+            "latest_direct",
+            "official_daily_extract",
+            "provisional_outcome",
+            "confirmed_outcome",
+            "action_operator",
+        )
+        if key in status
+    }
+
+
+def _copy_source_route_to_row(row: dict[str, Any], route: dict[str, Any]) -> None:
+    if not route:
+        return
+    mapping = {
+        "direct": "source_direct",
+        "provider": "source_provider",
+        "station_code": "source_station_code",
+        "latency_tier": "source_latency_tier",
+        "latency_priority": "source_latency_priority",
+        "polling_focus": "source_polling_focus",
+        "latest_url": "source_latest_url",
+        "history_url": "source_history_url",
+    }
+    for source_key, row_key in mapping.items():
+        if source_key in route:
+            row[row_key] = route[source_key]
+
+
+def _resolution_status_date_for_row(row: dict[str, Any], *, fallback_date: str) -> str:
+    row_date = str(row.get("date") or "").strip()
+    if not row_date:
+        return fallback_date
+    year = _year_from_iso_date(fallback_date)
+    if year is None:
+        return fallback_date
+    parsed = _parse_month_day(row_date, year=year)
+    return parsed or fallback_date
+
+
+def _year_from_iso_date(raw_value: str) -> int | None:
+    try:
+        return datetime.strptime(raw_value, "%Y-%m-%d").year
+    except ValueError:
+        return None
+
+
+def _parse_month_day(raw_value: str, *, year: int) -> str | None:
+    for fmt in ("%B %d", "%b %d"):
+        try:
+            parsed = datetime.strptime(raw_value, fmt)
+            return f"{year:04d}-{parsed.month:02d}-{parsed.day:02d}"
+        except ValueError:
+            continue
+    return None
+
+
 def build_strategy_shortlist_report_from_args(args: argparse.Namespace) -> dict[str, Any]:
     from prediction_core.server import paper_cycle_opportunity_report_request
 
@@ -425,6 +503,9 @@ def build_strategy_shortlist_report_from_args(args: argparse.Namespace) -> dict[
         "opportunity_report": opportunity_payload,
         "event_surface": surface_payload,
     }
+    if getattr(args, "resolution_date", None):
+        artifacts["generated_reports"].append("resolution_status")
+        enrich_shortlist_with_resolution_status(report, source=args.source, date=args.resolution_date)
     if getattr(args, "operator_limit", None) is not None:
         artifacts["generated_reports"].append("operator")
         report["operator"] = build_operator_shortlist_report(report, limit=args.operator_limit)
