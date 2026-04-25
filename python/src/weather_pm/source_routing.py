@@ -23,6 +23,7 @@ _COMMERCIAL_API_PROVIDERS = {
     "netatmo",
     "windy",
     "aerisweather",
+    "synoptic_mesowest",
 }
 _DIRECT_OFFICIAL_URL_PROVIDERS = {
     "uk_met_office": "uk_met_office_injected_payload_or_explicit_endpoint",

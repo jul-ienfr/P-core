@@ -81,6 +81,41 @@ def test_station_latest_client_parses_world_meteorological_observation_payloads(
 
 
 
+def test_station_history_client_parses_synoptic_mesowest_timeseries_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Synoptic/MesoWest station observations for station KDEN",
+        description="This market resolves to the highest temperature observed at Denver station KDEN.",
+        rules="Source: https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN official JSON payload.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "STATION": [
+                    {
+                        "STID": "KDEN",
+                        "OBSERVATIONS": {
+                            "date_time": ["2026-04-25T19:00:00Z", "2026-04-25T20:00:00Z"],
+                            "air_temp_value_1": [66.0, 68.0],
+                        },
+                    }
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN"]
+    assert bundle.source_provider == "synoptic_mesowest"
+    assert bundle.station_code == "KDEN"
+    assert bundle.latency_tier == "direct_api"
+    assert bundle.polling_focus == "synoptic_mesowest_injected_payload"
+    assert [point.timestamp for point in bundle.points] == ["2026-04-25T19:00:00Z", "2026-04-25T20:00:00Z"]
+    assert [point.value for point in bundle.points] == [66.0, 68.0]
+    assert bundle.summary["max"] == 68.0
+
+
 def test_station_history_client_fetches_noaa_station_observation_range() -> None:
     structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
     resolution = parse_resolution_metadata(
@@ -1094,6 +1129,42 @@ def test_station_history_client_parses_iot_station_measurement_payloads() -> Non
         assert bundle.latency_tier == "direct_api"
         assert bundle.polling_focus == f"{provider}_injected_payload"
         assert bundle.points[0].value == 80.5
+
+
+def test_station_history_client_parses_synoptic_mesowest_station_timeseries_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Synoptic/MesoWest station observations for station KDEN",
+        description="This market resolves to the highest temperature observed at Denver station KDEN.",
+        rules="Source: https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN official JSON payload.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "STATION": [
+                    {
+                        "STID": "KDEN",
+                        "OBSERVATIONS": {
+                            "date_time": ["2026-04-25T12:00:00Z", "2026-04-25T18:00:00Z"],
+                            "air_temp_set_1": [63.5, 66.2],
+                        },
+                        "UNITS": {"air_temp": "F"},
+                    }
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN"]
+    assert bundle.source_provider == "synoptic_mesowest"
+    assert bundle.station_code == "KDEN"
+    assert bundle.latency_tier == "direct_api"
+    assert bundle.polling_focus == "synoptic_mesowest_injected_payload"
+    assert [point.timestamp for point in bundle.points] == ["2026-04-25T12:00:00Z", "2026-04-25T18:00:00Z"]
+    assert [point.value for point in bundle.points] == [63.5, 66.2]
+    assert bundle.summary["max"] == 66.2
 
 
 def test_station_history_client_parses_additional_european_official_payload_shapes() -> None:

@@ -533,3 +533,19 @@ def test_parse_resolution_metadata_detects_asia_pacific_official_sources() -> No
         assert result.wording_clear is True
         assert result.rules_clear is True
         assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_synoptic_mesowest_station_api_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Synoptic/MesoWest station observations for station KDEN",
+        description="This market resolves to the highest temperature observed at Denver station KDEN.",
+        rules="Source: https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN official JSON payload.",
+    )
+
+    assert result.provider == "synoptic_mesowest"
+    assert result.source_url == "https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN"
+    assert result.station_code == "KDEN"
+    assert result.station_type == "airport"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False

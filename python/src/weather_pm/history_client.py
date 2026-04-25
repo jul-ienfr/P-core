@@ -513,7 +513,8 @@ class StationHistoryClient:
                 continue
             value, from_unit = extracted
             converted = _convert_temperature(value, from_unit=from_unit, to_unit=structure.unit)
-            output_timestamp = row_date if not latest and row_date and resolution.provider != "iem_asos" else timestamp
+            keep_observation_timestamp = resolution.provider in {"iem_asos", "synoptic_mesowest"}
+            output_timestamp = row_date if not latest and row_date and not keep_observation_timestamp else timestamp
             points.append(StationHistoryPoint(timestamp=output_timestamp, value=round(converted, 2), unit=structure.unit))
         if resolution.provider == "uk_met_office" and points and structure.measurement_kind in {"high", "low"}:
             selected = max(points, key=lambda point: point.value) if structure.measurement_kind == "high" else min(points, key=lambda point: point.value)
@@ -606,6 +607,7 @@ def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str |
         "netatmo": "netatmo_injected_payload",
         "windy": "windy_injected_payload",
         "aerisweather": "aerisweather_injected_payload",
+        "synoptic_mesowest": "synoptic_mesowest_injected_payload",
         "meteo_france": "meteo_france_daily_payload",
         "uk_met_office": "uk_met_office_daily_payload" if latency_tier != "direct_latest" else "uk_met_office_injected_payload_or_explicit_endpoint",
         "dwd": "dwd_open_data_daily_observations",
@@ -804,6 +806,7 @@ _DIRECT_API_PROVIDERS = {
     "netatmo",
     "windy",
     "aerisweather",
+    "synoptic_mesowest",
     "meteo_france",
 }
 _DIRECT_SOURCE_PROVIDERS = {
@@ -899,6 +902,9 @@ def _extract_rows(payload: Any) -> list[Any]:
     current_weather = payload.get("current_weather")
     if isinstance(current_weather, dict):
         return [current_weather]
+    synoptic_rows = _rows_from_synoptic_mesowest(payload)
+    if synoptic_rows:
+        return synoptic_rows
     properties = payload.get("properties")
     if isinstance(properties, dict) and isinstance(properties.get("timeseries"), list):
         return properties["timeseries"]
@@ -960,8 +966,42 @@ def _extract_rows(payload: Any) -> list[Any]:
 
 
 
+def _rows_from_synoptic_mesowest(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    stations = payload.get("STATION") or payload.get("station") or payload.get("stations")
+    if not isinstance(stations, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for station in stations:
+        if not isinstance(station, dict):
+            continue
+        observations = station.get("OBSERVATIONS") or station.get("observations")
+        if not isinstance(observations, dict):
+            continue
+        timestamps = observations.get("date_time") or observations.get("dateTime") or observations.get("timestamp") or observations.get("time")
+        if not isinstance(timestamps, list):
+            continue
+        station_code = station.get("STID") or station.get("stid") or station.get("station")
+        units = station.get("UNITS") if isinstance(station.get("UNITS"), dict) else station.get("units")
+        temp_unit = str((units or {}).get("air_temp") or (units or {}).get("air_temperature") or "F").lower() if isinstance(units, dict) else "f"
+        temperature_series = None
+        for key, value in observations.items():
+            if isinstance(value, list) and str(key).lower().startswith(("air_temp", "temperature", "temp")):
+                temperature_series = value
+                break
+        if not isinstance(temperature_series, list):
+            continue
+        for index, timestamp in enumerate(timestamps):
+            if index >= len(temperature_series):
+                continue
+            value = temperature_series[index]
+            if value in {None, "", "-"}:
+                continue
+            rows.append({"timestamp": timestamp, "air_temp": value, "unit": temp_unit, "station": station_code})
+    return rows
+
+
 def _row_matches_station(row: dict[str, Any], station_code: str) -> bool:
-    keys = ("station", "station_id", "stationID", "STATION", "id")
+    keys = ("station", "station_id", "stationID", "STATION", "STID", "stid", "id")
     present = [str(row.get(key)) for key in keys if row.get(key) is not None]
     return not present or station_code in present
 

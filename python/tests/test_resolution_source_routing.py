@@ -584,21 +584,40 @@ def test_build_resolution_source_route_preserves_additional_api_and_iot_source_u
 
     for provider, source_url in cases:
         resolution = parse_resolution_metadata(
-            resolution_source=source_url,
+            resolution_source=provider,
             description="This market resolves to the highest temperature observed for Miami.",
-            rules="Use the linked weather API JSON payload.",
+            rules=f"Source: {source_url} JSON payload.",
         )
-
         route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
 
         assert route.provider == provider
-        assert route.source_url == source_url
-        assert route.latest_url == source_url
-        assert route.history_url == source_url
         assert route.direct is True
         assert route.supported is True
-        assert route.latency_tier == "direct_api"
+        assert route.latest_url == source_url
+        assert route.history_url == source_url
         assert route.polling_focus == f"{provider}_injected_payload"
+        assert route.reason.startswith(f"{provider} source URL found")
+
+
+def test_build_resolution_source_route_preserves_synoptic_mesowest_station_api_source_url() -> None:
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Synoptic/MesoWest station observations for station KDEN",
+        description="This market resolves to the highest temperature observed at Denver station KDEN.",
+        rules="Source: https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN official JSON payload.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "synoptic_mesowest"
+    assert route.station_code == "KDEN"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.latest_url == "https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN"
+    assert route.history_url == "https://api.synopticdata.com/v2/stations/timeseries?stid=KDEN"
+    assert route.latency_tier == "direct_api"
+    assert route.latency_priority == "direct_source_low_latency"
+    assert route.polling_focus == "synoptic_mesowest_injected_payload"
 
 
 def test_build_resolution_source_route_preserves_additional_european_official_source_urls() -> None:

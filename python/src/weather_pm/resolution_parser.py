@@ -51,6 +51,7 @@ WEATHER_SOURCE_PROVIDER_CATALOG = {
     "netatmo": {"category": "commercial_api", "route_support": "direct_api"},
     "windy": {"category": "commercial_api", "route_support": "direct_api"},
     "aerisweather": {"category": "commercial_api", "route_support": "direct_api"},
+    "synoptic_mesowest": {"category": "commercial_api", "route_support": "direct_api"},
     "meteoswiss": {"category": "official_europe", "route_support": "direct_history"},
     "smhi": {"category": "official_europe", "route_support": "direct_history"},
     "knmi": {"category": "official_europe", "route_support": "direct_history"},
@@ -254,6 +255,8 @@ def _detect_provider(lowered: str, *, source_url: str | None) -> str:
         return "windy"
     if any(token in lowered for token in ["aerisweather", "aeris weather", "api.aerisapi.com"]):
         return "aerisweather"
+    if any(token in lowered for token in ["synopticdata.com", "synoptic/mesowest", "synoptic mesowest", "mesowest api", "mesowest station"]):
+        return "synoptic_mesowest"
     if any(token in lowered for token in ["wunderground", "weather underground"]):
         return "wunderground"
     if any(token in lowered for token in ["accuweather"]):
