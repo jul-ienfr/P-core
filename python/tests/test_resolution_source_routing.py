@@ -88,6 +88,27 @@ def test_build_resolution_source_route_targets_aviation_weather_station_api() ->
     assert route.polling_focus == "aviation_weather_metar_observations"
 
 
+def test_build_resolution_source_route_targets_iem_asos_station_archive_without_geocoding() -> None:
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="IEM ASOS archive for station KDEN",
+        description="Official ASOS/METAR observed high temperature at Denver International Airport station KDEN.",
+        rules="Source: https://mesonet.agron.iastate.edu/request/download.phtml station KDEN.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "iem_asos"
+    assert route.station_code == "KDEN"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.latency_tier == "direct_history"
+    assert route.latency_priority == "direct_source_official_open_data"
+    assert route.latest_url is None
+    assert route.history_url == "https://mesonet.agron.iastate.edu/request/download.phtml?station=KDEN&data=tmpf&year1=2026&month1=4&day1=25&year2=2026&month2=4&day2=25&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=empty&trace=null&direct=no&report_type=1&report_type=2"
+    assert route.polling_focus == "iem_asos_minute_archive"
+
+
 def test_build_resolution_source_route_targets_meteostat_station_history_fallback() -> None:
     structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
     resolution = parse_resolution_metadata(

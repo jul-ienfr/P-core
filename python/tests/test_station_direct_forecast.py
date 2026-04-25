@@ -156,6 +156,37 @@ def test_direct_station_client_routes_aviation_weather_metar_station_without_cit
     assert bundle.source_latency_tier == "direct"
 
 
+def test_direct_station_client_routes_official_source_url_payload_without_city_geocoding() -> None:
+    structure = parse_market_question("Will the current temperature in Sydney be 21C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://bom.gov.au/fwo/IDN60901/IDN60901.94767.json",
+        description="This market resolves to the current temperature at Bureau of Meteorology station 94767 in Sydney.",
+        rules="Source: Bureau of Meteorology official observations JSON payload.",
+    )
+    client = _FakeDirectStationClient(
+        [
+            {
+                "observations": {
+                    "data": [
+                        {"station": "94767", "local_date_time_full": "20260425120000", "air_temp": 21.4},
+                    ]
+                }
+            },
+        ]
+    )
+
+    bundle = client.build_forecast_bundle(structure, resolution)
+
+    assert client.requested_urls == [resolution.source_url]
+    assert bundle.consensus_value == 21.4
+    assert bundle.source_count == 1
+    assert bundle.historical_station_available is True
+    assert bundle.source_provider == "bom"
+    assert bundle.source_station_code == "94767"
+    assert bundle.source_url == resolution.source_url
+    assert bundle.source_latency_tier == "direct_history"
+
+
 def test_build_forecast_bundle_preserves_direct_resolution_target_when_fetch_falls_back() -> None:
     class _FailingDirectClient(DirectStationForecastClient):
         def build_forecast_bundle(self, structure, resolution):

@@ -118,6 +118,9 @@ def build_resolution_source_route(
     if resolution.provider == "aviation_weather" and resolution.station_code:
         return _route(structure, resolution, latest_url=_aviation_weather_url(resolution.station_code), history_url=_aviation_weather_url(resolution.station_code, start_date=start_date, end_date=end_date), direct=True, supported=True, latency_tier="direct_latest", latency_priority="direct_source_low_latency", polling_focus="aviation_weather_metar_observations", reason="AviationWeather METAR station code found in resolution rules; poll station observations directly.")
 
+    if resolution.provider == "iem_asos" and resolution.station_code:
+        return _route(structure, resolution, latest_url=None, history_url=_iem_asos_history_url(resolution.station_code, start_date=start_date, end_date=end_date), direct=True, supported=True, latency_tier="direct_history", latency_priority="direct_source_official_open_data", polling_focus="iem_asos_minute_archive", reason="IEM ASOS station archive found in resolution rules; poll minute-level station observations directly without city geocoding.")
+
     if resolution.provider == "hong_kong_observatory":
         latest_url = _hko_latest_url(resolution.source_url)
         history_url = _hko_daily_extract_url(structure, start_date=start_date, end_date=end_date)
@@ -214,6 +217,37 @@ def _aviation_weather_url(station_code: str, *, start_date: str | None = None, e
     if start_date and end_date:
         query.update({"start": f"{start_date}T00:00:00Z", "end": f"{end_date}T23:59:59Z"})
     return f"https://aviationweather.gov/api/data/metar?{urlencode(query)}"
+
+
+def _iem_asos_history_url(station_code: str, *, start_date: str | None = None, end_date: str | None = None) -> str | None:
+    if not start_date or not end_date:
+        return None
+    start = _parse_iso_date(start_date)
+    end = _parse_iso_date(end_date)
+    if start is None or end is None:
+        return None
+    query = urlencode(
+        {
+            "station": station_code,
+            "data": "tmpf",
+            "year1": start.year,
+            "month1": start.month,
+            "day1": start.day,
+            "year2": end.year,
+            "month2": end.month,
+            "day2": end.day,
+            "tz": "Etc/UTC",
+            "format": "onlycomma",
+            "latlon": "no",
+            "elev": "no",
+            "missing": "empty",
+            "trace": "null",
+            "direct": "no",
+            "report_type": ["1", "2"],
+        },
+        doseq=True,
+    )
+    return f"https://mesonet.agron.iastate.edu/request/download.phtml?{query}"
 
 
 def _hko_latest_url(source_url: str | None) -> str:

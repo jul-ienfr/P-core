@@ -103,6 +103,21 @@ class DirectStationForecastClient:
                 raise ValueError(f"{resolution.provider} direct API payload missing parseable temperature")
             return self._bundle(structure, resolution, value=points[-1].value, url=resolution.source_url, latency_tier="direct_api")
 
+        if resolution.provider in _DIRECT_OFFICIAL_FORECAST_PROVIDERS and resolution.source_url:
+            from weather_pm.history_client import StationHistoryClient, _latency_tier_for_provider
+
+            payload = self._fetch_json(resolution.source_url)
+            points = StationHistoryClient()._parse_generic_weather_points(structure, resolution, payload, latest=True)
+            if not points:
+                raise ValueError(f"{resolution.provider} official source payload missing parseable temperature")
+            return self._bundle(
+                structure,
+                resolution,
+                value=points[-1].value,
+                url=resolution.source_url,
+                latency_tier=_latency_tier_for_provider(resolution.provider),
+            )
+
         raise ValueError(f"no direct station route for provider={resolution.provider!r}")
 
     def _bundle(self, structure: MarketStructure, resolution: ResolutionMetadata, *, value: float, url: str, latency_tier: str = "direct") -> ForecastBundle:
@@ -207,12 +222,46 @@ _DIRECT_API_FORECAST_PROVIDERS = {
     "aerisweather",
     "meteo_france",
 }
+_DIRECT_OFFICIAL_FORECAST_PROVIDERS = {
+    "environment_canada",
+    "uk_met_office",
+    "dwd",
+    "bom",
+    "jma",
+    "pagasa",
+    "imd",
+    "meteoswiss",
+    "smhi",
+    "knmi",
+    "aemet",
+    "met_eireann",
+    "dmi",
+    "meteochile",
+    "inmet",
+    "senamhi_peru",
+    "ideam_colombia",
+    "smn_argentina",
+    "smn_mexico",
+    "south_african_weather_service",
+    "nimet_nigeria",
+    "egyptian_meteorological_authority",
+    "israel_meteorological_service",
+    "turkish_meteorological_service",
+    "saudi_ncm",
+    "kma_korea",
+    "taiwan_cwa",
+    "mss_singapore",
+    "metmalaysia",
+    "bmkg_indonesia",
+    "tmd_thailand",
+    "metservice_nz",
+}
 
 
 def _direct_resolution_target(resolution: ResolutionMetadata | None) -> ResolutionMetadata | None:
     if resolution is None:
         return None
-    if resolution.provider in ({"noaa", "wunderground", "hong_kong_observatory", "aviation_weather"} | _DIRECT_API_FORECAST_PROVIDERS) and (resolution.station_code or resolution.source_url or resolution.provider == "hong_kong_observatory"):
+    if resolution.provider in ({"noaa", "wunderground", "hong_kong_observatory", "aviation_weather"} | _DIRECT_API_FORECAST_PROVIDERS | _DIRECT_OFFICIAL_FORECAST_PROVIDERS) and (resolution.station_code or resolution.source_url or resolution.provider == "hong_kong_observatory"):
         return resolution
     return None
 

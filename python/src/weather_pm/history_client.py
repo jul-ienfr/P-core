@@ -134,6 +134,14 @@ class StationHistoryClient:
             points = self._parse_aviation_weather_points(structure, payload)
             return self._bundle(resolution, url=url, points=points, latency_tier="direct_history")
 
+        if resolution.provider == "iem_asos" and resolution.station_code:
+            url = self._build_iem_asos_history_url(resolution.station_code, start_date=start_date, end_date=end_date)
+            payload = self._fetch_json(url)
+            points = self._parse_generic_weather_points(structure, resolution, payload, start_date=start_date, end_date=end_date)
+            bundle = self._bundle(resolution, url=url, points=points, latency_tier="direct_history")
+            bundle.polling_focus = "iem_asos_minute_archive"
+            return bundle
+
         if resolution.provider == "hong_kong_observatory":
             url = self._build_hko_daily_extract_url(structure, start_date=start_date, end_date=end_date)
             payload = self._fetch_json(url)
@@ -215,6 +223,32 @@ class StationHistoryClient:
         if start_date and end_date:
             query.update({"start": f"{start_date}T00:00:00Z", "end": f"{end_date}T23:59:59Z"})
         return f"https://aviationweather.gov/api/data/metar?{urlencode(query)}"
+
+    def _build_iem_asos_history_url(self, station_code: str, *, start_date: str, end_date: str) -> str:
+        start = _parse_iso_date(start_date)
+        end = _parse_iso_date(end_date)
+        query = urlencode(
+            {
+                "station": station_code,
+                "data": "tmpf",
+                "year1": start.year,
+                "month1": start.month,
+                "day1": start.day,
+                "year2": end.year,
+                "month2": end.month,
+                "day2": end.day,
+                "tz": "Etc/UTC",
+                "format": "onlycomma",
+                "latlon": "no",
+                "elev": "no",
+                "missing": "empty",
+                "trace": "null",
+                "direct": "no",
+                "report_type": ["1", "2"],
+            },
+            doseq=True,
+        )
+        return f"https://mesonet.agron.iastate.edu/request/download.phtml?{query}"
 
     def _build_hko_daily_extract_url(self, structure: MarketStructure, *, start_date: str, end_date: str) -> str:
         if start_date != end_date:
@@ -479,7 +513,8 @@ class StationHistoryClient:
                 continue
             value, from_unit = extracted
             converted = _convert_temperature(value, from_unit=from_unit, to_unit=structure.unit)
-            points.append(StationHistoryPoint(timestamp=row_date if not latest and row_date else timestamp, value=round(converted, 2), unit=structure.unit))
+            output_timestamp = row_date if not latest and row_date and resolution.provider != "iem_asos" else timestamp
+            points.append(StationHistoryPoint(timestamp=output_timestamp, value=round(converted, 2), unit=structure.unit))
         if resolution.provider == "uk_met_office" and points and structure.measurement_kind in {"high", "low"}:
             selected = max(points, key=lambda point: point.value) if structure.measurement_kind == "high" else min(points, key=lambda point: point.value)
             return [StationHistoryPoint(timestamp=selected.timestamp, value=selected.value, unit=selected.unit)]
@@ -771,6 +806,7 @@ _DIRECT_API_PROVIDERS = {
     "meteo_france",
 }
 _DIRECT_SOURCE_PROVIDERS = {
+    "iem_asos",
     "uk_met_office",
     "dwd",
     "bom",
@@ -932,7 +968,7 @@ def _extract_row_timestamp(row: dict[str, Any]) -> str:
     obs_time = row.get("ObsTime")
     if isinstance(obs_time, dict) and obs_time.get("DateTime") not in {None, ""}:
         return str(obs_time["DateTime"])
-    for key in ("timestamp", "time", "datetime", "date", "Date", "DateTime", "fecha", "Fecha", "DT_MEDICAO", "tarih", "tm", "local_date_time_full", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "obs_time", "observationTime", "observation_time", "MESS_DATUM", "reference_ts", "fint", "observed"):
+    for key in ("timestamp", "time", "datetime", "date", "Date", "DateTime", "fecha", "Fecha", "DT_MEDICAO", "tarih", "tm", "valid", "local_date_time_full", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "obs_time", "observationTime", "observation_time", "MESS_DATUM", "reference_ts", "fint", "observed"):
         value = row.get(key)
         if value not in {None, ""}:
             text = str(value)
@@ -958,6 +994,7 @@ def _row_has_explicit_timestamp(row: dict[str, Any]) -> bool:
         "DT_MEDICAO",
         "tarih",
         "tm",
+        "valid",
         "DateTime",
         "local_date_time_full",
         "startTime",
@@ -1031,9 +1068,9 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         if isinstance(nested, dict) and nested.get("Value") is not None:
             return float(nested["Value"]), str(nested.get("Unit") or structure.unit).lower()
     key_groups = {
-        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "maximum_temperature", "max_temperature", "MAX_TEMP", "tmax", "TXK", "TX", "tre200s0", "ta", "TA", "t", "temperaturaMaxima", "maksimumSicaklik", "TEM_MAX", "Valor", "TD", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "air_temp", "AirTemperature", "maxtempC", "maxtempF"),
-        "low": ("mintemp_f", "mintemp_c", "min_temp", "minimum_temperature", "min_temperature", "MIN_TEMP", "tmin", "TNK", "TN", "tre200s0", "ta", "TA", "t", "temperaturaMinima", "minimumSicaklik", "TEM_MIN", "Valor", "TD", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "air_temp", "AirTemperature", "mintempC", "mintempF"),
-        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "temperatura", "T", "TX", "TN", "TA", "t", "tre200s0", "ta", "Valor", "value", "temperature_2m", "air_temperature", "air_temp", "AirTemperature", "temperatureC", "temperatureF"),
+        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "maximum_temperature", "max_temperature", "MAX_TEMP", "tmax", "TXK", "TX", "tre200s0", "ta", "TA", "t", "tmpf", "tmpc", "temperaturaMaxima", "maksimumSicaklik", "TEM_MAX", "Valor", "TD", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "air_temp", "AirTemperature", "maxtempC", "maxtempF"),
+        "low": ("mintemp_f", "mintemp_c", "min_temp", "minimum_temperature", "min_temperature", "MIN_TEMP", "tmin", "TNK", "TN", "tre200s0", "ta", "TA", "t", "tmpf", "tmpc", "temperaturaMinima", "minimumSicaklik", "TEM_MIN", "Valor", "TD", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "air_temp", "AirTemperature", "mintempC", "mintempF"),
+        "current": ("temp_f", "temp_c", "tempf", "tempc", "tmpf", "tmpc", "temp", "current", "temperature", "temperatura", "T", "TX", "TN", "TA", "t", "tre200s0", "ta", "Valor", "value", "temperature_2m", "air_temperature", "air_temp", "AirTemperature", "temperatureC", "temperatureF"),
     }
     keys = key_groups.get(structure.measurement_kind, key_groups["current"]) + key_groups["current"]
     temperature_fields = {"temperature"}

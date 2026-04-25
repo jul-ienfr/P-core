@@ -34,6 +34,22 @@ def test_parse_resolution_metadata_detects_aviation_weather_metar_station_source
     assert result.manual_review_needed is False
 
 
+def test_parse_resolution_metadata_detects_iem_asos_station_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Iowa Environmental Mesonet ASOS archive for station KDEN",
+        description="Official ASOS/METAR observed high temperature at Denver International Airport station KDEN.",
+        rules="Source: https://mesonet.agron.iastate.edu/request/download.phtml ASOS one-minute station archive.",
+    )
+
+    assert result.provider == "iem_asos"
+    assert result.source_url == "https://mesonet.agron.iastate.edu/request/download.phtml"
+    assert result.station_code == "KDEN"
+    assert result.station_type == "airport"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
 def test_parse_resolution_metadata_keeps_noaa_provider_when_noaa_and_metar_are_both_mentioned() -> None:
     result = parse_resolution_metadata(
         resolution_source="Resolution source: NOAA daily climate report for station KMIA",

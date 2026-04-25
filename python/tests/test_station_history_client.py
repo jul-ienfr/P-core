@@ -267,6 +267,35 @@ def test_station_history_client_summarizes_aviation_weather_history_observations
     assert bundle.summary["latest"] == 80.6
 
 
+def test_station_history_client_fetches_iem_asos_minute_archive_for_station_day() -> None:
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="IEM ASOS archive for station KDEN",
+        description="Official ASOS/METAR observed high temperature at Denver International Airport station KDEN.",
+        rules="Source: https://mesonet.agron.iastate.edu/request/download.phtml station KDEN.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            "station,valid,tmpf\n"
+            "KDEN,2026-04-25 12:53,62.6\n"
+            "KDEN,2026-04-25 21:53,71.1\n"
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [
+        "https://mesonet.agron.iastate.edu/request/download.phtml?station=KDEN&data=tmpf&year1=2026&month1=4&day1=25&year2=2026&month2=4&day2=25&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=empty&trace=null&direct=no&report_type=1&report_type=2"
+    ]
+    assert bundle.source_provider == "iem_asos"
+    assert bundle.station_code == "KDEN"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.polling_focus == "iem_asos_minute_archive"
+    assert [point.timestamp for point in bundle.points] == ["2026-04-25 12:53", "2026-04-25 21:53"]
+    assert [point.value for point in bundle.points] == [62.6, 71.1]
+    assert bundle.summary["max"] == 71.1
+
+
 def test_station_history_client_fetches_hko_monthly_daily_maximum_extract_for_requested_day() -> None:
     structure = parse_market_question("Will the highest temperature in Hong Kong be 29°C or higher on April 25?")
     resolution = parse_resolution_metadata(

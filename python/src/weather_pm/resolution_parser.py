@@ -18,6 +18,7 @@ _STATION_NAME_PATTERNS = (
 WEATHER_SOURCE_PROVIDER_CATALOG = {
     "noaa": {"category": "official_us", "route_support": "direct_latest"},
     "aviation_weather": {"category": "official_aviation", "route_support": "direct_latest"},
+    "iem_asos": {"category": "official_aviation", "route_support": "direct_history"},
     "wunderground": {"category": "commercial_page", "route_support": "direct_latest"},
     "accuweather": {"category": "commercial_page", "route_support": "direct_or_injected"},
     "hong_kong_observatory": {"category": "official_asia_pacific", "route_support": "direct_latest"},
@@ -147,6 +148,8 @@ def parse_resolution_metadata(*, resolution_source: str | None, description: str
 
 
 def _detect_provider(lowered: str, *, source_url: str | None) -> str:
+    if any(token in lowered for token in ["iem asos", "iowa environmental mesonet", "mesonet.agron.iastate.edu", "asos archive"]):
+        return "iem_asos"
     if any(token in lowered for token in ["hong kong observatory", "weather.gov.hk"]):
         return "hong_kong_observatory"
     if any(token in lowered for token in ["weather.gc.ca", "climate.weather.gc.ca", "environment and climate change canada", "environment canada"]):
@@ -442,8 +445,10 @@ def _are_rules_clear(lowered: str, provider: str, station_code: str | None) -> b
         return any(token in lowered for token in clarity_tokens)
     if station_code is None:
         return False
-    if provider == "aviation_weather":
+    if provider in {"aviation_weather", "iem_asos"}:
         clarity_tokens = ["source", "station", "official", "aviationweather.gov", "metar", "aviation weather", "airport observations"]
+        if provider == "iem_asos":
+            clarity_tokens.extend(["mesonet", "asos", "iem"])
         return any(token in lowered for token in clarity_tokens)
     clarity_tokens = ["source", "station", "official", "weather.gov", "daily climate report"]
     return any(token in lowered for token in clarity_tokens)
