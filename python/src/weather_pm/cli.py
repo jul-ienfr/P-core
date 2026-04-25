@@ -13,6 +13,7 @@ from weather_pm.history_client import StationHistoryClient, build_station_histor
 from weather_pm.market_parser import parse_market_question
 from weather_pm.models import ForecastBundle
 from weather_pm.neighbor_context import build_neighbor_context
+from weather_pm.operator_summary import write_profitable_accounts_operator_summary
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import get_event_book_by_id, get_market_by_id, list_weather_markets, normalize_market_record
 from weather_pm.probability_model import build_model_output
@@ -83,6 +84,17 @@ def build_parser() -> argparse.ArgumentParser:
     operator_shortlist = subparsers.add_parser("operator-shortlist", help="Compress a saved strategy shortlist into an operator action report")
     operator_shortlist.add_argument("--shortlist-json", required=True, help="Full or compact strategy shortlist JSON")
     operator_shortlist.add_argument("--limit", required=False, type=int, default=10, help="Maximum watchlist rows to include")
+    operator_shortlist.add_argument("--output-json", required=False, help="Optional path to write the refreshed operator action report")
+
+    profitable_operator_summary = subparsers.add_parser(
+        "profitable-accounts-operator-summary",
+        help="Bridge classified profitable weather accounts with a live operator shortlist report",
+    )
+    profitable_operator_summary.add_argument("--classified-csv", required=True, help="Classified profitable weather accounts CSV")
+    profitable_operator_summary.add_argument("--reverse-engineering-json", required=True, help="Reverse-engineering JSON produced by import-weather-traders")
+    profitable_operator_summary.add_argument("--operator-report-json", required=True, help="Operator shortlist report JSON")
+    profitable_operator_summary.add_argument("--output-json", required=True, help="Output compact operator summary JSON")
+    profitable_operator_summary.add_argument("--priority-limit", required=False, type=int, default=10, help="Maximum priority accounts to include")
 
     event_surface = subparsers.add_parser("event-surface", help="Build city/date weather event surfaces and flag threshold/bin anomalies")
     event_surface.add_argument("--markets-json", required=True, help="JSON file containing either a markets list or an object with markets/opportunities")
@@ -216,7 +228,27 @@ def main() -> int:
         payload = json.loads(Path(args.shortlist_json).read_text())
         if not isinstance(payload, dict):
             raise ValueError("shortlist JSON must be an object")
-        print(json.dumps(build_operator_shortlist_report(payload, limit=args.limit)))
+        report = build_operator_shortlist_report(payload, limit=args.limit)
+        if args.output_json:
+            output_path = Path(args.output_json)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            report.setdefault("artifacts", {})["output_json"] = str(output_path)
+            output_path.write_text(json.dumps(report, indent=2, sort_keys=True))
+        print(json.dumps(report))
+        return 0
+
+    if args.command == "profitable-accounts-operator-summary":
+        print(
+            json.dumps(
+                write_profitable_accounts_operator_summary(
+                    classified_accounts_csv=args.classified_csv,
+                    reverse_engineering_json=args.reverse_engineering_json,
+                    operator_report_json=args.operator_report_json,
+                    output_json=args.output_json,
+                    priority_limit=args.priority_limit,
+                )
+            )
+        )
         return 0
 
     if args.command == "strategy-shortlist-report":

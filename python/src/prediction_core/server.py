@@ -461,6 +461,7 @@ def _compact_opportunity(market_result: dict[str, Any]) -> dict[str, Any]:
     }
     if source_route:
         _add_source_route_summary(opportunity, source_route)
+        opportunity["source_route"] = _compact_source_route(source_route)
     skip_reason = market_result.get("skip_reason")
     if isinstance(skip_reason, str) and skip_reason:
         opportunity["skip_reason"] = skip_reason
@@ -468,6 +469,35 @@ def _compact_opportunity(market_result: dict[str, Any]) -> dict[str, Any]:
     if isinstance(reasons, list) and reasons:
         opportunity["reasons"] = [str(reason) for reason in reasons]
     return opportunity
+
+
+def _compact_source_route(source_route: dict[str, Any]) -> dict[str, Any]:
+    keys = (
+        "provider",
+        "station_code",
+        "station_name",
+        "source_url",
+        "latest_url",
+        "history_url",
+        "direct",
+        "supported",
+        "latency_tier",
+        "latency_priority",
+        "polling_focus",
+        "manual_review_needed",
+        "reason",
+    )
+    return {
+        key: _default_source_route_value(key, source_route)
+        for key in keys
+        if key in source_route or key in {"history_url", "manual_review_needed"}
+    }
+
+
+def _default_source_route_value(key: str, source_route: dict[str, Any]) -> Any:
+    if key == "manual_review_needed":
+        return bool(source_route.get("manual_review_needed"))
+    return source_route.get(key)
 
 
 def _add_source_route_summary(opportunity: dict[str, Any], source_route: dict[str, Any]) -> None:

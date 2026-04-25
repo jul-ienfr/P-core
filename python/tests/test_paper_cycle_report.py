@@ -115,6 +115,17 @@ def test_paper_cycle_opportunity_report_ranks_tradeable_real_net_interest_and_st
         "source_latency_priority": "direct_source_low_latency",
         "source_polling_focus": "station_observations_latest",
         "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+        "source_route": {
+            "provider": "noaa",
+            "station_code": "KDEN",
+            "direct": True,
+            "latency_tier": "direct_latest",
+            "latency_priority": "direct_source_low_latency",
+            "polling_focus": "station_observations_latest",
+            "latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+            "history_url": None,
+            "manual_review_needed": False,
+        },
         "reasons": ["small trade"],
     }
     assert report["opportunities"][2]["skip_reason"] == "decision_not_tradeable"
@@ -137,6 +148,7 @@ def test_paper_cycle_opportunity_report_ranks_tradeable_real_net_interest_and_st
         "source_latency_priority",
         "source_polling_focus",
         "source_latest_url",
+        "source_route",
         "reasons",
     }
 
@@ -174,6 +186,7 @@ def test_paper_cycle_report_cli_outputs_compact_fixture_json() -> None:
         "source_latency_priority",
         "source_polling_focus",
         "source_latest_url",
+        "source_route",
         "reasons",
     }
 

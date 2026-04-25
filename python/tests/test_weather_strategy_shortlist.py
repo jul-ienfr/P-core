@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from weather_pm.operator_summary import build_profitable_accounts_operator_summary
 from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 
 
@@ -635,8 +636,141 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
     assert report["artifacts"] == {"source_shortlist_json": "/tmp/shortlist.json"}
 
 
+def test_profitable_accounts_operator_summary_bridges_accounts_to_live_watchlist(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    operator_path = tmp_path / "operator.json"
+    csv_path = tmp_path / "classified.csv"
+    csv_path.write_text("rank,userName\n1,DenverSharp\n")
+    reverse_path.write_text(
+        json.dumps(
+            {
+                "accounts": [
+                    {
+                        "rank": 1,
+                        "handle": "DenverSharp",
+                        "wallet": "0xdenver",
+                        "weather_pnl_usd": 10000.0,
+                        "weather_volume_usd": 200000.0,
+                        "pnl_over_volume_pct": 5.0,
+                        "classification": "weather specialist / weather-heavy",
+                        "active_weather_positions": 4,
+                        "recent_weather_activity": 20,
+                        "recent_nonweather_activity": 0,
+                        "recommended_use": "model_and_execution_template",
+                        "profile_url": "https://polymarket.com/profile/0xdenver",
+                        "sample_weather_titles": ["Will the highest temperature in Denver be 65F or higher?"],
+                    },
+                    {
+                        "rank": 2,
+                        "handle": "Generalist",
+                        "weather_pnl_usd": 5000.0,
+                        "classification": "profitable in weather but currently/recently generalist",
+                    },
+                ]
+            }
+        )
+    )
+    operator_path.write_text(
+        json.dumps(
+            {
+                "summary": {"shortlisted": 1, "top_actions": ["paper_trade_watch_direct_station"], "top_blockers": []},
+                "operator_focus": ["paper_trade_watch_direct_station: 1"],
+                "watchlist": [
+                    {
+                        "rank": 1,
+                        "market_id": "denver-65",
+                        "city": "Denver",
+                        "matched_traders": ["DenverSharp", "Generalist", "Unknown"],
+                        "action": "paper_trade_watch_direct_station",
+                        "blocker": "extreme_price",
+                    }
+                ],
+            }
+        )
+    )
+
+    summary = build_profitable_accounts_operator_summary(
+        classified_accounts_csv=csv_path,
+        reverse_engineering_json=reverse_path,
+        operator_report_json=operator_path,
+        priority_limit=5,
+    )
+
+    assert summary["classified_account_counts"] == {
+        "profitable in weather but currently/recently generalist": 1,
+        "weather specialist / weather-heavy": 1,
+    }
+    assert summary["priority_weather_accounts"][0]["handle"] == "DenverSharp"
+    assert summary["live_watchlist"][0]["matched_weather_heavy_traders"] == ["DenverSharp"]
+    assert summary["live_watchlist"][0]["matched_signal_only_traders"] == ["Generalist"]
+    assert summary["live_watchlist"][0]["matched_profitable_weather_count"] == 2
+    assert summary["live_watchlist"][0]["operator_verdict"] == {
+        "status": "paper_micro",
+        "confidence": "high_signal_cautious_execution",
+        "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
+        "recommended_size": "micro_paper_only",
+    }
+
+
+def test_cli_profitable_accounts_operator_summary_writes_json_and_prints_compact_payload(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    operator_path = tmp_path / "operator.json"
+    csv_path = tmp_path / "classified.csv"
+    out_path = tmp_path / "summary.json"
+    csv_path.write_text("rank,userName\n1,DenverSharp\n")
+    reverse_path.write_text(
+        json.dumps(
+            {
+                "accounts": [
+                    {
+                        "rank": 1,
+                        "handle": "DenverSharp",
+                        "weather_pnl_usd": 10000.0,
+                        "weather_volume_usd": 200000.0,
+                        "pnl_over_volume_pct": 5.0,
+                        "classification": "weather specialist / weather-heavy",
+                        "active_weather_positions": 4,
+                        "recent_weather_activity": 20,
+                        "sample_weather_titles": [],
+                    }
+                ]
+            }
+        )
+    )
+    operator_path.write_text(
+        json.dumps(
+            {
+                "summary": {"shortlisted": 1, "top_actions": ["paper_trade_watch_direct_station"], "top_blockers": ["extreme_price"]},
+                "watchlist": [{"rank": 1, "market_id": "denver-65", "matched_traders": ["DenverSharp"]}],
+            }
+        )
+    )
+
+    result = _run_cli(
+        "profitable-accounts-operator-summary",
+        "--classified-csv",
+        str(csv_path),
+        "--reverse-engineering-json",
+        str(reverse_path),
+        "--operator-report-json",
+        str(operator_path),
+        "--output-json",
+        str(out_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    full = json.loads(out_path.read_text())
+    assert compact["output_json"] == str(out_path)
+    assert compact["priority_account_count"] == 1
+    assert compact["live_matched_profitable_weather_count"] == 1
+    assert compact["live_top_blockers"] == ["extreme_price"]
+    assert full["live_watchlist"][0]["matched_weather_heavy_traders"] == ["DenverSharp"]
+
+
 def test_cli_operator_shortlist_reads_saved_shortlist_and_outputs_action_report(tmp_path: Path) -> None:
     shortlist_path = tmp_path / "shortlist.json"
+    out_path = tmp_path / "operator-refreshed.json"
     shortlist_path.write_text(
         json.dumps(
             {
@@ -645,7 +779,7 @@ def test_cli_operator_shortlist_reads_saved_shortlist_and_outputs_action_report(
                 "summary": {
                     "shortlisted": 1,
                     "action_counts": {"paper_trade_watch_direct_station": 1},
-                    "execution_blocker_counts": {},
+                    "execution_blocker_counts": {"extreme_price": 1},
                 },
                 "artifacts": {"output_json": str(shortlist_path)},
                 "shortlist": [
@@ -662,19 +796,24 @@ def test_cli_operator_shortlist_reads_saved_shortlist_and_outputs_action_report(
                         "source_station_code": "KDEN",
                         "matched_traders": ["DenverSharp"],
                         "surface_inconsistency_types": [],
+                        "execution_blocker": "extreme_price",
                         "action": "paper_trade_watch_direct_station",
-                        "next_actions": ["poll_direct_resolution_source", "paper_order_with_limit_and_fill_tracking"],
+                        "next_actions": ["poll_direct_resolution_source", "skip_until_next_daily_market"],
                     }
                 ],
             }
         )
     )
 
-    result = _run_cli("operator-shortlist", "--shortlist-json", str(shortlist_path), "--limit", "1")
+    result = _run_cli("operator-shortlist", "--shortlist-json", str(shortlist_path), "--limit", "1", "--output-json", str(out_path))
 
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
+    written = json.loads(out_path.read_text())
+    assert payload == written
     assert payload["run_id"] == "saved-run"
     assert payload["summary"]["tradeable_count"] == 1
     assert payload["watchlist"][0]["direct_source"] == "noaa:KDEN"
-    assert payload["artifacts"]["source_shortlist_json"] == str(shortlist_path)
+    assert payload["watchlist"][0]["next"] == ["poll_direct_resolution_source", "paper_micro_order_with_strict_limit_and_fill_tracking"]
+    assert payload["watchlist"][0]["blocker_detail"]["severity"] == "caution"
+    assert payload["artifacts"] == {"source_shortlist_json": str(shortlist_path), "output_json": str(out_path)}

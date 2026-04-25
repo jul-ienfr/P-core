@@ -1,0 +1,342 @@
+{
+  "classified_account_counts": {
+    "not enough public recent data to classify": 71,
+    "profitable in weather but currently/recently generalist": 81,
+    "weather specialist / weather-heavy": 301,
+    "weather-heavy mixed": 47
+  },
+  "generated_from": {
+    "classified_accounts_csv": "data/polymarket/weather_profitable_accounts_classified.csv",
+    "operator_report_json": "data/polymarket/weather_strategy_operator_report_live_latest.json",
+    "reverse_engineering_json": "docs/polymarket-weather-trader-reverse-engineering.json"
+  },
+  "live_operator_focus": [
+    "paper_trade_watch_direct_station: 2",
+    "extreme_price: 2"
+  ],
+  "live_operator_summary": {
+    "blocked_count": 2,
+    "direct_source_count": 2,
+    "shortlisted": 2,
+    "surface_anomaly_count": 0,
+    "top_actions": [
+      "paper_trade_watch_direct_station"
+    ],
+    "top_blockers": [
+      "extreme_price"
+    ],
+    "tradeable_count": 2
+  },
+  "live_watchlist": [
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "extreme_price",
+      "blocker_detail": {
+        "kind": "market_state",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "polling_focus": "hko_current_weather_and_daily_extract",
+        "severity": "caution",
+        "source_latest_url": "https://www.hko.gov.hk/en/wxinfo/currwx/current.htm"
+      },
+      "city": "Hong Kong",
+      "date": "April 25",
+      "decision_status": "trade_small",
+      "depth_usd": 0.0,
+      "direct_source": "hong_kong_observatory",
+      "edge": 0.15,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "executable_extreme_price",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2057060",
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "matched_weather_heavy_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "operator_verdict": {
+        "confidence": "high_signal_cautious_execution",
+        "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
+        "recommended_size": "micro_paper_only",
+        "status": "paper_micro"
+      },
+      "polling_focus": "hko_current_weather_and_daily_extract",
+      "rank": 1,
+      "source_latest_url": "https://www.hko.gov.hk/en/wxinfo/currwx/current.htm"
+    },
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "extreme_price",
+      "blocker_detail": {
+        "kind": "market_state",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "polling_focus": "hko_current_weather_and_daily_extract",
+        "severity": "caution",
+        "source_latest_url": "https://www.hko.gov.hk/en/wxinfo/currwx/current.htm"
+      },
+      "city": "Hong Kong",
+      "date": "April 25",
+      "decision_status": "trade_small",
+      "depth_usd": 0.0,
+      "direct_source": "hong_kong_observatory",
+      "edge": 0.15,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "executable_extreme_price",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2057070",
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "matched_weather_heavy_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "operator_verdict": {
+        "confidence": "high_signal_cautious_execution",
+        "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
+        "recommended_size": "micro_paper_only",
+        "status": "paper_micro"
+      },
+      "polling_focus": "hko_current_weather_and_daily_extract",
+      "rank": 2,
+      "source_latest_url": "https://www.hko.gov.hk/en/wxinfo/currwx/current.htm"
+    }
+  ],
+  "priority_weather_accounts": [
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+      "pnl_over_volume_pct": 1.127,
+      "profile_url": "https://polymarket.com/profile/0xec86a2d3f69015b1a9382e4dfa8695e1b48760e4",
+      "rank": 111,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Shanghai be 21\u00b0C on April 26?",
+        "Will the highest temperature in Shanghai be 20\u00b0C on April 26?",
+        "Will the highest temperature in Beijing be 23\u00b0C on April 26?",
+        "Will the highest temperature in Beijing be 22\u00b0C on April 26?"
+      ],
+      "weather_pnl_usd": 10474.8,
+      "weather_volume_usd": 929411.55
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Amano-Hina",
+      "pnl_over_volume_pct": 6.432,
+      "profile_url": "https://polymarket.com/profile/0x8aa29c27241b6909a7c4d6cb4f400267aa215a0b",
+      "rank": 132,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in New York City be between 86-87\u00b0F on April 15?",
+        "Will the highest temperature in Miami be between 78-79\u00b0F on April 1?",
+        "Will the highest temperature in New York City be between 76-77\u00b0F on April 13?",
+        "Will the highest temperature in San Francisco be between 64-65\u00b0F on April 20?"
+      ],
+      "weather_pnl_usd": 8831.67,
+      "weather_volume_usd": 137310.31
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "StayFreshCheeseBags",
+      "pnl_over_volume_pct": 0.212,
+      "profile_url": "https://polymarket.com/profile/0xc34f6b088bb9172625ee1ea2ee8da9ac4f037d2e",
+      "rank": 155,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Tokyo be 17\u00b0C on April 4?",
+        "Will the highest temperature in Lagos be 33\u00b0C on April 23?",
+        "Will the highest temperature in Houston be between 80-81\u00b0F on April 4?",
+        "Will the highest temperature in New York City be 55\u00b0F or below on April 22?"
+      ],
+      "weather_pnl_usd": 7272.38,
+      "weather_volume_usd": 3436855.96
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Railbird",
+      "pnl_over_volume_pct": 2.93,
+      "profile_url": "https://polymarket.com/profile/0x906f2454a777600aea6c506247566decef82371a",
+      "rank": 42,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 199,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Seoul be 12\u00b0C on April 11?",
+        "Will the highest temperature in London be 20\u00b0C on April 25?",
+        "Will the highest temperature in Wellington be 16\u00b0C on April 19?",
+        "Will the highest temperature in London be 19\u00b0C on April 25?"
+      ],
+      "weather_pnl_usd": 23358.41,
+      "weather_volume_usd": 797165.7
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "syacxxa",
+      "pnl_over_volume_pct": 4.1,
+      "profile_url": "https://polymarket.com/profile/0x2b2866a724e73bf45af306036f12f20170b4d021",
+      "rank": 56,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 199,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Buenos Aires be 30\u00b0C or below on January 30?",
+        "Will the highest temperature in London be 14\u00b0C on March 19?",
+        "Will the highest temperature in London be 25\u00b0C or higher on April 9?",
+        "Will the highest temperature in London be 11\u00b0C on April 20?"
+      ],
+      "weather_pnl_usd": 19511.69,
+      "weather_volume_usd": 475869.55
+    },
+    {
+      "active_weather_positions": 99,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "neophyt",
+      "pnl_over_volume_pct": 1.106,
+      "profile_url": "https://polymarket.com/profile/0x3da3958abf6ec9cbab635824447e5e0c24fc0fdc",
+      "rank": 127,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in New York City be 39\u00b0F or below on December 10?",
+        "Will the highest temperature in London be between 50-51\u00b0F on November 29?",
+        "Will the highest temperature in New York City be between 38-39\u00b0F on December 7?",
+        "Will the highest temperature in Atlanta be between 48-49\u00b0F on January 23?"
+      ],
+      "weather_pnl_usd": 9044.31,
+      "weather_volume_usd": 817458.45
+    },
+    {
+      "active_weather_positions": 99,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Walter-Weather",
+      "pnl_over_volume_pct": 2.47,
+      "profile_url": "https://polymarket.com/profile/0x85c06787486a90e05ba1df96c034ef95c8cce01d",
+      "rank": 144,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Denver be 80\u00b0F or higher on March 28?",
+        "Will the highest temperature in London be 8\u00b0C on March 26?",
+        "Will the highest temperature in London be 11\u00b0C on March 21?",
+        "Will the highest temperature in London be 13\u00b0C or higher on December 14?"
+      ],
+      "weather_pnl_usd": 7794.98,
+      "weather_volume_usd": 315614.76
+    },
+    {
+      "active_weather_positions": 98,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "0x4CE3f17Be91C3d0D6dbFed7Bd4D326957dec4291-1768045938794",
+      "pnl_over_volume_pct": 2.212,
+      "profile_url": "https://polymarket.com/profile/0x4ce3f17be91c3d0d6dbfed7bd4d326957dec4291",
+      "rank": 100,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Shenzhen be 26\u00b0C on March 26?",
+        "Will the highest temperature in Wellington be 20\u00b0C on March 18?",
+        "Will the highest temperature in Shenzhen be 22\u00b0C on March 28?",
+        "Will the highest temperature in Tel Aviv be 19\u00b0C on March 13?"
+      ],
+      "weather_pnl_usd": 11588.69,
+      "weather_volume_usd": 523888.72
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "heimaokuaipao",
+      "pnl_over_volume_pct": 1.895,
+      "profile_url": "https://polymarket.com/profile/0x1361f345f4bf87d1a39b46577e8e448abab9f12b",
+      "rank": 131,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 198,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Hong Kong be 28\u00b0C on April 23?",
+        "Will the highest temperature in Ankara be 11\u00b0C on April 19?",
+        "Will the highest temperature in Warsaw be 12\u00b0C on April 20?",
+        "Will the highest temperature in Munich be 22\u00b0C or higher on April 25?"
+      ],
+      "weather_pnl_usd": 8866.39,
+      "weather_volume_usd": 467853.7
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "oleksiyz",
+      "pnl_over_volume_pct": 1.745,
+      "profile_url": "https://polymarket.com/profile/0xfd8e46519d0a8f9c35e5010ef4e7f56f7583aea4",
+      "rank": 142,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 198,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Munich be 18\u00b0C on April 27?",
+        "Will the highest temperature in Ankara be 19\u00b0C on April 26?",
+        "Will the highest temperature in New York City be between 50-51\u00b0F on April 26?",
+        "Will the highest temperature in Tokyo be 21\u00b0C or higher on April 27?"
+      ],
+      "weather_pnl_usd": 7874.35,
+      "weather_volume_usd": 451291.53
+    }
+  ]
+}
