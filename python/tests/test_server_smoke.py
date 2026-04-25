@@ -102,6 +102,25 @@ def test_score_market_endpoint_rejects_invalid_request_payload() -> None:
         thread.join(timeout=2)
 
 
+def test_source_coverage_endpoint_returns_provider_inventory() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/source-coverage",
+            method="POST",
+            payload={},
+        )
+        assert status == 200
+        assert payload["provider_count"] >= 50
+        assert "noaa" in payload["direct_low_latency"]
+        assert "weather_com" in payload["manual_review_only"]
+        assert any("not literally exhaustive" in caveat for caveat in payload["caveats"])
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def test_fetch_markets_endpoint_returns_normalized_weather_market_list() -> None:
     server, thread, port = _start_server()
     try:
