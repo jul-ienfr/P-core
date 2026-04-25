@@ -50,6 +50,23 @@ class StationHistoryClient:
                 points = [points[-1]]
             return self._bundle(resolution, url=resolution.source_url, points=points, latency_tier="direct_latest")
 
+        if resolution.provider == "hong_kong_observatory":
+            url = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+            payload = self._fetch_json(url)
+            points = self._parse_hko_latest_points(structure, payload)
+            hko_resolution = ResolutionMetadata(
+                provider=resolution.provider,
+                source_url=resolution.source_url,
+                station_code=resolution.station_code or "HKO",
+                station_name=resolution.station_name,
+                station_type=resolution.station_type,
+                wording_clear=resolution.wording_clear,
+                rules_clear=resolution.rules_clear,
+                manual_review_needed=resolution.manual_review_needed,
+                revision_risk=resolution.revision_risk,
+            )
+            return self._bundle(hko_resolution, url=url, points=points, latency_tier="direct_latest")
+
         raise ValueError(f"no direct latest route for provider={resolution.provider!r}")
 
     def fetch_history_bundle(
@@ -165,6 +182,26 @@ class StationHistoryClient:
             else:
                 continue
             points.append(StationHistoryPoint(timestamp=timestamp, value=round(value, 2), unit=structure.unit))
+        return points
+
+    def _parse_hko_latest_points(self, structure: MarketStructure, payload: dict[str, Any]) -> list[StationHistoryPoint]:
+        temperature = payload.get("temperature")
+        rows = temperature.get("data") if isinstance(temperature, dict) else None
+        if not isinstance(rows, list):
+            raise ValueError("HKO latest payload missing temperature data rows")
+        timestamp = str(payload.get("updateTime") or payload.get("UpdateTime") or "")
+        points: list[StationHistoryPoint] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            place = str(row.get("place") or row.get("Place") or "").strip().lower()
+            if place not in {"hong kong observatory", "hko"}:
+                continue
+            value = row.get("value") or row.get("Value")
+            if value in {None, "", "-"}:
+                continue
+            converted = _convert_temperature(float(value), from_unit=str(row.get("unit") or row.get("Unit") or "C").lower(), to_unit=structure.unit)
+            points.append(StationHistoryPoint(timestamp=timestamp, value=round(converted, 2), unit=structure.unit))
         return points
 
     def _parse_hko_daily_extract_points(

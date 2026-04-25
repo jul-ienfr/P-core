@@ -114,6 +114,35 @@ def test_station_history_client_fetches_hko_monthly_daily_maximum_extract_for_re
     assert bundle.summary["max"] == 29.6
 
 
+def test_station_history_client_fetches_hko_latest_temperature_from_current_weather_api() -> None:
+    structure = parse_market_question("Will the highest temperature in Hong Kong be 29°C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.hko.gov.hk/en/wxinfo/currwx/current.htm",
+        description="This market resolves according to the official highest temperature recorded by the Hong Kong Observatory.",
+        rules="Source: Hong Kong Observatory current weather and daily extract, finalized by weather.gov.hk.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "temperature": {"data": [{"place": "Hong Kong Observatory", "value": 29.2, "unit": "C"}]},
+                "updateTime": "2026-04-25T08:45:00+08:00",
+            }
+        ]
+    )
+
+    bundle = client.fetch_latest_bundle(structure, resolution)
+
+    assert client.requested_urls == [
+        "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    ]
+    assert bundle.source_provider == "hong_kong_observatory"
+    assert bundle.station_code == "HKO"
+    assert bundle.latency_tier == "direct_latest"
+    assert bundle.points[0].timestamp == "2026-04-25T08:45:00+08:00"
+    assert bundle.points[0].value == 29.2
+    assert bundle.summary["latest"] == 29.2
+
+
 def test_build_station_history_bundle_returns_empty_fallback_when_source_has_no_direct_history_route() -> None:
     structure = parse_market_question("Will the highest temperature in Unknownville be 31C or higher on April 25?")
     resolution = parse_resolution_metadata(
