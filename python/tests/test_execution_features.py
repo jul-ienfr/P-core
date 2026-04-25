@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from prediction_core.execution import TradingFeeSchedule, TransferFeeSchedule
 from weather_pm.execution_features import build_execution_features
 
 
@@ -196,3 +197,53 @@ def test_build_execution_features_skips_when_single_side_impact_capped_depth_is_
     assert execution.order_book_depth_usd == 9.0
     assert execution.fillable_size_usd == 0.0
     assert execution.best_effort_reason == "missing_tradeable_quote"
+
+def test_build_execution_features_uses_canonical_execution_cost_breakdown_for_requested_size() -> None:
+    execution = build_execution_features(
+        {
+            "best_bid": 0.42,
+            "best_ask": 0.45,
+            "yes_price": 0.44,
+            "volume": 50_000.0,
+            "hours_to_resolution": 12.0,
+            "requested_quantity": 20.0,
+            "fair_probability": 0.50,
+            "trading_fees": TradingFeeSchedule(maker_bps=0.0, taker_bps=20.0),
+            "transfer_fees": TransferFeeSchedule(deposit_fixed=1.0, withdrawal_fixed=2.0),
+            "liquidity_role": "taker",
+            "asks": [{"price": 0.45, "size": 10.0}, {"price": 0.46, "size": 15.0}],
+            "bids": [{"price": 0.42, "size": 100.0}],
+        }
+    )
+
+    assert execution.quoted_best_bid == 0.42
+    assert execution.quoted_best_ask == 0.45
+    assert execution.quoted_mid_price == 0.435
+    assert execution.estimated_avg_fill_price == 0.455
+    assert execution.estimated_slippage_bps == 109.89
+    assert execution.estimated_trading_fee_bps == 20.0
+    assert execution.estimated_total_cost_bps == 459.56
+    assert execution.edge_net_execution == 0.4818
+    assert execution.edge_net_all_in == -2.5182
+
+
+def test_build_execution_features_accepts_size_alias_and_plain_fee_dicts() -> None:
+    execution = build_execution_features(
+        {
+            "best_bid": 0.40,
+            "best_ask": 0.50,
+            "yes_price": 0.50,
+            "volume": 1_000.0,
+            "hours_to_resolution": 12.0,
+            "requested_quantity": 2.0,
+            "fair_probability": 0.55,
+            "trading_fees": {"maker_bps": 0.0, "taker_bps": 50.0},
+            "transfer_fees": {"deposit_fixed": 0.0, "withdrawal_fixed": 0.0},
+            "ask_levels": [{"price": 0.50, "size": 2.0}],
+            "bid_levels": [{"price": 0.40, "size": 2.0}],
+        }
+    )
+
+    assert execution.estimated_avg_fill_price == 0.50
+    assert execution.estimated_trading_fee_bps == 50.0
+    assert execution.edge_net_execution == -0.005

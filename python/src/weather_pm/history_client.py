@@ -128,4 +128,6 @@ def _summarize(points: list[StationHistoryPoint]) -> dict[str, float]:
         "min": round(min(values), 2),
         "max": round(max(values), 2),
         "mean": round(sum(values) / len(values), 2),
+        "latest": round(points[-1].value, 2),
+        "point_count": float(len(points)),
     }

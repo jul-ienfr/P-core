@@ -209,6 +209,9 @@ def test_score_market_command_live_event_extracts_clean_resolution_metadata() ->
     assert payload["resolution"]["station_code"] == "KMIA"
     assert payload["resolution"]["station_name"] == "Miami Intl Airport"
     assert payload["resolution"]["station_type"] == "airport"
+    assert payload["model"]["source_provider"] == "wunderground"
+    assert payload["model"]["source_station_code"] == "KMIA"
+    assert payload["model"]["source_latency_tier"] in {"direct", "resolution_direct_target"}
 
 
 def test_score_market_command_live_event_already_resolved_is_not_tradeable() -> None:
@@ -481,6 +484,80 @@ def test_fetch_event_book_command_outputs_event_and_normalized_child_markets() -
     assert result["markets"][0]["id"] == "live-1"
     assert result["markets"][0]["spread"] == 0.02
     assert result["markets"][0]["volume_usd"] == 12345.6
+
+
+def test_station_history_command_fetches_direct_resolution_station_history() -> None:
+    class FakeHistoryClient:
+        def fetch_history_bundle(self, structure, resolution, *, start_date: str, end_date: str):
+            from weather_pm.models import StationHistoryBundle, StationHistoryPoint
+
+            assert structure.city == "Miami"
+            assert structure.measurement_kind == "low"
+            assert resolution.provider == "wunderground"
+            assert resolution.station_code == "KMIA"
+            assert start_date == "2026-04-23"
+            assert end_date == "2026-04-23"
+            return StationHistoryBundle(
+                source_provider="wunderground",
+                station_code="KMIA",
+                source_url="https://www.wunderground.com/history/daily/us/fl/miami/KMIA/date/2026-04-23",
+                latency_tier="direct",
+                points=[
+                    StationHistoryPoint(timestamp="2026-04-23 05:53", value=72.0, unit="f"),
+                    StationHistoryPoint(timestamp="2026-04-23 06:53", value=71.0, unit="f"),
+                ],
+                summary={"min": 71.0, "max": 72.0, "mean": 71.5},
+            )
+
+    market = {
+        "id": "404359",
+        "question": "Lowest temperature in Miami on April 23?",
+        "resolution_source": "https://www.wunderground.com/history/daily/us/fl/miami/KMIA",
+        "description": "This market resolves to the lowest temperature recorded at the Miami Intl Airport Station in degrees Fahrenheit on 23 Apr '26.",
+        "rules": "This market resolves based on the final daily observation published at the resolution source.",
+    }
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=market):
+        payload = weather_cli.station_history_for_market_id(
+            "404359",
+            source="live",
+            start_date="2026-04-23",
+            end_date="2026-04-23",
+            client=FakeHistoryClient(),
+        )
+
+    assert payload["market"]["city"] == "Miami"
+    assert payload["market"]["measurement_kind"] == "low"
+    assert payload["resolution"]["provider"] == "wunderground"
+    assert payload["resolution"]["station_code"] == "KMIA"
+    assert payload["history"]["latency_tier"] == "direct"
+    assert payload["history"]["source_url"].endswith("/KMIA/date/2026-04-23")
+    assert payload["history"]["summary"] == {"min": 71.0, "max": 72.0, "mean": 71.5, "latest": 71.0, "point_count": 2.0}
+    assert payload["history"]["latest"] == {"timestamp": "2026-04-23 06:53", "value": 71.0, "unit": "f"}
+    assert payload["history"]["points"][0] == {"timestamp": "2026-04-23 05:53", "value": 72.0, "unit": "f"}
+    assert payload["latency"] == {
+        "provider": "wunderground",
+        "station_code": "KMIA",
+        "tier": "direct",
+        "direct": True,
+        "point_count": 2,
+        "latest_timestamp": "2026-04-23 06:53",
+        "latest_value": 71.0,
+        "unit": "f",
+        "source_url": "https://www.wunderground.com/history/daily/us/fl/miami/KMIA/date/2026-04-23",
+    }
+
+
+def test_station_history_parser_accepts_market_id_dates_and_source() -> None:
+    parser = weather_cli.build_parser()
+
+    args = parser.parse_args(["station-history", "--market-id", "404359", "--source", "live", "--start-date", "2026-04-23", "--end-date", "2026-04-23"])
+
+    assert args.command == "station-history"
+    assert args.market_id == "404359"
+    assert args.source == "live"
+    assert args.start_date == "2026-04-23"
+    assert args.end_date == "2026-04-23"
 
 
 def test_score_market_command_with_live_market_id_supports_event_style_highest_temperature_resolution_via_event_payload() -> None:

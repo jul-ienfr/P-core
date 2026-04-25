@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from prediction_core.execution import BookLevel, OrderBookSnapshot, TradingFeeSchedule, TransferFeeSchedule, build_execution_cost_breakdown
 from weather_pm.models import ExecutionFeatures
 
 
@@ -30,10 +31,16 @@ def build_execution_features(raw_market: dict[str, Any]) -> ExecutionFeatures:
     if best_effort_reason == "missing_tradeable_quote":
         fillable_size_usd = 0.0
 
+    canonical_costs = _canonical_execution_costs(raw_market)
     expected_slippage_bps = round(_expected_slippage_bps(spread=spread, volume_usd=volume_usd, target_order_size_usd=fillable_size_usd, order_book_depth_usd=order_book_depth_usd), 2)
     spread_cost_bps = round(_spread_cost_bps(spread=spread, order_book_depth_usd=order_book_depth_usd), 2)
     all_in_cost_usd = round(fillable_size_usd * ((transaction_fee_bps + expected_slippage_bps + spread_cost_bps) / 10000.0) + deposit_fee_usd + withdrawal_fee_usd, 3)
     all_in_cost_bps = 0.0 if fillable_size_usd <= 0 else round((all_in_cost_usd / fillable_size_usd) * 10000.0, 2)
+    if canonical_costs is not None:
+        expected_slippage_bps = round(_cost_bps(canonical_costs.book_slippage_cost, canonical_costs), 2)
+        transaction_fee_bps = round(_cost_bps(canonical_costs.trading_fee_cost, canonical_costs), 2)
+        all_in_cost_usd = round(canonical_costs.total_all_in_cost, 3)
+        all_in_cost_bps = round(_cost_bps(canonical_costs.total_all_in_cost, canonical_costs), 2)
     cost_risk = _cost_risk(all_in_cost_bps=all_in_cost_bps, all_in_cost_usd=all_in_cost_usd, fillable_size_usd=fillable_size_usd)
     tradeability_status = _tradeability_status(best_effort_reason=best_effort_reason, cost_risk=cost_risk)
 
@@ -60,6 +67,15 @@ def build_execution_features(raw_market: dict[str, Any]) -> ExecutionFeatures:
         expected_slippage_bps=expected_slippage_bps,
         all_in_cost_bps=all_in_cost_bps,
         all_in_cost_usd=all_in_cost_usd,
+        quoted_best_bid=canonical_costs.quoted_best_bid if canonical_costs is not None else (best_bid if best_bid > 0.0 else None),
+        quoted_best_ask=canonical_costs.quoted_best_ask if canonical_costs is not None else (best_ask if best_ask > 0.0 else None),
+        quoted_mid_price=canonical_costs.quoted_mid_price if canonical_costs is not None else (_mid_price(best_bid=best_bid, best_ask=best_ask)),
+        estimated_avg_fill_price=canonical_costs.estimated_avg_fill_price if canonical_costs is not None else None,
+        estimated_slippage_bps=round(_cost_bps(canonical_costs.book_slippage_cost, canonical_costs), 2) if canonical_costs is not None else expected_slippage_bps,
+        estimated_trading_fee_bps=round(_cost_bps(canonical_costs.trading_fee_cost, canonical_costs), 2) if canonical_costs is not None else transaction_fee_bps,
+        estimated_total_cost_bps=round(_cost_bps(canonical_costs.total_execution_cost, canonical_costs), 2) if canonical_costs is not None else all_in_cost_bps,
+        edge_net_execution=canonical_costs.edge_net_execution if canonical_costs is not None else None,
+        edge_net_all_in=canonical_costs.edge_net_all_in if canonical_costs is not None else None,
         best_effort_reason=best_effort_reason,
         tradeability_status=tradeability_status,
         cost_risk=cost_risk,
@@ -70,7 +86,90 @@ def _resolve_target_order_size(raw_market: dict[str, Any], volume_usd: float) ->
     explicit = _optional_float(raw_market.get("target_order_size_usd"))
     if explicit is not None:
         return max(explicit, 0.0)
+    quantity = _optional_float(raw_market.get("requested_quantity"))
+    price = _optional_float(raw_market.get("best_ask")) or _optional_float(raw_market.get("yes_price"))
+    if quantity is not None and price is not None:
+        return max(round(quantity * price, 2), 0.0)
     return max(round(volume_usd * 0.01, 2), 0.0)
+
+
+def _canonical_execution_costs(raw_market: dict[str, Any]):
+    requested_quantity = _optional_float(raw_market.get("requested_quantity"))
+    fair_probability = _optional_float(raw_market.get("fair_probability"))
+    if requested_quantity is None or fair_probability is None:
+        return None
+    book = _order_book_snapshot(raw_market)
+    if not book.bids and not book.asks:
+        return None
+    return build_execution_cost_breakdown(
+        book=book,
+        requested_quantity=requested_quantity,
+        side=str(raw_market.get("execution_side") or "buy"),
+        fair_probability=fair_probability,
+        trading_fees=_trading_fee_schedule(raw_market.get("trading_fees"), raw_market),
+        transfer_fees=_transfer_fee_schedule(raw_market.get("transfer_fees"), raw_market),
+        liquidity_role=str(raw_market.get("liquidity_role") or "taker"),
+    )
+
+
+def _order_book_snapshot(raw_market: dict[str, Any]) -> OrderBookSnapshot:
+    bids = [_book_level(level) for level in _normalized_levels(raw_market.get("bid_levels") or raw_market.get("bids"))]
+    asks = [_book_level(level) for level in _normalized_levels(raw_market.get("ask_levels") or raw_market.get("asks"))]
+    return OrderBookSnapshot(bids=bids, asks=asks)
+
+
+def _book_level(level: dict[str, float]) -> BookLevel:
+    return BookLevel(price=level["price"], quantity=level["size"])
+
+
+def _trading_fee_schedule(value: Any, raw_market: dict[str, Any]) -> TradingFeeSchedule | None:
+    if isinstance(value, TradingFeeSchedule):
+        return value
+    if isinstance(value, dict):
+        return TradingFeeSchedule(
+            maker_bps=_as_float(value.get("maker_bps")),
+            taker_bps=_as_float(value.get("taker_bps")),
+            min_fee=_as_float(value.get("min_fee")),
+        )
+    taker_bps = _as_float(raw_market.get("taker_fee_bps", raw_market.get("transaction_fee_bps")))
+    if taker_bps <= 0.0:
+        return None
+    return TradingFeeSchedule(maker_bps=_as_float(raw_market.get("maker_fee_bps")), taker_bps=taker_bps)
+
+
+def _transfer_fee_schedule(value: Any, raw_market: dict[str, Any]) -> TransferFeeSchedule | None:
+    if isinstance(value, TransferFeeSchedule):
+        return value
+    if isinstance(value, dict):
+        return TransferFeeSchedule(
+            deposit_fixed=_as_float(value.get("deposit_fixed", value.get("deposit_fee_usd"))),
+            deposit_bps=_as_float(value.get("deposit_bps")),
+            withdrawal_fixed=_as_float(value.get("withdrawal_fixed", value.get("withdrawal_fee_usd"))),
+            withdrawal_bps=_as_float(value.get("withdrawal_bps")),
+        )
+    if not any(raw_market.get(key) is not None for key in ("deposit_fee_usd", "deposit_fee_bps", "withdrawal_fee_usd", "withdrawal_fee_bps")):
+        return None
+    return TransferFeeSchedule(
+        deposit_fixed=_as_float(raw_market.get("deposit_fee_usd")),
+        deposit_bps=_as_float(raw_market.get("deposit_fee_bps")),
+        withdrawal_fixed=_as_float(raw_market.get("withdrawal_fee_usd")),
+        withdrawal_bps=_as_float(raw_market.get("withdrawal_fee_bps")),
+    )
+
+
+def _cost_bps(cost: float, costs: Any) -> float:
+    if costs.estimated_filled_quantity <= 0 or costs.estimated_avg_fill_price is None:
+        return 0.0
+    notional = costs.estimated_filled_quantity * costs.estimated_avg_fill_price
+    if notional <= 0.0:
+        return 0.0
+    return (float(cost) / notional) * 10000.0
+
+
+def _mid_price(*, best_bid: float, best_ask: float) -> float | None:
+    if best_bid <= 0.0 or best_ask <= 0.0:
+        return None
+    return round((best_bid + best_ask) / 2.0, 6)
 
 
 def _resolve_spread(*, best_bid: float, best_ask: float, yes_price: float | None) -> float:

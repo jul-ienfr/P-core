@@ -141,6 +141,71 @@ def test_polymarket_weather_markets_get_endpoint_rejects_non_positive_limit() ->
         thread.join(timeout=2)
 
 
+def test_station_history_endpoint_fetches_direct_resolution_station_history() -> None:
+    from unittest.mock import patch
+
+    from weather_pm.models import StationHistoryBundle, StationHistoryPoint
+
+    market = {
+        "id": "404359",
+        "question": "Lowest temperature in Miami on April 23?",
+        "resolution_source": "https://www.wunderground.com/history/daily/us/fl/miami/KMIA",
+        "description": "This market resolves to the lowest temperature recorded at the Miami Intl Airport Station in degrees Fahrenheit on 23 Apr '26.",
+        "rules": "This market resolves based on the final daily observation published at the resolution source.",
+    }
+    history = StationHistoryBundle(
+        source_provider="wunderground",
+        station_code="KMIA",
+        source_url="https://www.wunderground.com/history/daily/us/fl/miami/KMIA/date/2026-04-23",
+        latency_tier="direct",
+        points=[StationHistoryPoint(timestamp="2026-04-23 06:53", value=71.0, unit="f")],
+        summary={"min": 71.0, "max": 71.0, "mean": 71.0},
+    )
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=market), patch(
+        "weather_pm.cli.build_station_history_bundle", return_value=history
+    ):
+        server, thread, port = _start_server()
+        try:
+            status, payload = _json_request(
+                f"http://127.0.0.1:{port}/weather/station-history",
+                method="POST",
+                payload={"market_id": "404359", "source": "live", "start_date": "2026-04-23", "end_date": "2026-04-23"},
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    assert status == 200
+    assert payload["resolution"]["station_code"] == "KMIA"
+    assert payload["history"]["latency_tier"] == "direct"
+    assert payload["history"]["source_url"].endswith("/KMIA/date/2026-04-23")
+    assert payload["history"]["summary"]["min"] == 71.0
+    assert payload["history"]["latest"] == {"timestamp": "2026-04-23 06:53", "value": 71.0, "unit": "f"}
+    assert payload["latency"]["direct"] is True
+    assert payload["latency"]["latest_value"] == 71.0
+    assert payload["latency"]["latest_timestamp"] == "2026-04-23 06:53"
+
+
+def test_station_history_endpoint_rejects_missing_market_id() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/station-history",
+            method="POST",
+            payload={"source": "live", "start_date": "2026-04-23", "end_date": "2026-04-23"},
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+    assert status == 400
+    assert payload["status"] == "error"
+    assert payload["message"] == "market_id is required"
+
+
 def test_live_paper_cycle_overfetches_to_fill_limit_after_pre_filtering() -> None:
     from unittest.mock import patch
 

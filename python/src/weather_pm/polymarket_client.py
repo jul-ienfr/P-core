@@ -121,6 +121,19 @@ def get_event_book_by_id(event_id: str, source: str = "fixture") -> dict[str, An
 def normalize_market_record(raw: dict[str, Any]) -> dict[str, Any]:
     best_bid = _as_float(raw.get("best_bid"))
     best_ask = _as_float(raw.get("best_ask"))
+    bid_levels = _normalized_book_levels(raw.get("bid_levels") or raw.get("bids"))
+    ask_levels = _normalized_book_levels(raw.get("ask_levels") or raw.get("asks"))
+    if not bid_levels and best_bid > 0.0:
+        best_bid_size = _as_float(raw.get("best_bid_size"))
+        if best_bid_size > 0.0:
+            bid_levels = [{"price": best_bid, "size": best_bid_size}]
+    if not ask_levels and best_ask > 0.0:
+        best_ask_size = _as_float(raw.get("best_ask_size"))
+        if best_ask_size > 0.0:
+            ask_levels = [{"price": best_ask, "size": best_ask_size}]
+    book_depth_source = str(raw.get("book_depth_source") or ("clob_book" if bid_levels or ask_levels else "top_of_book_unavailable"))
+    if book_depth_source == "clob_book" and not _has_full_book_depth(raw) and (bid_levels or ask_levels):
+        book_depth_source = "top_of_book_fallback"
     spread = round(max(best_ask - best_bid, 0.0), 2)
     volume_usd = _as_float(raw.get("volume"))
     return {
@@ -134,10 +147,34 @@ def normalize_market_record(raw: dict[str, Any]) -> dict[str, Any]:
         "volume_usd": volume_usd,
         "hours_to_resolution": _as_float(raw.get("hours_to_resolution")),
         "max_impact_bps": _as_float(raw.get("max_impact_bps")) or 150.0,
+        "bid_levels": bid_levels,
+        "ask_levels": ask_levels,
+        "bids": bid_levels,
+        "asks": ask_levels,
+        "book_depth_source": book_depth_source,
         "resolution_source": raw.get("resolution_source"),
         "description": raw.get("description"),
         "rules": raw.get("rules"),
     }
+
+
+def _has_full_book_depth(raw: dict[str, Any]) -> bool:
+    return bool(_normalized_book_levels(raw.get("bid_levels") or raw.get("bids")) or _normalized_book_levels(raw.get("ask_levels") or raw.get("asks")))
+
+
+def _normalized_book_levels(levels: Any) -> list[dict[str, float]]:
+    if not isinstance(levels, list):
+        return []
+    normalized: list[dict[str, float]] = []
+    for level in levels:
+        if not isinstance(level, dict):
+            continue
+        price = _as_float(level.get("price"))
+        size = _as_float(level.get("size", level.get("quantity")))
+        if price <= 0.0 or size <= 0.0:
+            continue
+        normalized.append({"price": price, "size": size})
+    return normalized
 
 
 def _validate_source(source: str) -> str:

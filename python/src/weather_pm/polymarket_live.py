@@ -343,34 +343,14 @@ def _sum_book_depth_usd(levels: list[dict[str, float]]) -> float:
 def _extract_clob_book_metrics(raw: dict[str, Any], yes_index: int) -> dict[str, Any]:
     token_id = _pick_yes_token_id(raw, yes_index)
     if not token_id:
-        return {
-            "clob_token_id": None,
-            "bids": [],
-            "asks": [],
-            "best_bid": None,
-            "best_ask": None,
-            "best_bid_size": None,
-            "best_ask_size": None,
-            "bid_depth_usd": 0.0,
-            "ask_depth_usd": 0.0,
-        }
+        return _empty_book_metrics(clob_token_id=None)
 
     try:
         book = _fetch_clob_book(token_id)
     except (RuntimeError, TimeoutError, OSError) as exc:
         if isinstance(exc, RuntimeError) and "HTTP 404" not in str(exc) and "timed out" not in str(exc).lower():
             raise
-        return {
-            "clob_token_id": token_id,
-            "bids": [],
-            "asks": [],
-            "best_bid": None,
-            "best_ask": None,
-            "best_bid_size": None,
-            "best_ask_size": None,
-            "bid_depth_usd": 0.0,
-            "ask_depth_usd": 0.0,
-        }
+        return _empty_book_metrics(clob_token_id=token_id)
 
     bids = _normalize_book_levels(book.get("bids"))
     asks = _normalize_book_levels(book.get("asks"))
@@ -378,12 +358,32 @@ def _extract_clob_book_metrics(raw: dict[str, Any], yes_index: int) -> dict[str,
         "clob_token_id": token_id,
         "bids": bids,
         "asks": asks,
+        "bid_levels": bids,
+        "ask_levels": asks,
+        "book_depth_source": "clob_book" if bids or asks else "top_of_book_unavailable",
         "best_bid": bids[0]["price"] if bids else None,
         "best_ask": asks[0]["price"] if asks else None,
         "best_bid_size": bids[0]["size"] if bids else None,
         "best_ask_size": asks[0]["size"] if asks else None,
         "bid_depth_usd": _sum_book_depth_usd(bids),
         "ask_depth_usd": _sum_book_depth_usd(asks),
+    }
+
+
+def _empty_book_metrics(*, clob_token_id: str | None) -> dict[str, Any]:
+    return {
+        "clob_token_id": clob_token_id,
+        "bids": [],
+        "asks": [],
+        "bid_levels": [],
+        "ask_levels": [],
+        "book_depth_source": "top_of_book_unavailable",
+        "best_bid": None,
+        "best_ask": None,
+        "best_bid_size": None,
+        "best_ask_size": None,
+        "bid_depth_usd": 0.0,
+        "ask_depth_usd": 0.0,
     }
 
 
@@ -412,6 +412,9 @@ def _normalize_gamma_market(raw: dict[str, Any]) -> dict[str, Any]:
         "ask_depth_usd": book_metrics["ask_depth_usd"],
         "bids": book_metrics["bids"],
         "asks": book_metrics["asks"],
+        "bid_levels": book_metrics["bid_levels"],
+        "ask_levels": book_metrics["ask_levels"],
+        "book_depth_source": book_metrics["book_depth_source"],
         "clob_token_id": book_metrics["clob_token_id"],
         "volume": _as_float(raw.get("volume") or raw.get("volumeNum") or raw.get("liquidityClob") or raw.get("liquidity")),
         "hours_to_resolution": _compute_hours_to_resolution(raw),
@@ -491,6 +494,9 @@ def _normalize_gamma_series_event(raw: dict[str, Any]) -> dict[str, Any]:
         "ask_depth_usd": book_metrics["ask_depth_usd"],
         "bids": book_metrics["bids"],
         "asks": book_metrics["asks"],
+        "bid_levels": book_metrics["bid_levels"],
+        "ask_levels": book_metrics["ask_levels"],
+        "book_depth_source": book_metrics["book_depth_source"],
         "clob_token_id": book_metrics["clob_token_id"],
         "volume": _as_float(raw.get("volume") or raw.get("openInterest") or raw.get("liquidity")),
         "hours_to_resolution": _compute_hours_to_resolution(raw),

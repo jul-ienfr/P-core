@@ -59,10 +59,12 @@ def score_market_from_question(
         forecast_dispersion=forecast_bundle.dispersion,
         execution=execution,
     )
+    model_payload = _model_payload_with_source(model_output, forecast_bundle)
     return {
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
-        "model": model_output.to_dict(),
+        "model": model_payload,
+        "forecast": forecast_bundle.to_dict(),
         "edge": {
             "market_implied_yes_probability": round(float(yes_price), 2),
             "probability_edge": round(score.raw_edge, 2),
@@ -104,10 +106,12 @@ def score_market_from_fixture_market_id(market_id: str) -> dict[str, object]:
         forecast_dispersion=forecast_bundle.dispersion,
         execution=execution,
     )
+    model_payload = _model_payload_with_source(model_output, forecast_bundle)
     return {
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
-        "model": model_output.to_dict(),
+        "model": model_payload,
+        "forecast": forecast_bundle.to_dict(),
         "edge": {
             "market_implied_yes_probability": round(yes_price, 2),
             "probability_edge": round(score.raw_edge, 2),
@@ -118,6 +122,19 @@ def score_market_from_fixture_market_id(market_id: str) -> dict[str, object]:
         "neighbors": neighbor_context.to_dict(),
         "execution": execution.to_dict(),
     }
+
+
+def _model_payload_with_source(model_output, forecast_bundle) -> dict[str, object]:
+    payload = model_output.to_dict()
+    payload.update(
+        {
+            "source_provider": forecast_bundle.source_provider,
+            "source_station_code": forecast_bundle.source_station_code,
+            "source_url": forecast_bundle.source_url,
+            "source_latency_tier": forecast_bundle.source_latency_tier,
+        }
+    )
+    return payload
 
 
 def _default_resolution_source(structure: MarketStructure) -> str:

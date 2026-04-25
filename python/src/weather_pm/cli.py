@@ -7,6 +7,7 @@ from typing import Any
 from weather_pm.decision import build_decision
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
+from weather_pm.history_client import build_station_history_bundle
 from weather_pm.market_parser import parse_market_question
 from weather_pm.models import ForecastBundle
 from weather_pm.neighbor_context import build_neighbor_context
@@ -44,6 +45,12 @@ def build_parser() -> argparse.ArgumentParser:
     score_market_parser.add_argument("--description", required=False, help="Resolution description text")
     score_market_parser.add_argument("--rules", required=False, help="Resolution rules text")
     score_market_parser.add_argument("--max-impact-bps", required=False, type=float, help="Override max executable price impact in bps")
+
+    station_history = subparsers.add_parser("station-history", help="Fetch direct observed history from a market's resolution station")
+    station_history.add_argument("--market-id", required=True, help="Market id whose resolution station should be followed")
+    station_history.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+    station_history.add_argument("--start-date", required=True, help="Start date YYYY-MM-DD")
+    station_history.add_argument("--end-date", required=True, help="End date YYYY-MM-DD")
 
     price_market = subparsers.add_parser("price-market", help="Produce a theoretical price for a market")
     price_market.add_argument("--market-id", required=False, help="Market identifier")
@@ -113,6 +120,10 @@ def main() -> int:
         )
         return 0
 
+    if args.command == "station-history":
+        print(json.dumps(station_history_for_market_id(args.market_id, source=args.source, start_date=args.start_date, end_date=args.end_date)))
+        return 0
+
     if args.command == "paper-cycle":
         from prediction_core.server import live_paper_cycle_request
 
@@ -143,6 +154,40 @@ def _paper_cycle_payload_from_args(args: argparse.Namespace) -> dict[str, Any]:
         "min_depth_usd": getattr(args, "min_depth_usd", None),
     }
     return {key: value for key, value in payload.items() if value is not None}
+
+
+def station_history_for_market_id(
+    market_id: str,
+    *,
+    source: str = "live",
+    start_date: str,
+    end_date: str,
+    client: Any | None = None,
+) -> dict[str, Any]:
+    if source not in _VALID_SOURCES:
+        raise ValueError("source must be 'fixture' or 'live'")
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    structure = parse_market_question(str(raw_market["question"]))
+    resolution = parse_resolution_metadata(
+        resolution_source=raw_market.get("resolution_source"),
+        description=raw_market.get("description"),
+        rules=raw_market.get("rules"),
+    )
+    history = build_station_history_bundle(
+        structure,
+        resolution,
+        start_date=start_date,
+        end_date=end_date,
+        client=client,
+    )
+    return {
+        "market_id": market_id,
+        "source": source,
+        "market": structure.to_dict(),
+        "resolution": resolution.to_dict(),
+        "history": history.to_dict(),
+        "latency": history.latency_diagnostics(),
+    }
 
 
 def _normalize_event_book_payload(event_book: dict[str, Any]) -> dict[str, Any]:
@@ -188,10 +233,20 @@ def _score_market_from_market_id(market_id: str, *, source: str, max_impact_bps:
         forecast_dispersion=forecast_bundle.dispersion,
         execution=execution,
     )
+    model_payload = model_output.to_dict()
+    model_payload.update(
+        {
+            "source_provider": forecast_bundle.source_provider or resolution.provider,
+            "source_station_code": forecast_bundle.source_station_code or resolution.station_code,
+            "source_url": forecast_bundle.source_url or resolution.source_url,
+            "source_latency_tier": forecast_bundle.source_latency_tier if forecast_bundle.source_provider else "resolution_direct_target",
+        }
+    )
     return {
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
-        "model": model_output.to_dict(),
+        "model": model_payload,
+        "forecast": forecast_bundle.to_dict(),
         "edge": {
             "market_implied_yes_probability": round(float(raw_market.get("yes_price", 0.0)), 2),
             "probability_edge": round(score.raw_edge, 2),
