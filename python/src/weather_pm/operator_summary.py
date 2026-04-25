@@ -31,7 +31,13 @@ def build_profitable_accounts_operator_summary(
     priority_accounts = _priority_accounts(accounts, limit=priority_limit)
     handle_lookup = {str(account.get("handle") or ""): account for account in accounts}
     enriched_watchlist = [_watchlist_row(row, handle_lookup=handle_lookup) for row in watchlist]
+    live_matched_accounts = _live_matched_accounts(enriched_watchlist)
 
+    live_match_summary = _live_matched_accounts_summary(
+        live_matched_accounts,
+        enriched_watchlist=enriched_watchlist,
+    )
+    live_market_signal_cards = _live_market_signal_cards(enriched_watchlist)
     return {
         "generated_from": {
             "classified_accounts_csv": str(classified_accounts_csv),
@@ -43,7 +49,16 @@ def build_profitable_accounts_operator_summary(
         "live_operator_summary": operator_payload.get("summary", {}),
         "live_operator_focus": list(operator_payload.get("operator_focus") or []),
         "live_watchlist": enriched_watchlist,
+        "live_matched_profitable_weather_summary": live_match_summary,
+        "live_market_signal_cards": live_market_signal_cards,
+        "live_matched_profitable_weather_accounts": live_matched_accounts,
+        "discord_operator_brief": _discord_operator_brief(
+            live_market_signal_cards,
+            live_match_summary=live_match_summary,
+        ),
     }
+
+
 
 
 def write_profitable_accounts_operator_summary(
@@ -112,15 +127,156 @@ def _watchlist_row(row: dict[str, Any], *, handle_lookup: dict[str, dict[str, An
     matched = [str(handle) for handle in row.get("matched_traders") or [] if handle]
     matched_weather_heavy = [handle for handle in matched if _is_weather_heavy(handle_lookup.get(handle, {}))]
     matched_signal_only = [handle for handle in matched if handle in handle_lookup and handle not in matched_weather_heavy]
-    matched_count = len([handle for handle in matched if handle in handle_lookup])
+    matched_accounts = [_matched_account_snapshot(handle_lookup[handle]) for handle in matched if handle in handle_lookup]
     enriched = {
         **row,
         "matched_weather_heavy_traders": matched_weather_heavy,
         "matched_signal_only_traders": matched_signal_only,
-        "matched_profitable_weather_count": matched_count,
+        "matched_profitable_weather_count": len(matched_accounts),
+        "matched_profitable_weather_accounts": matched_accounts,
     }
     enriched["operator_verdict"] = _operator_verdict(enriched)
     return enriched
+
+
+def _matched_account_snapshot(account: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "handle": account.get("handle"),
+        "rank": _to_int(account.get("rank")),
+        "classification": account.get("classification"),
+        "weather_pnl_usd": round(_to_float(account.get("weather_pnl_usd")), 2),
+        "weather_volume_usd": round(_to_float(account.get("weather_volume_usd")), 2),
+        "pnl_over_volume_pct": round(_to_float(account.get("pnl_over_volume_pct")), 3),
+        "active_weather_positions": _to_int(account.get("active_weather_positions")),
+        "recent_weather_activity": _to_int(account.get("recent_weather_activity")),
+        "recommended_use": account.get("recommended_use"),
+        "profile_url": account.get("profile_url"),
+    }
+
+
+def _live_market_signal_cards(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    cards: list[dict[str, Any]] = []
+    for row in watchlist:
+        matched_accounts = [account for account in row.get("matched_profitable_weather_accounts") or [] if isinstance(account, dict)]
+        if not matched_accounts:
+            continue
+        top_accounts = sorted(matched_accounts, key=lambda account: _to_float(account.get("weather_pnl_usd")), reverse=True)[:5]
+        card = {
+            "market_id": row.get("market_id"),
+            "city": row.get("city"),
+            "date": row.get("date"),
+            "action": row.get("action"),
+            "blocker": row.get("blocker") or row.get("execution_blocker"),
+            "matched_profitable_weather_count": len(matched_accounts),
+            "weather_heavy_count": len(row.get("matched_weather_heavy_traders") or []),
+            "signal_only_count": len(row.get("matched_signal_only_traders") or []),
+            "top_matched_accounts": [
+                {
+                    "handle": account.get("handle"),
+                    "weather_pnl_usd": round(_to_float(account.get("weather_pnl_usd")), 2),
+                    "pnl_over_volume_pct": round(_to_float(account.get("pnl_over_volume_pct")), 3),
+                }
+                for account in top_accounts
+            ],
+            "operator_verdict": row.get("operator_verdict"),
+            "next": list(row.get("next") or row.get("next_actions") or []),
+            "source_latest_url": row.get("source_latest_url"),
+        }
+        if row.get("source_history_url") is not None:
+            card["source_history_url"] = row.get("source_history_url")
+        if row.get("polling_focus") is not None:
+            card["polling_focus"] = row.get("polling_focus")
+        if row.get("latency_tier") is not None:
+            card["latency_tier"] = row.get("latency_tier")
+        if row.get("latency_priority") is not None:
+            card["latency_priority"] = row.get("latency_priority")
+        if row.get("resolution_status") is not None:
+            card["resolution_status"] = row.get("resolution_status")
+        cards.append(card)
+    return cards
+
+
+def _live_matched_accounts(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_handle: dict[str, dict[str, Any]] = {}
+    for row in watchlist:
+        market_id = str(row.get("market_id") or "")
+        city = str(row.get("city") or "")
+        for account in row.get("matched_profitable_weather_accounts") or []:
+            if not isinstance(account, dict):
+                continue
+            handle = str(account.get("handle") or "")
+            if not handle:
+                continue
+            entry = by_handle.setdefault(handle, {**account, "matched_market_ids": [], "matched_cities": []})
+            if market_id and market_id not in entry["matched_market_ids"]:
+                entry["matched_market_ids"].append(market_id)
+            if city and city not in entry["matched_cities"]:
+                entry["matched_cities"].append(city)
+    ranked = sorted(by_handle.values(), key=lambda account: _to_float(account.get("weather_pnl_usd")), reverse=True)
+    return [{**account, "matched_market_count": len(account.get("matched_market_ids") or [])} for account in ranked]
+
+
+def _live_matched_accounts_summary(
+    accounts: list[dict[str, Any]],
+    *,
+    enriched_watchlist: list[dict[str, Any]],
+) -> dict[str, Any]:
+    matched_market_ids: list[str] = []
+    matched_cities: list[str] = []
+    row_level_match_count = 0
+    for row in enriched_watchlist:
+        row_level_match_count += _to_int(row.get("matched_profitable_weather_count"))
+        market_id = str(row.get("market_id") or "")
+        city = str(row.get("city") or "")
+        if market_id and any(account.get("handle") for account in row.get("matched_profitable_weather_accounts") or []):
+            matched_market_ids.append(market_id)
+        if city and any(account.get("handle") for account in row.get("matched_profitable_weather_accounts") or []):
+            matched_cities.append(city)
+    return {
+        "unique_account_count": len(accounts),
+        "row_level_match_count": row_level_match_count,
+        "weather_heavy_unique_count": len([account for account in accounts if _is_weather_heavy(account)]),
+        "signal_only_unique_count": len([account for account in accounts if not _is_weather_heavy(account)]),
+        "top_account_handles_by_pnl": [str(account.get("handle")) for account in accounts[:10] if account.get("handle")],
+        "matched_market_ids": _unique(matched_market_ids),
+        "matched_cities": _unique(matched_cities),
+        "operator_recommendation": _summary_operator_recommendation(
+            accounts,
+            enriched_watchlist=enriched_watchlist,
+        ),
+    }
+
+
+def _summary_operator_recommendation(
+    accounts: list[dict[str, Any]],
+    *,
+    enriched_watchlist: list[dict[str, Any]],
+) -> dict[str, Any]:
+    blockers = {str(row.get("blocker") or row.get("execution_blocker") or "") for row in enriched_watchlist}
+    if accounts and "extreme_price" in blockers:
+        return {
+            "status": "paper_micro_only",
+            "confidence": "profitable_weather_signal_with_execution_caution",
+            "reason": "unique_profitable_weather_accounts_match_live_markets_but_extreme_price_blocks_normal_sizing",
+            "next_actions": [
+                "poll_direct_resolution_source",
+                "paper_micro_order_with_strict_limit_and_fill_tracking",
+                "do_not_use_normal_size_until_extreme_price_clears",
+            ],
+        }
+    if accounts:
+        return {
+            "status": "watch_or_paper",
+            "confidence": "profitable_weather_signal",
+            "reason": "unique_profitable_weather_accounts_match_live_markets",
+            "next_actions": ["validate_execution_depth", "paper_trade_until_fill_quality_confirmed"],
+        }
+    return {
+        "status": "watch_only",
+        "confidence": "no_profitable_account_signal",
+        "reason": "no_unique_profitable_weather_accounts_match_live_markets",
+        "next_actions": ["wait_for_profitable_weather_account_match"],
+    }
 
 
 def _operator_verdict(row: dict[str, Any]) -> dict[str, str]:
@@ -148,17 +304,68 @@ def _operator_verdict(row: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _discord_operator_brief(cards: list[dict[str, Any]], *, live_match_summary: dict[str, Any]) -> str:
+    recommendation = live_match_summary.get("operator_recommendation") or {}
+    status = str(recommendation.get("status") or "watch_only")
+    lines = [f"Météo Polymarket: {len(cards)} marché live avec comptes météo rentables. Reco globale: {status}."]
+    for card in cards[:5]:
+        market_id = str(card.get("market_id") or "n/a")
+        city = str(card.get("city") or "n/a")
+        matched_count = _to_int(card.get("matched_profitable_weather_count"))
+        heavy_count = _to_int(card.get("weather_heavy_count"))
+        blocker = str(card.get("blocker") or "none")
+        verdict = card.get("operator_verdict") or {}
+        verdict_status = str(verdict.get("status") or "watch_only")
+        top = _brief_top_accounts(card.get("top_matched_accounts") or [])
+        lines.append(
+            f"- {market_id} — {city} — {matched_count} comptes ({heavy_count} heavy), "
+            f"blocker={blocker}, verdict={verdict_status}, top={top}"
+        )
+    return "\n".join(lines)
+
+
+def _brief_top_accounts(accounts: list[Any]) -> str:
+    chunks: list[str] = []
+    for account in accounts[:3]:
+        if not isinstance(account, dict):
+            continue
+        handle = str(account.get("handle") or "n/a")
+        chunks.append(f"{handle} ${_to_float(account.get('weather_pnl_usd')):,.2f}")
+    return " / ".join(chunks) if chunks else "n/a"
+
+
 def _compact_summary(payload: dict[str, Any], *, output_path: Path) -> dict[str, Any]:
     live_watchlist = [row for row in payload.get("live_watchlist", []) if isinstance(row, dict)]
+    live_market_signal_cards = [row for row in payload.get("live_market_signal_cards", []) if isinstance(row, dict)]
+    live_match_summary = payload.get("live_matched_profitable_weather_summary") or {}
+    live_recommendation = live_match_summary.get("operator_recommendation") or {}
     return {
         "output_json": str(output_path),
         "classified_account_counts": payload.get("classified_account_counts", {}),
         "priority_account_count": len(payload.get("priority_weather_accounts") or []),
         "live_watchlist_count": len(live_watchlist),
         "live_matched_profitable_weather_count": sum(int(row.get("matched_profitable_weather_count") or 0) for row in live_watchlist),
+        "live_unique_matched_profitable_weather_count": _to_int(live_match_summary.get("unique_account_count")),
+        "live_weather_heavy_unique_count": _to_int(live_match_summary.get("weather_heavy_unique_count")),
+        "live_signal_only_unique_count": _to_int(live_match_summary.get("signal_only_unique_count")),
+        "live_top_account_handles_by_pnl": list(live_match_summary.get("top_account_handles_by_pnl") or []),
+        "live_matched_market_ids": list(live_match_summary.get("matched_market_ids") or []),
+        "live_operator_recommendation_status": live_recommendation.get("status"),
+        "live_operator_recommendation_next_actions": list(live_recommendation.get("next_actions") or []),
+        "live_market_signal_card_count": len(live_market_signal_cards),
+        "live_market_signal_cards": live_market_signal_cards[:5],
+        "discord_operator_brief": payload.get("discord_operator_brief"),
         "live_top_blockers": payload.get("live_operator_summary", {}).get("top_blockers", []),
         "live_top_actions": payload.get("live_operator_summary", {}).get("top_actions", []),
     }
+
+
+def _unique(values: list[str]) -> list[str]:
+    unique_values: list[str] = []
+    for value in values:
+        if value not in unique_values:
+            unique_values.append(value)
+    return unique_values
 
 
 def _is_weather_heavy(account: dict[str, Any]) -> bool:

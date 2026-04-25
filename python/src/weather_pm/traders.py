@@ -86,25 +86,35 @@ def build_weather_trader_registry(traders: Iterable[WeatherTrader]) -> dict[str,
 
 
 def _trader_from_row(row: dict[str, str]) -> WeatherTrader:
+    active_weather = _to_int(row.get("active_weather_positions"))
+    active_nonweather = _to_int(row.get("active_nonweather_positions"))
+    recent_weather = _to_int(row.get("recent_weather_activity"))
+    recent_nonweather = _to_int(row.get("recent_nonweather_activity"))
     return WeatherTrader(
         rank=_to_int(row.get("rank")),
-        handle=str(row.get("userName") or ""),
-        wallet=str(row.get("proxyWallet") or ""),
+        handle=str(row.get("userName") or row.get("handle") or ""),
+        wallet=str(row.get("proxyWallet") or row.get("wallet") or ""),
         weather_pnl_usd=_to_float(row.get("weather_pnl_usd")),
         weather_volume_usd=_to_float(row.get("weather_volume_usd")),
-        pnl_over_volume_pct=_to_float(row.get("pnl_over_volume_pct")),
+        pnl_over_volume_pct=_to_float(row.get("pnl_over_volume_pct") or row.get("pnl_volume_pct")),
         classification=str(row.get("classification") or ""),
         confidence=str(row.get("confidence") or ""),
-        active_positions=_to_int(row.get("active_positions")),
-        active_weather_positions=_to_int(row.get("active_weather_positions")),
-        active_nonweather_positions=_to_int(row.get("active_nonweather_positions")),
-        recent_activity=_to_int(row.get("recent_activity")),
-        recent_weather_activity=_to_int(row.get("recent_weather_activity")),
-        recent_nonweather_activity=_to_int(row.get("recent_nonweather_activity")),
+        active_positions=_to_int(row.get("active_positions")) or active_weather + active_nonweather,
+        active_weather_positions=active_weather,
+        active_nonweather_positions=active_nonweather,
+        recent_activity=_to_int(row.get("recent_activity")) or recent_weather + recent_nonweather,
+        recent_weather_activity=recent_weather,
+        recent_nonweather_activity=recent_nonweather,
         sample_weather_titles=_split_titles(row.get("sample_weather_titles")),
         sample_nonweather_titles=_split_titles(row.get("sample_nonweather_titles")),
-        profile_url=str(row.get("profile_url") or ""),
+        profile_url=str(row.get("profile_url") or _profile_url(row.get("proxyWallet") or row.get("wallet"))),
     )
+
+
+def _profile_url(wallet: str | None) -> str:
+    if not wallet:
+        return ""
+    return f"https://polymarket.com/profile/{wallet}"
 
 
 def _to_int(value: str | None) -> int:

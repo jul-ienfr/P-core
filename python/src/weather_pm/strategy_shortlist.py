@@ -142,6 +142,12 @@ def _monitor_paper_resolution_payload(row: dict[str, Any]) -> dict[str, Any] | N
         "mode": "paper_only",
         "trigger": "confirmed_outcome_pending",
     }
+    if row.get("source_history_url") is not None:
+        watch_row["source_history_url"] = row.get("source_history_url")
+    resolution_status = _operator_resolution_status(row)
+    if resolution_status is not None:
+        watch_row["resolution_status"] = resolution_status
+    return watch_row
 
 
 def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
@@ -157,6 +163,28 @@ def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
         **({"depth_usd": depth} if depth is not None else {}),
         **({"fetched_at": snapshot.get("fetched_at")} if snapshot.get("fetched_at") else {}),
     }
+
+
+def _operator_resolution_status(row: dict[str, Any]) -> dict[str, Any] | None:
+    latest_direct = row.get("latest_direct") if isinstance(row.get("latest_direct"), dict) else None
+    official_daily_extract = row.get("official_daily_extract") if isinstance(row.get("official_daily_extract"), dict) else None
+    provisional_outcome = row.get("provisional_outcome") if isinstance(row.get("provisional_outcome"), dict) else None
+    confirmed_outcome = row.get("confirmed_outcome") if isinstance(row.get("confirmed_outcome"), dict) else None
+    action_operator = row.get("resolution_action_operator")
+    if not any([latest_direct, official_daily_extract, provisional_outcome, confirmed_outcome, action_operator]):
+        return None
+    status = {
+        "latest_direct": latest_direct,
+        "official_daily_extract": official_daily_extract,
+        "provisional_outcome": provisional_outcome,
+        "confirmed_outcome": confirmed_outcome,
+        "action_operator": action_operator,
+        "source_latest_url": row.get("source_latest_url"),
+        "source_history_url": row.get("source_history_url"),
+    }
+    if isinstance(row.get("resolution_latency"), dict):
+        status["latency"] = row.get("resolution_latency")
+    return status
 
 
 def _operator_next_actions(row: dict[str, Any]) -> list[str]:
@@ -309,6 +337,12 @@ def _shortlist_row(
         "source_latency_priority": opportunity.get("source_latency_priority"),
         "source_polling_focus": opportunity.get("source_polling_focus"),
         "source_latest_url": opportunity.get("source_latest_url"),
+        "source_history_url": opportunity.get("source_history_url"),
+        "latest_direct": _optional_mapping(opportunity.get("latest_direct")),
+        "official_daily_extract": _optional_mapping(opportunity.get("official_daily_extract")),
+        "provisional_outcome": _optional_mapping(opportunity.get("provisional_outcome")),
+        "confirmed_outcome": _optional_mapping(opportunity.get("confirmed_outcome")),
+        "resolution_action_operator": opportunity.get("resolution_action_operator") or opportunity.get("action_operator"),
         "matched_traders": [str(account.get("handle") or "") for account in matched_accounts[:5] if account.get("handle")],
         "trader_archetype_match": _unique(str(account.get("primary_archetype") or "") for account in matched_accounts if account.get("primary_archetype")),
         "surface_inconsistency_count": len(inconsistencies),
@@ -418,6 +452,10 @@ def _optional_number(value: Any) -> float | None:
         return round(float(value), 6)
     except (TypeError, ValueError):
         return None
+
+
+def _optional_mapping(value: Any) -> dict[str, Any] | None:
+    return dict(value) if isinstance(value, dict) else None
 
 
 def _counts(values: Any) -> dict[str, int]:

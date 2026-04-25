@@ -9,6 +9,8 @@ from weather_pm.traders import WeatherTrader
 _THRESHOLD_RE = re.compile(r"temperature in (?P<city>.+?) be .+? or (?P<direction>higher|below) on (?P<date>.+?)\?", re.I)
 _RANGE_RE = re.compile(r"temperature in (?P<city>.+?) be between .+? on (?P<date>.+?)\?", re.I)
 _EXACT_RE = re.compile(r"temperature in (?P<city>.+?) be (?:exactly )?-?\d+(?:\.\d+)?(?:°)?[CF] on (?P<date>.+?)\?", re.I)
+_SLUG_DATE_RE = re.compile(r"-(?P<month>january|february|march|april|may|june|july|august|september|october|november|december)-(?P<day>\d{1,2})(?:-|$)", re.I)
+_TITLE_PREFIX_RE = re.compile(r"^(?P<title>Will .+?\?)(?:\s|$)", re.I)
 
 
 def extract_weather_strategy_rules(traders: Iterable[WeatherTrader]) -> dict[str, Any]:
@@ -62,15 +64,30 @@ def _account_strategy(trader: WeatherTrader) -> dict[str, Any]:
 
 
 def _parse_title(title: str) -> dict[str, str] | None:
-    stripped = title.strip()
+    stripped = _normalize_observed_title(title)
     for market_type, pattern in (("threshold", _THRESHOLD_RE), ("exact_range", _RANGE_RE), ("exact_value", _EXACT_RE)):
         match = pattern.search(stripped)
         if match:
             return {"market_type": market_type, "city": match.group("city"), "date": match.group("date")}
     city_match = re.search(r"temperature in (?P<city>.+?) be ", stripped, re.I)
     if city_match:
-        return {"market_type": "weather_other", "city": city_match.group("city"), "date": "unknown"}
+        return {"market_type": "weather_other", "city": city_match.group("city"), "date": _date_from_slug(title)}
     return None
+
+
+def _normalize_observed_title(raw_title: str) -> str:
+    stripped = raw_title.strip()
+    prefix = _TITLE_PREFIX_RE.search(stripped)
+    if prefix:
+        return prefix.group("title")
+    return stripped
+
+
+def _date_from_slug(raw_title: str) -> str:
+    match = _SLUG_DATE_RE.search(raw_title)
+    if not match:
+        return "unknown"
+    return f"{match.group('month').title()} {int(match.group('day'))}"
 
 
 def _infer_archetype(market_counts: Counter[str], event_counts: Counter[tuple[str, str]]) -> str:
