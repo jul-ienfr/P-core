@@ -182,6 +182,10 @@ def score_market_request(payload: dict[str, Any]) -> dict[str, Any]:
     except (TypeError, ValueError) as exc:
         raise ValueError("yes_price must be numeric") from exc
 
+    source = payload.get("source", "fixture")
+    if source not in {"fixture", "live"}:
+        raise ValueError("source must be 'fixture' or 'live'")
+    infer_default_resolution = _optional_bool(payload.get("infer_default_resolution"))
     result = score_market_from_question(
         question.strip(),
         yes_price_value,
@@ -189,6 +193,8 @@ def score_market_request(payload: dict[str, Any]) -> dict[str, Any]:
         description=_optional_string(payload.get("description")),
         rules=_optional_string(payload.get("rules")),
         market_data=_market_data_from_payload(payload),
+        live=(source == "live"),
+        infer_default_resolution=bool(infer_default_resolution),
     )
     execution_costs = _execution_quote_from_payload(payload)
     if execution_costs is not None:
@@ -234,6 +240,8 @@ def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
             description=_optional_string(payload.get("description")),
             rules=_optional_string(payload.get("rules")),
             market_data=_market_data_from_payload(payload),
+            live=(_coerce_source(payload.get("source", "fixture")) == "live"),
+            infer_default_resolution=True,
         )
         execution_quote = _execution_quote_from_payload(payload)
         if execution_quote is not None:
@@ -357,6 +365,7 @@ def live_paper_cycle_request(payload: dict[str, Any], *, run_id: str | None = No
     scored_count = 0
     traded_count = 0
     skipped_reasons: dict[str, int] = {}
+    filtered_reasons: dict[str, int] = {}
 
     for market in markets:
         market_id = str(market.get("id", "")).strip()
@@ -364,6 +373,12 @@ def live_paper_cycle_request(payload: dict[str, Any], *, run_id: str | None = No
             continue
         score_bundle = _score_market_from_market_id(market_id, source=source, max_impact_bps=max_impact_bps)
         scored_count += 1
+        post_score_filter_reason = _post_score_filter_reason(market, score_bundle)
+        if post_score_filter_reason is not None:
+            filtered_reasons[post_score_filter_reason] = filtered_reasons.get(post_score_filter_reason, 0) + 1
+            skipped_reasons[post_score_filter_reason] = skipped_reasons.get(post_score_filter_reason, 0) + 1
+            results.append(_paper_cycle_scored_skip_market_result(run_id=resolved_run_id, market_id=market_id, market=market, score_bundle=score_bundle, payload=payload, skip_reason=post_score_filter_reason))
+            continue
         decision_status = _decision_status(score_bundle)
         if decision_status in {"trade", "trade_small"}:
             market_result = _paper_cycle_tradeable_market_result(run_id=resolved_run_id, market_id=market_id, market=market, score_bundle=score_bundle, payload=payload)
@@ -388,6 +403,9 @@ def live_paper_cycle_request(payload: dict[str, Any], *, run_id: str | None = No
     if pre_filter_reasons:
         summary["pre_filtered"] = sum(pre_filter_reasons.values())
         summary["pre_filter_reasons"] = dict(sorted(pre_filter_reasons.items()))
+    if filtered_reasons:
+        summary["filtered_out"] = sum(filtered_reasons.values())
+        summary["filtered_reasons"] = dict(sorted(filtered_reasons.items()))
 
     return {
         "run_id": resolved_run_id,
@@ -426,6 +444,7 @@ def _compact_opportunity(market_result: dict[str, Any]) -> dict[str, Any]:
     edge_info = score_bundle.get("edge") if isinstance(score_bundle.get("edge"), dict) else {}
     execution_info = score_bundle.get("execution") if isinstance(score_bundle.get("execution"), dict) else {}
     decision_info = score_bundle.get("decision") if isinstance(score_bundle.get("decision"), dict) else {}
+    source_route = score_bundle.get("source_route") if isinstance(score_bundle.get("source_route"), dict) else {}
 
     opportunity: dict[str, Any] = {
         "rank": 0,
@@ -440,6 +459,8 @@ def _compact_opportunity(market_result: dict[str, Any]) -> dict[str, Any]:
         "order_book_depth_usd": _rounded_optional_number(execution_info.get("order_book_depth_usd")),
         "hours_to_resolution": _rounded_optional_number(execution_info.get("hours_to_resolution"), market.get("hours_to_resolution")),
     }
+    if source_route:
+        _add_source_route_summary(opportunity, source_route)
     skip_reason = market_result.get("skip_reason")
     if isinstance(skip_reason, str) and skip_reason:
         opportunity["skip_reason"] = skip_reason
@@ -447,6 +468,29 @@ def _compact_opportunity(market_result: dict[str, Any]) -> dict[str, Any]:
     if isinstance(reasons, list) and reasons:
         opportunity["reasons"] = [str(reason) for reason in reasons]
     return opportunity
+
+
+def _add_source_route_summary(opportunity: dict[str, Any], source_route: dict[str, Any]) -> None:
+    provider = source_route.get("provider")
+    if provider is not None:
+        opportunity["source_provider"] = str(provider)
+    station_code = source_route.get("station_code")
+    if station_code is not None:
+        opportunity["source_station_code"] = str(station_code)
+    if "direct" in source_route:
+        opportunity["source_direct"] = bool(source_route.get("direct"))
+    latency_tier = source_route.get("latency_tier")
+    if latency_tier is not None:
+        opportunity["source_latency_tier"] = str(latency_tier)
+    latency_priority = source_route.get("latency_priority")
+    if latency_priority is not None:
+        opportunity["source_latency_priority"] = str(latency_priority)
+    polling_focus = source_route.get("polling_focus")
+    if polling_focus is not None:
+        opportunity["source_polling_focus"] = str(polling_focus)
+    latest_url = source_route.get("latest_url")
+    if latest_url is not None:
+        opportunity["source_latest_url"] = str(latest_url)
 
 
 def _opportunity_sort_key(opportunity: dict[str, Any]) -> tuple[int, float, str]:
@@ -512,17 +556,25 @@ def _paper_cycle_tradeable_market_result(*, run_id: str, market_id: str, market:
     return _paper_cycle_market_result_payload(market_id=market_id, market=market, score_bundle=score_bundle, simulation=simulation)
 
 
-def _paper_cycle_scored_skip_market_result(*, run_id: str, market_id: str, market: dict[str, Any], score_bundle: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+def _paper_cycle_scored_skip_market_result(
+    *,
+    run_id: str,
+    market_id: str,
+    market: dict[str, Any],
+    score_bundle: dict[str, Any],
+    payload: dict[str, Any],
+    skip_reason: str = "decision_not_tradeable",
+) -> dict[str, Any]:
     simulation = _skipped_paper_trade_simulation(
         run_id=run_id,
         market_id=market_id,
         market=market,
         requested_quantity=_optional_number(payload.get("requested_quantity")) or 0.0,
         score_bundle=score_bundle,
-        skip_reason="decision_not_tradeable",
+        skip_reason=skip_reason,
         payload=payload,
     )
-    return _paper_cycle_market_result_payload(market_id=market_id, market=market, score_bundle=score_bundle, simulation=simulation, skip_reason="decision_not_tradeable")
+    return _paper_cycle_market_result_payload(market_id=market_id, market=market, score_bundle=score_bundle, simulation=simulation, skip_reason=skip_reason)
 
 
 def _paper_cycle_skipped_market_result(*, run_id: str, market_id: str, market: dict[str, Any], skip_reason: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -599,6 +651,33 @@ def _pre_score_skip_reason(market: dict[str, Any]) -> str | None:
         return "insufficient_executable_depth"
     if order_book_depth_usd is not None and order_book_depth_usd < 1.0:
         return "insufficient_executable_depth"
+    return None
+
+
+def _post_score_filter_reason(market: dict[str, Any], score_bundle: dict[str, Any]) -> str | None:
+    execution = score_bundle.get("execution") if isinstance(score_bundle.get("execution"), dict) else {}
+    best_effort_reason = execution.get("best_effort_reason")
+    if isinstance(best_effort_reason, str) and best_effort_reason:
+        return best_effort_reason
+
+    fillable_size_usd = _optional_number(execution.get("fillable_size_usd"))
+    if fillable_size_usd is not None and fillable_size_usd < 25.0:
+        return "tiny_fillable_size"
+
+    slippage_risk = execution.get("slippage_risk")
+    if isinstance(slippage_risk, str) and slippage_risk.lower() == "high":
+        return "high_slippage_risk"
+
+    spread = _optional_number(execution.get("spread"))
+    if spread is None:
+        spread = _optional_number(market.get("spread"))
+    if spread is not None and spread >= 0.07:
+        return "wide_spread"
+
+    yes_price = _market_yes_price(market)
+    if yes_price <= 0.01 or yes_price >= 0.99:
+        return "extreme_price"
+
     return None
 
 
@@ -903,6 +982,20 @@ def _optional_number(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError) as exc:
         raise ValueError("optional numeric fields must be numeric") from exc
+
+
+def _optional_bool(value: Any) -> bool | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+    raise ValueError("optional boolean fields must be booleans")
 
 
 def _truthy(value: Any) -> bool:

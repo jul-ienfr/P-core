@@ -19,6 +19,7 @@ def test_build_resolution_source_route_targets_noaa_station_latest_and_history_d
     assert route.station_code == "KDEN"
     assert route.direct is True
     assert route.latency_tier == "direct_latest"
+    assert route.latency_priority == "direct_source_low_latency"
     assert route.latest_url == "https://api.weather.gov/stations/KDEN/observations/latest"
     assert route.history_url == "https://api.weather.gov/stations/KDEN/observations?start=2026-04-24T00%3A00%3A00Z&end=2026-04-25T23%3A59%3A59Z"
     assert route.polling_focus == "station_observations_latest"
@@ -41,6 +42,7 @@ def test_build_resolution_source_route_targets_wunderground_station_without_geoc
     assert route.provider == "wunderground"
     assert route.station_code == "KMIA"
     assert route.direct is True
+    assert route.latency_priority == "direct_source_low_latency"
     assert route.latest_url == "https://www.wunderground.com/history/daily/us/fl/miami/KMIA"
     assert route.history_url == "https://www.wunderground.com/history/daily/us/fl/miami/KMIA/date/2026-04-23"
     assert route.polling_focus == "station_history_page"
@@ -61,5 +63,6 @@ def test_build_resolution_source_route_marks_unknown_source_as_unsupported_focus
     assert route.latest_url is None
     assert route.history_url is None
     assert route.latency_tier == "unsupported"
+    assert route.latency_priority == "manual_review_required"
     assert route.manual_review_needed is True
     assert "No direct route" in route.reason

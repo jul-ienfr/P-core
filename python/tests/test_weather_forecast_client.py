@@ -9,8 +9,9 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-from weather_pm.forecast_client import OpenMeteoForecastClient, build_forecast_bundle
+from weather_pm.forecast_client import DirectStationForecastClient, OpenMeteoForecastClient, build_forecast_bundle
 from weather_pm.market_parser import parse_market_question
+from weather_pm.resolution_parser import parse_resolution_metadata
 
 
 class _FakeOpenMeteoClient(OpenMeteoForecastClient):
@@ -31,6 +32,17 @@ class _FailingOpenMeteoClient(OpenMeteoForecastClient):
 
     def _fetch_json(self, url: str) -> dict[str, object]:
         raise RuntimeError(f"boom for {url}")
+
+
+class _FakeDirectStationClient(DirectStationForecastClient):
+    def __init__(self, payload: dict[str, object]) -> None:
+        super().__init__(timeout=0.1)
+        self.payload = payload
+        self.requested_urls: list[str] = []
+
+    def _fetch_json(self, url: str) -> dict[str, object]:
+        self.requested_urls.append(url)
+        return self.payload
 
 
 def test_open_meteo_client_builds_high_temperature_bundle_for_denver_in_fahrenheit() -> None:
@@ -136,3 +148,35 @@ def test_build_forecast_bundle_falls_back_to_synthetic_surface_when_live_lookup_
     assert bundle.consensus_value == 64.2
     assert bundle.dispersion == 1.2
     assert bundle.historical_station_available is True
+
+
+def test_direct_station_client_builds_hong_kong_observatory_bundle_from_current_weather() -> None:
+    structure = parse_market_question("Will the highest temperature in Hong Kong be 29°C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.hko.gov.hk/en/wxinfo/currwx/current.htm",
+        description="This market resolves according to the official highest temperature recorded by the Hong Kong Observatory.",
+        rules="Source: Hong Kong Observatory daily extract, finalized by weather.gov.hk.",
+    )
+    client = _FakeDirectStationClient(
+        {
+            "temperature": {
+                "recordTime": "2026-04-25T17:00:00+08:00",
+                "data": [
+                    {"place": "King's Park", "value": 26, "unit": "C"},
+                    {"place": "Hong Kong Observatory", "value": 25, "unit": "C"},
+                ],
+            }
+        }
+    )
+
+    bundle = client.build_forecast_bundle(structure, resolution)
+
+    assert client.requested_urls == ["https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"]
+    assert bundle.source_count == 1
+    assert bundle.consensus_value == 25.0
+    assert bundle.dispersion == 0.8
+    assert bundle.historical_station_available is True
+    assert bundle.source_provider == "hong_kong_observatory"
+    assert bundle.source_station_code is None
+    assert bundle.source_url == "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    assert bundle.source_latency_tier == "direct"

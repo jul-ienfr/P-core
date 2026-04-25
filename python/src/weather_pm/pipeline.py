@@ -30,14 +30,21 @@ def score_market_from_question(
     rules: str | None = None,
     market_data: dict[str, object] | None = None,
     max_impact_bps: float | None = None,
+    live: bool = False,
+    direct_client=None,
+    infer_default_resolution: bool = False,
 ) -> dict[str, object]:
     structure = parse_market_question(question)
+    if infer_default_resolution:
+        resolution_source = resolution_source or _default_resolution_source(structure)
+        description = description or _default_description(structure)
+        rules = rules or _default_rules(structure)
     resolution = parse_resolution_metadata(
-        resolution_source=resolution_source or _default_resolution_source(structure),
-        description=description or _default_description(structure),
-        rules=rules or _default_rules(structure),
+        resolution_source=resolution_source,
+        description=description,
+        rules=rules,
     )
-    forecast_bundle = _default_forecast(structure, resolution)
+    forecast_bundle = build_forecast_bundle(structure, live=live, resolution=resolution, direct_client=direct_client)
     model_output = _default_model(structure, forecast_bundle)
     neighbor_context = build_neighbor_context(structure, list_fixture_weather_markets())
     execution_market_data = dict(market_data or _default_execution_market_data())

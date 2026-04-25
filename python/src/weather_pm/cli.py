@@ -18,7 +18,9 @@ from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
 from weather_pm.source_routing import build_resolution_source_route
-from weather_pm.traders import build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
+from weather_pm.strategy_extractor import extract_weather_strategy_rules
+from weather_pm.strategy_shortlist import build_strategy_shortlist
+from weather_pm.traders import WeatherTrader, build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
 
 
 _VALID_SOURCES = ("fixture", "live")
@@ -67,6 +69,15 @@ def build_parser() -> argparse.ArgumentParser:
     import_traders.add_argument("--registry-out", required=True, help="Output JSON registry path")
     import_traders.add_argument("--reverse-engineering-out", required=True, help="Output JSON reverse-engineering report path")
     import_traders.add_argument("--min-pnl", required=False, type=float, default=0.0, help="Minimum weather PnL for reverse engineering report")
+
+    strategy_report = subparsers.add_parser("strategy-report", help="Extract reusable weather strategy rules from a reverse-engineering report")
+    strategy_report.add_argument("--reverse-engineering-json", required=True, help="Reverse-engineering JSON produced by import-weather-traders")
+
+    strategy_shortlist = subparsers.add_parser("strategy-shortlist", help="Rank paper-cycle opportunities using profitable weather trader strategies and event-surface anomalies")
+    strategy_shortlist.add_argument("--strategy-report-json", required=True, help="Strategy report JSON produced by strategy-report")
+    strategy_shortlist.add_argument("--opportunity-report-json", required=True, help="Compact opportunity report JSON produced by paper-cycle-report")
+    strategy_shortlist.add_argument("--event-surface-json", required=False, help="Optional event surface JSON produced by event-surface tooling")
+    strategy_shortlist.add_argument("--limit", required=False, type=int, default=25, help="Maximum shortlisted opportunities")
 
     paper_cycle = subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
     _add_paper_cycle_arguments(paper_cycle)
@@ -128,6 +139,7 @@ def main() -> int:
                     description=args.description,
                     rules=args.rules,
                     max_impact_bps=args.max_impact_bps,
+                    infer_default_resolution=True,
                 )
             )
         )
@@ -143,6 +155,23 @@ def main() -> int:
 
     if args.command == "import-weather-traders":
         print(json.dumps(import_weather_traders(args.classified_csv, args.registry_out, args.reverse_engineering_out, min_pnl=args.min_pnl)))
+        return 0
+
+    if args.command == "strategy-report":
+        print(json.dumps(strategy_report(args.reverse_engineering_json)))
+        return 0
+
+    if args.command == "strategy-shortlist":
+        print(
+            json.dumps(
+                strategy_shortlist_report(
+                    args.strategy_report_json,
+                    args.opportunity_report_json,
+                    event_surface_json=args.event_surface_json,
+                    limit=args.limit,
+                )
+            )
+        )
         return 0
 
     if args.command == "paper-cycle":
@@ -182,6 +211,56 @@ def import_weather_traders(
         "total_accounts": report["total_accounts"],
         "weather_heavy_count": report["weather_heavy_count"],
     }
+
+
+def strategy_report(reverse_engineering_json: str | Path) -> dict[str, Any]:
+    payload = json.loads(Path(reverse_engineering_json).read_text())
+    accounts = payload.get("accounts") if isinstance(payload, dict) else None
+    if not isinstance(accounts, list):
+        raise ValueError("reverse engineering JSON must contain an accounts list")
+    traders = [_weather_trader_from_report_account(account) for account in accounts if isinstance(account, dict)]
+    return extract_weather_strategy_rules(traders)
+
+
+def strategy_shortlist_report(
+    strategy_report_json: str | Path,
+    opportunity_report_json: str | Path,
+    *,
+    event_surface_json: str | Path | None = None,
+    limit: int = 25,
+) -> dict[str, Any]:
+    strategy_payload = json.loads(Path(strategy_report_json).read_text())
+    opportunity_payload = json.loads(Path(opportunity_report_json).read_text())
+    surface_payload = json.loads(Path(event_surface_json).read_text()) if event_surface_json else {"events": []}
+    if not isinstance(strategy_payload, dict):
+        raise ValueError("strategy report JSON must be an object")
+    if not isinstance(opportunity_payload, dict):
+        raise ValueError("opportunity report JSON must be an object")
+    if not isinstance(surface_payload, dict):
+        raise ValueError("event surface JSON must be an object")
+    return build_strategy_shortlist(strategy_payload, opportunity_payload, surface_payload, limit=limit)
+
+
+def _weather_trader_from_report_account(account: dict[str, Any]) -> WeatherTrader:
+    return WeatherTrader(
+        rank=int(account.get("rank") or 0),
+        handle=str(account.get("handle") or ""),
+        wallet=str(account.get("wallet") or ""),
+        weather_pnl_usd=float(account.get("weather_pnl_usd") or 0.0),
+        weather_volume_usd=float(account.get("weather_volume_usd") or 0.0),
+        pnl_over_volume_pct=float(account.get("pnl_over_volume_pct") or 0.0),
+        classification=str(account.get("classification") or ""),
+        confidence=str(account.get("confidence") or ""),
+        active_positions=int(account.get("active_positions") or 0),
+        active_weather_positions=int(account.get("active_weather_positions") or 0),
+        active_nonweather_positions=int(account.get("active_nonweather_positions") or 0),
+        recent_activity=int(account.get("recent_activity") or 0),
+        recent_weather_activity=int(account.get("recent_weather_activity") or 0),
+        recent_nonweather_activity=int(account.get("recent_nonweather_activity") or 0),
+        sample_weather_titles=[str(title) for title in account.get("sample_weather_titles") or []],
+        sample_nonweather_titles=[str(title) for title in account.get("sample_nonweather_titles") or []],
+        profile_url=str(account.get("profile_url") or ""),
+    )
 
 
 def _paper_cycle_payload_from_args(args: argparse.Namespace) -> dict[str, Any]:

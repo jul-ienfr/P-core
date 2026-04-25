@@ -52,6 +52,15 @@ def test_paper_cycle_opportunity_report_ranks_tradeable_real_net_interest_and_st
                     "score": {"total_score": 80.0, "grade": "B"},
                     "decision": {"reasons": ["small trade"]},
                     "execution": {"spread": 0.02, "all_in_cost_bps": 150.0, "order_book_depth_usd": 900.0, "hours_to_resolution": 6.0},
+                    "source_route": {
+                        "provider": "noaa",
+                        "station_code": "KDEN",
+                        "direct": True,
+                        "latency_tier": "direct_latest",
+                        "latency_priority": "direct_source_low_latency",
+                        "polling_focus": "station_observations_latest",
+                        "latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+                    },
                 },
             },
             {
@@ -99,6 +108,13 @@ def test_paper_cycle_opportunity_report_ranks_tradeable_real_net_interest_and_st
         "all_in_cost_bps": 150.0,
         "order_book_depth_usd": 900.0,
         "hours_to_resolution": 6.0,
+        "source_provider": "noaa",
+        "source_station_code": "KDEN",
+        "source_direct": True,
+        "source_latency_tier": "direct_latest",
+        "source_latency_priority": "direct_source_low_latency",
+        "source_polling_focus": "station_observations_latest",
+        "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
         "reasons": ["small trade"],
     }
     assert report["opportunities"][2]["skip_reason"] == "decision_not_tradeable"
@@ -114,6 +130,13 @@ def test_paper_cycle_opportunity_report_ranks_tradeable_real_net_interest_and_st
         "all_in_cost_bps",
         "order_book_depth_usd",
         "hours_to_resolution",
+        "source_provider",
+        "source_station_code",
+        "source_direct",
+        "source_latency_tier",
+        "source_latency_priority",
+        "source_polling_focus",
+        "source_latest_url",
         "reasons",
     }
 
@@ -144,6 +167,13 @@ def test_paper_cycle_report_cli_outputs_compact_fixture_json() -> None:
         "all_in_cost_bps",
         "order_book_depth_usd",
         "hours_to_resolution",
+        "source_provider",
+        "source_station_code",
+        "source_direct",
+        "source_latency_tier",
+        "source_latency_priority",
+        "source_polling_focus",
+        "source_latest_url",
         "reasons",
     }
 
@@ -235,6 +265,131 @@ def test_paper_cycle_report_cli_can_include_skipped_diagnostics() -> None:
     payload = json.loads(result.stdout)
     assert any(item["decision_status"] not in {"trade", "trade_small"} for item in payload["opportunities"])
 
+
+
+def test_live_paper_cycle_applies_conservative_post_score_filters() -> None:
+    from prediction_core.server import live_paper_cycle_request
+
+    markets = [
+        {
+            "id": "clean-trade",
+            "question": "Will the highest temperature in Denver be 64F or higher?",
+            "yes_price": 0.42,
+            "best_bid": 0.41,
+            "best_ask": 0.43,
+            "spread": 0.02,
+            "hours_to_resolution": 10.0,
+            "volume": 10000.0,
+        },
+        {
+            "id": "too-wide",
+            "question": "Will the highest temperature in Denver be 65F or higher?",
+            "yes_price": 0.45,
+            "best_bid": 0.40,
+            "best_ask": 0.49,
+            "spread": 0.09,
+            "hours_to_resolution": 10.0,
+            "volume": 10000.0,
+        },
+        {
+            "id": "too-small",
+            "question": "Will the highest temperature in Denver be 66F or higher?",
+            "yes_price": 0.45,
+            "best_bid": 0.44,
+            "best_ask": 0.46,
+            "spread": 0.02,
+            "hours_to_resolution": 10.0,
+            "volume": 10000.0,
+        },
+        {
+            "id": "too-extreme",
+            "question": "Will the highest temperature in Denver be 67F or higher?",
+            "yes_price": 0.995,
+            "best_bid": 0.99,
+            "best_ask": 0.995,
+            "spread": 0.005,
+            "hours_to_resolution": 10.0,
+            "volume": 10000.0,
+        },
+    ]
+    bundles = {
+        "clean-trade": _score_bundle("trade_small", fillable_size_usd=100.0, spread=0.02, slippage_risk="low"),
+        "too-wide": _score_bundle("trade", fillable_size_usd=100.0, spread=0.09, slippage_risk="low"),
+        "too-small": _score_bundle("trade", fillable_size_usd=10.0, spread=0.02, slippage_risk="low"),
+        "too-extreme": _score_bundle("trade", fillable_size_usd=100.0, spread=0.005, slippage_risk="low"),
+    }
+
+    with patch("prediction_core.server.list_weather_markets", return_value=markets), patch(
+        "prediction_core.server._score_market_from_market_id", side_effect=lambda market_id, **_: bundles[market_id]
+    ):
+        cycle = live_paper_cycle_request({"run_id": "post-score-filters", "source": "live", "limit": 4, "requested_quantity": 1.0})
+
+    assert cycle["summary"]["filtered_out"] == 3
+    assert cycle["summary"]["filtered_reasons"] == {"extreme_price": 1, "tiny_fillable_size": 1, "wide_spread": 1}
+    assert cycle["summary"]["traded"] == 1
+    assert {item["market_id"]: item.get("skip_reason") for item in cycle["markets"]} == {
+        "clean-trade": None,
+        "too-wide": "wide_spread",
+        "too-small": "tiny_fillable_size",
+        "too-extreme": "extreme_price",
+    }
+
+
+def test_live_paper_cycle_reports_missing_quote_before_extreme_price_for_unfillable_markets() -> None:
+    from prediction_core.server import live_paper_cycle_request
+
+    markets = [
+        {
+            "id": "unfillable-extreme",
+            "question": "Will the highest temperature in Dallas be 67°F or below on April 26?",
+            "yes_price": 0.0005,
+            "best_bid": 0.0,
+            "best_ask": 0.999,
+            "hours_to_resolution": 26.0,
+            "volume": 10000.0,
+        }
+    ]
+    bundle = _score_bundle(
+        "skip",
+        fillable_size_usd=0.0,
+        spread=1.0,
+        slippage_risk="high",
+        best_effort_reason="missing_tradeable_quote",
+        reasons=["skip: missing tradeable quote"],
+    )
+
+    with patch("prediction_core.server.list_weather_markets", return_value=markets), patch(
+        "prediction_core.server._score_market_from_market_id", return_value=bundle
+    ):
+        cycle = live_paper_cycle_request({"run_id": "missing-quote-priority", "source": "live", "limit": 1, "requested_quantity": 1.0})
+
+    assert cycle["summary"]["filtered_reasons"] == {"missing_tradeable_quote": 1}
+    assert cycle["markets"][0]["skip_reason"] == "missing_tradeable_quote"
+
+
+def _score_bundle(
+    status: str,
+    *,
+    fillable_size_usd: float,
+    spread: float,
+    slippage_risk: str,
+    best_effort_reason: str | None = None,
+    reasons: list[str] | None = None,
+) -> dict:
+    return {
+        "edge": {"probability_edge": 0.2},
+        "score": {"total_score": 82.0, "grade": "A", "edge_theoretical": 0.66},
+        "decision": {"status": status, "reasons": reasons or ["test fixture"]},
+        "execution": {
+            "spread": spread,
+            "fillable_size_usd": fillable_size_usd,
+            "slippage_risk": slippage_risk,
+            "best_effort_reason": best_effort_reason,
+            "all_in_cost_bps": 120.0,
+            "order_book_depth_usd": 500.0,
+            "hours_to_resolution": 10.0,
+        },
+    }
 
 def _threshold_cycle_payload() -> dict:
     return {

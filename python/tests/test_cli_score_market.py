@@ -8,6 +8,8 @@ from pathlib import Path
 
 from unittest.mock import patch
 
+from weather_pm.models import ForecastBundle
+
 import weather_pm.cli as weather_cli
 
 
@@ -53,6 +55,9 @@ def test_score_market_command_outputs_score_and_decision() -> None:
     assert payload["score"]["grade"] in {"A", "B", "C", "D"}
     assert payload["decision"]["status"] in {"trade", "trade_small", "watchlist", "skip"}
     assert payload["resolution"]["provider"] == "wunderground"
+    assert payload["resolution"]["station_code"] == "KDEN"
+    assert payload["source_route"]["direct"] is True
+    assert payload["source_route"]["latency_priority"] == "direct_source_low_latency"
 
 
 def test_score_market_command_question_accepts_max_impact_bps_override() -> None:
@@ -202,6 +207,18 @@ def test_score_market_command_live_event_extracts_clean_resolution_metadata() ->
 
     with patch("weather_pm.cli.get_market_by_id", return_value=event_market), patch(
         "weather_pm.cli.list_weather_markets", return_value=[event_market]
+    ), patch(
+        "weather_pm.cli.build_forecast_bundle",
+        return_value=ForecastBundle(
+            source_count=1,
+            consensus_value=62.6,
+            dispersion=1.5,
+            historical_station_available=True,
+            source_provider="wunderground",
+            source_station_code="KMIA",
+            source_url="https://www.wunderground.com/history/daily/us/fl/miami/KMIA",
+            source_latency_tier="direct",
+        ),
     ):
         payload = weather_cli._score_market_from_market_id("404359", source="live")
 
@@ -211,7 +228,8 @@ def test_score_market_command_live_event_extracts_clean_resolution_metadata() ->
     assert payload["resolution"]["station_type"] == "airport"
     assert payload["model"]["source_provider"] == "wunderground"
     assert payload["model"]["source_station_code"] == "KMIA"
-    assert payload["model"]["source_latency_tier"] in {"direct", "resolution_direct_target"}
+    assert payload["model"]["source_url"] == "https://www.wunderground.com/history/daily/us/fl/miami/KMIA"
+    assert payload["model"]["source_latency_tier"] == "direct"
     assert payload["source_route"]["provider"] == "wunderground"
     assert payload["source_route"]["station_code"] == "KMIA"
     assert payload["source_route"]["direct"] is True

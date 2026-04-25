@@ -18,6 +18,7 @@ class ResolutionSourceRoute:
     direct: bool
     supported: bool
     latency_tier: str
+    latency_priority: str
     polling_focus: str
     manual_review_needed: bool
     reason: str
@@ -54,6 +55,7 @@ def build_resolution_source_route(
             direct=True,
             supported=True,
             latency_tier="direct_latest",
+            latency_priority="direct_source_low_latency",
             polling_focus="station_observations_latest",
             manual_review_needed=resolution.manual_review_needed,
             reason="NOAA station code found in resolution rules; poll weather.gov station observations directly.",
@@ -71,9 +73,28 @@ def build_resolution_source_route(
             direct=True,
             supported=True,
             latency_tier="direct_latest",
+            latency_priority="direct_source_low_latency",
             polling_focus="station_history_page",
             manual_review_needed=resolution.manual_review_needed,
             reason="Wunderground station page found in resolution rules; poll the station page directly without city geocoding.",
+        )
+
+    if resolution.provider == "hong_kong_observatory":
+        latest_url = _hko_latest_url(resolution.source_url)
+        return ResolutionSourceRoute(
+            provider=resolution.provider,
+            station_code=resolution.station_code,
+            station_name=resolution.station_name or "Hong Kong Observatory",
+            source_url=resolution.source_url,
+            latest_url=latest_url,
+            history_url=_hko_daily_extract_url(),
+            direct=True,
+            supported=True,
+            latency_tier="direct_latest",
+            latency_priority="direct_source_low_latency",
+            polling_focus="hko_current_weather_and_daily_extract",
+            manual_review_needed=resolution.manual_review_needed,
+            reason="Hong Kong Observatory source found in resolution rules; poll HKO current weather and daily extract directly.",
         )
 
     return ResolutionSourceRoute(
@@ -86,6 +107,7 @@ def build_resolution_source_route(
         direct=False,
         supported=False,
         latency_tier="unsupported",
+        latency_priority="manual_review_required",
         polling_focus="manual_review",
         manual_review_needed=True,
         reason=f"No direct route for provider={resolution.provider!r} station={resolution.station_code!r}; manual source review required.",
@@ -109,3 +131,13 @@ def _wunderground_history_url(source_url: str, *, start_date: str | None, end_da
     if start_date != end_date:
         return None
     return f"{source_url.rstrip('/')}/date/{start_date}"
+
+
+def _hko_latest_url(source_url: str | None) -> str:
+    if source_url and "hko.gov.hk" in source_url.lower():
+        return source_url
+    return "https://www.hko.gov.hk/en/wxinfo/currwx/current.htm"
+
+
+def _hko_daily_extract_url() -> str:
+    return "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm"

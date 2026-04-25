@@ -91,6 +91,7 @@ def run_weather_workflow(
             "withdrawal_fee_usd": withdrawal_fee_usd,
             "bids": bids,
             "asks": asks,
+            "infer_default_resolution": run_id is not None and market_id is not None,
         }
     )
 

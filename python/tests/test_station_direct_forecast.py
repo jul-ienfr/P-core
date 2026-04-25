@@ -101,3 +101,33 @@ def test_build_forecast_bundle_prefers_direct_resolution_station_before_city_geo
     assert bundle.consensus_value == 68.0
     assert bundle.source_provider == "noaa"
     assert bundle.source_station_code == "KDEN"
+
+
+def test_build_forecast_bundle_preserves_direct_resolution_target_when_fetch_falls_back() -> None:
+    class _FailingDirectClient(DirectStationForecastClient):
+        def build_forecast_bundle(self, structure, resolution):
+            raise RuntimeError("direct station unavailable")
+
+    class _FailingCityClient:
+        def build_forecast_bundle(self, structure):
+            raise RuntimeError("city fallback unavailable")
+
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Resolution source: NOAA daily climate report for station KDEN",
+        description="Official observed high temperature at Denver International Airport station KDEN.",
+        rules="Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
+    )
+
+    bundle = build_forecast_bundle(
+        structure,
+        live=True,
+        resolution=resolution,
+        direct_client=_FailingDirectClient(),
+        client=_FailingCityClient(),
+    )
+
+    assert bundle.consensus_value == 64.2
+    assert bundle.source_provider == "noaa"
+    assert bundle.source_station_code == "KDEN"
+    assert bundle.source_latency_tier == "resolution_direct_target"

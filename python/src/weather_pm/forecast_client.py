@@ -21,6 +21,7 @@ def build_forecast_bundle(
     if not live:
         return build_synthetic_forecast_bundle(structure)
 
+    direct_target = _direct_resolution_target(resolution)
     if resolution is not None:
         station_client = direct_client or DirectStationForecastClient()
         try:
@@ -30,9 +31,15 @@ def build_forecast_bundle(
 
     forecast_client = client or OpenMeteoForecastClient()
     try:
-        return forecast_client.build_forecast_bundle(structure)
+        bundle = forecast_client.build_forecast_bundle(structure)
+        if direct_target is not None:
+            return _bundle_with_resolution_target(bundle, direct_target)
+        return bundle
     except Exception:
-        return build_synthetic_forecast_bundle(structure)
+        bundle = build_synthetic_forecast_bundle(structure)
+        if direct_target is not None:
+            return _bundle_with_resolution_target(bundle, direct_target)
+        return bundle
 
 
 def build_synthetic_forecast_bundle(structure: MarketStructure) -> ForecastBundle:
@@ -70,6 +77,12 @@ class DirectStationForecastClient:
             payload = self._fetch_json(resolution.source_url)
             value = self._extract_wunderground_value(structure, payload)
             return self._bundle(structure, resolution, value=value, url=resolution.source_url)
+
+        if resolution.provider == "hong_kong_observatory":
+            url = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+            payload = self._fetch_json(url)
+            value = self._extract_hko_value(structure, payload)
+            return self._bundle(structure, resolution, value=value, url=url)
 
         raise ValueError(f"no direct station route for provider={resolution.provider!r}")
 
@@ -125,6 +138,27 @@ class DirectStationForecastClient:
             raise ValueError("Wunderground payload missing temperature extrema")
         return _convert_temperature(value, from_unit=source_unit, to_unit=structure.unit)
 
+    def _extract_hko_value(self, structure: MarketStructure, payload: dict[str, Any]) -> float:
+        temperature = payload.get("temperature")
+        if not isinstance(temperature, dict):
+            raise ValueError("HKO payload missing temperature")
+        observations = temperature.get("data")
+        if not isinstance(observations, list) or not observations:
+            raise ValueError("HKO payload missing temperature observations")
+        fallback_values: list[float] = []
+        for observation in observations:
+            if not isinstance(observation, dict):
+                continue
+            if observation.get("value") is None:
+                continue
+            value = _convert_temperature(float(observation["value"]), from_unit=str(observation.get("unit") or "C").lower(), to_unit=structure.unit)
+            if str(observation.get("place") or "").strip().lower() == "hong kong observatory":
+                return value
+            fallback_values.append(value)
+        if not fallback_values:
+            raise ValueError("HKO payload missing numeric temperature observations")
+        return min(fallback_values) if structure.measurement_kind == "low" else max(fallback_values)
+
     def _extract_unit_value(self, properties: dict[str, Any], key: str) -> float | None:
         entry = properties.get(key)
         if not isinstance(entry, dict) or entry.get("value") is None:
@@ -134,6 +168,27 @@ class DirectStationForecastClient:
     def _fetch_json(self, url: str) -> dict[str, Any]:
         with urlopen(url, timeout=self.timeout) as response:
             return json.loads(response.read().decode("utf-8"))
+
+
+def _direct_resolution_target(resolution: ResolutionMetadata | None) -> ResolutionMetadata | None:
+    if resolution is None:
+        return None
+    if resolution.provider in {"noaa", "wunderground", "hong_kong_observatory"} and (resolution.station_code or resolution.source_url or resolution.provider == "hong_kong_observatory"):
+        return resolution
+    return None
+
+
+def _bundle_with_resolution_target(bundle: ForecastBundle, resolution: ResolutionMetadata) -> ForecastBundle:
+    return ForecastBundle(
+        source_count=bundle.source_count,
+        consensus_value=bundle.consensus_value,
+        dispersion=bundle.dispersion,
+        historical_station_available=bundle.historical_station_available,
+        source_provider=bundle.source_provider or resolution.provider,
+        source_station_code=bundle.source_station_code or resolution.station_code,
+        source_url=bundle.source_url or resolution.source_url,
+        source_latency_tier=bundle.source_latency_tier if bundle.source_latency_tier != "fallback" else "resolution_direct_target",
+    )
 
 
 class OpenMeteoForecastClient:
