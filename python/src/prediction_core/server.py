@@ -23,6 +23,7 @@ from weather_pm.cli import (
     resolution_status_for_market_id,
     station_history_for_market_id,
     station_latest_for_market_id,
+    station_source_plan_for_market_id,
 )
 from weather_pm.market_parser import parse_market_question
 from weather_pm.pipeline import score_market_from_question
@@ -80,6 +81,11 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
 
             if self.path == "/weather/station-latest":
                 result = station_latest_request(payload)
+                self._json_response(200, result)
+                return
+
+            if self.path == "/weather/station-source-plan":
+                result = station_source_plan_request(payload)
                 self._json_response(200, result)
                 return
 
@@ -230,6 +236,17 @@ def station_latest_request(payload: dict[str, Any]) -> dict[str, Any]:
     market_id = _required_string(payload, "market_id")
     source = _coerce_source(payload.get("source", "live"))
     return station_latest_for_market_id(market_id, source=source)
+
+
+def station_source_plan_request(payload: dict[str, Any]) -> dict[str, Any]:
+    market_id = _required_string(payload, "market_id")
+    source = _coerce_source(payload.get("source", "live"))
+    return station_source_plan_for_market_id(
+        market_id,
+        source=source,
+        start_date=_optional_string(payload.get("start_date")),
+        end_date=_optional_string(payload.get("end_date")),
+    )
 
 
 def resolution_status_request(payload: dict[str, Any]) -> dict[str, Any]:

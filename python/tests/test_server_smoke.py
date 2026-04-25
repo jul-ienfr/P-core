@@ -266,6 +266,59 @@ def test_station_latest_endpoint_fetches_latest_direct_resolution_station_observ
     assert payload["latency"]["latest_value"] == 68.0
 
 
+def test_station_source_plan_endpoint_exposes_best_direct_station_source_plan() -> None:
+    from unittest.mock import patch
+
+    expected = {
+        "market_id": "denver-high-64",
+        "source": "fixture",
+        "station_binding": {
+            "exact_station_match": True,
+            "latest_candidates": [{"url": "https://api.weather.gov/stations/KDEN/observations/latest"}],
+        },
+        "source_selection": {
+            "best_latest": {"provider": "noaa", "station_code": "KDEN", "source_lag_seconds": 300},
+            "best_final": {"provider": "noaa", "polling_focus": "noaa_official_daily_summary"},
+            "operator_action": "poll_best_latest_station_until_threshold_then_confirm_with_official_final",
+        },
+    }
+
+    with patch("prediction_core.server.station_source_plan_for_market_id", return_value=expected) as plan_mock:
+        server, thread, port = _start_server()
+        try:
+            status, payload = _json_request(
+                f"http://127.0.0.1:{port}/weather/station-source-plan",
+                method="POST",
+                payload={"market_id": "denver-high-64", "source": "fixture", "start_date": "2026-04-25", "end_date": "2026-04-25"},
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    assert status == 200
+    assert payload == expected
+    plan_mock.assert_called_once_with("denver-high-64", source="fixture", start_date="2026-04-25", end_date="2026-04-25")
+
+
+def test_station_source_plan_endpoint_rejects_missing_market_id() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/station-source-plan",
+            method="POST",
+            payload={"source": "fixture", "start_date": "2026-04-25", "end_date": "2026-04-25"},
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+    assert status == 400
+    assert payload["status"] == "error"
+    assert payload["message"] == "market_id is required"
+
+
 def test_resolution_status_endpoint_returns_resolution_status_envelope() -> None:
     from unittest.mock import patch
 
