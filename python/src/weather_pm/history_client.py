@@ -503,7 +503,7 @@ class StationHistoryClient:
             summary=_summarize(points),
             polling_focus=polling_focus,
             expected_lag_seconds=expected_lag_seconds,
-            source_lag_seconds=self._source_lag_seconds(points) if latency_tier == "direct_latest" else None,
+            source_lag_seconds=self._source_lag_seconds(points) if latency_tier.startswith("direct") else None,
         )
 
     def _source_lag_seconds(self, points: list[StationHistoryPoint]) -> int | None:
@@ -932,7 +932,7 @@ def _extract_row_timestamp(row: dict[str, Any]) -> str:
     obs_time = row.get("ObsTime")
     if isinstance(obs_time, dict) and obs_time.get("DateTime") not in {None, ""}:
         return str(obs_time["DateTime"])
-    for key in ("timestamp", "time", "datetime", "date", "Date", "DateTime", "fecha", "Fecha", "DT_MEDICAO", "tarih", "tm", "local_date_time_full", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
+    for key in ("timestamp", "time", "datetime", "date", "Date", "DateTime", "fecha", "Fecha", "DT_MEDICAO", "tarih", "tm", "local_date_time_full", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "obs_time", "observationTime", "observation_time", "MESS_DATUM", "reference_ts", "fint", "observed"):
         value = row.get(key)
         if value not in {None, ""}:
             text = str(value)
@@ -965,6 +965,9 @@ def _row_has_explicit_timestamp(row: dict[str, Any]) -> bool:
         "obsTime",
         "obsTimeUtc",
         "obsTimeLocal",
+        "obs_time",
+        "observationTime",
+        "observation_time",
         "MESS_DATUM",
         "reference_ts",
         "fint",
@@ -1015,10 +1018,10 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         candidates.append(measurements)
     if weather_element:
         candidates.append(weather_element)
-    temp = row.get("Temperature") or row.get("temperature")
+    temp = row.get("Temperature") or row.get("temperature") or row.get("airTemperature") or row.get("air_temperature")
     if isinstance(temp, dict):
-        if temp.get("value") is not None:
-            return float(temp["value"]), str(temp.get("unit") or temp.get("unitCode") or structure.unit).lower()
+        if temp.get("value") is not None or temp.get("Value") is not None:
+            return float(temp.get("value") if temp.get("value") is not None else temp["Value"]), str(temp.get("unit") or temp.get("Unit") or temp.get("unitCode") or structure.unit).lower()
         if structure.measurement_kind == "high":
             nested = temp.get("Maximum") or temp.get("maximum")
         elif structure.measurement_kind == "low":

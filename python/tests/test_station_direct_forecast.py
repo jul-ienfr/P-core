@@ -128,6 +128,34 @@ def test_direct_station_client_routes_open_meteo_explicit_payload_without_city_g
     assert bundle.source_latency_tier == "direct_api"
 
 
+def test_direct_station_client_routes_aviation_weather_metar_station_without_city_geocoding() -> None:
+    structure = parse_market_question("Will the current temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Resolution source: METAR airport observations for station KDEN",
+        description="Official current temperature at Denver International Airport station KDEN.",
+        rules="Source: https://aviationweather.gov/data/api/ station KDEN aviation weather observations.",
+    )
+    client = _FakeDirectStationClient(
+        [
+            {
+                "data": [
+                    {"obsTime": "2026-04-25T21:53:00Z", "temp_c": 20.0},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.build_forecast_bundle(structure, resolution)
+
+    assert client.requested_urls == ["https://aviationweather.gov/api/data/metar?ids=KDEN&format=json&taf=false"]
+    assert bundle.consensus_value == 68.0
+    assert bundle.source_count == 1
+    assert bundle.historical_station_available is True
+    assert bundle.source_provider == "aviation_weather"
+    assert bundle.source_station_code == "KDEN"
+    assert bundle.source_latency_tier == "direct"
+
+
 def test_build_forecast_bundle_preserves_direct_resolution_target_when_fetch_falls_back() -> None:
     class _FailingDirectClient(DirectStationForecastClient):
         def build_forecast_bundle(self, structure, resolution):

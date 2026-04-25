@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import urlopen
 
 from weather_pm.models import ForecastBundle, MarketStructure, ResolutionMetadata
@@ -83,6 +83,16 @@ class DirectStationForecastClient:
             payload = self._fetch_json(url)
             value = self._extract_hko_value(structure, payload)
             return self._bundle(structure, resolution, value=value, url=url)
+
+        if resolution.provider == "aviation_weather" and resolution.station_code:
+            from weather_pm.history_client import StationHistoryClient
+
+            url = f"https://aviationweather.gov/api/data/metar?ids={quote(resolution.station_code)}&format=json&taf=false"
+            payload = self._fetch_json(url)
+            points = StationHistoryClient()._parse_aviation_weather_points(structure, payload)
+            if not points:
+                raise ValueError("AviationWeather payload missing parseable temperature")
+            return self._bundle(structure, resolution, value=points[-1].value, url=url)
 
         if resolution.provider in _DIRECT_API_FORECAST_PROVIDERS and resolution.source_url:
             from weather_pm.history_client import StationHistoryClient
@@ -202,7 +212,7 @@ _DIRECT_API_FORECAST_PROVIDERS = {
 def _direct_resolution_target(resolution: ResolutionMetadata | None) -> ResolutionMetadata | None:
     if resolution is None:
         return None
-    if resolution.provider in ({"noaa", "wunderground", "hong_kong_observatory"} | _DIRECT_API_FORECAST_PROVIDERS) and (resolution.station_code or resolution.source_url or resolution.provider == "hong_kong_observatory"):
+    if resolution.provider in ({"noaa", "wunderground", "hong_kong_observatory", "aviation_weather"} | _DIRECT_API_FORECAST_PROVIDERS) and (resolution.station_code or resolution.source_url or resolution.provider == "hong_kong_observatory"):
         return resolution
     return None
 

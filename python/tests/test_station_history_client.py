@@ -51,6 +51,36 @@ def test_station_latest_client_reports_source_lag_seconds_for_noaa_direct_latest
 
 
 
+def test_station_latest_client_parses_world_meteorological_observation_payloads() -> None:
+    structure = parse_market_question("Will the current temperature in Riyadh be 34C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://ncm.gov.sa/api/observations/station/40437",
+        description="This market resolves to the current temperature at Saudi NCM station 40437 in Riyadh.",
+        rules="Source: Saudi National Center for Meteorology official observations API.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "observations": [
+                    {"station": "40437", "obs_time": "2026-04-25T12:00:00Z", "airTemperature": {"value": 33.7, "unit": "C"}},
+                ]
+            }
+        ],
+        now_utc=datetime(2026, 4, 25, 12, 10, tzinfo=timezone.utc),
+    )
+
+    bundle = client.fetch_latest_bundle(structure, resolution)
+
+    assert client.requested_urls == ["https://ncm.gov.sa/api/observations/station/40437"]
+    assert bundle.source_provider == "saudi_ncm"
+    assert bundle.station_code == "40437"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.points[0].timestamp == "2026-04-25T12:00:00Z"
+    assert bundle.points[0].value == 33.7
+    assert bundle.source_lag_seconds == 600
+
+
+
 def test_station_history_client_fetches_noaa_station_observation_range() -> None:
     structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
     resolution = parse_resolution_metadata(
