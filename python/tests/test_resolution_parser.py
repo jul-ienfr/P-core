@@ -163,3 +163,226 @@ def test_parse_resolution_metadata_detects_meteostat_from_resolution_text() -> N
     assert result.wording_clear is True
     assert result.rules_clear is True
     assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_commercial_weather_provider_names_and_domains() -> None:
+    cases = [
+        ("Weather.com / The Weather Channel", "https://weather.com/weather/today/l/Miami", "weather_com"),
+        ("WeatherAPI.com current JSON", "https://api.weatherapi.com/v1/current.json?q=Miami", "weatherapi"),
+        ("Visual Crossing timeline API", "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Miami", "visual_crossing"),
+        ("Weatherbit daily history", "https://api.weatherbit.io/v2.0/history/daily?city=Miami", "weatherbit"),
+        ("Tomorrow.io weather API", "https://api.tomorrow.io/v4/weather/history/recent?location=Miami", "tomorrow_io"),
+        ("MeteoBlue basic day API", "https://my.meteoblue.com/packages/basic-day?lat=25.76&lon=-80.19", "meteoblue"),
+    ]
+
+    for name, url, provider in cases:
+        result = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {name}",
+            description="This market resolves to the highest temperature observed for Miami.",
+            rules=f"Source: {url}",
+        )
+
+        assert result.provider == provider
+        assert result.source_url == url
+        assert result.wording_clear is True
+        assert result.rules_clear is True
+        assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_marks_commercial_api_without_url_for_manual_review() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Resolution source: WeatherAPI.com",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Use the commercial API result.",
+    )
+
+    assert result.provider == "weatherapi"
+    assert result.source_url is None
+    assert result.manual_review_needed is True
+    assert result.revision_risk == "high"
+
+
+def test_parse_resolution_metadata_detects_ecmwf_copernicus_domains() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Copernicus Climate Data Store reanalysis",
+        description="This market resolves to the highest temperature recorded in Paris.",
+        rules="Use https://cds.climate.copernicus.eu/api/reanalysis daily data from ECMWF.",
+    )
+
+    assert result.provider == "ecmwf_copernicus"
+    assert result.source_url == "https://cds.climate.copernicus.eu/api/reanalysis"
+    assert result.station_code is None
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+
+
+def test_parse_resolution_metadata_detects_meteo_france_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Météo-France official observations",
+        description="This market resolves to the lowest temperature recorded in Paris.",
+        rules="Source: https://meteofrance.com/api/observations daily official data.",
+    )
+
+    assert result.provider == "meteo_france"
+    assert result.source_url == "https://meteofrance.com/api/observations"
+    assert result.station_type == "unknown"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+
+
+def test_parse_resolution_metadata_detects_uk_met_office_datapoint_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="UK Met Office DataPoint observations",
+        description="This market resolves to the highest temperature recorded in London.",
+        rules="Source: https://www.metoffice.gov.uk/datapoint official site observations.",
+    )
+
+    assert result.provider == "uk_met_office"
+    assert result.source_url == "https://www.metoffice.gov.uk/datapoint"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+
+
+def test_parse_resolution_metadata_detects_dwd_opendata_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="DWD Germany open-data observations for station 10384",
+        description="This market resolves to the highest temperature recorded in Berlin.",
+        rules="Source: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/ station 10384.",
+    )
+
+    assert result.provider == "dwd"
+    assert result.source_url == "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/"
+    assert result.station_code == "10384"
+    assert result.station_type == "station"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_bom_station_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Bureau of Meteorology station 066062",
+        description="This market resolves to the official highest temperature observed at Sydney Observatory Hill station 066062.",
+        rules="Source: https://www.bom.gov.au/products/IDN60801/IDN60801.94768.shtml official BOM observations.",
+    )
+
+    assert result.provider == "bom"
+    assert result.source_url == "https://www.bom.gov.au/products/IDN60801/IDN60801.94768.shtml"
+    assert result.station_code == "066062"
+    assert result.station_name == "Sydney Observatory Hill"
+    assert result.station_type == "station"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_jma_station_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Japan Meteorological Agency station 44132",
+        description="This market resolves to the lowest temperature recorded at Tokyo station 44132.",
+        rules="Source: https://www.jma.go.jp/bosai/amedas/ official JMA observations.",
+    )
+
+    assert result.provider == "jma"
+    assert result.source_url == "https://www.jma.go.jp/bosai/amedas/"
+    assert result.station_code == "44132"
+    assert result.station_name == "Tokyo"
+    assert result.station_type == "station"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_pagasa_domain_for_manual_auditable_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="PAGASA official page",
+        description="This market resolves to the current observed temperature in Manila.",
+        rules="Source: https://pagasa.dost.gov.ph/weather official observations.",
+    )
+
+    assert result.provider == "pagasa"
+    assert result.source_url == "https://pagasa.dost.gov.ph/weather"
+    assert result.station_code is None
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_imd_mausam_domain() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="IMD station 42182",
+        description="This market resolves to the highest temperature recorded at New Delhi station 42182.",
+        rules="Source: https://mausam.imd.gov.in/ official IMD observations.",
+    )
+
+    assert result.provider == "imd"
+    assert result.source_url == "https://mausam.imd.gov.in/"
+    assert result.station_code == "42182"
+    assert result.station_name == "New Delhi"
+    assert result.station_type == "station"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_environment_canada_official_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442",
+        description="This market resolves to the highest temperature recorded in Toronto by Environment and Climate Change Canada.",
+        rules="Use the finalized Environment Canada climateData daily row from climate.weather.gc.ca.",
+    )
+
+    assert result.provider == "environment_canada"
+    assert result.source_url == "https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442"
+    assert result.station_code == "51442"
+    assert result.station_type == "station"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_generic_official_national_weather_service_without_station_code() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Official national meteorological service for Mexico City",
+        description="This market resolves to the highest temperature recorded by the local official weather service.",
+        rules="Use the official national meteorological service report if available.",
+    )
+
+    assert result.provider == "national_weather_service"
+    assert result.station_code is None
+    assert result.station_type == "unknown"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is True
+
+
+def test_parse_resolution_metadata_detects_local_official_weather_source_with_url() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Official local city weather station source: https://weather.example.gov/city/daily",
+        description="This market resolves to the highest temperature recorded by the official local weather source.",
+        rules="Use the linked country weather station DATA table after publication.",
+    )
+
+    assert result.provider == "local_official_weather_source"
+    assert result.source_url == "https://weather.example.gov/city/daily"
+    assert result.station_code is None
+    assert result.station_type == "station"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is True
+
+
+def test_parse_resolution_metadata_detects_generic_web_scrape_page_with_url() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Public website page: https://example.com/weather/history.html",
+        description="This market resolves from the temperature table on the linked HTML page.",
+        rules="Scrape the table on the source website after the daily data is posted.",
+    )
+
+    assert result.provider == "web_scrape"
+    assert result.source_url == "https://example.com/weather/history.html"
+    assert result.station_code is None
+    assert result.station_type == "unknown"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is True

@@ -201,3 +201,319 @@ def test_build_resolution_source_route_targets_hko_official_monthly_opendata_for
     route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
 
     assert route.history_url == "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMINT&rformat=json&station=HKO&year=2026&month=4"
+
+
+def test_build_resolution_source_route_preserves_commercial_api_source_url() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    cases = [
+        ("weatherapi", "https://api.weatherapi.com/v1/forecast.json?q=Miami&days=1"),
+        ("visual_crossing", "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Miami/2026-04-25"),
+        ("weatherbit", "https://api.weatherbit.io/v2.0/history/daily?city=Miami&start_date=2026-04-25&end_date=2026-04-26"),
+        ("tomorrow_io", "https://api.tomorrow.io/v4/weather/history/recent?location=Miami"),
+        ("meteoblue", "https://my.meteoblue.com/packages/basic-day?lat=25.76&lon=-80.19"),
+    ]
+
+    for provider, source_url in cases:
+        resolution = parse_resolution_metadata(
+            resolution_source=source_url,
+            description="This market resolves to the highest temperature observed for Miami.",
+            rules="Use the linked commercial weather API payload.",
+        )
+
+        route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+        assert route.provider == provider
+        assert route.source_url == source_url
+        assert route.latest_url == source_url
+        assert route.history_url == source_url
+        assert route.direct is True
+        assert route.supported is True
+        assert route.latency_tier == "direct_api"
+        assert route.polling_focus == f"{provider}_injected_payload"
+
+
+def test_build_resolution_source_route_marks_commercial_api_without_url_for_manual_review() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="WeatherAPI.com",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Use the commercial API result.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "weatherapi"
+    assert route.source_url is None
+    assert route.direct is False
+    assert route.supported is False
+    assert route.latest_url is None
+    assert route.history_url is None
+    assert route.latency_tier == "api_key_required"
+    assert route.latency_priority == "manual_review_required"
+    assert route.polling_focus == "manual_review"
+    assert route.manual_review_needed is True
+    assert "explicit source_url" in route.reason
+
+
+def test_build_resolution_source_route_marks_weather_com_page_as_scraping_unsupported() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://weather.com/weather/today/l/Miami",
+        description="This market resolves to the highest temperature observed for Miami on The Weather Channel.",
+        rules="Source: Weather.com page.",
+    )
+
+    route = build_resolution_source_route(structure, resolution)
+
+    assert route.provider == "weather_com"
+    assert route.source_url == "https://weather.com/weather/today/l/Miami"
+    assert route.direct is False
+    assert route.supported is False
+    assert route.latency_tier == "scraping_unsupported"
+    assert route.polling_focus == "manual_review"
+    assert "scraping" in route.reason
+
+
+def test_build_resolution_source_route_marks_ecmwf_copernicus_as_reanalysis_fallback() -> None:
+    structure = parse_market_question("Will the highest temperature in Paris be 20C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Copernicus Climate Data Store reanalysis",
+        description="This market resolves to the highest temperature recorded in Paris.",
+        rules="Use ECMWF ERA5 reanalysis from cds.climate.copernicus.eu.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "ecmwf_copernicus"
+    assert route.direct is False
+    assert route.supported is True
+    assert route.latency_tier == "fallback_reanalysis"
+    assert route.latency_priority == "fallback_reanalysis_not_low_latency"
+    assert route.polling_focus == "ecmwf_copernicus_reanalysis_manual_or_injected_payload"
+    assert route.latest_url is None
+    assert route.history_url == "ecmwf_copernicus://reanalysis?city=Paris&start=2026-04-25&end=2026-04-25"
+    assert "reanalysis" in route.reason
+
+
+def test_build_resolution_source_route_requires_explicit_meteo_france_api_source() -> None:
+    structure = parse_market_question("Will the lowest temperature in Paris be 8C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Météo-France official observations",
+        description="This market resolves to the lowest temperature recorded in Paris.",
+        rules="Use official Météo-France observations.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "meteo_france"
+    assert route.direct is False
+    assert route.supported is False
+    assert route.latency_tier == "unsupported"
+    assert route.latency_priority == "manual_review_required"
+    assert route.polling_focus == "manual_review_api_key_required"
+    assert route.manual_review_needed is True
+    assert "api_key_required" in route.reason
+
+
+def test_build_resolution_source_route_preserves_explicit_uk_met_office_source_url_without_key() -> None:
+    structure = parse_market_question("Will the highest temperature in London be 17C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.metoffice.gov.uk/datapoint",
+        description="This market resolves to the highest temperature recorded in London.",
+        rules="Source: UK Met Office DataPoint endpoint supplied by operator.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "uk_met_office"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.latest_url == "https://www.metoffice.gov.uk/datapoint"
+    assert route.history_url == "https://www.metoffice.gov.uk/datapoint"
+    assert route.polling_focus == "uk_met_office_injected_payload_or_explicit_endpoint"
+    assert "API key" in route.reason
+    assert "api_key" not in route.latest_url.lower()
+
+
+def test_build_resolution_source_route_targets_dwd_open_data_source_url_directly() -> None:
+    structure = parse_market_question("Will the highest temperature in Berlin be 18C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="DWD Germany open-data observations for station 10384",
+        description="This market resolves to the highest temperature recorded in Berlin.",
+        rules="Source: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/ station 10384.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "dwd"
+    assert route.station_code == "10384"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.latency_tier == "direct_history"
+    assert route.latency_priority == "direct_source_official_open_data"
+    assert route.latest_url == "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/"
+    assert route.history_url == "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/"
+    assert route.polling_focus == "dwd_open_data_daily_observations"
+
+
+def test_build_resolution_source_route_targets_bom_source_url_and_station() -> None:
+    structure = parse_market_question("Will the highest temperature in Sydney be 25C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Bureau of Meteorology station 066062",
+        description="This market resolves to the official highest temperature observed at Sydney Observatory Hill station 066062.",
+        rules="Source: https://www.bom.gov.au/products/IDN60801/IDN60801.94768.shtml official BOM observations.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "bom"
+    assert route.station_code == "066062"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.latest_url == "https://www.bom.gov.au/products/IDN60801/IDN60801.94768.shtml"
+    assert route.history_url == "https://www.bom.gov.au/products/IDN60801/IDN60801.94768.shtml"
+    assert route.polling_focus == "bom_official_observations_or_injected_payload"
+    assert route.manual_review_needed is False
+
+
+def test_build_resolution_source_route_targets_jma_official_source_url() -> None:
+    structure = parse_market_question("Will the lowest temperature in Tokyo be 12C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Japan Meteorological Agency station 44132",
+        description="This market resolves to the lowest temperature recorded at Tokyo station 44132.",
+        rules="Source: https://www.jma.go.jp/bosai/amedas/ official JMA observations.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "jma"
+    assert route.station_code == "44132"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.latest_url == "https://www.jma.go.jp/bosai/amedas/"
+    assert route.history_url == "https://www.jma.go.jp/bosai/amedas/"
+    assert route.polling_focus == "jma_official_amedas_or_injected_payload"
+
+
+def test_build_resolution_source_route_marks_pagasa_without_endpoint_as_manual_review() -> None:
+    structure = parse_market_question("Will the highest temperature in Manila be 34C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="PAGASA official observations",
+        description="This market resolves to the highest temperature observed in Manila.",
+        rules="Use PAGASA public bulletins when available.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "pagasa"
+    assert route.direct is False
+    assert route.supported is False
+    assert route.latest_url is None
+    assert route.history_url is None
+    assert route.polling_focus == "manual_review"
+    assert route.manual_review_needed is True
+    assert "source_url" in route.reason
+
+
+def test_build_resolution_source_route_targets_imd_source_url_without_api_key() -> None:
+    structure = parse_market_question("Will the highest temperature in Delhi be 38C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="IMD station 42182",
+        description="This market resolves to the highest temperature recorded at New Delhi station 42182.",
+        rules="Source: https://mausam.imd.gov.in/ official IMD observations.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "imd"
+    assert route.station_code == "42182"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.latest_url == "https://mausam.imd.gov.in/"
+    assert route.history_url == "https://mausam.imd.gov.in/"
+    assert route.polling_focus == "imd_official_observations_or_injected_payload"
+    assert "API key" not in route.reason
+
+
+def test_build_resolution_source_route_targets_environment_canada_source_url() -> None:
+    structure = parse_market_question("Will the highest temperature in Toronto be 18°C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442",
+        description="This market resolves to the highest temperature recorded in Toronto by Environment and Climate Change Canada.",
+        rules="Use the finalized Environment Canada climateData daily row from climate.weather.gc.ca.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "environment_canada"
+    assert route.station_code == "51442"
+    assert route.direct is True
+    assert route.supported is True
+    assert route.source_url == "https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442"
+    assert route.latest_url == "https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442"
+    assert route.history_url == "https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442&timeframe=2&StartYear=1840&EndYear=2026&Year=2026&Month=4&Day=25"
+    assert route.polling_focus == "environment_canada_official_history"
+    assert route.manual_review_needed is False
+
+
+def test_build_resolution_source_route_marks_generic_national_service_as_manual_review_with_source_url() -> None:
+    structure = parse_market_question("Will the highest temperature in Mexico City be 28°C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://example.test/official-weather/mexico-city",
+        description="This market resolves to the highest temperature recorded by the local official weather service.",
+        rules="Use the official national meteorological service report if available.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "national_weather_service"
+    assert route.direct is False
+    assert route.supported is False
+    assert route.source_url == "https://example.test/official-weather/mexico-city"
+    assert route.latest_url == "https://example.test/official-weather/mexico-city"
+    assert route.history_url is None
+    assert route.latency_tier == "manual_review"
+    assert route.polling_focus == "manual_review_official_national_service"
+    assert route.manual_review_needed is True
+
+
+def test_build_resolution_source_route_marks_web_scrape_url_as_auditable_scrape_target() -> None:
+    structure = parse_market_question("Will the highest temperature in Madrid be 28C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Public website page: https://example.com/weather/history.html",
+        description="This market resolves from the temperature table on the linked HTML page.",
+        rules="Scrape the table on the source website after the daily data is posted.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "web_scrape"
+    assert route.direct is False
+    assert route.supported is True
+    assert route.latest_url == "https://example.com/weather/history.html"
+    assert route.history_url == "https://example.com/weather/history.html"
+    assert route.latency_tier == "scrape_target"
+    assert route.latency_priority == "auditable_scrape_target"
+    assert route.polling_focus == "manual_html_extraction"
+    assert route.manual_review_needed is True
+
+
+def test_build_resolution_source_route_marks_local_official_source_url_for_review() -> None:
+    structure = parse_market_question("Will the lowest temperature in Reykjavík be 1C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Official local city weather station source: https://weather.example.gov/city/daily",
+        description="This market resolves to the lowest temperature recorded by the official local weather source.",
+        rules="Use the linked country weather station table after publication.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "local_official_weather_source"
+    assert route.direct is False
+    assert route.supported is True
+    assert route.latest_url == "https://weather.example.gov/city/daily"
+    assert route.history_url == "https://weather.example.gov/city/daily"
+    assert route.latency_tier == "scrape_target"
+    assert route.latency_priority == "auditable_scrape_target"
+    assert route.polling_focus == "local_official_source_review"
+    assert route.manual_review_needed is True

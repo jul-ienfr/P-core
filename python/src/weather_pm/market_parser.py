@@ -5,7 +5,7 @@ import re
 from weather_pm.models import MarketStructure
 
 _THRESHOLD_RE = re.compile(
-    r"Will the (?P<measurement>highest|lowest) temperature in (?P<city>.+?) be (?P<target>-?\d+(?:\.\d+)?)(?:°)?(?P<unit>[CF]) or (?P<direction>higher|below)(?: on (?P<date>.+?))?\?",
+    r"Will the (?P<measurement>highest|lowest|current) temperature in (?P<city>.+?) be (?P<target>-?\d+(?:\.\d+)?)(?:°)?(?P<unit>[CF]) or (?P<direction>higher|below)(?: on (?P<date>.+?))?\?",
     re.IGNORECASE,
 )
 _BIN_RE = re.compile(
@@ -111,7 +111,7 @@ def parse_market_question(question: str) -> MarketStructure:
 
 
 def _measurement_kind(raw_value: str) -> str:
-    return "high" if raw_value.lower() == "highest" else "low"
+    return "current" if raw_value.lower() == "current" else "high" if raw_value.lower() == "highest" else "low"
 
 
 def _default_unit_for_city(city: str) -> str:

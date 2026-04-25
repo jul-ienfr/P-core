@@ -368,3 +368,485 @@ def test_build_station_history_bundle_returns_empty_fallback_when_source_has_no_
     assert bundle.latency_tier == "unsupported"
     assert bundle.points == []
     assert bundle.summary == {}
+
+
+def test_station_history_client_parses_weatherapi_latest_and_forecastday_payloads() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.weatherapi.com/v1/forecast.json?q=Miami&days=1",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Source: WeatherAPI.com forecast JSON.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"location": {"localtime": "2026-04-25 10:00"}, "current": {"temp_f": 80.0, "temp_c": 26.7}},
+            {"forecast": {"forecastday": [{"date": "2026-04-25", "day": {"maxtemp_f": 84.0, "mintemp_f": 73.0, "avgtemp_f": 78.0}}]}},
+        ]
+    )
+
+    latest = client.fetch_latest_bundle(structure, resolution)
+    history = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url, resolution.source_url]
+    assert latest.source_provider == "weatherapi"
+    assert latest.latency_tier == "direct_api"
+    assert latest.polling_focus == "weatherapi_injected_payload"
+    assert latest.points[0].value == 80.0
+    assert history.points[0].timestamp == "2026-04-25"
+    assert history.points[0].value == 84.0
+    assert history.summary["max"] == 84.0
+
+
+def test_station_history_client_parses_visual_crossing_days_payload() -> None:
+    structure = parse_market_question("Will the lowest temperature in Miami be 73F or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Miami/2026-04-25?unitGroup=us",
+        description="This market resolves to the lowest temperature observed for Miami.",
+        rules="Source: Visual Crossing timeline API.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"currentConditions": {"datetime": "2026-04-25T10:00:00", "temp": 78.0}, "days": [{"datetime": "2026-04-25", "tempmax": 84.0, "tempmin": 72.0, "temp": 78.0}]},
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url]
+    assert bundle.source_provider == "visual_crossing"
+    assert bundle.latency_tier == "direct_api"
+    assert bundle.polling_focus == "visual_crossing_injected_payload"
+    assert bundle.points[0].value == 72.0
+    assert bundle.summary["min"] == 72.0
+
+
+def test_station_history_client_parses_weatherbit_data_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.weatherbit.io/v2.0/history/daily?city=Miami&start_date=2026-04-25&end_date=2026-04-26&units=I",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Source: Weatherbit history API.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"data": [{"datetime": "2026-04-25", "max_temp": 84.0, "min_temp": 73.0, "temp": 78.0}]},
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url]
+    assert bundle.source_provider == "weatherbit"
+    assert bundle.latency_tier == "direct_api"
+    assert bundle.points[0].value == 84.0
+    assert bundle.summary["max"] == 84.0
+
+
+def test_station_history_client_parses_tomorrow_io_timelines_payload() -> None:
+    structure = parse_market_question("Will the lowest temperature in Miami be 73F or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.tomorrow.io/v4/weather/history/recent?location=Miami&units=imperial",
+        description="This market resolves to the lowest temperature observed for Miami.",
+        rules="Source: Tomorrow.io timelines API.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"data": {"timelines": [{"intervals": [{"startTime": "2026-04-25T00:00:00Z", "values": {"temperatureMax": 84.0, "temperatureMin": 72.0, "temperature": 78.0}}]}]}},
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url]
+    assert bundle.source_provider == "tomorrow_io"
+    assert bundle.latency_tier == "direct_api"
+    assert bundle.points[0].value == 72.0
+    assert bundle.summary["min"] == 72.0
+
+
+def test_station_history_client_parses_meteoblue_simple_payloads() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 28C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://my.meteoblue.com/packages/basic-day?lat=25.76&lon=-80.19&units=metric",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Source: MeteoBlue basic day API.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"current": {"time": "2026-04-25T10:00:00Z", "temperature": 27.0}},
+            {"history": [{"date": "2026-04-25", "temperatureMax": 29.0, "temperatureMin": 23.0, "temperature": 26.0}]},
+        ]
+    )
+
+    latest = client.fetch_latest_bundle(structure, resolution)
+    history = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url, resolution.source_url]
+    assert latest.source_provider == "meteoblue"
+    assert latest.points[0].value == 27.0
+    assert history.latency_tier == "direct_api"
+    assert history.polling_focus == "meteoblue_injected_payload"
+    assert history.points[0].value == 29.0
+
+
+def test_station_history_client_parses_ecmwf_copernicus_reanalysis_daily_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Paris be 20C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Copernicus Climate Data Store reanalysis",
+        description="This market resolves to the highest temperature recorded in Paris.",
+        rules="Use ECMWF ERA5 reanalysis from cds.climate.copernicus.eu.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "daily": [
+                    {"date": "2026-04-24", "tmax": 18.2, "tmin": 9.1},
+                    {"date": "2026-04-25", "tmax": 21.4, "tmin": 10.0},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-24", end_date="2026-04-25")
+
+    assert client.requested_urls == ["ecmwf_copernicus://reanalysis?city=Paris&start=2026-04-24&end=2026-04-25"]
+    assert bundle.source_provider == "ecmwf_copernicus"
+    assert bundle.latency_tier == "fallback_reanalysis"
+    assert bundle.polling_focus == "ecmwf_copernicus_reanalysis_daily"
+    assert [point.timestamp for point in bundle.points] == ["2026-04-24", "2026-04-25"]
+    assert [point.value for point in bundle.points] == [18.2, 21.4]
+    assert bundle.summary["max"] == 21.4
+
+
+def test_station_history_client_parses_meteo_france_latest_and_daily_payloads_from_explicit_source() -> None:
+    structure = parse_market_question("Will the lowest temperature in Paris be 8C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://meteofrance.com/api/observations/paris",
+        description="This market resolves to the lowest temperature recorded in Paris.",
+        rules="Source: Météo-France official API endpoint supplied by operator.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"observations": [{"time": "2026-04-25T08:00:00+02:00", "temperature": {"value": 9.5, "unit": "C"}}]},
+            {"daily": [{"date": "2026-04-25", "tmax": 16.1, "tmin": 7.2}]},
+        ]
+    )
+
+    latest = client.fetch_latest_bundle(structure, resolution)
+    history = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [
+        "https://meteofrance.com/api/observations/paris",
+        "https://meteofrance.com/api/observations/paris",
+    ]
+    assert latest.source_provider == "meteo_france"
+    assert latest.latency_tier == "direct_latest"
+    assert latest.points[0].timestamp == "2026-04-25T08:00:00+02:00"
+    assert latest.points[0].value == 9.5
+    assert history.latency_tier == "direct_history"
+    assert history.polling_focus == "meteo_france_daily_payload"
+    assert history.points[0].timestamp == "2026-04-25"
+    assert history.points[0].value == 7.2
+
+
+def test_station_history_client_parses_uk_met_office_daily_payload_from_explicit_source() -> None:
+    structure = parse_market_question("Will the highest temperature in London be 17C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.metoffice.gov.uk/datapoint",
+        description="This market resolves to the highest temperature recorded in London.",
+        rules="Source: UK Met Office DataPoint endpoint supplied by operator.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "SiteRep": {
+                    "DV": {
+                        "Location": {
+                            "Period": [
+                                {"value": "2026-04-25Z", "Rep": [{"T": "14.1"}, {"T": "18.3"}, {"T": "12.2"}]}
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://www.metoffice.gov.uk/datapoint"]
+    assert bundle.source_provider == "uk_met_office"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.polling_focus == "uk_met_office_daily_payload"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 18.3
+
+
+def test_station_history_client_parses_dwd_open_data_daily_payload_from_source_url() -> None:
+    structure = parse_market_question("Will the highest temperature in Berlin be 18C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="DWD Germany open-data observations for station 10384",
+        description="This market resolves to the highest temperature recorded in Berlin.",
+        rules="Source: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/ station 10384.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "observations": [
+                    {"MESS_DATUM": "20260424", "TXK": "17.8", "TNK": "7.3"},
+                    {"MESS_DATUM": "20260425", "TXK": "19.6", "TNK": "8.1"},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-24", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/"]
+    assert bundle.source_provider == "dwd"
+    assert bundle.station_code == "10384"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.polling_focus == "dwd_open_data_daily_observations"
+    assert [point.timestamp for point in bundle.points] == ["2026-04-24", "2026-04-25"]
+    assert [point.value for point in bundle.points] == [17.8, 19.6]
+
+
+def test_station_history_client_parses_bom_daily_json_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Sydney be 25C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Bureau of Meteorology station 066062",
+        description="This market resolves to the official highest temperature observed at Sydney Observatory Hill station 066062.",
+        rules="Source: https://www.bom.gov.au/products/IDN60801/IDN60801.94768.shtml official BOM observations.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "observations": [
+                    {"date": "2026-04-25", "station": "066062", "max_temp": 25.6, "min_temp": 14.2, "unit": "C"},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://www.bom.gov.au/products/IDN60801/IDN60801.94768.shtml"]
+    assert bundle.source_provider == "bom"
+    assert bundle.station_code == "066062"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.polling_focus == "bom_official_observations_or_injected_payload"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 25.6
+    assert bundle.summary["max"] == 25.6
+
+
+def test_station_history_client_parses_jma_daily_csv_payload() -> None:
+    structure = parse_market_question("Will the lowest temperature in Tokyo be 12C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Japan Meteorological Agency station 44132",
+        description="This market resolves to the lowest temperature recorded at Tokyo station 44132.",
+        rules="Source: https://www.jma.go.jp/bosai/amedas/ official JMA observations.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            "date,station,tmax,tmin,current\n2026-04-25,44132,19.8,11.4,17.2\n",
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://www.jma.go.jp/bosai/amedas/"]
+    assert bundle.source_provider == "jma"
+    assert bundle.station_code == "44132"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.polling_focus == "jma_official_amedas_or_injected_payload"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 11.4
+    assert bundle.summary["min"] == 11.4
+
+
+def test_station_history_client_parses_pagasa_latest_json_payload_when_source_url_is_present() -> None:
+    structure = parse_market_question("Will the current temperature in Manila be 31C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="PAGASA official page",
+        description="This market resolves to the current observed temperature at NAIA station 98429.",
+        rules="Source: https://pagasa.dost.gov.ph/weather official observations.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"data": [{"timestamp": "2026-04-25T14:00:00+08:00", "station": "98429", "current": 32.1, "unit": "C"}]}
+        ]
+    )
+
+    bundle = client.fetch_latest_bundle(structure, resolution)
+
+    assert client.requested_urls == ["https://pagasa.dost.gov.ph/weather"]
+    assert bundle.source_provider == "pagasa"
+    assert bundle.station_code == "98429"
+    assert bundle.latency_tier == "direct_latest"
+    assert bundle.polling_focus == "pagasa_official_observations_or_injected_payload"
+    assert bundle.points[0].timestamp == "2026-04-25T14:00:00+08:00"
+    assert bundle.points[0].value == 32.1
+    assert bundle.summary["latest"] == 32.1
+
+
+def test_station_history_client_parses_imd_daily_json_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Delhi be 38C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="IMD station 42182",
+        description="This market resolves to the highest temperature recorded at New Delhi station 42182.",
+        rules="Source: https://mausam.imd.gov.in/ official IMD observations.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"records": [{"date": "2026-04-25", "station_id": "42182", "tmax": 39.3, "tmin": 24.8, "unit": "C"}]}
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://mausam.imd.gov.in/"]
+    assert bundle.source_provider == "imd"
+    assert bundle.station_code == "42182"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.polling_focus == "imd_official_observations_or_injected_payload"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 39.3
+    assert bundle.summary["max"] == 39.3
+
+
+def test_station_history_client_parses_environment_canada_climate_data_high_row() -> None:
+    structure = parse_market_question("Will the highest temperature in Toronto be 18°C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442",
+        description="This market resolves to the highest temperature recorded in Toronto by Environment and Climate Change Canada.",
+        rules="Use the finalized Environment Canada climateData daily row from climate.weather.gc.ca.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "climateData": [
+                    {"date": "2026-04-24", "maxTemp": "17.4", "minTemp": "8.1", "meanTemp": "12.8"},
+                    {"date": "2026-04-25", "maxTemp": "18.6", "minTemp": "7.9", "meanTemp": "13.3"},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [
+        "https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442&timeframe=2&StartYear=1840&EndYear=2026&Year=2026&Month=4&Day=25"
+    ]
+    assert bundle.source_provider == "environment_canada"
+    assert bundle.station_code == "51442"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.polling_focus == "environment_canada_official_history"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 18.6
+    assert bundle.summary["max"] == 18.6
+
+
+def test_station_history_client_parses_environment_canada_latest_climate_data_row() -> None:
+    structure = parse_market_question("Will the lowest temperature in Toronto be 8°C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442",
+        description="This market resolves to the lowest temperature recorded in Toronto by Environment Canada.",
+        rules="Use the finalized Environment Canada climateData daily row from climate.weather.gc.ca.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "climateData": [
+                    {"date": "2026-04-24", "maxTemp": "17.4", "minTemp": "8.1"},
+                    {"date": "2026-04-25", "maxTemp": "18.6", "minTemp": "7.9"},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_latest_bundle(structure, resolution)
+
+    assert client.requested_urls == ["https://climate.weather.gc.ca/climateData/dailydata_e.html?StationID=51442"]
+    assert bundle.source_provider == "environment_canada"
+    assert bundle.latency_tier == "direct_latest"
+    assert bundle.polling_focus == "environment_canada_official_observation"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 7.9
+    assert bundle.summary["latest"] == 7.9
+
+
+def test_station_history_client_parses_web_scrape_injected_table_like_history_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Madrid be 28C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Public website page: https://example.com/weather/history.html",
+        description="This market resolves from the temperature table on the linked HTML page.",
+        rules="Scrape the table on the source website after the daily data is posted.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "rows": [
+                    {"date": "2026-04-24", "tmax": 26.1, "tmin": 12.4},
+                    {"date": "2026-04-25", "tmax": 28.4, "tmin": 13.2},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://example.com/weather/history.html"]
+    assert bundle.source_provider == "web_scrape"
+    assert bundle.latency_tier == "scrape_target"
+    assert bundle.polling_focus == "manual_html_extraction"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 28.4
+    assert bundle.summary["max"] == 28.4
+
+
+def test_station_history_client_parses_local_official_injected_latest_payload() -> None:
+    structure = parse_market_question("Will the lowest temperature in Reykjavík be 1C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Official local city weather station source: https://weather.example.gov/city/daily",
+        description="This market resolves to the lowest temperature recorded by the official local weather source.",
+        rules="Use the linked country weather station table after publication.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "observations": [
+                    {"timestamp": "2026-04-25T07:00:00+00:00", "temp": 0.8, "unit": "C"},
+                    {"timestamp": "2026-04-25T13:00:00+00:00", "temp": 4.1, "unit": "C"},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_latest_bundle(structure, resolution)
+
+    assert client.requested_urls == ["https://weather.example.gov/city/daily"]
+    assert bundle.source_provider == "local_official_weather_source"
+    assert bundle.latency_tier == "scrape_target"
+    assert bundle.polling_focus == "local_official_source_review"
+    assert bundle.points[0].timestamp == "2026-04-25T13:00:00+00:00"
+    assert bundle.points[0].value == 4.1
+    assert bundle.summary["latest"] == 4.1
+
+
+def test_build_station_history_bundle_returns_empty_fallback_when_generic_payload_is_not_table_like() -> None:
+    structure = parse_market_question("Will the highest temperature in Madrid be 28C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Public website page: https://example.com/weather/history.html",
+        description="This market resolves from the temperature table on the linked HTML page.",
+        rules="Scrape the table on the source website after the daily data is posted.",
+    )
+    client = _FakeStationHistoryClient([{"content": "daily weather narrative without rows"}])
+
+    bundle = build_station_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25", client=client)
+
+    assert bundle.source_provider == "web_scrape"
+    assert bundle.station_code is None
+    assert bundle.latency_tier == "unsupported"
+    assert bundle.points == []
+    assert bundle.summary == {}

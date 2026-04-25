@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 from datetime import datetime
 from typing import Any
@@ -80,6 +81,18 @@ class StationHistoryClient:
             )
             return self._bundle(hko_resolution, url=url, points=points, latency_tier="direct_latest")
 
+        if resolution.provider in _DIRECT_API_PROVIDERS and resolution.source_url:
+            payload = self._fetch_json(resolution.source_url)
+            points = self._parse_generic_weather_points(structure, resolution, payload, latest=True)
+            latency_tier = "direct_latest" if resolution.provider == "meteo_france" else "direct_api"
+            return self._bundle(resolution, url=resolution.source_url, points=points[-1:] if points else [], latency_tier=latency_tier)
+
+        if resolution.provider in _DIRECT_SOURCE_PROVIDERS and resolution.source_url:
+            payload = self._fetch_json(resolution.source_url)
+            points = self._parse_generic_weather_points(structure, resolution, payload, latest=True)
+            latency_tier = "direct_latest" if resolution.provider in {"environment_canada", "pagasa"} else _latency_tier_for_provider(resolution.provider)
+            return self._bundle(resolution, url=resolution.source_url, points=points[-1:] if points else [], latency_tier=latency_tier)
+
         raise ValueError(f"no direct latest route for provider={resolution.provider!r}")
 
     def fetch_history_bundle(
@@ -145,6 +158,26 @@ class StationHistoryClient:
                 bundle.polling_focus = "meteostat_city_daily_history"
             return bundle
 
+        if resolution.provider == "ecmwf_copernicus":
+            url = self._build_ecmwf_copernicus_history_url(structure, start_date=start_date, end_date=end_date)
+            payload = self._fetch_json(url)
+            points = self._parse_generic_weather_points(structure, resolution, payload, start_date=start_date, end_date=end_date)
+            return self._bundle(resolution, url=url, points=points, latency_tier="fallback_reanalysis")
+
+        if resolution.provider == "environment_canada" and resolution.source_url:
+            url = self._build_environment_canada_history_url(resolution.source_url, start_date=start_date, end_date=end_date)
+            payload = self._fetch_json(url)
+            points = self._parse_generic_weather_points(structure, resolution, payload, start_date=start_date, end_date=end_date)
+            return self._bundle(resolution, url=url, points=points, latency_tier="direct_history")
+
+        if resolution.provider in (_DIRECT_API_PROVIDERS | _DIRECT_SOURCE_PROVIDERS) and resolution.source_url:
+            payload = self._fetch_json(resolution.source_url)
+            points = self._parse_generic_weather_points(structure, resolution, payload, start_date=start_date, end_date=end_date)
+            if resolution.provider in {"web_scrape", "local_official_weather_source"} and not points:
+                raise ValueError(f"{resolution.provider} payload had no parseable temperature rows")
+            latency_tier = "direct_history" if resolution.provider == "meteo_france" else _latency_tier_for_provider(resolution.provider)
+            return self._bundle(resolution, url=resolution.source_url, points=points, latency_tier=latency_tier)
+
         raise ValueError(f"no direct history route for provider={resolution.provider!r}")
 
     def _build_noaa_history_url(self, structure: MarketStructure, station_code: str, *, start_date: str, end_date: str) -> str:
@@ -203,6 +236,16 @@ class StationHistoryClient:
         query = urlencode({location_key: location_value, "start": start_date, "end": end_date})
         return f"meteostat://daily?{query}"
 
+    def _build_ecmwf_copernicus_history_url(self, structure: MarketStructure, *, start_date: str, end_date: str) -> str:
+        query = urlencode({"city": structure.city, "start": start_date, "end": end_date})
+        return f"ecmwf_copernicus://reanalysis?{query}"
+
+    def _build_environment_canada_history_url(self, source_url: str, *, start_date: str, end_date: str) -> str:
+        parsed = _parse_iso_date(start_date)
+        separator = "&" if "?" in source_url else "?"
+        query = urlencode({"timeframe": "2", "StartYear": "1840", "EndYear": parsed.year, "Year": parsed.year, "Month": parsed.month, "Day": parsed.day})
+        return f"{source_url}{separator}{query}"
+
     def _parse_noaa_latest_point(self, structure: MarketStructure, payload: dict[str, Any]) -> list[StationHistoryPoint]:
         properties = payload.get("properties")
         if not isinstance(properties, dict):
@@ -243,7 +286,7 @@ class StationHistoryClient:
             if not isinstance(row, dict):
                 continue
             value = row.get(field)
-            if value in {None, "", "-"}:
+            if value is None or value == "" or value == "-" or isinstance(value, dict):
                 continue
             points.append(StationHistoryPoint(timestamp=str(row.get("DATE") or ""), value=round(float(value), 2), unit=structure.unit))
         return points
@@ -340,7 +383,7 @@ class StationHistoryClient:
             if place not in {"hong kong observatory", "hko"}:
                 continue
             value = row.get("value") or row.get("Value")
-            if value in {None, "", "-"}:
+            if value is None or value == "" or value == "-" or isinstance(value, dict):
                 continue
             converted = _convert_temperature(float(value), from_unit=str(row.get("unit") or row.get("Unit") or "C").lower(), to_unit=structure.unit)
             points.append(StationHistoryPoint(timestamp=timestamp, value=round(converted, 2), unit=structure.unit))
@@ -401,6 +444,42 @@ class StationHistoryClient:
             points.append(StationHistoryPoint(timestamp=row_date, value=round(converted, 2), unit=structure.unit))
         return points
 
+    def _parse_generic_weather_points(
+        self,
+        structure: MarketStructure,
+        resolution: ResolutionMetadata,
+        payload: Any,
+        *,
+        latest: bool = False,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[StationHistoryPoint]:
+        rows = _extract_rows(payload)
+        if not rows:
+            raise ValueError(f"{resolution.provider} payload missing table-like rows")
+        start = _parse_iso_date(start_date).date().isoformat() if start_date else None
+        end = _parse_iso_date(end_date).date().isoformat() if end_date else None
+        points: list[StationHistoryPoint] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            if resolution.station_code and not _row_matches_station(row, resolution.station_code):
+                continue
+            timestamp = _extract_row_timestamp(row)
+            row_date = _normalize_date(timestamp)
+            if start and end and row_date and (row_date < start or row_date > end):
+                continue
+            extracted = _extract_generic_temperature(row, structure)
+            if extracted is None:
+                continue
+            value, from_unit = extracted
+            converted = _convert_temperature(value, from_unit=from_unit, to_unit=structure.unit)
+            points.append(StationHistoryPoint(timestamp=row_date if not latest and row_date else timestamp, value=round(converted, 2), unit=structure.unit))
+        if resolution.provider == "uk_met_office" and points and structure.measurement_kind in {"high", "low"}:
+            selected = max(points, key=lambda point: point.value) if structure.measurement_kind == "high" else min(points, key=lambda point: point.value)
+            return [StationHistoryPoint(timestamp=selected.timestamp, value=selected.value, unit=selected.unit)]
+        return points
+
     def _bundle(
         self,
         resolution: ResolutionMetadata,
@@ -432,6 +511,27 @@ def _uses_noaa_daily_summary(structure: MarketStructure, *, start_date: str, end
 
 
 def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str | None, int | None]:
+    focus_by_provider = {
+        "weatherapi": "weatherapi_injected_payload",
+        "visual_crossing": "visual_crossing_injected_payload",
+        "weatherbit": "weatherbit_injected_payload",
+        "tomorrow_io": "tomorrow_io_injected_payload",
+        "meteoblue": "meteoblue_injected_payload",
+        "meteo_france": "meteo_france_daily_payload",
+        "uk_met_office": "uk_met_office_daily_payload" if latency_tier != "direct_latest" else "uk_met_office_injected_payload_or_explicit_endpoint",
+        "dwd": "dwd_open_data_daily_observations",
+        "bom": "bom_official_observations_or_injected_payload",
+        "jma": "jma_official_amedas_or_injected_payload",
+        "pagasa": "pagasa_official_observations_or_injected_payload",
+        "imd": "imd_official_observations_or_injected_payload",
+        "environment_canada": "environment_canada_official_observation" if latency_tier == "direct_latest" else "environment_canada_official_history",
+        "ecmwf_copernicus": "ecmwf_copernicus_reanalysis_daily",
+        "web_scrape": "manual_html_extraction",
+        "local_official_weather_source": "local_official_source_review",
+    }
+    if provider in focus_by_provider:
+        lag = 86400 if latency_tier in {"direct_history", "fallback_reanalysis"} else None
+        return focus_by_provider[provider], lag
     if provider == "accuweather" and latency_tier == "direct_latest":
         return "accuweather_current_payload", None
     if provider == "accuweather" and latency_tier == "direct_history":
@@ -448,8 +548,6 @@ def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str |
         return "noaa_official_daily_summary", 86400
     if provider == "noaa":
         return "station_observations_history", None
-    if provider == "wunderground" and latency_tier == "direct_latest":
-        return "station_history_page", None
     if provider == "wunderground":
         return "station_history_page", None
     if provider == "meteostat":
@@ -572,4 +670,149 @@ def _extract_meteostat_row_value(row: dict[str, Any], structure: MarketStructure
     for key in preferred_keys:
         if key in lowered and lowered[key] not in {None, "", "-"}:
             return float(lowered[key])
+    return None
+
+
+_DIRECT_API_PROVIDERS = {"weatherapi", "visual_crossing", "weatherbit", "tomorrow_io", "meteoblue", "meteo_france"}
+_DIRECT_SOURCE_PROVIDERS = {"uk_met_office", "dwd", "bom", "jma", "pagasa", "imd", "environment_canada", "web_scrape", "local_official_weather_source"}
+
+
+def _latency_tier_for_provider(provider: str) -> str:
+    if provider == "ecmwf_copernicus":
+        return "fallback_reanalysis"
+    if provider in {"web_scrape", "local_official_weather_source"}:
+        return "scrape_target"
+    if provider in _DIRECT_API_PROVIDERS:
+        return "direct_api"
+    return "direct_history"
+
+
+def _extract_rows(payload: Any) -> list[Any]:
+    if isinstance(payload, str):
+        return list(csv.DictReader(payload.splitlines()))
+    if isinstance(payload, list):
+        return payload
+    if not isinstance(payload, dict):
+        return []
+    if set(payload.keys()).issubset({"content", "text", "html", "body"}):
+        return []
+
+    siterep = payload.get("SiteRep")
+    if isinstance(siterep, dict):
+        period = (((siterep.get("DV") or {}).get("Location") or {}).get("Period"))
+        rows: list[dict[str, Any]] = []
+        if isinstance(period, list):
+            for item in period:
+                if not isinstance(item, dict):
+                    continue
+                date = str(item.get("value") or "").replace("Z", "")
+                reps = item.get("Rep")
+                if isinstance(reps, list):
+                    for rep in reps:
+                        if isinstance(rep, dict):
+                            rows.append({**rep, "date": date, "unit": "C"})
+        return rows
+
+    for key in ("observations", "data", "daily", "history", "records", "rows", "climateData"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return value
+    forecast = payload.get("forecast")
+    if isinstance(forecast, dict) and isinstance(forecast.get("forecastday"), list):
+        return forecast["forecastday"]
+    if isinstance(payload.get("forecastday"), list):
+        return payload["forecastday"]
+    if isinstance(payload.get("DailyForecasts"), list):
+        return payload["DailyForecasts"]
+    if isinstance(payload.get("days"), list):
+        return payload["days"]
+    timelines = payload.get("data", {}).get("timelines") if isinstance(payload.get("data"), dict) else None
+    if isinstance(timelines, list):
+        rows: list[Any] = []
+        for timeline in timelines:
+            if isinstance(timeline, dict) and isinstance(timeline.get("intervals"), list):
+                rows.extend(timeline["intervals"])
+        return rows
+    current = payload.get("current") or payload.get("currentConditions")
+    if isinstance(current, dict):
+        return [current]
+    return [payload]
+
+
+
+
+def _row_matches_station(row: dict[str, Any], station_code: str) -> bool:
+    keys = ("station", "station_id", "stationID", "STATION", "id")
+    present = [str(row.get(key)) for key in keys if row.get(key) is not None]
+    return not present or station_code in present
+
+
+def _extract_row_timestamp(row: dict[str, Any]) -> str:
+    for key in ("timestamp", "time", "datetime", "date", "Date", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM"):
+        value = row.get(key)
+        if value not in {None, ""}:
+            text = str(value)
+            if key == "MESS_DATUM" and text.isdigit() and len(text) == 8:
+                return f"{text[:4]}-{text[4:6]}-{text[6:8]}"
+            return text[:10] if key in {"Date"} else text
+    return ""
+
+
+def _normalize_date(timestamp: str) -> str | None:
+    text = str(timestamp).strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y%m%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(text[:10] if fmt == "%Y-%m-%d" else text[:8], fmt).date().isoformat()
+        except ValueError:
+            pass
+    if len(text) >= 10 and text[4] == "-" and text[7] == "-":
+        return text[:10]
+    return None
+
+
+def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure) -> tuple[float, str] | None:
+    day = row.get("day") if isinstance(row.get("day"), dict) else None
+    values = row.get("values") if isinstance(row.get("values"), dict) else None
+    candidates: list[dict[str, Any]] = [row]
+    if day: candidates.append(day)
+    if values: candidates.append(values)
+    temp = row.get("Temperature") or row.get("temperature")
+    if isinstance(temp, dict):
+        if temp.get("value") is not None:
+            return float(temp["value"]), str(temp.get("unit") or temp.get("unitCode") or structure.unit).lower()
+        if structure.measurement_kind == "high":
+            nested = temp.get("Maximum") or temp.get("maximum")
+        elif structure.measurement_kind == "low":
+            nested = temp.get("Minimum") or temp.get("minimum")
+        else:
+            nested = temp.get("Metric") or temp.get("Imperial") or temp
+        if isinstance(nested, dict) and nested.get("Value") is not None:
+            return float(nested["Value"]), str(nested.get("Unit") or structure.unit).lower()
+    key_groups = {
+        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "tmax", "TXK", "tempmax", "temperatureMax", "maxTemp"),
+        "low": ("mintemp_f", "mintemp_c", "min_temp", "tmin", "TNK", "tempmin", "temperatureMin", "minTemp"),
+        "current": ("temp_f", "temp_c", "temp", "current", "temperature", "T"),
+    }
+    keys = key_groups.get(structure.measurement_kind, key_groups["current"]) + key_groups["current"]
+    temperature_fields = {"temperature"}
+    if structure.measurement_kind == "current":
+        temperature_fields.add("current")
+    for mapping in candidates:
+        lowered = {str(k).lower(): (k, v) for k, v in mapping.items()}
+        for key in keys:
+            item = lowered.get(key.lower())
+            if item is None:
+                continue
+            original_key, value = item
+            if isinstance(value, dict) and str(original_key).lower() in temperature_fields:
+                nested_value = value.get("value") or value.get("Value")
+                if nested_value not in {None, "", "-"}:
+                    unit = str(value.get("unit") or value.get("Unit") or value.get("unitCode") or structure.unit).lower()
+                    return float(nested_value), unit
+            if value is None or value == "" or value == "-" or isinstance(value, dict):
+                continue
+            unit = str(mapping.get("unit") or mapping.get("Unit") or ("F" if str(original_key).lower().endswith("_f") else "C" if str(original_key).lower().endswith("_c") else structure.unit)).lower()
+            return float(value), unit
     return None
