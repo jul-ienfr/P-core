@@ -100,6 +100,12 @@ def test_build_strategy_shortlist_prioritizes_tradeable_surface_anomalies_and_tr
         "strategy_accounts": 2,
         "surface_events": 2,
         "shortlisted": 3,
+        "action_counts": {
+            "paper_trade_watch_direct_station": 1,
+            "paper_trade_watch_fallback_source": 1,
+            "review_surface_anomaly": 1,
+        },
+        "execution_blocker_counts": {"watchlist": 1},
     }
     assert [item["market_id"] for item in shortlist["shortlist"]] == ["london-20", "paris-18", "nyc-70"]
     london = shortlist["shortlist"][0]
@@ -113,7 +119,13 @@ def test_build_strategy_shortlist_prioritizes_tradeable_surface_anomalies_and_tr
     assert london["source_latency_priority"] == "direct_source_low_latency"
     assert london["source_polling_focus"] == "station_observations_latest"
     assert london["source_latest_url"] == "https://api.weather.gov/stations/EGLL/observations/latest"
+    assert london["execution_blocker"] is None
     assert london["action"] == "paper_trade_watch_direct_station"
+    assert london["next_actions"] == [
+        "poll_direct_resolution_source",
+        "inspect_event_surface_prices",
+        "paper_order_with_limit_and_fill_tracking",
+    ]
     assert "surface_anomaly" in london["reasons"]
     assert "profitable_trader_city" in london["reasons"]
     assert "direct_resolution_source" in london["reasons"]
@@ -130,6 +142,40 @@ def test_build_strategy_shortlist_extracts_city_when_question_has_no_date() -> N
     assert row["city"] == "Denver"
     assert row["date"] == ""
     assert row["matched_traders"] == ["Signal"]
+
+
+def test_build_strategy_shortlist_turns_execution_blockers_into_operational_next_actions() -> None:
+    shortlist = build_strategy_shortlist(
+        {"accounts": []},
+        {
+            "opportunities": [
+                {
+                    "market_id": "thin-book",
+                    "question": "Will the highest temperature in Dallas be 70°F or below on April 25?",
+                    "decision_status": "skipped",
+                    "skip_reason": "high_slippage_risk",
+                    "source_direct": True,
+                },
+                {
+                    "market_id": "no-quote",
+                    "question": "Will the highest temperature in Dallas be 69°F or below on April 25?",
+                    "decision_status": "skipped",
+                    "skip_reason": "missing_tradeable_quote",
+                    "source_direct": True,
+                },
+            ]
+        },
+        {"events": []},
+    )
+
+    assert shortlist["summary"]["execution_blocker_counts"] == {
+        "high_slippage_risk": 1,
+        "missing_tradeable_quote": 1,
+    }
+    rows = {row["market_id"]: row for row in shortlist["shortlist"]}
+    assert rows["thin-book"]["execution_blocker"] == "high_slippage_risk"
+    assert rows["thin-book"]["next_actions"] == ["poll_direct_resolution_source", "wait_for_tighter_spread"]
+    assert rows["no-quote"]["next_actions"] == ["poll_direct_resolution_source", "wait_for_executable_depth"]
 
 
 def test_cli_strategy_shortlist_report_builds_inputs_and_outputs_ranked_json(tmp_path: Path) -> None:
@@ -235,6 +281,71 @@ def test_cli_strategy_shortlist_report_prints_compact_summary_when_output_file_i
     assert "opportunity_report" in full
     assert "strategy_report" not in compact
     assert len(result.stdout) < len(out_path.read_text())
+
+
+def test_cli_strategy_shortlist_report_can_reuse_event_surface_json_override(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    surface_path = tmp_path / "surface.json"
+    out_path = tmp_path / "shortlist-full.json"
+    reverse_path.write_text(
+        json.dumps(
+            {
+                "accounts": [
+                    {
+                        "rank": 1,
+                        "handle": "DenverSharp",
+                        "slug": "denversharp",
+                        "weather_pnl_usd": 10000.0,
+                        "markets_traded": 12,
+                        "profitable_market_count": 9,
+                        "top_cities": [{"city": "Denver", "count": 9}],
+                        "top_market_types": [{"type": "threshold", "count": 8}],
+                        "sample_weather_titles": ["Will the highest temperature in Denver be 65F or higher?"],
+                    }
+                ]
+            }
+        )
+    )
+    surface_path.write_text(
+        json.dumps(
+            {
+                "event_count": 1,
+                "events": [
+                    {
+                        "event_key": "Denver|high|f|",
+                        "market_count": 2,
+                        "inconsistencies": [{"type": "threshold_monotonicity_violation", "severity": 0.07}],
+                    }
+                ],
+                "artifacts": {"source_markets_json": "prebuilt-markets.json"},
+            }
+        )
+    )
+
+    result = _run_cli(
+        "strategy-shortlist-report",
+        "--reverse-engineering-json",
+        str(reverse_path),
+        "--run-id",
+        "shortlist-surface-override",
+        "--source",
+        "fixture",
+        "--limit",
+        "5",
+        "--event-surface-json",
+        str(surface_path),
+        "--output-json",
+        str(out_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    full = json.loads(out_path.read_text())
+    assert compact["summary"]["surface_events"] == 1
+    assert compact["shortlist"][0]["surface_inconsistency_count"] == 1
+    assert "surface_anomaly" in compact["shortlist"][0]["reasons"]
+    assert full["event_surface"]["artifacts"]["source_event_surface_json"] == str(surface_path)
+    assert full["event_surface"]["artifacts"]["source_markets_json"] == "prebuilt-markets.json"
 
 
 def test_cli_strategy_shortlist_reads_reports_and_writes_ranked_json(tmp_path: Path) -> None:

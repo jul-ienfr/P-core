@@ -23,7 +23,7 @@ def build_strategy_shortlist(
         question = str(opportunity.get("question") or "")
         city, date = _parse_city_date(question)
         matched_accounts = city_accounts.get(city, []) if city else []
-        surface_event = surface_by_city_date.get((city, date), {}) if city and date else {}
+        surface_event = surface_by_city_date.get((city, date), {}) if city else {}
         row = _shortlist_row(opportunity, city=city, date=date, matched_accounts=matched_accounts, surface_event=surface_event)
         rows.append(row)
 
@@ -37,6 +37,8 @@ def build_strategy_shortlist(
             "strategy_accounts": len(accounts),
             "surface_events": len(surface_events),
             "shortlisted": len(ranked),
+            "action_counts": _counts(row.get("action") for row in ranked),
+            "execution_blocker_counts": _counts(row.get("execution_blocker") for row in ranked),
         },
         "shortlist": ranked,
     }
@@ -95,7 +97,9 @@ def _shortlist_row(
         "trader_archetype_match": _unique(str(account.get("primary_archetype") or "") for account in matched_accounts if account.get("primary_archetype")),
         "surface_inconsistency_count": len(inconsistencies),
         "surface_inconsistency_types": _unique(str(item.get("type") or "") for item in inconsistencies if item.get("type")),
+        "execution_blocker": _execution_blocker(opportunity),
         "action": action,
+        "next_actions": _next_actions(opportunity, action=action, direct=bool(opportunity.get("source_direct")), inconsistencies=inconsistencies),
         "reasons": reasons,
     }
 
@@ -124,6 +128,44 @@ def _action(opportunity: dict[str, Any], *, direct: bool, inconsistencies: list[
     if inconsistencies:
         return "review_surface_anomaly"
     return "watch_only"
+
+
+def _execution_blocker(opportunity: dict[str, Any]) -> str | None:
+    skip_reason = opportunity.get("skip_reason")
+    if isinstance(skip_reason, str) and skip_reason:
+        return skip_reason
+    status = str(opportunity.get("decision_status") or "")
+    if status and status not in {"trade", "trade_small"}:
+        return status
+    return None
+
+
+def _next_actions(opportunity: dict[str, Any], *, action: str, direct: bool, inconsistencies: list[dict[str, Any]]) -> list[str]:
+    actions: list[str] = []
+    if direct:
+        actions.append("poll_direct_resolution_source")
+    if inconsistencies:
+        actions.append("inspect_event_surface_prices")
+    blocker = _execution_blocker(opportunity)
+    if blocker:
+        actions.append(_next_action_for_blocker(blocker))
+    elif action.startswith("paper_trade"):
+        actions.append("paper_order_with_limit_and_fill_tracking")
+    else:
+        actions.append("keep_on_watchlist")
+    return _unique(actions)
+
+
+def _next_action_for_blocker(blocker: str) -> str:
+    if blocker in {"missing_tradeable_quote", "insufficient_executable_depth", "tiny_fillable_size"}:
+        return "wait_for_executable_depth"
+    if blocker in {"high_slippage_risk", "wide_spread"}:
+        return "wait_for_tighter_spread"
+    if blocker in {"market_already_resolving_or_resolved", "extreme_price"}:
+        return "skip_until_next_daily_market"
+    if blocker == "decision_not_tradeable":
+        return "watch_for_edge_or_execution_improvement"
+    return "review_execution_blocker"
 
 
 def _shortlist_sort_key(row: dict[str, Any]) -> tuple[int, float, str]:
@@ -155,6 +197,16 @@ def _optional_number(value: Any) -> float | None:
         return round(float(value), 6)
     except (TypeError, ValueError):
         return None
+
+
+def _counts(values: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        if not value:
+            continue
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _unique(values: Any) -> list[str]:

@@ -96,6 +96,7 @@ def build_parser() -> argparse.ArgumentParser:
     strategy_shortlist_report.add_argument("--min-edge", required=False, type=float, help="Minimum probability edge to include in the opportunity report")
     strategy_shortlist_report.add_argument("--max-cost-bps", required=False, type=float, help="Maximum all-in execution cost in basis points")
     strategy_shortlist_report.add_argument("--min-depth-usd", required=False, type=float, help="Minimum order book depth in USD")
+    strategy_shortlist_report.add_argument("--event-surface-json", required=False, help="Optional prebuilt event surface JSON to reuse instead of deriving one from opportunities")
     strategy_shortlist_report.add_argument("--output-json", required=False, help="Optional path to write the combined shortlist report")
 
     paper_cycle = subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
@@ -347,7 +348,13 @@ def build_strategy_shortlist_report_from_args(args: argparse.Namespace) -> dict[
             **({"min_depth_usd": args.min_depth_usd} if args.min_depth_usd is not None else {}),
         }
     )
-    surface_payload = build_weather_event_surface(opportunity_payload.get("opportunities", []))
+    if getattr(args, "event_surface_json", None):
+        surface_payload = json.loads(Path(args.event_surface_json).read_text())
+        if not isinstance(surface_payload, dict):
+            raise ValueError("event surface JSON must be an object")
+        surface_payload.setdefault("artifacts", {})["source_event_surface_json"] = str(args.event_surface_json)
+    else:
+        surface_payload = build_weather_event_surface(opportunity_payload.get("opportunities", []))
     shortlist_payload = build_strategy_shortlist(strategy_payload, opportunity_payload, surface_payload, limit=args.limit)
     artifacts: dict[str, Any] = {
         "reverse_engineering_json": str(args.reverse_engineering_json),
