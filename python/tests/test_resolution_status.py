@@ -54,7 +54,9 @@ def test_resolution_status_reports_provisional_latest_until_official_daily_extra
     )
     client = FakeResolutionStatusClient(latest=latest, history=official_empty)
 
-    with patch("weather_pm.cli.get_market_by_id", return_value=_hko_market()):
+    with patch("weather_pm.cli.get_market_by_id", return_value=_hko_market()), patch(
+        "weather_pm.cli._utc_now", return_value=datetime(2026, 4, 25, 8, 0, tzinfo=timezone.utc)
+    ):
         payload = weather_cli.resolution_status_for_market_id(
             "hko-high-29",
             source="live",
@@ -74,6 +76,7 @@ def test_resolution_status_reports_provisional_latest_until_official_daily_extra
         "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
         "polling_focus": "hko_current_weather_api",
         "expected_lag_seconds": None,
+        "source_lag_seconds": 900,
     }
     assert payload["official_daily_extract"] == {
         "available": False,
@@ -83,7 +86,9 @@ def test_resolution_status_reports_provisional_latest_until_official_daily_extra
         "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
         "polling_focus": "hko_official_daily_extract",
         "expected_lag_seconds": 86400,
+        "source_lag_seconds": None,
     }
+
     assert payload["provisional_outcome"] == "yes"
     assert payload["confirmed_outcome"] == "pending"
     assert payload["action_operator"] == "monitor_until_official_daily_extract"

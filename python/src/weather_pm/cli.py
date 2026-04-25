@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -860,6 +860,9 @@ def resolution_status_for_market_id(
         polling_focus="hko_official_daily_extract" if resolution.provider == "hong_kong_observatory" else None,
         expected_lag_seconds=86400 if resolution.provider == "hong_kong_observatory" else None,
     )
+    now = _utc_now()
+    _annotate_source_lag_seconds(latest_bundle, now=now)
+    _annotate_source_lag_seconds(official_bundle, now=now)
     latest_point = latest_bundle.latest()
     official_point = official_bundle.latest()
     route = build_resolution_source_route(structure, resolution, start_date=date, end_date=date)
@@ -909,7 +912,45 @@ def _status_point_payload(bundle: Any) -> dict[str, Any]:
         "source_url": getattr(bundle, "source_url", None),
         "polling_focus": getattr(bundle, "polling_focus", None),
         "expected_lag_seconds": getattr(bundle, "expected_lag_seconds", None),
+        "source_lag_seconds": getattr(bundle, "source_lag_seconds", None),
     }
+
+
+
+def _annotate_source_lag_seconds(bundle: Any, *, now: datetime) -> None:
+    point = bundle.latest()
+    if point is None:
+        return
+    observed_at = _parse_observation_timestamp(point.timestamp)
+    if observed_at is None:
+        return
+    bundle.source_lag_seconds = max(0, int((now - observed_at).total_seconds()))
+
+
+
+def _parse_observation_timestamp(raw_timestamp: str) -> datetime | None:
+    text = str(raw_timestamp).strip()
+    if not text:
+        return None
+    candidates = [text]
+    if len(text) == 10 and text[4] == "-" and text[7] == "-":
+        candidates.append(f"{text}T00:00:00+00:00")
+    for candidate in candidates:
+        normalized = candidate.replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(normalized)
+        except ValueError:
+            continue
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    return None
+
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
 
 
 def _outcome_for_point(structure, point: StationHistoryPoint) -> str:
