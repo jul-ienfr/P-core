@@ -84,9 +84,18 @@ class DirectStationForecastClient:
             value = self._extract_hko_value(structure, payload)
             return self._bundle(structure, resolution, value=value, url=url)
 
+        if resolution.provider in _DIRECT_API_FORECAST_PROVIDERS and resolution.source_url:
+            from weather_pm.history_client import StationHistoryClient
+
+            payload = self._fetch_json(resolution.source_url)
+            points = StationHistoryClient()._parse_generic_weather_points(structure, resolution, payload, latest=True)
+            if not points:
+                raise ValueError(f"{resolution.provider} direct API payload missing parseable temperature")
+            return self._bundle(structure, resolution, value=points[-1].value, url=resolution.source_url, latency_tier="direct_api")
+
         raise ValueError(f"no direct station route for provider={resolution.provider!r}")
 
-    def _bundle(self, structure: MarketStructure, resolution: ResolutionMetadata, *, value: float, url: str) -> ForecastBundle:
+    def _bundle(self, structure: MarketStructure, resolution: ResolutionMetadata, *, value: float, url: str, latency_tier: str = "direct") -> ForecastBundle:
         return ForecastBundle(
             source_count=1,
             consensus_value=round(value, 2),
@@ -95,7 +104,7 @@ class DirectStationForecastClient:
             source_provider=resolution.provider,
             source_station_code=resolution.station_code,
             source_url=url,
-            source_latency_tier="direct",
+            source_latency_tier=latency_tier,
         )
 
     def _extract_noaa_value(self, structure: MarketStructure, payload: dict[str, Any]) -> float:
@@ -170,10 +179,30 @@ class DirectStationForecastClient:
             return json.loads(response.read().decode("utf-8"))
 
 
+_DIRECT_API_FORECAST_PROVIDERS = {
+    "weatherapi",
+    "visual_crossing",
+    "weatherbit",
+    "tomorrow_io",
+    "meteoblue",
+    "open_meteo",
+    "openweather",
+    "yr_no",
+    "world_weather_online",
+    "meteomatics",
+    "weatherlink",
+    "ambient_weather",
+    "netatmo",
+    "windy",
+    "aerisweather",
+    "meteo_france",
+}
+
+
 def _direct_resolution_target(resolution: ResolutionMetadata | None) -> ResolutionMetadata | None:
     if resolution is None:
         return None
-    if resolution.provider in {"noaa", "wunderground", "hong_kong_observatory"} and (resolution.station_code or resolution.source_url or resolution.provider == "hong_kong_observatory"):
+    if resolution.provider in ({"noaa", "wunderground", "hong_kong_observatory"} | _DIRECT_API_FORECAST_PROVIDERS) and (resolution.station_code or resolution.source_url or resolution.provider == "hong_kong_observatory"):
         return resolution
     return None
 

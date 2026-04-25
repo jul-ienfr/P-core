@@ -103,6 +103,31 @@ def test_build_forecast_bundle_prefers_direct_resolution_station_before_city_geo
     assert bundle.source_station_code == "KDEN"
 
 
+def test_direct_station_client_routes_open_meteo_explicit_payload_without_city_geocoding() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 28C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.open-meteo.com/v1/forecast?latitude=25.76&longitude=-80.19&daily=temperature_2m_max,temperature_2m_min&current_weather=true",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Source: Open-Meteo API JSON payload.",
+    )
+    client = _FakeDirectStationClient(
+        [
+            {"current_weather": {"time": "2026-04-25T10:00", "temperature": 27.0}},
+        ]
+    )
+
+    bundle = client.build_forecast_bundle(structure, resolution)
+
+    assert client.requested_urls == [resolution.source_url]
+    assert bundle.consensus_value == 27.0
+    assert bundle.source_count == 1
+    assert bundle.historical_station_available is True
+    assert bundle.source_provider == "open_meteo"
+    assert bundle.source_station_code is None
+    assert bundle.source_url == resolution.source_url
+    assert bundle.source_latency_tier == "direct_api"
+
+
 def test_build_forecast_bundle_preserves_direct_resolution_target_when_fetch_falls_back() -> None:
     class _FailingDirectClient(DirectStationForecastClient):
         def build_forecast_bundle(self, structure, resolution):
