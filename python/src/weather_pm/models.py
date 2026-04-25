@@ -85,6 +85,8 @@ class ExecutionFeatures:
     all_in_cost_bps: float = 0.0
     all_in_cost_usd: float = 0.0
     best_effort_reason: str | None = None
+    tradeability_status: str = "tradeable"
+    cost_risk: str = "low"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

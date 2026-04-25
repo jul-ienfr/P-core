@@ -188,6 +188,9 @@ def score_market_request(payload: dict[str, Any]) -> dict[str, Any]:
 
 def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
     run_id = _required_string(payload, "run_id")
+    if not isinstance(payload.get("market_id"), str) or not str(payload.get("market_id", "")).strip():
+        return live_paper_cycle_request(payload, run_id=run_id)
+
     market_id = _required_string(payload, "market_id")
 
     question = _optional_string(payload.get("question"))
@@ -302,6 +305,300 @@ def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
         "postmortem": postmortem.model_dump(mode="json"),
         "score_bundle": score_bundle,
     }
+
+
+def live_paper_cycle_request(payload: dict[str, Any], *, run_id: str | None = None) -> dict[str, Any]:
+    resolved_run_id = run_id or _required_string(payload, "run_id")
+    source = _coerce_source(payload.get("source", "live"))
+    limit_value = _coerce_limit(payload.get("limit", 25))
+    max_impact_bps = _optional_number(payload.get("max_impact_bps")) if "max_impact_bps" in payload else None
+
+    fetch_limit = _live_cycle_fetch_limit(limit_value)
+    raw_markets = list_weather_markets(source=source, limit=fetch_limit)
+    markets: list[dict[str, Any]] = []
+    pre_filter_reasons: dict[str, int] = {}
+    for raw_market in raw_markets:
+        market = dict(raw_market)
+        skip_reason = _pre_score_skip_reason(market)
+        if skip_reason is not None:
+            pre_filter_reasons[skip_reason] = pre_filter_reasons.get(skip_reason, 0) + 1
+            continue
+        markets.append(market)
+        if len(markets) >= limit_value:
+            break
+
+    results: list[dict[str, Any]] = []
+    scored_count = 0
+    traded_count = 0
+    skipped_reasons: dict[str, int] = {}
+
+    for market in markets:
+        market_id = str(market.get("id", "")).strip()
+        if not market_id:
+            continue
+        score_bundle = _score_market_from_market_id(market_id, source=source, max_impact_bps=max_impact_bps)
+        scored_count += 1
+        decision_status = _decision_status(score_bundle)
+        if decision_status in {"trade", "trade_small"}:
+            market_result = _paper_cycle_tradeable_market_result(run_id=resolved_run_id, market_id=market_id, market=market, score_bundle=score_bundle, payload=payload)
+            simulation = market_result.get("simulation")
+            if isinstance(simulation, dict) and simulation.get("status") in {"filled", "partial"}:
+                traded_count += 1
+            results.append(market_result)
+        else:
+            skipped_reasons["decision_not_tradeable"] = skipped_reasons.get("decision_not_tradeable", 0) + 1
+            results.append(_paper_cycle_scored_skip_market_result(run_id=resolved_run_id, market_id=market_id, market=market, score_bundle=score_bundle, payload=payload))
+
+    summary = {
+        "selected": len(markets),
+        "raw_candidates": len(raw_markets),
+        "fetch_limit": fetch_limit,
+        "scored": scored_count,
+        "scoreable": scored_count,
+        "traded": traded_count,
+        "skipped": len(results) - traded_count,
+        "skipped_reasons": dict(sorted(skipped_reasons.items())),
+    }
+    if pre_filter_reasons:
+        summary["pre_filtered"] = sum(pre_filter_reasons.values())
+        summary["pre_filter_reasons"] = dict(sorted(pre_filter_reasons.items()))
+
+    return {
+        "run_id": resolved_run_id,
+        "source": source,
+        "limit": limit_value,
+        "summary": summary,
+        "markets": results,
+    }
+
+
+def paper_cycle_opportunity_report_request(payload: dict[str, Any]) -> dict[str, Any]:
+    cycle = live_paper_cycle_request(payload)
+    compact_opportunities = [_compact_opportunity(item) for item in cycle.get("markets", []) if isinstance(item, dict)]
+    if not _truthy(payload.get("include_skipped")) or _truthy(payload.get("tradeable_only")):
+        compact_opportunities = [opportunity for opportunity in compact_opportunities if opportunity.get("decision_status") in {"trade", "trade_small"}]
+    compact_opportunities = [opportunity for opportunity in compact_opportunities if _opportunity_passes_thresholds(opportunity, payload)]
+    ranked = sorted(
+        compact_opportunities,
+        key=_opportunity_sort_key,
+    )
+    for index, opportunity in enumerate(ranked, start=1):
+        opportunity["rank"] = index
+    return {
+        "run_id": cycle.get("run_id"),
+        "source": cycle.get("source"),
+        "limit": cycle.get("limit"),
+        "summary": cycle.get("summary", {}),
+        "opportunities": ranked,
+    }
+
+
+def _compact_opportunity(market_result: dict[str, Any]) -> dict[str, Any]:
+    market = market_result.get("market") if isinstance(market_result.get("market"), dict) else {}
+    score_bundle = market_result.get("score_bundle") if isinstance(market_result.get("score_bundle"), dict) else {}
+    score_info = score_bundle.get("score") if isinstance(score_bundle.get("score"), dict) else {}
+    edge_info = score_bundle.get("edge") if isinstance(score_bundle.get("edge"), dict) else {}
+    execution_info = score_bundle.get("execution") if isinstance(score_bundle.get("execution"), dict) else {}
+    decision_info = score_bundle.get("decision") if isinstance(score_bundle.get("decision"), dict) else {}
+
+    opportunity: dict[str, Any] = {
+        "rank": 0,
+        "market_id": str(market_result.get("market_id", market.get("id", ""))),
+        "question": _optional_string(market.get("question")) or "",
+        "decision_status": str(market_result.get("decision_status", "skipped")),
+        "score": _rounded_optional_number(score_info.get("total_score")),
+        "grade": score_info.get("grade"),
+        "probability_edge": _rounded_optional_number(edge_info.get("probability_edge")),
+        "spread": _rounded_optional_number(execution_info.get("spread"), market.get("spread")),
+        "all_in_cost_bps": _rounded_optional_number(execution_info.get("all_in_cost_bps")),
+        "order_book_depth_usd": _rounded_optional_number(execution_info.get("order_book_depth_usd")),
+        "hours_to_resolution": _rounded_optional_number(execution_info.get("hours_to_resolution"), market.get("hours_to_resolution")),
+    }
+    skip_reason = market_result.get("skip_reason")
+    if isinstance(skip_reason, str) and skip_reason:
+        opportunity["skip_reason"] = skip_reason
+    reasons = decision_info.get("reasons")
+    if isinstance(reasons, list) and reasons:
+        opportunity["reasons"] = [str(reason) for reason in reasons]
+    return opportunity
+
+
+def _opportunity_sort_key(opportunity: dict[str, Any]) -> tuple[int, float, str]:
+    status = opportunity.get("decision_status")
+    tradeable = status in {"trade", "trade_small"}
+    total_score = _optional_number(opportunity.get("score")) or 0.0
+    probability_edge = _optional_number(opportunity.get("probability_edge")) or 0.0
+    all_in_cost_bps = _optional_number(opportunity.get("all_in_cost_bps")) or 0.0
+    spread = _optional_number(opportunity.get("spread")) or 0.0
+    net_interest = total_score + (probability_edge * 100.0) - (all_in_cost_bps / 100.0) - (spread * 100.0)
+    return (0 if tradeable else 1, -net_interest, str(opportunity.get("market_id", "")))
+
+
+def _opportunity_passes_thresholds(opportunity: dict[str, Any], payload: dict[str, Any]) -> bool:
+    min_edge = _optional_number(payload.get("min_edge")) if "min_edge" in payload else None
+    if min_edge is not None and (_optional_number(opportunity.get("probability_edge")) or 0.0) < min_edge:
+        return False
+
+    max_cost_bps = _optional_number(payload.get("max_cost_bps")) if "max_cost_bps" in payload else None
+    if max_cost_bps is not None:
+        cost_bps = _optional_number(opportunity.get("all_in_cost_bps"))
+        if cost_bps is None or cost_bps > max_cost_bps:
+            return False
+
+    min_depth_usd = _optional_number(payload.get("min_depth_usd")) if "min_depth_usd" in payload else None
+    if min_depth_usd is not None and (_optional_number(opportunity.get("order_book_depth_usd")) or 0.0) < min_depth_usd:
+        return False
+
+    return True
+
+
+def _rounded_optional_number(*values: Any) -> float | None:
+    for value in values:
+        number = _optional_number(value)
+        if number is not None:
+            return round(number, 6)
+    return None
+
+
+def _paper_cycle_tradeable_market_result(*, run_id: str, market_id: str, market: dict[str, Any], score_bundle: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    yes_price = _market_yes_price(market)
+    requested_quantity = derive_requested_quantity(
+        requested_quantity=_optional_number(payload.get("requested_quantity")),
+        bankroll_usd=_optional_number(payload.get("bankroll_usd")),
+        yes_price=yes_price,
+        score_bundle=score_bundle,
+    )
+    filled_quantity, fill_price = derive_filled_execution(filled_quantity=None, fill_price=None, requested_quantity=requested_quantity, yes_price=yes_price, score_bundle=score_bundle)
+    execution_costs = _execution_costs_from_score_bundle(score_bundle)
+    metadata = _paper_cycle_metadata(question=_optional_string(market.get("question")), score_bundle=score_bundle, auto_derived=True, execution_costs=execution_costs)
+    simulation = _manual_paper_trade_simulation(
+        run_id=run_id,
+        market_id=market_id,
+        requested_quantity=requested_quantity,
+        filled_quantity=filled_quantity,
+        fill_price=fill_price,
+        fee_paid=_derive_fee_paid_from_execution_costs(gross_notional=round(filled_quantity * fill_price, 6), filled_quantity=filled_quantity, execution_costs=execution_costs),
+        reference_price=_reference_price_from_score_bundle(score_bundle),
+        position_side=_string_with_default(payload, "position_side", default="yes"),
+        execution_side=_string_with_default(payload, "execution_side", default="buy"),
+        metadata=metadata,
+    )
+    return _paper_cycle_market_result_payload(market_id=market_id, market=market, score_bundle=score_bundle, simulation=simulation)
+
+
+def _paper_cycle_scored_skip_market_result(*, run_id: str, market_id: str, market: dict[str, Any], score_bundle: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    simulation = _skipped_paper_trade_simulation(
+        run_id=run_id,
+        market_id=market_id,
+        market=market,
+        requested_quantity=_optional_number(payload.get("requested_quantity")) or 0.0,
+        score_bundle=score_bundle,
+        skip_reason="decision_not_tradeable",
+        payload=payload,
+    )
+    return _paper_cycle_market_result_payload(market_id=market_id, market=market, score_bundle=score_bundle, simulation=simulation, skip_reason="decision_not_tradeable")
+
+
+def _paper_cycle_skipped_market_result(*, run_id: str, market_id: str, market: dict[str, Any], skip_reason: str, payload: dict[str, Any]) -> dict[str, Any]:
+    simulation = _skipped_paper_trade_simulation(
+        run_id=run_id,
+        market_id=market_id,
+        market=market,
+        requested_quantity=_optional_number(payload.get("requested_quantity")) or 0.0,
+        score_bundle=None,
+        skip_reason=skip_reason,
+        payload=payload,
+    )
+    return _paper_cycle_market_result_payload(market_id=market_id, market=market, score_bundle=None, simulation=simulation, skip_reason=skip_reason)
+
+
+def _skipped_paper_trade_simulation(*, run_id: str, market_id: str, market: dict[str, Any], requested_quantity: float, score_bundle: dict[str, Any] | None, skip_reason: str, payload: dict[str, Any]):
+    metadata = _paper_cycle_metadata(question=_optional_string(market.get("question")), score_bundle=score_bundle, auto_derived=True, execution_costs=_execution_costs_from_score_bundle(score_bundle))
+    metadata["skip_reason"] = skip_reason
+    return _manual_paper_trade_simulation(
+        run_id=run_id,
+        market_id=market_id,
+        requested_quantity=requested_quantity,
+        filled_quantity=0.0,
+        fill_price=max(_market_yes_price(market), 0.0),
+        fee_paid=0.0,
+        reference_price=_reference_price_from_score_bundle(score_bundle),
+        position_side=_string_with_default(payload, "position_side", default="yes"),
+        execution_side=_string_with_default(payload, "execution_side", default="buy"),
+        metadata=metadata,
+    )
+
+
+def _paper_cycle_market_result_payload(*, market_id: str, market: dict[str, Any], score_bundle: dict[str, Any] | None, simulation: Any, skip_reason: str | None = None) -> dict[str, Any]:
+    postmortem = simulation.postmortem()
+    simulation_payload = simulation.model_dump(mode="json")
+    postmortem_payload = postmortem.model_dump(mode="json")
+    simulation_status = str(simulation_payload.get("status", ""))
+    postmortem_recommendation = str(postmortem_payload.get("recommendation", ""))
+    result: dict[str, Any] = {
+        "market_id": market_id,
+        "market": normalize_market_record(market),
+        "decision_status": _decision_status(score_bundle) or "skipped",
+        "simulation_status": simulation_status,
+        "postmortem_recommendation": postmortem_recommendation,
+        "scoreable": score_bundle is not None,
+        "traded": simulation_status in {"filled", "partial"},
+        "simulation": simulation_payload,
+        "postmortem": postmortem_payload,
+        "score_bundle": score_bundle,
+    }
+    if skip_reason is not None:
+        result["skip_reason"] = skip_reason
+    return result
+
+
+def _live_cycle_fetch_limit(limit_value: int) -> int:
+    return max(limit_value, min(limit_value * 3, 250))
+
+
+def _pre_score_skip_reason(market: dict[str, Any]) -> str | None:
+    hours_to_resolution = _optional_number(market.get("hours_to_resolution"))
+    if hours_to_resolution is not None and hours_to_resolution <= 0:
+        return "market_already_resolving_or_resolved"
+    best_bid = _optional_number(market.get("best_bid")) or 0.0
+    best_ask = _optional_number(market.get("best_ask")) or 0.0
+    yes_price = _optional_number(market.get("yes_price")) or 0.0
+    if best_bid <= 0.0 and best_ask <= 0.0 and yes_price <= 0.0:
+        return "missing_tradeable_quote"
+    return None
+
+
+def _market_yes_price(market: dict[str, Any]) -> float:
+    yes_price = _optional_unit_price(market.get("yes_price"), field="yes_price")
+    if yes_price is not None and yes_price > 0.0:
+        return yes_price
+    best_ask = _optional_unit_price(market.get("best_ask"), field="best_ask")
+    if best_ask is not None and best_ask > 0.0:
+        return best_ask
+    best_bid = _optional_unit_price(market.get("best_bid"), field="best_bid")
+    if best_bid is not None and best_bid > 0.0:
+        return best_bid
+    return 0.0
+
+
+def _decision_status(score_bundle: dict[str, Any] | None) -> str | None:
+    if not isinstance(score_bundle, dict):
+        return None
+    decision_info = score_bundle.get("decision")
+    if isinstance(decision_info, dict) and isinstance(decision_info.get("status"), str):
+        return decision_info["status"]
+    return None
+
+
+def _reference_price_from_score_bundle(score_bundle: dict[str, Any] | None) -> float | None:
+    if not isinstance(score_bundle, dict):
+        return None
+    score_info = score_bundle.get("score")
+    if isinstance(score_info, dict):
+        edge_theoretical = score_info.get("edge_theoretical")
+        if isinstance(edge_theoretical, (int, float)):
+            return round(float(edge_theoretical), 6)
+    return None
 
 
 def _manual_paper_trade_simulation(
@@ -570,6 +867,14 @@ def _optional_number(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError) as exc:
         raise ValueError("optional numeric fields must be numeric") from exc
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
 
 
 def _string_with_default(payload: dict[str, Any], field: str, *, default: str) -> str:

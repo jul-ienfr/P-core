@@ -48,8 +48,26 @@ def build_parser() -> argparse.ArgumentParser:
     price_market = subparsers.add_parser("price-market", help="Produce a theoretical price for a market")
     price_market.add_argument("--market-id", required=False, help="Market identifier")
 
-    subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
+    paper_cycle = subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
+    _add_paper_cycle_arguments(paper_cycle)
+
+    paper_cycle_report = subparsers.add_parser("paper-cycle-report", help="Run a paper cycle and output compact ranked opportunities")
+    _add_paper_cycle_arguments(paper_cycle_report)
+    paper_cycle_report.add_argument("--tradeable-only", action="store_true", help="Only output candidates with a trade/trade_small decision")
+    paper_cycle_report.add_argument("--include-skipped", action="store_true", help="Include skipped/watchlist diagnostics in addition to tradeable candidates")
+    paper_cycle_report.add_argument("--min-edge", required=False, type=float, help="Minimum probability edge to include in the report")
+    paper_cycle_report.add_argument("--max-cost-bps", required=False, type=float, help="Maximum all-in execution cost in basis points")
+    paper_cycle_report.add_argument("--min-depth-usd", required=False, type=float, help="Minimum order book depth in USD")
     return parser
+
+
+def _add_paper_cycle_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--run-id", required=True, help="Paper cycle run id")
+    parser.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+    parser.add_argument("--limit", required=False, type=int, default=25, help="Maximum live markets to score")
+    parser.add_argument("--bankroll-usd", required=False, type=float, help="Bankroll used for decision sizing")
+    parser.add_argument("--requested-quantity", required=False, type=float, default=1.0, help="Requested quantity per tradeable market")
+    parser.add_argument("--max-impact-bps", required=False, type=float, help="Override max executable price impact in bps")
 
 
 def main() -> int:
@@ -95,7 +113,36 @@ def main() -> int:
         )
         return 0
 
+    if args.command == "paper-cycle":
+        from prediction_core.server import live_paper_cycle_request
+
+        print(json.dumps(live_paper_cycle_request(_paper_cycle_payload_from_args(args))))
+        return 0
+
+    if args.command == "paper-cycle-report":
+        from prediction_core.server import paper_cycle_opportunity_report_request
+
+        print(json.dumps(paper_cycle_opportunity_report_request(_paper_cycle_payload_from_args(args))))
+        return 0
+
     return 0
+
+
+def _paper_cycle_payload_from_args(args: argparse.Namespace) -> dict[str, Any]:
+    payload = {
+        "run_id": args.run_id,
+        "source": args.source,
+        "limit": args.limit,
+        "bankroll_usd": args.bankroll_usd,
+        "requested_quantity": args.requested_quantity,
+        "max_impact_bps": args.max_impact_bps,
+        "tradeable_only": getattr(args, "tradeable_only", False),
+        "include_skipped": getattr(args, "include_skipped", False),
+        "min_edge": getattr(args, "min_edge", None),
+        "max_cost_bps": getattr(args, "max_cost_bps", None),
+        "min_depth_usd": getattr(args, "min_depth_usd", None),
+    }
+    return {key: value for key, value in payload.items() if value is not None}
 
 
 def _normalize_event_book_payload(event_book: dict[str, Any]) -> dict[str, Any]:

@@ -52,6 +52,13 @@ Cette zone réutilisera progressivement le Python utile déjà présent dans l�
 cd /home/jul/prediction_core/python
 PYTHONPATH=src pytest -q
 python3 -m weather_pm.cli --help
+PYTHONPATH=src python3 -m weather_pm.cli paper-cycle-report \
+  --run-id live-scan \
+  --source live \
+  --limit 25 \
+  --min-edge 0.01 \
+  --max-cost-bps 1000 \
+  --min-depth-usd 0
 ./scripts/prediction-core serve --host 127.0.0.1 --port 8080
 ./scripts/prediction-core consume-markets --base-url http://127.0.0.1:8080 --source live --limit 3 --min-status watchlist
 ```
@@ -72,7 +79,13 @@ Endpoints actuels :
 - `GET /health`
 - `POST /weather/parse-market`
 - `POST /weather/score-market`
-- `POST /weather/paper-cycle` (construit une simulation paper + postmortem ; si `question` + `yes_price` sont fournis, il score le marché puis peut auto-dériver `requested_quantity` depuis `bankroll_usd`, puis `filled_quantity` et `fill_price` depuis la décision)
+- `POST /weather/paper-cycle` (construit une simulation paper + postmortem ; si `question` + `yes_price` sont fournis, il score le marché puis peut auto-dériver `requested_quantity` depuis `bankroll_usd`, puis `filled_quantity` et `fill_price` depuis la décision ; si `market_id` est absent/vide, lance un cycle live multi-marchés borné)
+
+CLI screener compact :
+- `python3 -m weather_pm.cli paper-cycle --run-id ... --source fixture|live --limit N`
+- `python3 -m weather_pm.cli paper-cycle-report --run-id ... --source fixture|live --limit N`
+- par défaut, le report n’affiche que les candidats exécutables (`trade` / `trade_small`) pour éviter le bruit ; ajouter `--include-skipped` pour diagnostiquer les marchés ignorés
+- filtres report : `--tradeable-only`, `--include-skipped`, `--min-edge`, `--max-cost-bps`, `--min-depth-usd`
 
 Exemples de smoke test manuels :
 

@@ -271,12 +271,13 @@ def test_score_market_command_live_event_without_tradeable_quote_is_not_tradeabl
     assert "missing tradeable quote" in " ".join(payload["decision"]["reasons"])
 
 
-def test_build_parser_accepts_source_argument_for_fetch_event_book_and_score_commands() -> None:
+def test_build_parser_accepts_source_argument_for_fetch_event_book_score_and_paper_cycle_commands() -> None:
     parser = weather_cli.build_parser()
 
     fetch_args = parser.parse_args(["fetch-markets", "--source", "live", "--limit", "5"])
     event_args = parser.parse_args(["fetch-event-book", "--market-id", "event-123", "--source", "live"])
     score_args = parser.parse_args(["score-market", "--market-id", "abc", "--source", "live", "--max-impact-bps", "75"])
+    paper_args = parser.parse_args(["paper-cycle", "--run-id", "run-cli-1", "--source", "live", "--limit", "3", "--bankroll-usd", "1000"])
 
     assert fetch_args.source == "live"
     assert fetch_args.limit == 5
@@ -285,6 +286,47 @@ def test_build_parser_accepts_source_argument_for_fetch_event_book_and_score_com
     assert score_args.source == "live"
     assert score_args.market_id == "abc"
     assert score_args.max_impact_bps == 75.0
+    assert paper_args.run_id == "run-cli-1"
+    assert paper_args.source == "live"
+    assert paper_args.limit == 3
+    assert paper_args.bankroll_usd == 1000.0
+
+
+def test_paper_cycle_command_runs_fixture_source_deterministically_for_automation() -> None:
+    result = _run_cli("paper-cycle", "--run-id", "run-cli-fixture-1", "--source", "fixture", "--limit", "2")
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["run_id"] == "run-cli-fixture-1"
+    assert payload["source"] == "fixture"
+    assert payload["limit"] == 2
+    assert payload["summary"] == {
+        "selected": 2,
+        "raw_candidates": 3,
+        "fetch_limit": 6,
+        "scored": 2,
+        "scoreable": 2,
+        "traded": 2,
+        "skipped": 0,
+        "skipped_reasons": {},
+    }
+    assert [market["market_id"] for market in payload["markets"]] == ["denver-high-64", "denver-high-65"]
+    for market in payload["markets"]:
+        assert set(
+            [
+                "market_id",
+                "decision_status",
+                "simulation_status",
+                "postmortem_recommendation",
+                "scoreable",
+                "traded",
+                "simulation",
+                "postmortem",
+            ]
+        ).issubset(market)
+        assert market["decision_status"] in {"trade", "trade_small", "watchlist", "skip"}
+        assert market["simulation_status"] == market["simulation"]["status"]
+        assert market["postmortem_recommendation"] == market["postmortem"]["recommendation"]
 
 
 def test_fetch_markets_command_keeps_stable_json_shape_for_live_source() -> None:

@@ -81,6 +81,49 @@ def test_build_decision_returns_trade_small_for_threshold_setup_with_small_but_a
 
 
 
+def test_build_decision_reduces_sizing_when_execution_is_degraded_by_high_cost_risk() -> None:
+    score = ScoreResult(
+        raw_edge=0.20,
+        edge_theoretical=1.0,
+        data_quality=0.92,
+        resolution_clarity=0.95,
+        execution_friction=0.55,
+        competition_inefficiency=0.70,
+        total_score=86.0,
+        grade="A",
+    )
+    execution = ExecutionFeatures(
+        spread=0.02,
+        hours_to_resolution=12.0,
+        volume_usd=50_000.0,
+        fillable_size_usd=100.0,
+        execution_speed_required="low",
+        slippage_risk="medium",
+        transaction_fee_bps=350.0,
+        deposit_fee_usd=0.0,
+        withdrawal_fee_usd=0.0,
+        order_book_depth_usd=225.0,
+        expected_slippage_bps=0.0,
+        all_in_cost_bps=400.0,
+        all_in_cost_usd=4.0,
+        tradeability_status="degraded",
+        cost_risk="high",
+    )
+
+    decision = build_decision(
+        score=score,
+        is_exact_bin=False,
+        spread=0.02,
+        forecast_dispersion=1.0,
+        execution=execution,
+    )
+
+    assert decision.status == "trade_small"
+    assert decision.max_position_pct_bankroll == 0.01
+    assert any("degraded" in reason for reason in decision.reasons)
+
+
+
 def test_build_decision_skips_when_all_in_costs_consume_the_edge() -> None:
     score = ScoreResult(
         raw_edge=0.06,

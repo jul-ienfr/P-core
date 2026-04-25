@@ -77,6 +77,47 @@ def test_build_execution_features_skips_when_impact_capped_depth_is_too_thin() -
     assert execution.order_book_depth_usd == 8.8
     assert execution.fillable_size_usd == 0.0
     assert execution.best_effort_reason == "missing_tradeable_quote"
+    assert execution.tradeability_status == "untradeable"
+    assert execution.cost_risk == "none"
+
+
+def test_build_execution_features_marks_degraded_tradeability_when_costs_are_high() -> None:
+    execution = build_execution_features(
+        {
+            "best_bid": 0.42,
+            "best_ask": 0.45,
+            "yes_price": 0.435,
+            "volume": 50_000.0,
+            "hours_to_resolution": 12.0,
+            "target_order_size_usd": 100.0,
+            "taker_fee_bps": 350.0,
+            "asks": [{"price": 0.45, "size": 500.0}],
+            "bids": [{"price": 0.42, "size": 500.0}],
+        }
+    )
+
+    assert execution.best_effort_reason is None
+    assert execution.tradeability_status == "degraded"
+    assert execution.cost_risk == "high"
+
+
+def test_build_execution_features_marks_tradeable_when_costs_are_low() -> None:
+    execution = build_execution_features(
+        {
+            "best_bid": 0.44,
+            "best_ask": 0.45,
+            "yes_price": 0.445,
+            "volume": 50_000.0,
+            "hours_to_resolution": 12.0,
+            "target_order_size_usd": 100.0,
+            "asks": [{"price": 0.45, "size": 500.0}],
+            "bids": [{"price": 0.44, "size": 500.0}],
+        }
+    )
+
+    assert execution.best_effort_reason is None
+    assert execution.tradeability_status == "tradeable"
+    assert execution.cost_risk == "low"
 
 
 def test_build_execution_features_respects_explicit_tighter_impact_cap() -> None:

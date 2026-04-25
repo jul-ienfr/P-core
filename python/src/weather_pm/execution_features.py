@@ -34,6 +34,8 @@ def build_execution_features(raw_market: dict[str, Any]) -> ExecutionFeatures:
     spread_cost_bps = round(_spread_cost_bps(spread=spread, order_book_depth_usd=order_book_depth_usd), 2)
     all_in_cost_usd = round(fillable_size_usd * ((transaction_fee_bps + expected_slippage_bps + spread_cost_bps) / 10000.0) + deposit_fee_usd + withdrawal_fee_usd, 3)
     all_in_cost_bps = 0.0 if fillable_size_usd <= 0 else round((all_in_cost_usd / fillable_size_usd) * 10000.0, 2)
+    cost_risk = _cost_risk(all_in_cost_bps=all_in_cost_bps, all_in_cost_usd=all_in_cost_usd, fillable_size_usd=fillable_size_usd)
+    tradeability_status = _tradeability_status(best_effort_reason=best_effort_reason, cost_risk=cost_risk)
 
     execution_speed_required = "high" if hours_to_resolution is not None and hours_to_resolution <= 6 else "low"
     if spread >= 0.06 or volume_usd < 1500:
@@ -59,6 +61,8 @@ def build_execution_features(raw_market: dict[str, Any]) -> ExecutionFeatures:
         all_in_cost_bps=all_in_cost_bps,
         all_in_cost_usd=all_in_cost_usd,
         best_effort_reason=best_effort_reason,
+        tradeability_status=tradeability_status,
+        cost_risk=cost_risk,
     )
 
 
@@ -190,6 +194,24 @@ def _best_effort_reason(*, best_bid: float, best_ask: float, yes_price: float | 
     if best_bid <= 0.0 and best_ask <= 0.0 and (yes_price is None or yes_price <= 0.0):
         return "missing_tradeable_quote"
     return None
+
+
+def _tradeability_status(*, best_effort_reason: str | None, cost_risk: str) -> str:
+    if best_effort_reason is not None:
+        return "untradeable"
+    if cost_risk == "high":
+        return "degraded"
+    return "tradeable"
+
+
+def _cost_risk(*, all_in_cost_bps: float, all_in_cost_usd: float, fillable_size_usd: float) -> str:
+    if fillable_size_usd <= 0.0 or all_in_cost_usd <= 0.0:
+        return "none"
+    if all_in_cost_bps >= 300.0:
+        return "high"
+    if all_in_cost_bps >= 100.0:
+        return "medium"
+    return "low"
 
 
 def _expected_slippage_bps(*, spread: float, volume_usd: float, target_order_size_usd: float, order_book_depth_usd: float) -> float:

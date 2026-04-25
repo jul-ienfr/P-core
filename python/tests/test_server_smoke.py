@@ -141,6 +141,170 @@ def test_polymarket_weather_markets_get_endpoint_rejects_non_positive_limit() ->
         thread.join(timeout=2)
 
 
+def test_live_paper_cycle_overfetches_to_fill_limit_after_pre_filtering() -> None:
+    from unittest.mock import patch
+
+    from prediction_core.server import paper_cycle_request
+
+    markets = [
+        {
+            "id": "expired-1",
+            "question": "Will the highest temperature in Denver be 60F or higher?",
+            "yes_price": 0.50,
+            "best_bid": 0.49,
+            "best_ask": 0.51,
+            "volume": 14000.0,
+            "hours_to_resolution": -1.0,
+        },
+        {
+            "id": "quoted-1",
+            "question": "Will the highest temperature in Denver be 61F or higher?",
+            "yes_price": 0.43,
+            "best_bid": 0.42,
+            "best_ask": 0.45,
+            "volume": 14000.0,
+            "hours_to_resolution": 12.0,
+        },
+        {
+            "id": "quoted-2",
+            "question": "Will the highest temperature in Denver be 62F or higher?",
+            "yes_price": 0.44,
+            "best_bid": 0.43,
+            "best_ask": 0.46,
+            "volume": 14000.0,
+            "hours_to_resolution": 12.0,
+        },
+    ]
+    score_bundles = {
+        market_id: {
+            "score": {"edge_theoretical": 0.57},
+            "decision": {"status": "skip", "max_position_pct_bankroll": 0.0},
+            "execution": {},
+        }
+        for market_id in {"quoted-1", "quoted-2"}
+    }
+
+    def fake_score(market_id: str, *, source: str, max_impact_bps: float | None = None) -> dict:
+        assert source == "live"
+        return score_bundles[market_id]
+
+    with patch("prediction_core.server.list_weather_markets", return_value=markets) as list_mock, patch(
+        "prediction_core.server._score_market_from_market_id", side_effect=fake_score
+    ) as score_mock:
+        payload = paper_cycle_request({"run_id": "run-live-fill", "source": "live", "limit": 2, "bankroll_usd": 1000})
+
+    assert list_mock.call_args.kwargs["limit"] > 2
+    assert [call.args[0] for call in score_mock.call_args_list] == ["quoted-1", "quoted-2"]
+    assert payload["summary"]["selected"] == 2
+    assert payload["summary"]["raw_candidates"] == 3
+    assert payload["summary"]["fetch_limit"] == list_mock.call_args.kwargs["limit"]
+    assert payload["summary"]["pre_filtered"] == 1
+
+
+
+def test_live_paper_cycle_scores_quoted_unresolved_markets_and_only_trades_tradeable_decisions() -> None:
+    from unittest.mock import patch
+
+    from prediction_core.server import paper_cycle_request
+
+    markets = [
+        {
+            "id": "live-trade",
+            "question": "Will the highest temperature in Denver be 64F or higher?",
+            "yes_price": 0.43,
+            "best_bid": 0.42,
+            "best_ask": 0.45,
+            "volume": 14000.0,
+            "hours_to_resolution": 12.0,
+        },
+        {
+            "id": "live-skip",
+            "question": "Will the highest temperature in Denver be 65F or higher?",
+            "yes_price": 0.67,
+            "best_bid": 0.66,
+            "best_ask": 0.68,
+            "volume": 14000.0,
+            "hours_to_resolution": 12.0,
+        },
+        {
+            "id": "live-resolved",
+            "question": "Will the highest temperature in Denver be 66F or higher?",
+            "yes_price": 0.50,
+            "best_bid": 0.49,
+            "best_ask": 0.51,
+            "volume": 14000.0,
+            "hours_to_resolution": -1.0,
+        },
+        {
+            "id": "live-unquoted",
+            "question": "Will the highest temperature in Denver be 67F or higher?",
+            "yes_price": 0.0,
+            "best_bid": 0.0,
+            "best_ask": 0.0,
+            "volume": 14000.0,
+            "hours_to_resolution": 12.0,
+        },
+    ]
+    score_bundles = {
+        "live-trade": {
+            "score": {"edge_theoretical": 0.57},
+            "decision": {"status": "trade_small", "max_position_pct_bankroll": 0.01},
+            "execution": {},
+        },
+        "live-skip": {
+            "score": {"edge_theoretical": 0.57},
+            "decision": {"status": "skip", "max_position_pct_bankroll": 0.0},
+            "execution": {},
+        },
+    }
+
+    def fake_score(market_id: str, *, source: str, max_impact_bps: float | None = None) -> dict:
+        assert source == "live"
+        return score_bundles[market_id]
+
+    with patch("prediction_core.server.list_weather_markets", return_value=markets), patch(
+        "prediction_core.server._score_market_from_market_id", side_effect=fake_score
+    ) as score_mock:
+        payload = paper_cycle_request({"run_id": "run-live-1", "source": "live", "limit": 4, "bankroll_usd": 1000})
+
+    assert [call.args[0] for call in score_mock.call_args_list] == ["live-trade", "live-skip"]
+    assert payload["summary"] == {
+        "selected": 2,
+        "raw_candidates": 4,
+        "fetch_limit": 12,
+        "scored": 2,
+        "scoreable": 2,
+        "traded": 1,
+        "skipped": 1,
+        "skipped_reasons": {
+            "decision_not_tradeable": 1,
+        },
+        "pre_filtered": 2,
+        "pre_filter_reasons": {
+            "market_already_resolving_or_resolved": 1,
+            "missing_tradeable_quote": 1,
+        },
+    }
+    by_id = {item["market_id"]: item for item in payload["markets"]}
+    assert by_id["live-trade"]["decision_status"] == "trade_small"
+    assert by_id["live-trade"]["simulation"]["status"] == "filled"
+    assert by_id["live-trade"]["simulation_status"] == "filled"
+    assert by_id["live-trade"]["traded"] is True
+    assert by_id["live-trade"]["scoreable"] is True
+    assert by_id["live-trade"]["postmortem"]["recommendation"] in {"hold", "reprice"}
+    assert by_id["live-trade"]["postmortem_recommendation"] in {"hold", "reprice"}
+    assert by_id["live-skip"]["decision_status"] == "skip"
+    assert by_id["live-skip"]["simulation"]["status"] == "skipped"
+    assert by_id["live-skip"]["simulation_status"] == "skipped"
+    assert by_id["live-skip"]["traded"] is False
+    assert by_id["live-skip"]["scoreable"] is True
+    assert by_id["live-skip"]["skip_reason"] == "decision_not_tradeable"
+    assert by_id["live-skip"]["postmortem"]["recommendation"] == "no_trade"
+    assert by_id["live-skip"]["postmortem_recommendation"] == "no_trade"
+    assert "live-resolved" not in by_id
+    assert "live-unquoted" not in by_id
+
+
 def test_paper_cycle_endpoint_returns_simulation_and_postmortem() -> None:
     server, thread, port = _start_server()
     try:

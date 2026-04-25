@@ -42,6 +42,10 @@ def build_decision(
 
     dispersion = forecast_dispersion if forecast_dispersion is not None else 99.0
 
+    if execution is not None and execution.tradeability_status == "degraded":
+        reasons.append("trade_small: execution degraded by high cost risk")
+        return DecisionResult(status="trade_small", max_position_pct_bankroll=0.01, reasons=reasons)
+
     if score.grade == "A" and not is_exact_bin and dispersion <= 2.0:
         reasons.append("trade: edge strong and setup clean")
         reasons.append("edge and structure support full MVP sizing")
