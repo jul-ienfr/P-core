@@ -87,6 +87,8 @@ Endpoints actuels :
 - `POST /weather/score-market` (retourne aussi `source_route`, le chemin direct de résolution quand les règles exposent une station NOAA/Wunderground/HKO : URL latest/history, station, focus de polling, `latency_priority` et besoin éventuel de review manuelle ; accepte `source=fixture|live` et `infer_default_resolution=true` pour les flows paper/fixture)
 - `POST /weather/station-history` (suit `market_id -> resolution_source -> station` et récupère l’historique direct quand supporté, avec diagnostics de latence et latest point)
 - `POST /weather/station-latest` (suit la même station de résolution et retourne le dernier point direct pour le polling low-latency)
+- `POST /weather/resolution-status` (compare latest direct provisoire vs daily extract officiel final, expose `provisional_outcome`, `confirmed_outcome`, action opérateur et diagnostics de latence/polling)
+- `POST /weather/monitor-paper-resolution` (écrit les artefacts paper-only JSON + markdown opérateur depuis `market_id`, `date`, `paper_side`, optionnellement notional/shares/output_dir ; retourne `should_repoll` et une proposition de cron bornée si le final officiel est encore pending)
 - `POST /weather/paper-cycle` (construit une simulation paper + postmortem ; si `question` + `yes_price` sont fournis, il score le marché puis peut auto-dériver `requested_quantity` depuis `bankroll_usd`, puis `filled_quantity` et `fill_price` depuis la décision ; si `market_id` est absent/vide, lance un cycle live multi-marchés borné)
 
 CLI screener compact :

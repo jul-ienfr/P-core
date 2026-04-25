@@ -27,6 +27,7 @@ from weather_pm.cli import (
 from weather_pm.market_parser import parse_market_question
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import list_weather_markets, normalize_market_record
+from weather_pm.resolution_monitor import write_paper_resolution_monitor
 
 
 class PredictionCoreHandler(BaseHTTPRequestHandler):
@@ -84,6 +85,11 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
 
             if self.path == "/weather/resolution-status":
                 result = resolution_status_request(payload)
+                self._json_response(200, result)
+                return
+
+            if self.path == "/weather/monitor-paper-resolution":
+                result = monitor_paper_resolution_request(payload)
                 self._json_response(200, result)
                 return
 
@@ -231,6 +237,24 @@ def resolution_status_request(payload: dict[str, Any]) -> dict[str, Any]:
     source = _coerce_source(payload.get("source", "live"))
     date = _required_string(payload, "date")
     return resolution_status_for_market_id(market_id, source=source, date=date)
+
+
+def monitor_paper_resolution_request(payload: dict[str, Any]) -> dict[str, Any]:
+    market_id = _required_string(payload, "market_id")
+    source = _coerce_source(payload.get("source", "live"))
+    date = _required_string(payload, "date")
+    paper_side = _required_string(payload, "paper_side")
+    if paper_side not in {"yes", "no"}:
+        raise ValueError("paper_side must be 'yes' or 'no'")
+    return write_paper_resolution_monitor(
+        market_id=market_id,
+        source=source,
+        settlement_date=date,
+        paper_side=paper_side,
+        paper_notional_usd=_optional_number(payload.get("paper_notional_usd")),
+        paper_shares=_optional_number(payload.get("paper_shares")),
+        output_dir=_optional_string(payload.get("output_dir")) or "/home/jul/prediction_core/data/polymarket",
+    )
 
 
 def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:

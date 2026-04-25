@@ -313,6 +313,76 @@ def test_resolution_status_endpoint_rejects_missing_date() -> None:
     assert payload["message"] == "date is required"
 
 
+def test_monitor_paper_resolution_endpoint_persists_paper_only_artifacts() -> None:
+    from unittest.mock import patch
+
+    expected = {
+        "mode": "paper_only",
+        "market_id": "hko-high-29",
+        "source": "live",
+        "settlement_date": "2026-04-25",
+        "paper_trade": {"side": "yes", "notional_usd": 5.0, "shares": 17.24},
+        "should_repoll": True,
+        "cron_repoll": {"schedule": "every 2h", "repeat": 24, "prompt": "self-contained prompt"},
+        "artifacts": {
+            "raw_status_json": "/tmp/weather-monitor/weather_paper_hko-high-29_resolution_marketdate_20260425.json",
+            "operator_monitor_md": "/tmp/weather-monitor/weather_paper_hko-high-29_monitor_latest.md",
+        },
+        "status": {"confirmed_outcome": "pending"},
+    }
+
+    with patch("prediction_core.server.write_paper_resolution_monitor", return_value=expected) as monitor_mock:
+        server, thread, port = _start_server()
+        try:
+            status, payload = _json_request(
+                f"http://127.0.0.1:{port}/weather/monitor-paper-resolution",
+                method="POST",
+                payload={
+                    "market_id": "hko-high-29",
+                    "source": "live",
+                    "date": "2026-04-25",
+                    "paper_side": "yes",
+                    "paper_notional_usd": 5,
+                    "paper_shares": 17.24,
+                    "output_dir": "/tmp/weather-monitor",
+                },
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    assert status == 200
+    assert payload == expected
+    monitor_mock.assert_called_once_with(
+        market_id="hko-high-29",
+        source="live",
+        settlement_date="2026-04-25",
+        paper_side="yes",
+        paper_notional_usd=5.0,
+        paper_shares=17.24,
+        output_dir="/tmp/weather-monitor",
+    )
+
+
+def test_monitor_paper_resolution_endpoint_rejects_missing_paper_side() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/monitor-paper-resolution",
+            method="POST",
+            payload={"market_id": "hko-high-29", "source": "live", "date": "2026-04-25"},
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+    assert status == 400
+    assert payload["status"] == "error"
+    assert payload["message"] == "paper_side is required"
+
+
 def test_live_paper_cycle_overfetches_to_fill_limit_after_pre_filtering() -> None:
     from unittest.mock import patch
 
