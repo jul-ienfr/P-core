@@ -22,7 +22,7 @@ def test_weather_source_coverage_report_answers_integrated_provider_inventory_wi
     assert payload["route_support_counts"]["direct_history"] >= 20
     assert payload["automation_summary"]["automated_or_direct_provider_count"] > payload["automation_summary"]["manual_review_provider_count"]
     assert payload["automation_summary"]["provider_count"] == payload["provider_count"]
-    assert payload["next_integration_targets"][0]["provider"] == "weather_com"
-    assert payload["next_integration_targets"][0]["reason"] == "unsupported"
+    assert not any(target["provider"] == "weather_com" and target["reason"] == "unsupported" for target in payload["next_integration_targets"])
+    assert any(target["provider"] == "weather_com" and target["reason"] == "scrape_review" for target in payload["next_integration_targets"])
     assert any(target["provider"] == "national_weather_service" for target in payload["next_integration_targets"])
     assert any("not literally exhaustive" in caveat for caveat in payload["caveats"])

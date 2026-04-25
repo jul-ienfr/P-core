@@ -208,6 +208,34 @@ def test_station_history_client_fetches_wunderground_history_url_for_station_and
     assert bundle.summary["max"] == 80.6
 
 
+def test_station_history_client_parses_weather_com_injected_daily_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://weather.com/weather/tenday/l/Miami+FL",
+        description="This market resolves to the highest temperature observed for Miami on The Weather Channel page.",
+        rules="Source: Weather.com / The Weather Channel daily details page.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "daily": [
+                    {"date": "2026-04-25", "temperatureMax": 84, "temperatureMin": 73, "unit": "F"},
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == ["https://weather.com/weather/tenday/l/Miami+FL"]
+    assert bundle.source_provider == "weather_com"
+    assert bundle.latency_tier == "scrape_target"
+    assert bundle.polling_focus == "weather_com_page_or_injected_payload"
+    assert bundle.points[0].timestamp == "2026-04-25"
+    assert bundle.points[0].value == 84.0
+    assert bundle.summary["max"] == 84.0
+
+
 def test_station_history_client_fetches_aviation_weather_latest_metar_observation() -> None:
     structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
     resolution = parse_resolution_metadata(

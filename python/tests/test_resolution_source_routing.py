@@ -253,6 +253,28 @@ def test_build_resolution_source_route_preserves_commercial_api_source_url() -> 
         assert route.polling_focus == f"{provider}_injected_payload"
 
 
+def test_build_resolution_source_route_preserves_weather_com_page_as_auditable_direct_target() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://weather.com/weather/tenday/l/Miami+FL",
+        description="This market resolves to the highest temperature observed for Miami on The Weather Channel page.",
+        rules="Source: Weather.com / The Weather Channel daily details page.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.provider == "weather_com"
+    assert route.source_url == "https://weather.com/weather/tenday/l/Miami+FL"
+    assert route.latest_url == "https://weather.com/weather/tenday/l/Miami+FL"
+    assert route.history_url == "https://weather.com/weather/tenday/l/Miami+FL"
+    assert route.direct is False
+    assert route.supported is True
+    assert route.latency_tier == "scrape_target"
+    assert route.latency_priority == "auditable_scrape_target"
+    assert route.polling_focus == "weather_com_page_or_injected_payload"
+    assert route.manual_review_needed is True
+
+
 def test_build_resolution_source_route_marks_commercial_api_without_url_for_manual_review() -> None:
     structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
     resolution = parse_resolution_metadata(
@@ -276,7 +298,7 @@ def test_build_resolution_source_route_marks_commercial_api_without_url_for_manu
     assert "explicit source_url" in route.reason
 
 
-def test_build_resolution_source_route_marks_weather_com_page_as_scraping_unsupported() -> None:
+def test_build_resolution_source_route_preserves_weather_com_page_as_manual_review_scrape_target() -> None:
     structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
     resolution = parse_resolution_metadata(
         resolution_source="https://weather.com/weather/today/l/Miami",
@@ -289,10 +311,14 @@ def test_build_resolution_source_route_marks_weather_com_page_as_scraping_unsupp
     assert route.provider == "weather_com"
     assert route.source_url == "https://weather.com/weather/today/l/Miami"
     assert route.direct is False
-    assert route.supported is False
-    assert route.latency_tier == "scraping_unsupported"
-    assert route.polling_focus == "manual_review"
-    assert "scraping" in route.reason
+    assert route.supported is True
+    assert route.latest_url == "https://weather.com/weather/today/l/Miami"
+    assert route.history_url == "https://weather.com/weather/today/l/Miami"
+    assert route.latency_tier == "scrape_target"
+    assert route.latency_priority == "auditable_scrape_target"
+    assert route.polling_focus == "weather_com_page_or_injected_payload"
+    assert route.manual_review_needed is True
+    assert "manual review" in route.reason
 
 
 def test_build_resolution_source_route_marks_ecmwf_copernicus_as_reanalysis_fallback() -> None:

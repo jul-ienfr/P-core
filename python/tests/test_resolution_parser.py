@@ -202,7 +202,7 @@ def test_parse_resolution_metadata_detects_commercial_weather_provider_names_and
         assert result.source_url == url
         assert result.wording_clear is True
         assert result.rules_clear is True
-        assert result.manual_review_needed is False
+        assert result.manual_review_needed is (provider == "weather_com")
 
 
 def test_parse_resolution_metadata_marks_commercial_api_without_url_for_manual_review() -> None:

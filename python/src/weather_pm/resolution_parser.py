@@ -35,7 +35,7 @@ WEATHER_SOURCE_PROVIDER_CATALOG = {
     "national_weather_service": {"category": "generic_official", "route_support": "manual_review"},
     "web_scrape": {"category": "auditable_scrape", "route_support": "scrape_review"},
     "local_official_weather_source": {"category": "generic_official", "route_support": "scrape_review"},
-    "weather_com": {"category": "commercial_page", "route_support": "unsupported"},
+    "weather_com": {"category": "commercial_page", "route_support": "scrape_review"},
     "weatherapi": {"category": "commercial_api", "route_support": "direct_api"},
     "visual_crossing": {"category": "commercial_api", "route_support": "direct_api"},
     "weatherbit": {"category": "commercial_api", "route_support": "direct_api"},
@@ -455,7 +455,7 @@ def _are_rules_clear(lowered: str, provider: str, station_code: str | None) -> b
 
 
 def _needs_manual_review(provider: str, source_url: str | None, station_code: str | None, station_name: str | None, wording_clear: bool, rules_clear: bool) -> bool:
-    if provider in {"web_scrape", "local_official_weather_source"}:
+    if provider in {"weather_com", "web_scrape", "local_official_weather_source"}:
         return True
     if provider == "unknown" or not wording_clear or not rules_clear:
         return True

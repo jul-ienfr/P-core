@@ -137,7 +137,21 @@ def build_resolution_source_route(
         return _unsupported(structure, resolution, latency_tier="api_key_required", polling_focus="manual_review", reason=f"{resolution.provider} requires an explicit source_url/API endpoint before automated polling; manual review required.")
 
     if resolution.provider == "weather_com":
-        return _unsupported(structure, resolution, latency_tier="scraping_unsupported", polling_focus="manual_review", reason="Weather.com/The Weather Channel pages require browser scraping or an API key; manual scraping review required.")
+        if resolution.source_url:
+            return _route(
+                structure,
+                resolution,
+                latest_url=resolution.source_url,
+                history_url=resolution.source_url,
+                direct=False,
+                supported=True,
+                latency_tier="scrape_target",
+                latency_priority="auditable_scrape_target",
+                polling_focus="weather_com_page_or_injected_payload",
+                manual_review_needed=True,
+                reason="Weather.com/The Weather Channel page found; preserve it as an auditable scrape/injected-payload target, but keep manual review because browser/API access is brittle.",
+            )
+        return _unsupported(structure, resolution, latency_tier="scraping_unsupported", polling_focus="manual_review", reason="Weather.com/The Weather Channel pages require a source_url plus browser scraping or an API key; manual scraping review required.")
 
     if resolution.provider == "ecmwf_copernicus":
         history_url = None

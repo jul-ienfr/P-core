@@ -183,7 +183,7 @@ class StationHistoryClient:
         if resolution.provider in (_DIRECT_API_PROVIDERS | _DIRECT_SOURCE_PROVIDERS) and resolution.source_url:
             payload = self._fetch_json(resolution.source_url)
             points = self._parse_generic_weather_points(structure, resolution, payload, start_date=start_date, end_date=end_date)
-            if resolution.provider in {"web_scrape", "local_official_weather_source"} and not points:
+            if resolution.provider in {"weather_com", "web_scrape", "local_official_weather_source"} and not points:
                 raise ValueError(f"{resolution.provider} payload had no parseable temperature rows")
             latency_tier = "direct_history" if resolution.provider == "meteo_france" else _latency_tier_for_provider(resolution.provider)
             return self._bundle(resolution, url=resolution.source_url, points=points, latency_tier=latency_tier)
@@ -640,6 +640,7 @@ def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str |
         "metservice_nz": "metservice_nz_official_observations",
         "environment_canada": "environment_canada_official_observation" if latency_tier == "direct_latest" else "environment_canada_official_history",
         "ecmwf_copernicus": "ecmwf_copernicus_reanalysis_daily",
+        "weather_com": "weather_com_page_or_injected_payload",
         "web_scrape": "manual_html_extraction",
         "local_official_weather_source": "local_official_source_review",
     }
@@ -839,6 +840,7 @@ _DIRECT_SOURCE_PROVIDERS = {
     "tmd_thailand",
     "metservice_nz",
     "environment_canada",
+    "weather_com",
     "web_scrape",
     "local_official_weather_source",
 }
@@ -847,7 +849,7 @@ _DIRECT_SOURCE_PROVIDERS = {
 def _latency_tier_for_provider(provider: str) -> str:
     if provider == "ecmwf_copernicus":
         return "fallback_reanalysis"
-    if provider in {"web_scrape", "local_official_weather_source"}:
+    if provider in {"weather_com", "web_scrape", "local_official_weather_source"}:
         return "scrape_target"
     if provider in _DIRECT_API_PROVIDERS:
         return "direct_api"
