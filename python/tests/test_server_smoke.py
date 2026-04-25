@@ -244,6 +244,26 @@ def test_live_paper_cycle_scores_quoted_unresolved_markets_and_only_trades_trade
             "volume": 14000.0,
             "hours_to_resolution": 12.0,
         },
+        {
+            "id": "live-wide-spread",
+            "question": "Will the highest temperature in Denver be 68F or higher?",
+            "yes_price": 0.51,
+            "best_bid": 0.01,
+            "best_ask": 1.0,
+            "spread": 1.0,
+            "order_book_depth_usd": 0.25,
+            "volume": 14000.0,
+            "hours_to_resolution": 12.0,
+        },
+        {
+            "id": "live-wide-bid-ask",
+            "question": "Will the highest temperature in Denver be 69F or higher?",
+            "yes_price": 0.003,
+            "best_bid": 0.001,
+            "best_ask": 0.999,
+            "volume": 14000.0,
+            "hours_to_resolution": 12.0,
+        },
     ]
     score_bundles = {
         "live-trade": {
@@ -270,7 +290,7 @@ def test_live_paper_cycle_scores_quoted_unresolved_markets_and_only_trades_trade
     assert [call.args[0] for call in score_mock.call_args_list] == ["live-trade", "live-skip"]
     assert payload["summary"] == {
         "selected": 2,
-        "raw_candidates": 4,
+        "raw_candidates": 6,
         "fetch_limit": 12,
         "scored": 2,
         "scoreable": 2,
@@ -279,10 +299,11 @@ def test_live_paper_cycle_scores_quoted_unresolved_markets_and_only_trades_trade
         "skipped_reasons": {
             "decision_not_tradeable": 1,
         },
-        "pre_filtered": 2,
+        "pre_filtered": 4,
         "pre_filter_reasons": {
             "market_already_resolving_or_resolved": 1,
             "missing_tradeable_quote": 1,
+            "insufficient_executable_depth": 2,
         },
     }
     by_id = {item["market_id"]: item for item in payload["markets"]}
@@ -303,6 +324,8 @@ def test_live_paper_cycle_scores_quoted_unresolved_markets_and_only_trades_trade
     assert by_id["live-skip"]["postmortem_recommendation"] == "no_trade"
     assert "live-resolved" not in by_id
     assert "live-unquoted" not in by_id
+    assert "live-wide-spread" not in by_id
+    assert "live-wide-bid-ask" not in by_id
 
 
 def test_paper_cycle_endpoint_returns_simulation_and_postmortem() -> None:

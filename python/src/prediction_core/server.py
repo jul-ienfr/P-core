@@ -565,6 +565,14 @@ def _pre_score_skip_reason(market: dict[str, Any]) -> str | None:
     yes_price = _optional_number(market.get("yes_price")) or 0.0
     if best_bid <= 0.0 and best_ask <= 0.0 and yes_price <= 0.0:
         return "missing_tradeable_quote"
+    spread = _optional_number(market.get("spread"))
+    if spread is None and best_bid > 0.0 and best_ask > 0.0:
+        spread = round(best_ask - best_bid, 6)
+    order_book_depth_usd = _optional_number(market.get("order_book_depth_usd"))
+    if spread is not None and spread >= 0.95:
+        return "insufficient_executable_depth"
+    if order_book_depth_usd is not None and order_book_depth_usd < 1.0:
+        return "insufficient_executable_depth"
     return None
 
 
