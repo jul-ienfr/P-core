@@ -1077,3 +1077,38 @@ def test_station_history_client_parses_latin_american_official_payload_shapes() 
         assert bundle.polling_focus == f"{provider}_official_observations"
         assert bundle.points
         assert bundle.summary["max"] >= 30.1
+
+
+def test_station_history_client_parses_africa_middle_east_official_payload_shapes() -> None:
+    client = StationHistoryClient()
+    structure = parse_market_question("Will the highest temperature in Johannesburg be 28C or higher on April 25?")
+    cases = [
+        ("south_african_weather_service", [{"date": "2026-04-25", "maximum_temperature": 28.4, "station": "Johannesburg"}]),
+        ("nimet_nigeria", {"data": [{"date": "2026-04-25", "maxTemp": 34.1, "station": "Lagos"}]}),
+        ("egyptian_meteorological_authority", {"records": [{"date": "2026-04-25", "max_temperature": 31.6, "station": "Cairo"}]}),
+        ("israel_meteorological_service", [{"date": "2026-04-25", "TD": 29.2, "station": "Tel Aviv"}]),
+        ("turkish_meteorological_service", {"data": [{"tarih": "2026-04-25", "maksimumSicaklik": 28.7, "istasyon": "Istanbul"}]}),
+        ("saudi_ncm", {"observations": [{"date": "2026-04-25", "max_temperature": 39.3, "station": "Riyadh"}]}),
+    ]
+
+    for provider, payload in cases:
+        resolution = ResolutionMetadata(
+            provider=provider,
+            source_url=f"https://example.test/{provider}",
+            station_code=None,
+            station_name=None,
+            station_type="unknown",
+            wording_clear=True,
+            rules_clear=True,
+            manual_review_needed=False,
+            revision_risk="low",
+        )
+        client._fetch_json = lambda url, payload=payload: payload  # type: ignore[method-assign]
+
+        bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+        assert bundle.source_provider == provider
+        assert bundle.latency_tier == "direct_history"
+        assert bundle.polling_focus == f"{provider}_official_observations"
+        assert bundle.points
+        assert bundle.summary["max"] >= 28.4

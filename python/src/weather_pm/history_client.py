@@ -590,6 +590,12 @@ def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str |
         "ideam_colombia": "ideam_colombia_official_observations",
         "smn_argentina": "smn_argentina_official_observations",
         "smn_mexico": "smn_mexico_official_observations",
+        "south_african_weather_service": "south_african_weather_service_official_observations",
+        "nimet_nigeria": "nimet_nigeria_official_observations",
+        "egyptian_meteorological_authority": "egyptian_meteorological_authority_official_observations",
+        "israel_meteorological_service": "israel_meteorological_service_official_observations",
+        "turkish_meteorological_service": "turkish_meteorological_service_official_observations",
+        "saudi_ncm": "saudi_ncm_official_observations",
         "environment_canada": "environment_canada_official_observation" if latency_tier == "direct_latest" else "environment_canada_official_history",
         "ecmwf_copernicus": "ecmwf_copernicus_reanalysis_daily",
         "web_scrape": "manual_html_extraction",
@@ -776,6 +782,12 @@ _DIRECT_SOURCE_PROVIDERS = {
     "ideam_colombia",
     "smn_argentina",
     "smn_mexico",
+    "south_african_weather_service",
+    "nimet_nigeria",
+    "egyptian_meteorological_authority",
+    "israel_meteorological_service",
+    "turkish_meteorological_service",
+    "saudi_ncm",
     "environment_canada",
     "web_scrape",
     "local_official_weather_source",
@@ -877,7 +889,7 @@ def _row_matches_station(row: dict[str, Any], station_code: str) -> bool:
 
 
 def _extract_row_timestamp(row: dict[str, Any]) -> str:
-    for key in ("timestamp", "time", "datetime", "date", "Date", "fecha", "Fecha", "DT_MEDICAO", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
+    for key in ("timestamp", "time", "datetime", "date", "Date", "fecha", "Fecha", "DT_MEDICAO", "tarih", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
         value = row.get(key)
         if value not in {None, ""}:
             text = str(value)
@@ -901,6 +913,7 @@ def _row_has_explicit_timestamp(row: dict[str, Any]) -> bool:
         "fecha",
         "Fecha",
         "DT_MEDICAO",
+        "tarih",
         "startTime",
         "LocalObservationDateTime",
         "obsTime",
@@ -966,8 +979,8 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         if isinstance(nested, dict) and nested.get("Value") is not None:
             return float(nested["Value"]), str(nested.get("Unit") or structure.unit).lower()
     key_groups = {
-        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "tmax", "TXK", "TX", "tre200s0", "ta", "temperaturaMaxima", "TEM_MAX", "Valor", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "maxtempC", "maxtempF"),
-        "low": ("mintemp_f", "mintemp_c", "min_temp", "tmin", "TNK", "TN", "tre200s0", "ta", "temperaturaMinima", "TEM_MIN", "Valor", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "mintempC", "mintempF"),
+        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "maximum_temperature", "max_temperature", "tmax", "TXK", "TX", "tre200s0", "ta", "temperaturaMaxima", "maksimumSicaklik", "TEM_MAX", "Valor", "TD", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "maxtempC", "maxtempF"),
+        "low": ("mintemp_f", "mintemp_c", "min_temp", "minimum_temperature", "min_temperature", "tmin", "TNK", "TN", "tre200s0", "ta", "temperaturaMinima", "minimumSicaklik", "TEM_MIN", "Valor", "TD", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "mintempC", "mintempF"),
         "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "temperatura", "T", "TX", "TN", "tre200s0", "ta", "Valor", "value", "temperature_2m", "air_temperature", "temperatureC", "temperatureF"),
     }
     keys = key_groups.get(structure.measurement_kind, key_groups["current"]) + key_groups["current"]

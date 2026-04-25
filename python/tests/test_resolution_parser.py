@@ -463,3 +463,27 @@ def test_parse_resolution_metadata_detects_latin_american_official_sources() -> 
         assert result.wording_clear is True
         assert result.rules_clear is True
         assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_africa_middle_east_official_sources() -> None:
+    cases = [
+        ("South African Weather Service observations", "https://www.weathersa.co.za/home/historicalrain", "south_african_weather_service"),
+        ("Nigerian Meteorological Agency observations", "https://nimet.gov.ng/weather-data", "nimet_nigeria"),
+        ("Egyptian Meteorological Authority observations", "https://ema.gov.eg/wp/climate", "egyptian_meteorological_authority"),
+        ("Israel Meteorological Service observations", "https://ims.gov.il/en/ObservationData", "israel_meteorological_service"),
+        ("Turkish State Meteorological Service observations", "https://www.mgm.gov.tr/eng/forecast-cities.aspx", "turkish_meteorological_service"),
+        ("Saudi National Center for Meteorology observations", "https://ncm.gov.sa/Ar/Weather/Pages/LocalWeather.aspx", "saudi_ncm"),
+    ]
+
+    for name, url, provider in cases:
+        result = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {name}",
+            description="This market resolves to the highest temperature observed by the official meteorological service.",
+            rules=f"Source: {url} official station payload.",
+        )
+
+        assert result.provider == provider
+        assert result.source_url == url
+        assert result.wording_clear is True
+        assert result.rules_clear is True
+        assert result.manual_review_needed is False

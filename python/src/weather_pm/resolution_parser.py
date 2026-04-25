@@ -44,6 +44,12 @@ _COMMERCIAL_WEATHER_PROVIDERS = {
     "ideam_colombia",
     "smn_argentina",
     "smn_mexico",
+    "south_african_weather_service",
+    "nimet_nigeria",
+    "egyptian_meteorological_authority",
+    "israel_meteorological_service",
+    "turkish_meteorological_service",
+    "saudi_ncm",
 }
 
 
@@ -120,6 +126,18 @@ def _detect_provider(lowered: str, *, source_url: str | None) -> str:
         return "smn_argentina"
     if any(token in lowered for token in ["smn conagua", "smn.conagua.gob.mx", "conagua"]):
         return "smn_mexico"
+    if any(token in lowered for token in ["south african weather service", "weathersa.co.za", "saws"]):
+        return "south_african_weather_service"
+    if any(token in lowered for token in ["nigerian meteorological agency", "nimet", "nimet.gov.ng"]):
+        return "nimet_nigeria"
+    if any(token in lowered for token in ["egyptian meteorological authority", "ema.gov.eg"]):
+        return "egyptian_meteorological_authority"
+    if any(token in lowered for token in ["israel meteorological service", "ims.gov.il"]):
+        return "israel_meteorological_service"
+    if any(token in lowered for token in ["turkish state meteorological service", "turkish meteorological service", "mgm.gov.tr"]):
+        return "turkish_meteorological_service"
+    if any(token in lowered for token in ["saudi national center for meteorology", "ncm.gov.sa", "saudi ncm"]):
+        return "saudi_ncm"
     if any(token in lowered for token in ["bom.gov.au", "bureau of meteorology"]):
         return "bom"
     if any(token in lowered for token in ["jma.go.jp", "japan meteorological agency"]):

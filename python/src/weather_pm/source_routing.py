@@ -43,6 +43,12 @@ _DIRECT_OFFICIAL_URL_PROVIDERS = {
     "ideam_colombia": "ideam_colombia_official_observations",
     "smn_argentina": "smn_argentina_official_observations",
     "smn_mexico": "smn_mexico_official_observations",
+    "south_african_weather_service": "south_african_weather_service_official_observations",
+    "nimet_nigeria": "nimet_nigeria_official_observations",
+    "egyptian_meteorological_authority": "egyptian_meteorological_authority_official_observations",
+    "israel_meteorological_service": "israel_meteorological_service_official_observations",
+    "turkish_meteorological_service": "turkish_meteorological_service_official_observations",
+    "saudi_ncm": "saudi_ncm_official_observations",
 }
 
 
@@ -141,7 +147,7 @@ def build_resolution_source_route(
 
     if resolution.provider in _DIRECT_OFFICIAL_URL_PROVIDERS:
         if resolution.source_url:
-            latency_priority = "direct_source_official_open_data" if resolution.provider in {"dwd", "meteoswiss", "smhi", "knmi", "aemet", "met_eireann", "dmi", "meteochile", "inmet", "senamhi_peru", "ideam_colombia", "smn_argentina", "smn_mexico"} else "direct_source_low_latency"
+            latency_priority = "direct_source_official_open_data" if resolution.provider in {"dwd", "meteoswiss", "smhi", "knmi", "aemet", "met_eireann", "dmi", "meteochile", "inmet", "senamhi_peru", "ideam_colombia", "smn_argentina", "smn_mexico", "south_african_weather_service", "nimet_nigeria", "egyptian_meteorological_authority", "israel_meteorological_service", "turkish_meteorological_service", "saudi_ncm"} else "direct_source_low_latency"
             key_note = " API key may be required outside route metadata." if resolution.provider == "uk_met_office" else ""
             return _route(structure, resolution, latest_url=resolution.source_url, history_url=resolution.source_url, direct=True, supported=True, latency_tier="direct_history", latency_priority=latency_priority, polling_focus=_DIRECT_OFFICIAL_URL_PROVIDERS[resolution.provider], reason=f"{resolution.provider} explicit official source URL found; parse official/injected observations directly.{key_note}")
         return _unsupported(structure, resolution, latency_tier="unsupported", polling_focus="manual_review", reason=f"{resolution.provider} requires an explicit source_url before automated polling; manual review required.")
