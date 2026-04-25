@@ -655,6 +655,10 @@ def test_build_resolution_source_route_preserves_asia_pacific_official_source_ur
         ("bmkg_indonesia", "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json", "bmkg_indonesia_official_observations"),
         ("tmd_thailand", "https://data.tmd.go.th/api/WeatherToday/V2/", "tmd_thailand_official_observations"),
         ("metservice_nz", "https://api.metservice.com/publicData/localObs/auckland", "metservice_nz_official_observations"),
+        ("jma", "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt", "jma_official_amedas_or_injected_payload"),
+        ("pagasa", "https://www.pagasa.dost.gov.ph/weather/weather-observation-station", "pagasa_official_observations_or_injected_payload"),
+        ("imd", "https://mausam.imd.gov.in/imd_latest/contents/aws_awsdata.php", "imd_official_observations_or_injected_payload"),
+        ("bom", "https://reg.bom.gov.au/fwo/IDN60901/IDN60901.94767.json", "bom_official_observations_or_injected_payload"),
     ]
 
     for provider, source_url, polling_focus in cases:

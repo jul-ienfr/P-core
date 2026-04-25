@@ -892,6 +892,13 @@ def _extract_rows(payload: Any) -> list[Any]:
                         rows.append({**reading, "timestamp": item.get("timestamp")})
         if rows:
             return rows
+    if isinstance(payload.get("temp"), list):
+        return payload["temp"]
+    if isinstance(payload.get("aws"), list):
+        return payload["aws"]
+    observations = payload.get("observations")
+    if isinstance(observations, dict) and isinstance(observations.get("data"), list):
+        return observations["data"]
     for key in ("results", "WeatherToday"):
         value = payload.get(key)
         if isinstance(value, list):
@@ -925,7 +932,7 @@ def _extract_row_timestamp(row: dict[str, Any]) -> str:
     obs_time = row.get("ObsTime")
     if isinstance(obs_time, dict) and obs_time.get("DateTime") not in {None, ""}:
         return str(obs_time["DateTime"])
-    for key in ("timestamp", "time", "datetime", "date", "Date", "DateTime", "fecha", "Fecha", "DT_MEDICAO", "tarih", "tm", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
+    for key in ("timestamp", "time", "datetime", "date", "Date", "DateTime", "fecha", "Fecha", "DT_MEDICAO", "tarih", "tm", "local_date_time_full", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
         value = row.get(key)
         if value not in {None, ""}:
             text = str(value)
@@ -952,6 +959,7 @@ def _row_has_explicit_timestamp(row: dict[str, Any]) -> bool:
         "tarih",
         "tm",
         "DateTime",
+        "local_date_time_full",
         "startTime",
         "LocalObservationDateTime",
         "obsTime",
@@ -1020,9 +1028,9 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         if isinstance(nested, dict) and nested.get("Value") is not None:
             return float(nested["Value"]), str(nested.get("Unit") or structure.unit).lower()
     key_groups = {
-        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "maximum_temperature", "max_temperature", "tmax", "TXK", "TX", "tre200s0", "ta", "TA", "t", "temperaturaMaxima", "maksimumSicaklik", "TEM_MAX", "Valor", "TD", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "AirTemperature", "maxtempC", "maxtempF"),
-        "low": ("mintemp_f", "mintemp_c", "min_temp", "minimum_temperature", "min_temperature", "tmin", "TNK", "TN", "tre200s0", "ta", "TA", "t", "temperaturaMinima", "minimumSicaklik", "TEM_MIN", "Valor", "TD", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "AirTemperature", "mintempC", "mintempF"),
-        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "temperatura", "T", "TX", "TN", "TA", "t", "tre200s0", "ta", "Valor", "value", "temperature_2m", "air_temperature", "AirTemperature", "temperatureC", "temperatureF"),
+        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "maximum_temperature", "max_temperature", "MAX_TEMP", "tmax", "TXK", "TX", "tre200s0", "ta", "TA", "t", "temperaturaMaxima", "maksimumSicaklik", "TEM_MAX", "Valor", "TD", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "air_temp", "AirTemperature", "maxtempC", "maxtempF"),
+        "low": ("mintemp_f", "mintemp_c", "min_temp", "minimum_temperature", "min_temperature", "MIN_TEMP", "tmin", "TNK", "TN", "tre200s0", "ta", "TA", "t", "temperaturaMinima", "minimumSicaklik", "TEM_MIN", "Valor", "TD", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "air_temp", "AirTemperature", "mintempC", "mintempF"),
+        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "temperatura", "T", "TX", "TN", "TA", "t", "tre200s0", "ta", "Valor", "value", "temperature_2m", "air_temperature", "air_temp", "AirTemperature", "temperatureC", "temperatureF"),
     }
     keys = key_groups.get(structure.measurement_kind, key_groups["current"]) + key_groups["current"]
     temperature_fields = {"temperature"}

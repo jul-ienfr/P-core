@@ -1125,9 +1125,15 @@ def test_station_history_client_parses_asia_pacific_official_payload_shapes() ->
         ("bmkg_indonesia", {"data": [{"datetime": "2026-04-25T12:00:00+07:00", "t": 30.8, "id_stasiun": "96745"}]}),
         ("tmd_thailand", {"WeatherToday": [{"DateTime": "2026-04-25T13:00:00+07:00", "Temperature": 35.2, "StationNameThai": "Bangkok"}]}),
         ("metservice_nz", {"observations": [{"time": "2026-04-25T12:00:00+12:00", "temperature": 18.7, "station": "Auckland"}]}),
+        ("jma", {"latestTime": "2026-04-25T12:00:00+09:00", "temp": [{"station": "44132", "time": "2026-04-25T12:00:00+09:00", "temp": 24.9}]}, "jma_official_amedas_or_injected_payload"),
+        ("pagasa", {"observations": [{"datetime": "2026-04-25T12:00:00+08:00", "temperature": 33.4, "station": "NCR"}]}, "pagasa_official_observations_or_injected_payload"),
+        ("imd", {"aws": [{"date": "2026-04-25", "MAX_TEMP": 36.5, "station_id": "42182"}]}, "imd_official_observations_or_injected_payload"),
+        ("bom", {"observations": {"data": [{"local_date_time_full": "20260425120000", "air_temp": 27.2, "name": "Sydney"}]}}, "bom_official_observations_or_injected_payload"),
     ]
 
-    for provider, payload in cases:
+    for case in cases:
+        provider, payload = case[:2]
+        expected_focus = case[2] if len(case) == 3 else f"{provider}_official_observations"
         resolution = ResolutionMetadata(
             provider=provider,
             source_url=f"https://example.test/{provider}",
@@ -1145,6 +1151,6 @@ def test_station_history_client_parses_asia_pacific_official_payload_shapes() ->
 
         assert bundle.source_provider == provider
         assert bundle.latency_tier == "direct_history"
-        assert bundle.polling_focus == f"{provider}_official_observations"
+        assert bundle.polling_focus == expected_focus
         assert bundle.points
         assert bundle.summary["max"] >= 18.7

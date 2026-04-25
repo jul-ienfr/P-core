@@ -498,6 +498,11 @@ def test_parse_resolution_metadata_detects_asia_pacific_official_sources() -> No
         ("BMKG Indonesia official observations", "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json", "bmkg_indonesia"),
         ("Thai Meteorological Department observations", "https://data.tmd.go.th/api/WeatherToday/V2/", "tmd_thailand"),
         ("MetService New Zealand official observations", "https://api.metservice.com/publicData/localObs/auckland", "metservice_nz"),
+        ("Hong Kong Observatory observations", "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en", "hong_kong_observatory"),
+        ("Japan Meteorological Agency AMeDAS observations", "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt", "jma"),
+        ("PAGASA official observations", "https://www.pagasa.dost.gov.ph/weather/weather-observation-station", "pagasa"),
+        ("India Meteorological Department observations", "https://mausam.imd.gov.in/imd_latest/contents/aws_awsdata.php", "imd"),
+        ("Australian Bureau of Meteorology observations", "https://reg.bom.gov.au/fwo/IDN60901/IDN60901.94767.json", "bom"),
     ]
 
     for name, url, provider in cases:
