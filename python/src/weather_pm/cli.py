@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from weather_pm.decision import build_decision
+from weather_pm.event_surface import build_weather_event_surface
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
 from weather_pm.history_client import StationHistoryClient, build_station_history_bundle
@@ -78,6 +79,24 @@ def build_parser() -> argparse.ArgumentParser:
     strategy_shortlist.add_argument("--opportunity-report-json", required=True, help="Compact opportunity report JSON produced by paper-cycle-report")
     strategy_shortlist.add_argument("--event-surface-json", required=False, help="Optional event surface JSON produced by event-surface tooling")
     strategy_shortlist.add_argument("--limit", required=False, type=int, default=25, help="Maximum shortlisted opportunities")
+
+    event_surface = subparsers.add_parser("event-surface", help="Build city/date weather event surfaces and flag threshold/bin anomalies")
+    event_surface.add_argument("--markets-json", required=True, help="JSON file containing either a markets list or an object with markets/opportunities")
+    event_surface.add_argument("--exact-mass-tolerance", required=False, type=float, default=1.0, help="Maximum acceptable exact-bin YES price mass")
+    event_surface.add_argument("--output-json", required=False, help="Optional path to write the full event surface report")
+
+    strategy_shortlist_report = subparsers.add_parser("strategy-shortlist-report", help="Build strategy report, paper opportunity report, event surface, and ranked shortlist in one command")
+    strategy_shortlist_report.add_argument("--reverse-engineering-json", required=True, help="Reverse-engineering JSON produced by import-weather-traders")
+    strategy_shortlist_report.add_argument("--run-id", required=True, help="Paper cycle run id")
+    strategy_shortlist_report.add_argument("--source", choices=_VALID_SOURCES, default="fixture", help="Market source")
+    strategy_shortlist_report.add_argument("--limit", required=False, type=int, default=25, help="Maximum markets/opportunities to inspect")
+    strategy_shortlist_report.add_argument("--requested-quantity", required=False, type=float, default=1.0, help="Requested quantity per tradeable market")
+    strategy_shortlist_report.add_argument("--include-skipped", action="store_true", help="Include skipped/watchlist diagnostics in the opportunity report")
+    strategy_shortlist_report.add_argument("--tradeable-only", action="store_true", help="Only include trade/trade_small opportunities before shortlisting")
+    strategy_shortlist_report.add_argument("--min-edge", required=False, type=float, help="Minimum probability edge to include in the opportunity report")
+    strategy_shortlist_report.add_argument("--max-cost-bps", required=False, type=float, help="Maximum all-in execution cost in basis points")
+    strategy_shortlist_report.add_argument("--min-depth-usd", required=False, type=float, help="Minimum order book depth in USD")
+    strategy_shortlist_report.add_argument("--output-json", required=False, help="Optional path to write the combined shortlist report")
 
     paper_cycle = subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
     _add_paper_cycle_arguments(paper_cycle)
@@ -161,6 +180,19 @@ def main() -> int:
         print(json.dumps(strategy_report(args.reverse_engineering_json)))
         return 0
 
+    if args.command == "event-surface":
+        payload = event_surface_report(args.markets_json, exact_mass_tolerance=args.exact_mass_tolerance)
+        output_payload = payload
+        if args.output_json:
+            output_path = Path(args.output_json)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            payload.setdefault("artifacts", {})["source_markets_json"] = str(args.markets_json)
+            payload.setdefault("artifacts", {})["output_json"] = str(output_path)
+            output_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+            output_payload = compact_event_surface_report(payload)
+        print(json.dumps(output_payload))
+        return 0
+
     if args.command == "strategy-shortlist":
         print(
             json.dumps(
@@ -172,6 +204,18 @@ def main() -> int:
                 )
             )
         )
+        return 0
+
+    if args.command == "strategy-shortlist-report":
+        payload = build_strategy_shortlist_report_from_args(args)
+        output_payload = payload
+        if args.output_json:
+            output_path = Path(args.output_json)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            payload.setdefault("artifacts", {})["output_json"] = str(output_path)
+            output_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+            output_payload = compact_strategy_shortlist_report(payload)
+        print(json.dumps(output_payload))
         return 0
 
     if args.command == "paper-cycle":
@@ -239,6 +283,85 @@ def strategy_shortlist_report(
     if not isinstance(surface_payload, dict):
         raise ValueError("event surface JSON must be an object")
     return build_strategy_shortlist(strategy_payload, opportunity_payload, surface_payload, limit=limit)
+
+
+def event_surface_report(markets_json: str | Path, *, exact_mass_tolerance: float = 1.0) -> dict[str, Any]:
+    payload = json.loads(Path(markets_json).read_text())
+    if isinstance(payload, list):
+        markets = payload
+    elif isinstance(payload, dict):
+        candidate = payload.get("markets") if "markets" in payload else payload.get("opportunities")
+        markets = candidate if isinstance(candidate, list) else []
+    else:
+        markets = []
+    report = build_weather_event_surface([market for market in markets if isinstance(market, dict)], exact_mass_tolerance=exact_mass_tolerance)
+    report["artifacts"] = {"source_markets_json": str(markets_json)}
+    return report
+
+
+def compact_event_surface_report(payload: dict[str, Any]) -> dict[str, Any]:
+    events = payload.get("events", [])
+    event_list = events if isinstance(events, list) else []
+    market_count = 0
+    for event in event_list:
+        if isinstance(event, dict):
+            markets = event.get("markets", [])
+            if isinstance(markets, list):
+                market_count += len(markets)
+            else:
+                market_count += int(event.get("market_count") or 0)
+    return {
+        "event_count": int(payload.get("event_count") or len(event_list)),
+        "events_with_inconsistencies": sum(
+            1 for event in event_list if isinstance(event, dict) and event.get("inconsistencies")
+        ),
+        "market_count": market_count,
+        "artifacts": {"output_json": payload.get("artifacts", {}).get("output_json")},
+    }
+
+
+def compact_strategy_shortlist_report(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "summary": payload.get("summary", {}),
+        "shortlist": payload.get("shortlist", []),
+        "run_id": payload.get("run_id"),
+        "source": payload.get("source"),
+        "artifacts": payload.get("artifacts", {}),
+    }
+
+
+def build_strategy_shortlist_report_from_args(args: argparse.Namespace) -> dict[str, Any]:
+    from prediction_core.server import paper_cycle_opportunity_report_request
+
+    strategy_payload = strategy_report(args.reverse_engineering_json)
+    opportunity_payload = paper_cycle_opportunity_report_request(
+        {
+            "run_id": args.run_id,
+            "source": args.source,
+            "limit": args.limit,
+            "requested_quantity": args.requested_quantity,
+            "include_skipped": bool(args.include_skipped),
+            "tradeable_only": bool(args.tradeable_only),
+            **({"min_edge": args.min_edge} if args.min_edge is not None else {}),
+            **({"max_cost_bps": args.max_cost_bps} if args.max_cost_bps is not None else {}),
+            **({"min_depth_usd": args.min_depth_usd} if args.min_depth_usd is not None else {}),
+        }
+    )
+    surface_payload = build_weather_event_surface(opportunity_payload.get("opportunities", []))
+    shortlist_payload = build_strategy_shortlist(strategy_payload, opportunity_payload, surface_payload, limit=args.limit)
+    artifacts: dict[str, Any] = {
+        "reverse_engineering_json": str(args.reverse_engineering_json),
+        "generated_reports": ["strategy_report", "opportunity_report", "event_surface", "shortlist"],
+    }
+    return {
+        **shortlist_payload,
+        "run_id": args.run_id,
+        "source": args.source,
+        "artifacts": artifacts,
+        "strategy_report": strategy_payload,
+        "opportunity_report": opportunity_payload,
+        "event_surface": surface_payload,
+    }
 
 
 def _weather_trader_from_report_account(account: dict[str, Any]) -> WeatherTrader:

@@ -51,7 +51,12 @@ def test_build_strategy_shortlist_prioritizes_tradeable_surface_anomalies_and_tr
                 "all_in_cost_bps": 120.0,
                 "order_book_depth_usd": 900.0,
                 "source_direct": True,
+                "source_provider": "noaa",
+                "source_station_code": "EGLL",
                 "source_latency_tier": "direct_latest",
+                "source_latency_priority": "direct_source_low_latency",
+                "source_polling_focus": "station_observations_latest",
+                "source_latest_url": "https://api.weather.gov/stations/EGLL/observations/latest",
             },
             {
                 "market_id": "nyc-70",
@@ -103,6 +108,11 @@ def test_build_strategy_shortlist_prioritizes_tradeable_surface_anomalies_and_tr
     assert london["trader_archetype_match"] == ["event_surface_grid_specialist"]
     assert london["matched_traders"] == ["ColdMath"]
     assert london["surface_inconsistency_count"] == 1
+    assert london["source_provider"] == "noaa"
+    assert london["source_station_code"] == "EGLL"
+    assert london["source_latency_priority"] == "direct_source_low_latency"
+    assert london["source_polling_focus"] == "station_observations_latest"
+    assert london["source_latest_url"] == "https://api.weather.gov/stations/EGLL/observations/latest"
     assert london["action"] == "paper_trade_watch_direct_station"
     assert "surface_anomaly" in london["reasons"]
     assert "profitable_trader_city" in london["reasons"]
@@ -120,6 +130,111 @@ def test_build_strategy_shortlist_extracts_city_when_question_has_no_date() -> N
     assert row["city"] == "Denver"
     assert row["date"] == ""
     assert row["matched_traders"] == ["Signal"]
+
+
+def test_cli_strategy_shortlist_report_builds_inputs_and_outputs_ranked_json(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    out_path = tmp_path / "shortlist.json"
+    reverse_path.write_text(
+        json.dumps(
+            {
+                "accounts": [
+                    {
+                        "rank": 1,
+                        "handle": "DenverSharp",
+                        "slug": "denversharp",
+                        "weather_pnl_usd": 10000.0,
+                        "markets_traded": 12,
+                        "profitable_market_count": 9,
+                        "top_cities": [{"city": "Denver", "count": 9}],
+                        "top_market_types": [{"type": "threshold", "count": 8}],
+                        "sample_weather_titles": [
+                            "Will the highest temperature in Denver be 65F or higher?",
+                            "Will the highest temperature in Denver be 64F or higher?",
+                        ],
+                    }
+                ]
+            }
+        )
+    )
+
+    result = _run_cli(
+        "strategy-shortlist-report",
+        "--reverse-engineering-json",
+        str(reverse_path),
+        "--run-id",
+        "shortlist-fixture",
+        "--source",
+        "fixture",
+        "--limit",
+        "5",
+        "--output-json",
+        str(out_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["summary"]["strategy_accounts"] == 1
+    assert payload["summary"]["shortlisted"] >= 1
+    assert payload["shortlist"][0]["city"] == "Denver"
+    assert payload["shortlist"][0]["matched_traders"] == ["DenverSharp"]
+    assert payload["artifacts"]["output_json"] == str(out_path)
+    full_payload = json.loads(out_path.read_text())
+    assert full_payload["summary"] == payload["summary"]
+    assert full_payload["shortlist"] == payload["shortlist"]
+    assert full_payload["artifacts"] == payload["artifacts"]
+    assert "strategy_report" in full_payload
+    assert "opportunity_report" in full_payload
+
+
+def test_cli_strategy_shortlist_report_prints_compact_summary_when_output_file_is_used(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    out_path = tmp_path / "shortlist-full.json"
+    reverse_path.write_text(
+        json.dumps(
+            {
+                "accounts": [
+                    {
+                        "rank": 1,
+                        "handle": "DenverSharp",
+                        "slug": "denversharp",
+                        "weather_pnl_usd": 10000.0,
+                        "markets_traded": 12,
+                        "profitable_market_count": 9,
+                        "top_cities": [{"city": "Denver", "count": 9}],
+                        "top_market_types": [{"type": "threshold", "count": 8}],
+                        "sample_weather_titles": ["Will the highest temperature in Denver be 65F or higher?"],
+                    }
+                ]
+            }
+        )
+    )
+
+    result = _run_cli(
+        "strategy-shortlist-report",
+        "--reverse-engineering-json",
+        str(reverse_path),
+        "--run-id",
+        "shortlist-compact",
+        "--source",
+        "fixture",
+        "--limit",
+        "5",
+        "--output-json",
+        str(out_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    full = json.loads(out_path.read_text())
+    assert set(compact) == {"summary", "shortlist", "run_id", "source", "artifacts"}
+    assert compact["summary"] == full["summary"]
+    assert compact["shortlist"] == full["shortlist"]
+    assert compact["artifacts"]["output_json"] == str(out_path)
+    assert "strategy_report" in full
+    assert "opportunity_report" in full
+    assert "strategy_report" not in compact
+    assert len(result.stdout) < len(out_path.read_text())
 
 
 def test_cli_strategy_shortlist_reads_reports_and_writes_ranked_json(tmp_path: Path) -> None:

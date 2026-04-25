@@ -1,6 +1,25 @@
 from __future__ import annotations
 
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
 from weather_pm.event_surface import build_weather_event_surface
+
+
+def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
+    project_root = Path(__file__).resolve().parents[1]
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(project_root / "src")
+    return subprocess.run(
+        [sys.executable, "-m", "weather_pm.cli", *args],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
 
 
 def test_build_weather_event_surface_groups_city_date_and_flags_monotonic_threshold_violation() -> None:
@@ -53,3 +72,57 @@ def test_build_weather_event_surface_flags_exact_bin_mass_overround() -> None:
             "severity": 0.03,
         }
     ]
+
+
+def test_cli_event_surface_reads_market_json_and_outputs_grouped_surface(tmp_path: Path) -> None:
+    markets_path = tmp_path / "markets.json"
+    markets_path.write_text(
+        json.dumps(
+            {
+                "markets": [
+                    {"id": "london-19", "question": "Will the highest temperature in London be 19°C or higher on April 25?", "yes_price": 0.40},
+                    {"id": "london-20", "question": "Will the highest temperature in London be 20°C or higher on April 25?", "yes_price": 0.45},
+                ]
+            }
+        )
+    )
+
+    result = _run_cli("event-surface", "--markets-json", str(markets_path))
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["event_count"] == 1
+    assert payload["events"][0]["event_key"] == "London|high|c|April 25"
+    assert payload["events"][0]["inconsistencies"][0]["type"] == "threshold_monotonicity_violation"
+
+
+def test_cli_event_surface_can_write_full_report_and_print_compact_summary(tmp_path: Path) -> None:
+    markets_path = tmp_path / "markets.json"
+    out_path = tmp_path / "event-surface.json"
+    markets_path.write_text(
+        json.dumps(
+            {
+                "markets": [
+                    {"id": "london-19", "question": "Will the highest temperature in London be 19°C or higher on April 25?", "yes_price": 0.40},
+                    {"id": "london-20", "question": "Will the highest temperature in London be 20°C or higher on April 25?", "yes_price": 0.45},
+                ]
+            }
+        )
+    )
+
+    result = _run_cli("event-surface", "--markets-json", str(markets_path), "--output-json", str(out_path))
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    full = json.loads(out_path.read_text())
+    assert compact == {
+        "event_count": 1,
+        "events_with_inconsistencies": 1,
+        "market_count": 2,
+        "artifacts": {"output_json": str(out_path)},
+    }
+    assert full["event_count"] == 1
+    assert full["events"][0]["event_key"] == "London|high|c|April 25"
+    assert full["artifacts"]["source_markets_json"] == str(markets_path)
+    assert full["artifacts"]["output_json"] == str(out_path)
+    assert len(result.stdout) < len(out_path.read_text())
