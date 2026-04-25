@@ -61,6 +61,17 @@ def test_score_market_command_outputs_score_and_decision() -> None:
     assert payload["source_route"]["latency_priority"] == "direct_source_low_latency"
 
 
+def test_source_coverage_command_outputs_integrated_weather_source_inventory() -> None:
+    result = _run_cli("source-coverage")
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["provider_count"] >= 50
+    assert "noaa" in payload["direct_low_latency"]
+    assert "weather_com" in payload["manual_review_only"]
+    assert any("not literally exhaustive" in caveat for caveat in payload["caveats"])
+
+
 def test_station_source_plan_helper_exposes_best_direct_station_source() -> None:
     class FakeLatestClient:
         def fetch_latest_bundle(self, structure, resolution):

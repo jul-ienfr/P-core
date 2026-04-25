@@ -29,6 +29,7 @@ from weather_pm.market_parser import parse_market_question
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import list_weather_markets, normalize_market_record
 from weather_pm.resolution_monitor import write_paper_resolution_monitor
+from weather_pm.source_coverage import build_weather_source_coverage_report
 
 
 class PredictionCoreHandler(BaseHTTPRequestHandler):
@@ -86,6 +87,11 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
 
             if self.path == "/weather/station-source-plan":
                 result = station_source_plan_request(payload)
+                self._json_response(200, result)
+                return
+
+            if self.path == "/weather/source-coverage":
+                result = source_coverage_request(payload)
                 self._json_response(200, result)
                 return
 
@@ -247,6 +253,10 @@ def station_source_plan_request(payload: dict[str, Any]) -> dict[str, Any]:
         start_date=_optional_string(payload.get("start_date")),
         end_date=_optional_string(payload.get("end_date")),
     )
+
+
+def source_coverage_request(payload: dict[str, Any]) -> dict[str, Any]:
+    return build_weather_source_coverage_report().to_dict()
 
 
 def resolution_status_request(payload: dict[str, Any]) -> dict[str, Any]:

@@ -266,6 +266,26 @@ def test_station_latest_endpoint_fetches_latest_direct_resolution_station_observ
     assert payload["latency"]["latest_value"] == 68.0
 
 
+def test_source_coverage_endpoint_returns_integrated_weather_source_inventory() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/source-coverage",
+            method="POST",
+            payload={},
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+    assert status == 200
+    assert payload["provider_count"] >= 50
+    assert "noaa" in payload["direct_low_latency"]
+    assert "weather_com" in payload["manual_review_only"]
+    assert any("not literally exhaustive" in caveat for caveat in payload["caveats"])
+
+
 def test_station_source_plan_endpoint_exposes_best_direct_station_source_plan() -> None:
     from unittest.mock import patch
 

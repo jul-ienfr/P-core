@@ -22,6 +22,7 @@ from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_monitor import write_paper_resolution_monitor
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
+from weather_pm.source_coverage import build_weather_source_coverage_report
 from weather_pm.source_routing import build_resolution_source_route
 from weather_pm.source_selection import select_best_station_sources
 from weather_pm.station_binding import build_station_binding
@@ -78,6 +79,8 @@ def build_parser() -> argparse.ArgumentParser:
     resolution_status.add_argument("--market-id", required=True, help="Market id whose resolution status should be checked")
     resolution_status.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
     resolution_status.add_argument("--date", required=True, help="Settlement date YYYY-MM-DD")
+
+    subparsers.add_parser("source-coverage", help="Report integrated weather source provider coverage and caveats")
 
     monitor_resolution = subparsers.add_parser("monitor-paper-resolution", help="Persist paper-only resolution monitor artifacts for a weather market")
     monitor_resolution.add_argument("--market-id", required=True, help="Market id whose paper resolution should be monitored")
@@ -230,6 +233,10 @@ def main() -> int:
 
     if args.command == "resolution-status":
         print(json.dumps(resolution_status_for_market_id(args.market_id, source=args.source, date=args.date)))
+        return 0
+
+    if args.command == "source-coverage":
+        print(json.dumps(build_weather_source_coverage_report().to_dict()))
         return 0
 
     if args.command == "monitor-paper-resolution":
