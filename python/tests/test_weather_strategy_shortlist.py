@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from weather_pm.cli import build_strategy_shortlist_report_from_args, enrich_shortlist_with_resolution_status
+from weather_pm.cli import build_strategy_shortlist_report_from_args, build_operator_refresh_report, enrich_shortlist_with_resolution_status
 from weather_pm.operator_summary import build_profitable_accounts_operator_summary
 from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 
@@ -962,6 +962,113 @@ def test_cli_profitable_accounts_operator_summary_writes_json_and_prints_compact
     assert compact["live_matched_profitable_weather_count"] == 1
     assert compact["live_top_blockers"] == ["extreme_price"]
     assert full["live_watchlist"][0]["matched_weather_heavy_traders"] == ["DenverSharp"]
+
+
+def test_build_operator_refresh_report_refreshes_existing_shortlist_and_rebuilds_operator(monkeypatch) -> None:
+    calls: list[tuple[str, str, str]] = []
+
+    def fake_resolution_status_for_market_id(market_id: str, *, source: str, date: str):
+        calls.append((market_id, source, date))
+        return _fake_resolution_status_for_dallas(market_id, source=source, date=date)
+
+    monkeypatch.setattr("weather_pm.cli.resolution_status_for_market_id", fake_resolution_status_for_market_id)
+    payload = {
+        "run_id": "saved-run",
+        "source": "live",
+        "summary": {"shortlisted": 1, "action_counts": {"paper_trade_watch_direct_station": 1}, "execution_blocker_counts": {}},
+        "shortlist": [
+            {
+                "rank": 1,
+                "market_id": "dallas-70",
+                "city": "Dallas",
+                "date": "April 27",
+                "decision_status": "trade_small",
+                "paper_side": "yes",
+                "paper_notional_usd": 5.0,
+                "paper_shares": 17.24,
+                "action": "paper_trade_watch_direct_station",
+                "next_actions": ["poll_direct_resolution_source"],
+            }
+        ],
+    }
+
+    refreshed = build_operator_refresh_report(payload, source="live", resolution_date="2026-04-25", operator_limit=1)
+
+    assert calls == [("dallas-70", "live", "2026-04-27")]
+    assert refreshed["summary"] == {
+        "paper_only": True,
+        "input_kind": "shortlist",
+        "rows": 1,
+        "resolution_status_refreshed": 1,
+        "operator_watchlist_rows": 1,
+    }
+    assert refreshed["shortlist"][0]["resolution_status"]["confirmed_outcome"] == "pending"
+    assert refreshed["shortlist"][0]["source_provider"] == "wunderground"
+    watch = refreshed["operator"]["watchlist"][0]
+    assert watch["resolution_status"]["confirmed_outcome"] == "pending"
+    assert watch["monitor_paper_resolution"]["payload"] == {
+        "market_id": "dallas-70",
+        "source": "live",
+        "date": "2026-04-27",
+        "paper_side": "yes",
+        "paper_notional_usd": 5.0,
+        "paper_shares": 17.24,
+    }
+    assert refreshed["artifacts"] == {"source_operator_refresh_input": None}
+
+
+def test_cli_operator_refresh_reads_saved_shortlist_writes_wrapper_and_prints_compact(monkeypatch, tmp_path: Path) -> None:
+    shortlist_path = tmp_path / "shortlist.json"
+    out_path = tmp_path / "refresh.json"
+    shortlist_path.write_text(
+        json.dumps(
+            {
+                "run_id": "saved-run",
+                "source": "fixture",
+                "summary": {"shortlisted": 1, "action_counts": {"paper_trade_watch_direct_station": 1}, "execution_blocker_counts": {}},
+                "shortlist": [
+                    {
+                        "rank": 1,
+                        "market_id": "denver-high-65",
+                        "city": "Denver",
+                        "date": "April 25",
+                        "decision_status": "trade_small",
+                        "paper_side": "yes",
+                        "paper_notional_usd": 5.0,
+                        "paper_shares": 10.0,
+                        "action": "paper_trade_watch_direct_station",
+                        "next_actions": ["poll_direct_resolution_source"],
+                    }
+                ],
+            }
+        )
+    )
+
+    result = _run_cli(
+        "operator-refresh",
+        "--input-json",
+        str(shortlist_path),
+        "--source",
+        "fixture",
+        "--resolution-date",
+        "2026-04-25",
+        "--operator-limit",
+        "1",
+        "--output-json",
+        str(out_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    written = json.loads(out_path.read_text())
+    assert compact == {
+        "summary": written["summary"],
+        "operator": written["operator"],
+        "artifacts": {"source_operator_refresh_input": str(shortlist_path), "output_json": str(out_path)},
+    }
+    assert written["summary"]["paper_only"] is True
+    assert written["summary"]["resolution_status_refreshed"] == 1
+    assert written["operator"]["watchlist"][0]["monitor_paper_resolution"]["payload"]["market_id"] == "denver-high-65"
 
 
 def test_cli_operator_shortlist_reads_saved_shortlist_and_outputs_action_report(tmp_path: Path) -> None:

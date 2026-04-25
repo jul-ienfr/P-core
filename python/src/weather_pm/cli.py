@@ -112,6 +112,14 @@ def build_parser() -> argparse.ArgumentParser:
     profitable_operator_summary.add_argument("--output-json", required=True, help="Output compact operator summary JSON")
     profitable_operator_summary.add_argument("--priority-limit", required=False, type=int, default=10, help="Maximum priority accounts to include")
 
+    operator_refresh = subparsers.add_parser("operator-refresh", help="Refresh a saved weather shortlist/operator report with paper-only live resolution status")
+    operator_refresh.add_argument("--input-json", required=True, help="Saved strategy shortlist or operator refresh JSON")
+    operator_refresh.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+    operator_refresh.add_argument("--resolution-date", required=True, help="Fallback settlement date YYYY-MM-DD")
+    operator_refresh.add_argument("--operator-limit", required=False, type=int, default=10, help="Maximum watchlist rows to include")
+    operator_refresh.add_argument("--skip-orderbook", action="store_true", help="Reserved: do not refresh execution/orderbook state")
+    operator_refresh.add_argument("--output-json", required=False, help="Optional path to write the full paper-only refresh wrapper")
+
     event_surface = subparsers.add_parser("event-surface", help="Build city/date weather event surfaces and flag threshold/bin anomalies")
     event_surface.add_argument("--markets-json", required=True, help="JSON file containing either a markets list or an object with markets/opportunities")
     event_surface.add_argument("--exact-mass-tolerance", required=False, type=float, default=1.0, help="Maximum acceptable exact-bin YES price mass")
@@ -288,6 +296,27 @@ def main() -> int:
         )
         return 0
 
+    if args.command == "operator-refresh":
+        payload = json.loads(Path(args.input_json).read_text())
+        if not isinstance(payload, dict):
+            raise ValueError("operator refresh input JSON must be an object")
+        report = build_operator_refresh_report(
+            payload,
+            source=args.source,
+            resolution_date=args.resolution_date,
+            operator_limit=args.operator_limit,
+            source_input_json=str(args.input_json),
+        )
+        output_payload = compact_operator_refresh_report(report)
+        if args.output_json:
+            output_path = Path(args.output_json)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            report.setdefault("artifacts", {})["output_json"] = str(output_path)
+            output_path.write_text(json.dumps(report, indent=2, sort_keys=True))
+            output_payload = compact_operator_refresh_report(report)
+        print(json.dumps(output_payload))
+        return 0
+
     if args.command == "strategy-shortlist-report":
         payload = build_strategy_shortlist_report_from_args(args)
         output_payload = payload
@@ -413,6 +442,105 @@ def compact_strategy_shortlist_report(payload: dict[str, Any]) -> dict[str, Any]
     if "operator" in payload:
         compact["operator"] = payload.get("operator")
     return compact
+
+
+def compact_operator_refresh_report(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "summary": payload.get("summary", {}),
+        "operator": payload.get("operator", {}),
+        "artifacts": payload.get("artifacts", {}),
+    }
+
+
+def build_operator_refresh_report(
+    payload: dict[str, Any],
+    *,
+    source: str,
+    resolution_date: str,
+    operator_limit: int = 10,
+    source_input_json: str | None = None,
+) -> dict[str, Any]:
+    shortlist_payload = _operator_refresh_shortlist_payload(payload)
+    enrich_shortlist_with_resolution_status(shortlist_payload, source=source, date=resolution_date)
+    operator = build_operator_shortlist_report(shortlist_payload, limit=operator_limit)
+    artifacts = {"source_operator_refresh_input": source_input_json}
+    return {
+        "summary": {
+            "paper_only": True,
+            "input_kind": _operator_refresh_input_kind(payload),
+            "rows": len(shortlist_payload.get("shortlist", [])),
+            "resolution_status_refreshed": _resolution_status_refreshed_count(shortlist_payload),
+            "operator_watchlist_rows": len(operator.get("watchlist", [])),
+        },
+        "shortlist": shortlist_payload.get("shortlist", []),
+        "operator": operator,
+        "artifacts": artifacts,
+    }
+
+
+def _operator_refresh_shortlist_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(payload.get("operator"), dict) and isinstance(payload.get("shortlist"), list):
+        return {**payload, "shortlist": [dict(row) for row in payload.get("shortlist", []) if isinstance(row, dict)]}
+    if isinstance(payload.get("shortlist"), list):
+        return {**payload, "shortlist": [dict(row) for row in payload.get("shortlist", []) if isinstance(row, dict)]}
+    if isinstance(payload.get("watchlist"), list):
+        return {
+            "run_id": payload.get("run_id"),
+            "source": payload.get("source"),
+            "summary": payload.get("summary", {}),
+            "artifacts": payload.get("artifacts", {}),
+            "shortlist": [_shortlist_row_from_operator_watch_row(row) for row in payload.get("watchlist", []) if isinstance(row, dict)],
+        }
+    raise ValueError("operator refresh input must contain a shortlist or watchlist")
+
+
+def _operator_refresh_input_kind(payload: dict[str, Any]) -> str:
+    if isinstance(payload.get("operator"), dict) and isinstance(payload.get("shortlist"), list):
+        return "refresh_wrapper"
+    if isinstance(payload.get("shortlist"), list):
+        return "shortlist"
+    if isinstance(payload.get("watchlist"), list):
+        return "operator"
+    return "unknown"
+
+
+def _shortlist_row_from_operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
+    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    return {
+        "rank": row.get("rank"),
+        "market_id": row.get("market_id"),
+        "city": row.get("city"),
+        "date": row.get("date"),
+        "action": row.get("action"),
+        "decision_status": row.get("decision_status"),
+        "probability_edge": row.get("edge"),
+        "all_in_cost_bps": row.get("all_in_cost_bps"),
+        "order_book_depth_usd": row.get("depth_usd"),
+        "matched_traders": list(row.get("matched_traders") or []),
+        "surface_inconsistency_types": list(row.get("anomalies") or []),
+        "execution_blocker": row.get("blocker"),
+        "next_actions": list(row.get("next") or []),
+        "source_polling_focus": row.get("polling_focus"),
+        "source_latest_url": row.get("source_latest_url"),
+        "source_latency_tier": row.get("latency_tier"),
+        "source_latency_priority": row.get("latency_priority"),
+        "resolution_status_date": status.get("date"),
+        "resolution_status": {key: value for key, value in status.items() if key not in {"date", "latency"}},
+        "resolution_latency": status.get("latency"),
+        **_parse_direct_source_label(row.get("direct_source")),
+    }
+
+
+def _parse_direct_source_label(value: Any) -> dict[str, Any]:
+    if not value:
+        return {"source_direct": False}
+    label = str(value)
+    provider, _, station = label.partition(":")
+    return {"source_direct": True, "source_provider": provider or None, "source_station_code": station or None}
+
+
+def _resolution_status_refreshed_count(payload: dict[str, Any]) -> int:
+    return sum(1 for row in payload.get("shortlist", []) if isinstance(row, dict) and row.get("resolution_status"))
 
 
 def enrich_shortlist_with_resolution_status(report: dict[str, Any], *, source: str, date: str) -> dict[str, Any]:
