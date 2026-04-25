@@ -71,6 +71,12 @@ prediction-core serve --host 127.0.0.1 --port 8080
 prediction-core consume-markets --base-url http://127.0.0.1:8080 --source live --limit 3 --min-status watchlist
 ```
 
+## Execution cost model
+
+Le domaine canonique `prediction_core.execution` estime maintenant un coût d'exécution détaillé : sweep du carnet multi-niveaux, prix moyen de fill, spread/slippage, frais maker/taker, frais optionnels de dépôt/retrait, puis `edge_net_execution` et `edge_net_all_in`.
+
+Les frais de trading et les frais de transfert sont volontairement séparés : le score microstructure utilise l'edge net d'exécution, tandis que les coûts dépôt/retrait servent à vérifier si le trade reste rentable en all-in. Voir `../docs/execution-cost-model.md` pour le détail et un exemple chiffré.
+
 ## Service HTTP local minimal
 
 Le bootstrap Python expose une petite surface HTTP locale pour rendre `prediction_core` démarrable sans introduire de framework web supplémentaire.
