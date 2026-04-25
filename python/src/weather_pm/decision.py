@@ -24,20 +24,26 @@ def build_decision(
         reasons.append("skip: missing tradeable quote")
         return DecisionResult(status="skip", max_position_pct_bankroll=0.0, reasons=reasons)
 
+    effective_edge = score.edge_net_execution if score.edge_net_execution is not None else score.raw_edge
+
     if score.raw_edge < MIN_EDGE_TO_TRADE:
         reasons.append("skip: raw edge too small")
         return DecisionResult(status="skip", max_position_pct_bankroll=0.0, reasons=reasons)
 
-    if spread > 0.06:
-        reasons.append("skip: spread too wide")
+    if effective_edge <= 0.0:
+        reasons.append("skip: net edge not positive after execution costs")
         return DecisionResult(status="skip", max_position_pct_bankroll=0.0, reasons=reasons)
 
-    if (
-        execution is not None
-        and score.grade in {"A", "B"}
-        and execution.all_in_cost_bps >= (score.raw_edge * 10000.0) * 0.95
-    ):
-        reasons.append("skip: all-in costs exceed raw edge")
+    if effective_edge < 0.005:
+        reasons.append("skip: net edge nearly consumed by execution costs")
+        return DecisionResult(status="skip", max_position_pct_bankroll=0.0, reasons=reasons)
+
+    if effective_edge < 0.015:
+        reasons.append("watchlist: net edge too thin after execution costs")
+        return DecisionResult(status="watchlist", max_position_pct_bankroll=0.0, reasons=reasons)
+
+    if spread > 0.06:
+        reasons.append("skip: spread too wide")
         return DecisionResult(status="skip", max_position_pct_bankroll=0.0, reasons=reasons)
 
     dispersion = forecast_dispersion if forecast_dispersion is not None else 99.0

@@ -29,7 +29,9 @@ def score_market(
     yes_price: float,
 ) -> ScoreResult:
     raw_edge = round(model_output.probability_yes - yes_price, 2)
-    edge_theoretical = _clamp(raw_edge / 0.20)
+    edge_net_execution = _edge_net_execution(raw_edge=raw_edge, execution=execution)
+    edge_for_scoring = edge_net_execution if edge_net_execution is not None else raw_edge
+    edge_theoretical = _clamp(edge_for_scoring / 0.20)
     data_quality = _score_data_quality(forecast_bundle)
     resolution_clarity = _score_resolution(resolution)
     execution_friction = _score_execution(execution)
@@ -57,7 +59,14 @@ def score_market(
         competition_inefficiency=round(competition_inefficiency, 2),
         total_score=total_score,
         grade=grade,
+        edge_net_execution=edge_net_execution,
     )
+
+
+def _edge_net_execution(*, raw_edge: float, execution: ExecutionFeatures) -> float | None:
+    if execution.fillable_size_usd <= 0.0:
+        return None
+    return round(raw_edge - (execution.all_in_cost_bps / 10000.0), 3)
 
 
 def _score_data_quality(bundle: ForecastBundle) -> float:

@@ -102,6 +102,7 @@ class ScoreResult:
     competition_inefficiency: float
     total_score: float
     grade: str
+    edge_net_execution: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

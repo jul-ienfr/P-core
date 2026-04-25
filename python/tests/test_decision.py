@@ -127,6 +127,7 @@ def test_build_decision_reduces_sizing_when_execution_is_degraded_by_high_cost_r
 def test_build_decision_skips_when_all_in_costs_consume_the_edge() -> None:
     score = ScoreResult(
         raw_edge=0.06,
+        edge_net_execution=0.002,
         edge_theoretical=0.30,
         data_quality=0.82,
         resolution_clarity=0.91,
@@ -161,4 +162,40 @@ def test_build_decision_skips_when_all_in_costs_consume_the_edge() -> None:
 
     assert decision.status == "skip"
     assert decision.max_position_pct_bankroll == 0.0
-    assert any("all-in costs" in reason for reason in decision.reasons)
+    assert any("net edge" in reason for reason in decision.reasons)
+
+
+def test_build_decision_uses_net_edge_for_trade_sizing() -> None:
+    score = ScoreResult(
+        raw_edge=0.08,
+        edge_net_execution=0.010,
+        edge_theoretical=0.40,
+        data_quality=0.95,
+        resolution_clarity=0.96,
+        execution_friction=0.80,
+        competition_inefficiency=0.72,
+        total_score=84.0,
+        grade="A",
+    )
+    execution = ExecutionFeatures(
+        spread=0.02,
+        hours_to_resolution=16.0,
+        volume_usd=30_000.0,
+        fillable_size_usd=300.0,
+        execution_speed_required="low",
+        slippage_risk="low",
+        all_in_cost_bps=680.0,
+        all_in_cost_usd=20.4,
+    )
+
+    decision = build_decision(
+        score=score,
+        is_exact_bin=False,
+        spread=0.02,
+        forecast_dispersion=1.0,
+        execution=execution,
+    )
+
+    assert decision.status == "watchlist"
+    assert decision.max_position_pct_bankroll == 0.0
+    assert any("net edge" in reason for reason in decision.reasons)
