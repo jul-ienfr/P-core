@@ -18,6 +18,7 @@ from weather_pm.operator_summary import write_profitable_accounts_operator_summa
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import get_event_book_by_id, get_market_by_id, list_weather_markets, normalize_market_record
 from weather_pm.probability_model import build_model_output
+from weather_pm.resolution_monitor import write_paper_resolution_monitor
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
 from weather_pm.source_routing import build_resolution_source_route
@@ -68,6 +69,15 @@ def build_parser() -> argparse.ArgumentParser:
     resolution_status.add_argument("--market-id", required=True, help="Market id whose resolution status should be checked")
     resolution_status.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
     resolution_status.add_argument("--date", required=True, help="Settlement date YYYY-MM-DD")
+
+    monitor_resolution = subparsers.add_parser("monitor-paper-resolution", help="Persist paper-only resolution monitor artifacts for a weather market")
+    monitor_resolution.add_argument("--market-id", required=True, help="Market id whose paper resolution should be monitored")
+    monitor_resolution.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+    monitor_resolution.add_argument("--date", required=True, help="Settlement date YYYY-MM-DD")
+    monitor_resolution.add_argument("--paper-side", required=True, choices=("yes", "no"), help="Paper trade side")
+    monitor_resolution.add_argument("--paper-notional-usd", required=False, type=float, help="Paper notional in USD")
+    monitor_resolution.add_argument("--paper-shares", required=False, type=float, help="Paper shares/contracts")
+    monitor_resolution.add_argument("--output-dir", required=False, default="/home/jul/prediction_core/data/polymarket", help="Directory for raw status JSON and operator markdown")
 
     price_market = subparsers.add_parser("price-market", help="Produce a theoretical price for a market")
     price_market.add_argument("--market-id", required=False, help="Market identifier")
@@ -199,6 +209,22 @@ def main() -> int:
 
     if args.command == "resolution-status":
         print(json.dumps(resolution_status_for_market_id(args.market_id, source=args.source, date=args.date)))
+        return 0
+
+    if args.command == "monitor-paper-resolution":
+        print(
+            json.dumps(
+                write_paper_resolution_monitor(
+                    market_id=args.market_id,
+                    source=args.source,
+                    settlement_date=args.date,
+                    paper_side=args.paper_side,
+                    paper_notional_usd=args.paper_notional_usd,
+                    paper_shares=args.paper_shares,
+                    output_dir=args.output_dir,
+                )
+            )
+        )
         return 0
 
     if args.command == "import-weather-traders":
