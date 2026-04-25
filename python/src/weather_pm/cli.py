@@ -168,7 +168,7 @@ def _score_market_from_market_id(market_id: str, *, source: str, max_impact_bps:
         description=raw_market.get("description"),
         rules=raw_market.get("rules"),
     )
-    forecast_bundle = build_forecast_bundle(structure, live=(source == "live"))
+    forecast_bundle = build_forecast_bundle(structure, live=(source == "live"), resolution=resolution)
     model_output = build_model_output(structure, forecast_bundle)
     neighbor_context = build_neighbor_context(structure, list_weather_markets(source=source))
     execution = build_execution_features(raw_market)

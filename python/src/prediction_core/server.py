@@ -269,7 +269,9 @@ def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:
             ),
             transfer_fees=TransferFeeSchedule(
                 deposit_fixed=_number_with_default(payload, "deposit_fee_usd", default=0.0),
+                deposit_bps=_number_with_default(payload, "deposit_fee_bps", default=0.0),
                 withdrawal_fixed=_number_with_default(payload, "withdrawal_fee_usd", default=0.0),
+                withdrawal_bps=_number_with_default(payload, "withdrawal_fee_bps", default=0.0),
             ),
             edge_gross=0.0,
             position_side=PaperPositionSide(position_side),
@@ -729,6 +731,8 @@ def _market_data_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "transaction_fee_bps",
         "deposit_fee_usd",
         "withdrawal_fee_usd",
+        "deposit_fee_bps",
+        "withdrawal_fee_bps",
         "bids",
         "asks",
     ):

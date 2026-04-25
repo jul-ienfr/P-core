@@ -43,6 +43,33 @@ class ForecastBundle:
     consensus_value: float | None
     dispersion: float | None
     historical_station_available: bool
+    source_provider: str | None = None
+    source_station_code: str | None = None
+    source_url: str | None = None
+    source_latency_tier: str = "fallback"
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(slots=True)
+class StationHistoryPoint:
+    timestamp: str
+    value: float
+    unit: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(slots=True)
+class StationHistoryBundle:
+    source_provider: str
+    station_code: str | None
+    source_url: str | None
+    latency_tier: str
+    points: list[StationHistoryPoint]
+    summary: dict[str, float]
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

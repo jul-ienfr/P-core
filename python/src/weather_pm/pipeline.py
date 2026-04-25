@@ -12,8 +12,8 @@ from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
 
 
-def _default_forecast(structure: MarketStructure):
-    return build_forecast_bundle(structure, live=False)
+def _default_forecast(structure: MarketStructure, resolution=None, *, live: bool = False):
+    return build_forecast_bundle(structure, live=live, resolution=resolution)
 
 
 def _default_model(structure: MarketStructure, forecast_bundle):
@@ -36,7 +36,7 @@ def score_market_from_question(
         description=description or _default_description(structure),
         rules=rules or _default_rules(structure),
     )
-    forecast_bundle = _default_forecast(structure)
+    forecast_bundle = _default_forecast(structure, resolution)
     model_output = _default_model(structure, forecast_bundle)
     neighbor_context = build_neighbor_context(structure, list_fixture_weather_markets())
     execution_market_data = dict(market_data or _default_execution_market_data())
@@ -83,7 +83,7 @@ def score_market_from_fixture_market_id(market_id: str) -> dict[str, object]:
         description=raw_market.get("description"),
         rules=raw_market.get("rules"),
     )
-    forecast_bundle = _default_forecast(structure)
+    forecast_bundle = _default_forecast(structure, resolution)
     model_output = _default_model(structure, forecast_bundle)
     neighbor_context = build_neighbor_context(structure, list_fixture_weather_markets())
     execution = build_execution_features(raw_market)
