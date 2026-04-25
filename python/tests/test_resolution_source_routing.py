@@ -23,6 +23,8 @@ def test_build_resolution_source_route_targets_noaa_station_latest_and_history_d
     assert route.latest_url == "https://api.weather.gov/stations/KDEN/observations/latest"
     assert route.history_url == "https://api.weather.gov/stations/KDEN/observations?start=2026-04-24T00%3A00%3A00Z&end=2026-04-25T23%3A59%3A59Z"
     assert route.polling_focus == "station_observations_latest"
+    assert route.expected_lag_seconds == 900
+    assert route.freshness_sla_seconds == 1200
     assert route.manual_review_needed is False
 
 
@@ -65,6 +67,8 @@ def test_build_resolution_source_route_targets_wunderground_station_without_geoc
     assert route.latest_url == "https://www.wunderground.com/history/daily/us/fl/miami/KMIA"
     assert route.history_url == "https://www.wunderground.com/history/daily/us/fl/miami/KMIA/date/2026-04-23"
     assert route.polling_focus == "station_history_page"
+    assert route.expected_lag_seconds == 1800
+    assert route.freshness_sla_seconds == 3600
 
 
 def test_build_resolution_source_route_targets_aviation_weather_station_api() -> None:

@@ -4,6 +4,8 @@ import re
 from collections import defaultdict
 from typing import Any
 
+from weather_pm.edge_sizing import calculate_edge_sizing
+
 
 def build_strategy_shortlist(
     strategy_report: dict[str, Any],
@@ -142,6 +144,8 @@ def _monitor_paper_resolution_payload(row: dict[str, Any]) -> dict[str, Any] | N
         "mode": "paper_only",
         "trigger": "confirmed_outcome_pending",
     }
+    if isinstance(row.get("edge_sizing"), dict):
+        watch_row["edge_sizing"] = row.get("edge_sizing")
     if row.get("source_history_url") is not None:
         watch_row["source_history_url"] = row.get("source_history_url")
     resolution_status = _operator_resolution_status(row)
@@ -330,6 +334,7 @@ def _shortlist_row(
         "probability_edge": _optional_number(opportunity.get("probability_edge")),
         "all_in_cost_bps": _optional_number(opportunity.get("all_in_cost_bps")),
         "order_book_depth_usd": _optional_number(opportunity.get("order_book_depth_usd")),
+        "edge_sizing": _edge_sizing(opportunity),
         "source_direct": bool(opportunity.get("source_direct")),
         "source_provider": opportunity.get("source_provider"),
         "source_station_code": opportunity.get("source_station_code"),
@@ -352,6 +357,22 @@ def _shortlist_row(
         "next_actions": _next_actions(opportunity, action=action, direct=bool(opportunity.get("source_direct")), inconsistencies=inconsistencies),
         "reasons": reasons,
     }
+
+
+def _edge_sizing(opportunity: dict[str, Any]) -> dict[str, Any] | None:
+    existing = opportunity.get("edge_sizing")
+    if isinstance(existing, dict):
+        return existing
+    prediction = _optional_number(opportunity.get("prediction_probability"))
+    price = _optional_number(opportunity.get("market_price"))
+    if prediction is None or price is None:
+        return None
+    return calculate_edge_sizing(
+        prediction_probability=prediction,
+        market_price=price,
+        side=str(opportunity.get("edge_side") or opportunity.get("side") or "buy"),
+        edge_cost_bps=_optional_number(opportunity.get("all_in_cost_bps")) or 0.0,
+    ).to_dict()
 
 
 def _reasons(opportunity: dict[str, Any], *, matched_accounts: list[dict[str, Any]], inconsistencies: list[dict[str, Any]]) -> list[str]:

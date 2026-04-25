@@ -182,6 +182,8 @@ def _live_market_signal_cards(watchlist: list[dict[str, Any]]) -> list[dict[str,
             "next": list(row.get("next") or row.get("next_actions") or []),
             "source_latest_url": row.get("source_latest_url"),
         }
+        if isinstance(row.get("edge_sizing"), dict):
+            card["edge_sizing"] = row.get("edge_sizing")
         if row.get("source_history_url") is not None:
             card["source_history_url"] = row.get("source_history_url")
         if row.get("polling_focus") is not None:

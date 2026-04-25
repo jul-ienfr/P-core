@@ -75,6 +75,9 @@ class ResolutionSourceRoute:
     polling_focus: str
     manual_review_needed: bool
     reason: str
+    expected_lag_seconds: int | None = None
+    freshness_sla_seconds: int | None = None
+    official_lag_seconds: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -107,11 +110,13 @@ def build_resolution_source_route(
                 if daily_summary
                 else "NOAA station code found in resolution rules; poll weather.gov station observations directly."
             ),
+            expected_lag_seconds=900,
+            freshness_sla_seconds=1200,
         )
 
     if resolution.provider == "wunderground" and resolution.source_url and resolution.station_code:
         history_url = _wunderground_history_url(resolution.source_url, start_date=start_date, end_date=end_date)
-        return _route(structure, resolution, latest_url=resolution.source_url, history_url=history_url, direct=True, supported=True, latency_tier="direct_latest", latency_priority="direct_source_low_latency", polling_focus="station_history_page", reason="Wunderground station page found in resolution rules; poll the station page directly without city geocoding.")
+        return _route(structure, resolution, latest_url=resolution.source_url, history_url=history_url, direct=True, supported=True, latency_tier="direct_latest", latency_priority="direct_source_low_latency", polling_focus="station_history_page", reason="Wunderground station page found in resolution rules; poll the station page directly without city geocoding.", expected_lag_seconds=1800, freshness_sla_seconds=3600)
 
     if resolution.provider == "accuweather" and resolution.source_url:
         return _route(structure, resolution, latest_url=resolution.source_url, history_url=_accuweather_history_url(resolution.source_url), direct=True, supported=True, latency_tier="direct_latest", latency_priority="direct_source_low_latency", polling_focus="accuweather_location_page_or_injected_json", reason="AccuWeather source URL found in resolution rules; route directly to the auditable page and parse injected JSON payloads. Live AccuWeather API use requires an API key supplied outside tests.")
@@ -125,7 +130,7 @@ def build_resolution_source_route(
     if resolution.provider == "hong_kong_observatory":
         latest_url = _hko_latest_url(resolution.source_url)
         history_url = _hko_daily_extract_url(structure, start_date=start_date, end_date=end_date)
-        return _route(structure, resolution, station_code=resolution.station_code or "HKO", station_name=resolution.station_name or "Hong Kong Observatory", latest_url=latest_url, history_url=history_url, direct=True, supported=True, latency_tier="direct_latest", latency_priority="direct_source_low_latency", polling_focus="hko_current_weather_and_daily_extract", reason="Hong Kong Observatory source found in resolution rules; poll HKO current weather and official monthly daily extract directly.")
+        return _route(structure, resolution, station_code=resolution.station_code or "HKO", station_name=resolution.station_name or "Hong Kong Observatory", latest_url=latest_url, history_url=history_url, direct=True, supported=True, latency_tier="direct_latest", latency_priority="direct_source_low_latency", polling_focus="hko_current_weather_and_daily_extract", reason="Hong Kong Observatory source found in resolution rules; poll HKO current weather and official monthly daily extract directly.", expected_lag_seconds=600, freshness_sla_seconds=1200, official_lag_seconds=86400)
 
     if resolution.provider == "meteostat" and (resolution.station_code or structure.city):
         history_url = _meteostat_history_url(structure, resolution, start_date=start_date, end_date=end_date)
@@ -189,9 +194,44 @@ def build_resolution_source_route(
     return _unsupported(structure, resolution, latency_tier="unsupported", polling_focus="manual_review", reason=f"No direct route for provider={resolution.provider!r} station={resolution.station_code!r}; manual source review required.")
 
 
-def _route(structure: MarketStructure, resolution: ResolutionMetadata, *, latest_url: str | None, history_url: str | None, direct: bool, supported: bool, latency_tier: str, latency_priority: str, polling_focus: str, reason: str, station_code: str | None = None, station_name: str | None = None, manual_review_needed: bool | None = None) -> ResolutionSourceRoute:
+def _route(
+    structure: MarketStructure,
+    resolution: ResolutionMetadata,
+    *,
+    latest_url: str | None,
+    history_url: str | None,
+    direct: bool,
+    supported: bool,
+    latency_tier: str,
+    latency_priority: str,
+    polling_focus: str,
+    reason: str,
+    station_code: str | None = None,
+    station_name: str | None = None,
+    manual_review_needed: bool | None = None,
+    expected_lag_seconds: int | None = None,
+    freshness_sla_seconds: int | None = None,
+    official_lag_seconds: int | None = None,
+) -> ResolutionSourceRoute:
     del structure
-    return ResolutionSourceRoute(provider=resolution.provider, station_code=resolution.station_code if station_code is None else station_code, station_name=resolution.station_name if station_name is None else station_name, source_url=resolution.source_url, latest_url=latest_url, history_url=history_url, direct=direct, supported=supported, latency_tier=latency_tier, latency_priority=latency_priority, polling_focus=polling_focus, manual_review_needed=resolution.manual_review_needed if manual_review_needed is None else manual_review_needed, reason=reason)
+    return ResolutionSourceRoute(
+        provider=resolution.provider,
+        station_code=resolution.station_code if station_code is None else station_code,
+        station_name=resolution.station_name if station_name is None else station_name,
+        source_url=resolution.source_url,
+        latest_url=latest_url,
+        history_url=history_url,
+        direct=direct,
+        supported=supported,
+        latency_tier=latency_tier,
+        latency_priority=latency_priority,
+        polling_focus=polling_focus,
+        manual_review_needed=resolution.manual_review_needed if manual_review_needed is None else manual_review_needed,
+        reason=reason,
+        expected_lag_seconds=expected_lag_seconds,
+        freshness_sla_seconds=freshness_sla_seconds,
+        official_lag_seconds=official_lag_seconds,
+    )
 
 
 def _unsupported(structure: MarketStructure, resolution: ResolutionMetadata, *, latency_tier: str, polling_focus: str, reason: str) -> ResolutionSourceRoute:

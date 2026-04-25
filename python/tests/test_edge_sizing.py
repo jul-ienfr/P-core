@@ -1,0 +1,58 @@
+from __future__ import annotations
+
+from weather_pm.edge_sizing import calculate_edge_sizing
+
+
+def test_calculate_edge_sizing_returns_buy_when_prediction_clears_market_and_costs() -> None:
+    sizing = calculate_edge_sizing(
+        prediction_probability=0.62,
+        market_price=0.55,
+        edge_cost_bps=120.0,
+    )
+
+    assert sizing.recommendation == "buy"
+    assert sizing.raw_edge == 0.07
+    assert sizing.net_edge == 0.058
+    assert sizing.edge_bps == 700
+    assert sizing.net_edge_bps == 580
+    assert sizing.kelly_fraction > 0.0
+    assert sizing.suggested_fraction <= sizing.kelly_fraction
+
+
+def test_calculate_edge_sizing_skips_when_execution_costs_consume_edge() -> None:
+    sizing = calculate_edge_sizing(
+        prediction_probability=0.54,
+        market_price=0.52,
+        edge_cost_bps=250.0,
+    )
+
+    assert sizing.recommendation == "skip"
+    assert sizing.raw_edge == 0.02
+    assert sizing.net_edge == -0.005
+    assert sizing.kelly_fraction > 0.0
+    assert sizing.suggested_fraction == 0.0
+
+
+def test_calculate_edge_sizing_supports_sell_side_edges() -> None:
+    sizing = calculate_edge_sizing(
+        prediction_probability=0.40,
+        market_price=0.48,
+        side="sell",
+        edge_cost_bps=100.0,
+    )
+
+    assert sizing.recommendation == "sell"
+    assert sizing.raw_edge == -0.08
+    assert sizing.net_edge == 0.07
+    assert sizing.edge_bps == -800
+    assert sizing.net_edge_bps == 700
+    assert sizing.suggested_fraction > 0.0
+
+
+def test_calculate_edge_sizing_rejects_invalid_probabilities() -> None:
+    try:
+        calculate_edge_sizing(prediction_probability=1.2, market_price=0.5)
+    except ValueError as exc:
+        assert "prediction_probability" in str(exc)
+    else:
+        raise AssertionError("expected invalid probability to raise")

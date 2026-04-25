@@ -51,6 +51,9 @@ def test_build_strategy_shortlist_prioritizes_tradeable_surface_anomalies_and_tr
                 "question": "Will the highest temperature in London be 20°C or higher on April 25?",
                 "decision_status": "trade_small",
                 "probability_edge": 0.12,
+                "prediction_probability": 0.67,
+                "market_price": 0.55,
+                "edge_side": "buy",
                 "all_in_cost_bps": 120.0,
                 "order_book_depth_usd": 900.0,
                 "source_direct": True,
@@ -122,6 +125,18 @@ def test_build_strategy_shortlist_prioritizes_tradeable_surface_anomalies_and_tr
     assert london["source_latency_priority"] == "direct_source_low_latency"
     assert london["source_polling_focus"] == "station_observations_latest"
     assert london["source_latest_url"] == "https://api.weather.gov/stations/EGLL/observations/latest"
+    assert london["edge_sizing"] == {
+        "prediction_probability": 0.67,
+        "market_price": 0.55,
+        "side": "buy",
+        "raw_edge": 0.12,
+        "net_edge": 0.108,
+        "edge_bps": 1200,
+        "net_edge_bps": 1080,
+        "kelly_fraction": 0.2667,
+        "suggested_fraction": 0.02,
+        "recommendation": "buy",
+    }
     assert london["execution_blocker"] is None
     assert london["action"] == "paper_trade_watch_direct_station"
     assert london["next_actions"] == [
@@ -880,6 +895,23 @@ def test_profitable_accounts_operator_summary_bridges_accounts_to_live_watchlist
                         "matched_traders": ["DenverSharp", "Generalist", "Unknown"],
                         "action": "paper_trade_watch_direct_station",
                         "blocker": "extreme_price",
+                        "polling_focus": "station_observations_latest",
+                        "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+                        "edge_sizing": {
+                            "prediction_probability": 0.67,
+                            "market_price": 0.55,
+                            "side": "buy",
+                            "raw_edge": 0.12,
+                            "net_edge": 0.108,
+                            "edge_bps": 1200,
+                            "net_edge_bps": 1080,
+                            "kelly_fraction": 0.2667,
+                            "suggested_fraction": 0.02,
+                            "recommendation": "buy",
+                        },
+                        "source_history_url": "https://api.weather.gov/stations/KDEN/observations",
+                        "latency_tier": "direct_latest",
+                        "latency_priority": 1,
                     }
                 ],
             }
@@ -907,6 +939,51 @@ def test_profitable_accounts_operator_summary_bridges_accounts_to_live_watchlist
         "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
         "recommended_size": "micro_paper_only",
     }
+    assert summary["live_market_signal_cards"] == [
+        {
+            "market_id": "denver-65",
+            "city": "Denver",
+            "date": None,
+            "action": "paper_trade_watch_direct_station",
+            "blocker": "extreme_price",
+            "matched_profitable_weather_count": 2,
+            "weather_heavy_count": 1,
+            "signal_only_count": 1,
+            "top_matched_accounts": [
+                {"handle": "DenverSharp", "weather_pnl_usd": 10000.0, "pnl_over_volume_pct": 5.0},
+                {"handle": "Generalist", "weather_pnl_usd": 5000.0, "pnl_over_volume_pct": 0.0},
+            ],
+            "operator_verdict": {
+                "status": "paper_micro",
+                "confidence": "high_signal_cautious_execution",
+                "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
+                "recommended_size": "micro_paper_only",
+            },
+            "next": [],
+            "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+            "edge_sizing": {
+                "prediction_probability": 0.67,
+                "market_price": 0.55,
+                "side": "buy",
+                "raw_edge": 0.12,
+                "net_edge": 0.108,
+                "edge_bps": 1200,
+                "net_edge_bps": 1080,
+                "kelly_fraction": 0.2667,
+                "suggested_fraction": 0.02,
+                "recommendation": "buy",
+            },
+            "source_history_url": "https://api.weather.gov/stations/KDEN/observations",
+            "polling_focus": "station_observations_latest",
+            "latency_tier": "direct_latest",
+            "latency_priority": 1,
+        }
+    ]
+    assert summary["discord_operator_brief"] == (
+        "Météo Polymarket: 1 marché live avec comptes météo rentables. Reco globale: paper_micro_only.\n"
+        "- denver-65 — Denver — 2 comptes (1 heavy), blocker=extreme_price, verdict=paper_micro, "
+        "top=DenverSharp $10,000.00 / Generalist $5,000.00"
+    )
 
 
 def test_cli_profitable_accounts_operator_summary_writes_json_and_prints_compact_payload(tmp_path: Path) -> None:
@@ -1231,6 +1308,18 @@ def test_cli_operator_shortlist_reads_saved_shortlist_and_outputs_action_report(
                         "probability_edge": 0.22,
                         "all_in_cost_bps": 42.0,
                         "order_book_depth_usd": 1200.0,
+                        "edge_sizing": {
+                            "prediction_probability": 0.67,
+                            "market_price": 0.55,
+                            "side": "buy",
+                            "raw_edge": 0.12,
+                            "net_edge": 0.108,
+                            "edge_bps": 1200,
+                            "net_edge_bps": 1080,
+                            "kelly_fraction": 0.2667,
+                            "suggested_fraction": 0.02,
+                            "recommendation": "buy",
+                        },
                         "source_direct": True,
                         "source_provider": "noaa",
                         "source_station_code": "KDEN",
@@ -1254,6 +1343,28 @@ def test_cli_operator_shortlist_reads_saved_shortlist_and_outputs_action_report(
     assert payload["run_id"] == "saved-run"
     assert payload["summary"]["tradeable_count"] == 1
     assert payload["watchlist"][0]["direct_source"] == "noaa:KDEN"
+    assert payload["watchlist"][0]["edge_sizing"] == {
+        "prediction_probability": 0.67,
+        "market_price": 0.55,
+        "side": "buy",
+        "raw_edge": 0.12,
+        "net_edge": 0.108,
+        "edge_bps": 1200,
+        "net_edge_bps": 1080,
+        "kelly_fraction": 0.2667,
+        "suggested_fraction": 0.02,
+        "recommendation": "buy",
+    }
+    assert payload["watchlist"][0]["source_history_url"] == "https://api.weather.gov/stations/KDEN/observations"
+    assert payload["watchlist"][0]["resolution_status"] == {
+        "latest_direct": {"available": True, "value": 66.0},
+        "official_daily_extract": {"available": False, "value": None},
+        "provisional_outcome": {"status": "yes", "basis": "latest_direct"},
+        "confirmed_outcome": {"status": "pending", "basis": "official_daily_extract"},
+        "action_operator": "monitor_until_official_daily_extract",
+        "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+        "source_history_url": "https://api.weather.gov/stations/KDEN/observations",
+    }
     assert payload["watchlist"][0]["next"] == ["poll_direct_resolution_source", "paper_micro_order_with_strict_limit_and_fill_tracking"]
     assert payload["watchlist"][0]["blocker_detail"]["severity"] == "caution"
     assert payload["artifacts"] == {"source_shortlist_json": str(shortlist_path), "output_json": str(out_path)}
