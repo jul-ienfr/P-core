@@ -775,13 +775,18 @@ def test_enrich_shortlist_with_resolution_status_preserves_full_source_route(mon
 def test_operator_report_preserves_resolution_status_latency_diagnostics() -> None:
     payload = {
         "summary": {"shortlisted": 1, "action_counts": {"paper_trade_watch_direct_station": 1}, "execution_blocker_counts": {}},
+        "source": "live",
         "shortlist": [
             {
                 "rank": 1,
                 "market_id": "dallas-70",
                 "city": "Dallas",
                 "date": "April 27",
+                "resolution_status_date": "2026-04-27",
                 "decision_status": "trade_small",
+                "paper_side": "yes",
+                "paper_notional_usd": 5.0,
+                "paper_shares": 17.24,
                 "source_direct": True,
                 "source_provider": "wunderground",
                 "source_station_code": "KDAL",
@@ -810,6 +815,21 @@ def test_operator_report_preserves_resolution_status_latency_diagnostics() -> No
     assert status["confirmed_outcome"] == "pending"
     assert status["latency"]["latest"]["polling_focus"] == "station_history_page"
     assert status["latency"]["official"]["expected_lag_seconds"] == 3600
+    assert operator["watchlist"][0]["monitor_paper_resolution"] == {
+        "endpoint": "/weather/monitor-paper-resolution",
+        "method": "POST",
+        "payload": {
+            "market_id": "dallas-70",
+            "source": "live",
+            "date": "2026-04-27",
+            "paper_side": "yes",
+            "paper_notional_usd": 5.0,
+            "paper_shares": 17.24,
+        },
+        "cli": "PYTHONPATH=python/src python3 -m weather_pm.cli monitor-paper-resolution --market-id dallas-70 --source live --date 2026-04-27 --paper-side yes --paper-notional-usd 5.0 --paper-shares 17.24",
+        "mode": "paper_only",
+        "trigger": "confirmed_outcome_pending",
+    }
 
 
 def test_profitable_accounts_operator_summary_bridges_accounts_to_live_watchlist(tmp_path: Path) -> None:

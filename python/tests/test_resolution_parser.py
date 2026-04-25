@@ -18,6 +18,33 @@ def test_parse_resolution_metadata_detects_clear_noaa_station_source() -> None:
     assert result.revision_risk == "low"
 
 
+def test_parse_resolution_metadata_detects_aviation_weather_metar_station_source() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Resolution source: METAR airport observations for station KDEN",
+        description="Official observed high temperature at Denver International Airport station KDEN.",
+        rules="Source: https://aviationweather.gov/data/api/ station KDEN aviation weather observations.",
+    )
+
+    assert result.provider == "aviation_weather"
+    assert result.source_url == "https://aviationweather.gov/data/api/"
+    assert result.station_code == "KDEN"
+    assert result.station_type == "airport"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_keeps_noaa_provider_when_noaa_and_metar_are_both_mentioned() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Resolution source: NOAA daily climate report for station KMIA",
+        description="Official observed high temperature at Miami airport station KMIA, not METAR.",
+        rules="Source: https://www.weather.gov/wrh/climate?wfo=mfl station KMIA.",
+    )
+
+    assert result.provider == "noaa"
+    assert result.station_code == "KMIA"
+
+
 def test_parse_resolution_metadata_marks_ambiguous_source_for_manual_review() -> None:
     result = parse_resolution_metadata(
         resolution_source="Resolution source: local weather station data",
@@ -100,3 +127,39 @@ def test_parse_resolution_metadata_extracts_clean_hong_kong_observatory_station_
     assert result.rules_clear is True
     assert result.manual_review_needed is False
     assert result.revision_risk == "low"
+
+
+def test_parse_resolution_metadata_extracts_accuweather_location_key_from_url() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="https://www.accuweather.com/en/us/miami/33128/daily-weather-forecast/347936",
+        description=(
+            "This market resolves to the highest temperature observed for Miami on "
+            "the linked AccuWeather page."
+        ),
+        rules="Source: AccuWeather daily forecast page for location key 347936.",
+    )
+
+    assert result.provider == "accuweather"
+    assert result.source_url == "https://www.accuweather.com/en/us/miami/33128/daily-weather-forecast/347936"
+    assert result.station_code == "347936"
+    assert result.station_name == "Miami"
+    assert result.station_type == "location"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_meteostat_from_resolution_text() -> None:
+    result = parse_resolution_metadata(
+        resolution_source="Resolution source: Meteostat daily data for station 72565",
+        description="This market resolves to the highest temperature recorded in Denver.",
+        rules="Use the Meteostat daily tmax/tmin row published at https://meteostat.net/en/station/72565.",
+    )
+
+    assert result.provider == "meteostat"
+    assert result.source_url == "https://meteostat.net/en/station/72565."
+    assert result.station_code == "72565"
+    assert result.station_type == "station"
+    assert result.wording_clear is True
+    assert result.rules_clear is True
+    assert result.manual_review_needed is False

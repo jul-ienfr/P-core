@@ -68,7 +68,7 @@ def build_operator_shortlist_report(payload: dict[str, Any], *, limit: int = 10)
 
 
 def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
-    return {
+    watch_row = {
         "rank": row.get("rank"),
         "market_id": row.get("market_id"),
         "city": row.get("city"),
@@ -91,6 +91,10 @@ def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
         "execution_diagnostic": _execution_diagnostic(row),
         **(_resolution_status_payload(row) if row.get("resolution_status") else {}),
     }
+    monitor_payload = _monitor_paper_resolution_payload(row)
+    if monitor_payload is not None:
+        watch_row["monitor_paper_resolution"] = monitor_payload
+    return watch_row
 
 
 def _resolution_status_payload(row: dict[str, Any]) -> dict[str, Any]:
@@ -101,6 +105,41 @@ def _resolution_status_payload(row: dict[str, Any]) -> dict[str, Any]:
     if row.get("resolution_status_date") is not None:
         payload["date"] = row.get("resolution_status_date")
     return {"resolution_status": payload}
+
+
+def _monitor_paper_resolution_payload(row: dict[str, Any]) -> dict[str, Any] | None:
+    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    if status.get("confirmed_outcome") != "pending":
+        return None
+    market_id = row.get("market_id")
+    date = row.get("resolution_status_date")
+    paper_side = row.get("paper_side")
+    paper_notional_usd = _optional_number(row.get("paper_notional_usd"))
+    paper_shares = _optional_number(row.get("paper_shares"))
+    if not market_id or not date or not paper_side or paper_notional_usd is None or paper_shares is None:
+        return None
+    payload = {
+        "market_id": str(market_id),
+        "source": "live",
+        "date": str(date),
+        "paper_side": str(paper_side),
+        "paper_notional_usd": paper_notional_usd,
+        "paper_shares": paper_shares,
+    }
+    cli = (
+        "PYTHONPATH=python/src python3 -m weather_pm.cli monitor-paper-resolution "
+        f"--market-id {payload['market_id']} --source live --date {payload['date']} "
+        f"--paper-side {payload['paper_side']} --paper-notional-usd {payload['paper_notional_usd']} "
+        f"--paper-shares {payload['paper_shares']}"
+    )
+    return {
+        "endpoint": "/weather/monitor-paper-resolution",
+        "method": "POST",
+        "payload": payload,
+        "cli": cli,
+        "mode": "paper_only",
+        "trigger": "confirmed_outcome_pending",
+    }
 
 
 def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
