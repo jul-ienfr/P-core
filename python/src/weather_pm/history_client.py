@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import csv
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import quote, urlencode
 from urllib.request import urlopen
@@ -34,8 +35,9 @@ def build_station_history_bundle(
 
 
 class StationHistoryClient:
-    def __init__(self, *, timeout: float = 10.0) -> None:
+    def __init__(self, *, timeout: float = 10.0, now_utc: datetime | None = None) -> None:
         self.timeout = timeout
+        self._now_utc = now_utc
 
     def fetch_latest_bundle(self, structure: MarketStructure, resolution: ResolutionMetadata) -> StationHistoryBundle:
         if resolution.provider == "noaa" and resolution.station_code:
@@ -501,7 +503,19 @@ class StationHistoryClient:
             summary=_summarize(points),
             polling_focus=polling_focus,
             expected_lag_seconds=expected_lag_seconds,
+            source_lag_seconds=self._source_lag_seconds(points) if latency_tier == "direct_latest" else None,
         )
+
+    def _source_lag_seconds(self, points: list[StationHistoryPoint]) -> int | None:
+        if not points:
+            return None
+        observed_at = _parse_observation_timestamp(points[-1].timestamp)
+        if observed_at is None:
+            return None
+        now = self._now_utc or datetime.now(timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        return max(0, int((now.astimezone(timezone.utc) - observed_at).total_seconds()))
 
     def _fetch_json(self, url: str) -> dict[str, Any]:
         with urlopen(url, timeout=self.timeout) as response:
@@ -510,6 +524,33 @@ class StationHistoryClient:
 
 def _uses_noaa_daily_summary(structure: MarketStructure, *, start_date: str, end_date: str) -> bool:
     return start_date == end_date and structure.measurement_kind in {"high", "low"}
+
+
+
+def _parse_observation_timestamp(raw_timestamp: str) -> datetime | None:
+    text = str(raw_timestamp).strip()
+    if not text:
+        return None
+    candidates = [text]
+    if text.endswith("Z"):
+        candidates.append(f"{text[:-1]}+00:00")
+    if len(text) == 10 and text[4] == "-" and text[7] == "-":
+        candidates.append(f"{text}T00:00:00+00:00")
+    for candidate in candidates:
+        try:
+            parsed = datetime.fromisoformat(candidate)
+        except ValueError:
+            continue
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    try:
+        parsed = parsedate_to_datetime(text)
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 
@@ -537,6 +578,12 @@ def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str |
         "jma": "jma_official_amedas_or_injected_payload",
         "pagasa": "pagasa_official_observations_or_injected_payload",
         "imd": "imd_official_observations_or_injected_payload",
+        "meteoswiss": "meteoswiss_official_observations",
+        "smhi": "smhi_official_observations",
+        "knmi": "knmi_official_observations",
+        "aemet": "aemet_official_observations",
+        "met_eireann": "met_eireann_official_observations",
+        "dmi": "dmi_official_observations",
         "environment_canada": "environment_canada_official_observation" if latency_tier == "direct_latest" else "environment_canada_official_history",
         "ecmwf_copernicus": "ecmwf_copernicus_reanalysis_daily",
         "web_scrape": "manual_html_extraction",
@@ -704,7 +751,23 @@ _DIRECT_API_PROVIDERS = {
     "aerisweather",
     "meteo_france",
 }
-_DIRECT_SOURCE_PROVIDERS = {"uk_met_office", "dwd", "bom", "jma", "pagasa", "imd", "environment_canada", "web_scrape", "local_official_weather_source"}
+_DIRECT_SOURCE_PROVIDERS = {
+    "uk_met_office",
+    "dwd",
+    "bom",
+    "jma",
+    "pagasa",
+    "imd",
+    "meteoswiss",
+    "smhi",
+    "knmi",
+    "aemet",
+    "met_eireann",
+    "dmi",
+    "environment_canada",
+    "web_scrape",
+    "local_official_weather_source",
+}
 
 
 def _latency_tier_for_provider(provider: str) -> str:
@@ -727,6 +790,14 @@ def _extract_rows(payload: Any) -> list[Any]:
     if set(payload.keys()).issubset({"content", "text", "html", "body"}):
         body = payload.get("body")
         return body if isinstance(body, list) else []
+
+    if isinstance(payload.get("features"), list):
+        rows: list[Any] = []
+        for feature in payload["features"]:
+            if isinstance(feature, dict) and isinstance(feature.get("properties"), dict):
+                rows.append(feature["properties"])
+        if rows:
+            return rows
 
     siterep = payload.get("SiteRep")
     if isinstance(siterep, dict):
@@ -755,7 +826,7 @@ def _extract_rows(payload: Any) -> list[Any]:
     properties = payload.get("properties")
     if isinstance(properties, dict) and isinstance(properties.get("timeseries"), list):
         return properties["timeseries"]
-    for key in ("observations", "data", "daily", "history", "records", "rows", "climateData", "list"):
+    for key in ("observations", "data", "daily", "history", "records", "rows", "climateData", "list", "value"):
         value = payload.get(key)
         if isinstance(value, list):
             return value
@@ -794,7 +865,7 @@ def _row_matches_station(row: dict[str, Any], station_code: str) -> bool:
 
 
 def _extract_row_timestamp(row: dict[str, Any]) -> str:
-    for key in ("timestamp", "time", "datetime", "date", "Date", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM"):
+    for key in ("timestamp", "time", "datetime", "date", "Date", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
         value = row.get(key)
         if value not in {None, ""}:
             text = str(value)
@@ -821,6 +892,9 @@ def _row_has_explicit_timestamp(row: dict[str, Any]) -> bool:
         "obsTimeUtc",
         "obsTimeLocal",
         "MESS_DATUM",
+        "reference_ts",
+        "fint",
+        "observed",
         "ts",
         "dateutc",
         "epoch",
@@ -877,9 +951,9 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         if isinstance(nested, dict) and nested.get("Value") is not None:
             return float(nested["Value"]), str(nested.get("Unit") or structure.unit).lower()
     key_groups = {
-        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "tmax", "TXK", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "maxtempC", "maxtempF"),
-        "low": ("mintemp_f", "mintemp_c", "min_temp", "tmin", "TNK", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "mintempC", "mintempF"),
-        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "T", "temperature_2m", "air_temperature", "temperatureC", "temperatureF"),
+        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "tmax", "TXK", "TX", "tre200s0", "ta", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "maxtempC", "maxtempF"),
+        "low": ("mintemp_f", "mintemp_c", "min_temp", "tmin", "TNK", "TN", "tre200s0", "ta", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "mintempC", "mintempF"),
+        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "T", "TX", "TN", "tre200s0", "ta", "value", "temperature_2m", "air_temperature", "temperatureC", "temperatureF"),
     }
     keys = key_groups.get(structure.measurement_kind, key_groups["current"]) + key_groups["current"]
     temperature_fields = {"temperature"}
@@ -903,9 +977,13 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
             unit = str(
                 mapping.get("unit")
                 or mapping.get("Unit")
-                or ("F" if key_lower.endswith("_f") or key_lower.endswith("f") else "C" if key_lower.endswith("_c") or key_lower.endswith("c") or "temperature_2m" in key_lower or "air_temperature" in key_lower else structure.unit)
+                or ("F" if key_lower.endswith("_f") or key_lower.endswith("f") else "C" if key_lower.endswith("_c") or key_lower.endswith("c") or "temperature_2m" in key_lower or "air_temperature" in key_lower or key_lower in {"tre200s0", "ta"} else structure.unit)
             ).lower()
-            return float(value), unit
+            numeric_value = float(value)
+            if unit in {"0.1c", "1/10c", "deci_c", "decic"}:
+                numeric_value = numeric_value / 10
+                unit = "c"
+            return numeric_value, unit
     return None
 
 

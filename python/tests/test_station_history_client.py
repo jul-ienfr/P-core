@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from weather_pm.history_client import StationHistoryClient, build_station_history_bundle
 from weather_pm.market_parser import parse_market_question
+from weather_pm.models import ResolutionMetadata
 from weather_pm.resolution_parser import parse_resolution_metadata
 
 
 class _FakeStationHistoryClient(StationHistoryClient):
-    def __init__(self, payloads: list[dict[str, object]]) -> None:
-        super().__init__(timeout=0.1)
+    def __init__(self, payloads: list[dict[str, object]], *, now_utc: datetime | None = None) -> None:
+        super().__init__(timeout=0.1, now_utc=now_utc)
         self.requested_urls: list[str] = []
         self._payloads = list(payloads)
 
@@ -16,6 +19,36 @@ class _FakeStationHistoryClient(StationHistoryClient):
         if not self._payloads:
             raise AssertionError(f"unexpected extra fetch for {url}")
         return self._payloads.pop(0)
+
+
+def test_station_latest_client_reports_source_lag_seconds_for_noaa_direct_latest() -> None:
+    structure = parse_market_question("Will the current temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Resolution source: NOAA latest station observation for station KDEN",
+        description="Official current temperature at Denver International Airport station KDEN.",
+        rules="Source: https://api.weather.gov/stations/KDEN/observations/latest station KDEN.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "properties": {
+                    "timestamp": "2026-04-25T21:53:00+00:00",
+                    "temperature": {"value": 20.0, "unitCode": "wmoUnit:degC"},
+                }
+            }
+        ],
+        now_utc=datetime(2026, 4, 25, 22, 3, tzinfo=timezone.utc),
+    )
+
+    bundle = client.fetch_latest_bundle(structure, resolution)
+
+    assert client.requested_urls == ["https://api.weather.gov/stations/KDEN/observations/latest"]
+    assert bundle.source_provider == "noaa"
+    assert bundle.station_code == "KDEN"
+    assert bundle.latency_tier == "direct_latest"
+    assert bundle.source_lag_seconds == 600
+    assert bundle.latency_diagnostics()["source_lag_seconds"] == 600
+
 
 
 def test_station_history_client_fetches_noaa_station_observation_range() -> None:
@@ -79,6 +112,36 @@ def test_station_history_client_fetches_noaa_official_daily_summary_for_single_d
     assert bundle.points[0].value == 72.0
     assert bundle.summary["max"] == 72.0
     assert bundle.summary["point_count"] == 1.0
+
+
+
+def test_station_latest_client_reports_source_lag_seconds_for_wunderground_direct_latest() -> None:
+    structure = parse_market_question("Will the current temperature in Miami be 80°F or higher on April 23?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.wunderground.com/history/daily/us/fl/miami/KMIA",
+        description="This market resolves to the current temperature recorded at Miami Intl Airport Station KMIA.",
+        rules="This market resolves based on the latest observation published at the resolution source.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "observations": [
+                    {"stationID": "KMIA", "obsTimeUtc": "2026-04-23T11:43:00Z", "imperial": {"temp": 80.0}},
+                    {"stationID": "KMIA", "obsTimeUtc": "2026-04-23T11:53:00Z", "imperial": {"temp": 81.0}},
+                ]
+            }
+        ],
+        now_utc=datetime(2026, 4, 23, 12, 3, tzinfo=timezone.utc),
+    )
+
+    bundle = client.fetch_latest_bundle(structure, resolution)
+
+    assert bundle.source_provider == "wunderground"
+    assert bundle.station_code == "KMIA"
+    assert bundle.latency_tier == "direct_latest"
+    assert bundle.points[0].timestamp == "2026-04-23T11:53:00Z"
+    assert bundle.source_lag_seconds == 600
+    assert bundle.latency_diagnostics()["source_lag_seconds"] == 600
 
 
 
@@ -944,3 +1007,38 @@ def test_station_history_client_parses_iot_station_measurement_payloads() -> Non
         assert bundle.latency_tier == "direct_api"
         assert bundle.polling_focus == f"{provider}_injected_payload"
         assert bundle.points[0].value == 80.5
+
+
+def test_station_history_client_parses_additional_european_official_payload_shapes() -> None:
+    client = StationHistoryClient()
+    structure = parse_market_question("Will the highest temperature in Zurich be 25C or higher on April 25?")
+    cases = [
+        ("meteoswiss", {"features": [{"properties": {"reference_ts": "2026-04-25T12:00:00Z", "tre200s0": 25.4, "station": "SMA"}}]}),
+        ("smhi", {"value": [{"date": "2026-04-25", "value": 25.1, "station": "98210"}]}),
+        ("knmi", {"records": [{"date": "2026-04-25", "TX": 251, "unit": "0.1C"}]}),
+        ("aemet", [{"fint": "2026-04-25T18:00:00", "ta": 25.7}]),
+        ("met_eireann", [{"date": "2026-04-25", "temperature": 25.2, "station": "phoenix-park"}]),
+        ("dmi", {"features": [{"properties": {"observed": "2026-04-25T12:00:00Z", "value": 25.6, "parameterId": "temp_dry"}}]}),
+    ]
+
+    for provider, payload in cases:
+        resolution = ResolutionMetadata(
+            provider=provider,
+            source_url=f"https://example.test/{provider}",
+            station_code=None,
+            station_name=None,
+            station_type="unknown",
+            wording_clear=True,
+            rules_clear=True,
+            manual_review_needed=False,
+            revision_risk="low",
+        )
+        client._fetch_json = lambda url, payload=payload: payload  # type: ignore[method-assign]
+
+        bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+        assert bundle.source_provider == provider
+        assert bundle.latency_tier == "direct_history"
+        assert bundle.polling_focus == f"{provider}_official_observations"
+        assert bundle.points
+        assert bundle.points[-1].unit == "c"

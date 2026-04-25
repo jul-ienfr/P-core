@@ -415,3 +415,27 @@ def test_parse_resolution_metadata_detects_additional_global_api_and_iot_sources
         assert result.wording_clear is True
         assert result.rules_clear is True
         assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_additional_european_official_sources() -> None:
+    cases = [
+        ("MeteoSwiss official station data", "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv", "meteoswiss"),
+        ("SMHI Open Data observations", "https://opendata-download-metobs.smhi.se/api/version/latest/parameter/1/station/98210/period/latest-day/data.json", "smhi"),
+        ("KNMI Data Platform daily observations", "https://api.dataplatform.knmi.nl/open-data/v1/datasets/etmaalgegevensKNMIstations/versions/1/files", "knmi"),
+        ("AEMET OpenData observations", "https://opendata.aemet.es/opendata/api/observacion/convencional/datos/estacion/3195", "aemet"),
+        ("Met Éireann observations", "https://prodapi.metweb.ie/observations/phoenix-park/today", "met_eireann"),
+        ("DMI Danish Meteorological Institute observations", "https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?stationId=06181", "dmi"),
+    ]
+
+    for name, url, provider in cases:
+        result = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {name}",
+            description="This market resolves to the highest temperature observed by the official service.",
+            rules=f"Source: {url} official JSON/CSV payload.",
+        )
+
+        assert result.provider == provider
+        assert result.source_url == url
+        assert result.wording_clear is True
+        assert result.rules_clear is True
+        assert result.manual_review_needed is False

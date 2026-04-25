@@ -552,3 +552,34 @@ def test_build_resolution_source_route_preserves_additional_api_and_iot_source_u
         assert route.supported is True
         assert route.latency_tier == "direct_api"
         assert route.polling_focus == f"{provider}_injected_payload"
+
+
+def test_build_resolution_source_route_preserves_additional_european_official_source_urls() -> None:
+    structure = parse_market_question("Will the highest temperature in Zurich be 25C or higher on April 25?")
+    cases = [
+        ("meteoswiss", "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv", "meteoswiss_official_observations"),
+        ("smhi", "https://opendata-download-metobs.smhi.se/api/version/latest/parameter/1/station/98210/period/latest-day/data.json", "smhi_official_observations"),
+        ("knmi", "https://api.dataplatform.knmi.nl/open-data/v1/datasets/etmaalgegevensKNMIstations/versions/1/files", "knmi_official_observations"),
+        ("aemet", "https://opendata.aemet.es/opendata/api/observacion/convencional/datos/estacion/3195", "aemet_official_observations"),
+        ("met_eireann", "https://prodapi.metweb.ie/observations/phoenix-park/today", "met_eireann_official_observations"),
+        ("dmi", "https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?stationId=06181", "dmi_official_observations"),
+    ]
+
+    for provider, source_url, polling_focus in cases:
+        resolution = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {provider} official observations",
+            description="Official observed high temperature.",
+            rules=f"Source: {source_url} official payload.",
+        )
+
+        route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+        assert route.provider == provider
+        assert route.source_url == source_url
+        assert route.latest_url == source_url
+        assert route.history_url == source_url
+        assert route.direct is True
+        assert route.supported is True
+        assert route.latency_tier == "direct_history"
+        assert route.latency_priority == "direct_source_official_open_data"
+        assert route.polling_focus == polling_focus

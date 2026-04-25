@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 import os
 import subprocess
 import sys
@@ -614,7 +615,9 @@ def test_station_latest_command_fetches_latest_direct_resolution_station_observa
         "rules": "Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
     }
 
-    with patch("weather_pm.cli.get_market_by_id", return_value=market):
+    with patch("weather_pm.cli.get_market_by_id", return_value=market), patch(
+        "weather_pm.cli._utc_now", return_value=datetime(2026, 4, 25, 22, 3, tzinfo=timezone.utc)
+    ):
         payload = weather_cli.station_latest_for_market_id("denver-latest", source="live", client=FakeLatestClient())
 
     assert payload["market"]["city"] == "Denver"
@@ -633,6 +636,7 @@ def test_station_latest_command_fetches_latest_direct_resolution_station_observa
         "latest_value": 68.0,
         "unit": "f",
         "source_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+        "source_lag_seconds": 600,
     }
 
 

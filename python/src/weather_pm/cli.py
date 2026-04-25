@@ -814,6 +814,7 @@ def station_latest_for_market_id(
         bundle = latest_client.fetch_latest_bundle(structure, resolution)
     except Exception:
         bundle = build_station_history_bundle(structure, resolution, start_date="", end_date="", client=latest_client)
+    _annotate_source_lag_seconds(bundle, now=_utc_now())
     latest = bundle.latest()
     route = build_resolution_source_route(structure, resolution)
     return {
