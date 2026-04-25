@@ -35,6 +35,22 @@ class StationHistoryClient:
     def __init__(self, *, timeout: float = 10.0) -> None:
         self.timeout = timeout
 
+    def fetch_latest_bundle(self, structure: MarketStructure, resolution: ResolutionMetadata) -> StationHistoryBundle:
+        if resolution.provider == "noaa" and resolution.station_code:
+            url = f"https://api.weather.gov/stations/{quote(resolution.station_code)}/observations/latest"
+            payload = self._fetch_json(url)
+            points = self._parse_noaa_latest_point(structure, payload)
+            return self._bundle(resolution, url=url, points=points, latency_tier="direct_latest")
+
+        if resolution.provider == "wunderground" and resolution.source_url and resolution.station_code:
+            payload = self._fetch_json(resolution.source_url)
+            points = self._parse_wunderground_points(structure, payload)
+            if points:
+                points = [points[-1]]
+            return self._bundle(resolution, url=resolution.source_url, points=points, latency_tier="direct_latest")
+
+        raise ValueError(f"no direct latest route for provider={resolution.provider!r}")
+
     def fetch_history_bundle(
         self,
         structure: MarketStructure,
@@ -66,6 +82,13 @@ class StationHistoryClient:
             raise ValueError("Wunderground direct history currently supports a single day per request")
         return f"{source_url.rstrip('/')}/date/{start_date}"
 
+    def _parse_noaa_latest_point(self, structure: MarketStructure, payload: dict[str, Any]) -> list[StationHistoryPoint]:
+        properties = payload.get("properties")
+        if not isinstance(properties, dict):
+            raise ValueError("NOAA latest payload missing properties")
+        point = self._parse_noaa_properties_point(structure, properties)
+        return [point] if point else []
+
     def _parse_noaa_points(self, structure: MarketStructure, payload: dict[str, Any]) -> list[StationHistoryPoint]:
         features = payload.get("features")
         if not isinstance(features, list):
@@ -77,13 +100,18 @@ class StationHistoryClient:
             properties = feature.get("properties")
             if not isinstance(properties, dict):
                 continue
-            temperature = properties.get("temperature")
-            if not isinstance(temperature, dict) or temperature.get("value") is None:
-                continue
-            timestamp = str(properties.get("timestamp") or "")
-            value = _convert_temperature(float(temperature["value"]), from_unit="c", to_unit=structure.unit)
-            points.append(StationHistoryPoint(timestamp=timestamp, value=round(value, 2), unit=structure.unit))
+            point = self._parse_noaa_properties_point(structure, properties)
+            if point:
+                points.append(point)
         return points
+
+    def _parse_noaa_properties_point(self, structure: MarketStructure, properties: dict[str, Any]) -> StationHistoryPoint | None:
+        temperature = properties.get("temperature")
+        if not isinstance(temperature, dict) or temperature.get("value") is None:
+            return None
+        timestamp = str(properties.get("timestamp") or "")
+        value = _convert_temperature(float(temperature["value"]), from_unit="c", to_unit=structure.unit)
+        return StationHistoryPoint(timestamp=timestamp, value=round(value, 2), unit=structure.unit)
 
     def _parse_wunderground_points(self, structure: MarketStructure, payload: dict[str, Any]) -> list[StationHistoryPoint]:
         observations = payload.get("observations")
@@ -105,12 +133,19 @@ class StationHistoryClient:
             points.append(StationHistoryPoint(timestamp=timestamp, value=round(value, 2), unit=structure.unit))
         return points
 
-    def _bundle(self, resolution: ResolutionMetadata, *, url: str, points: list[StationHistoryPoint]) -> StationHistoryBundle:
+    def _bundle(
+        self,
+        resolution: ResolutionMetadata,
+        *,
+        url: str,
+        points: list[StationHistoryPoint],
+        latency_tier: str = "direct",
+    ) -> StationHistoryBundle:
         return StationHistoryBundle(
             source_provider=resolution.provider,
             station_code=resolution.station_code,
             source_url=url,
-            latency_tier="direct",
+            latency_tier=latency_tier,
             points=points,
             summary=_summarize(points),
         )

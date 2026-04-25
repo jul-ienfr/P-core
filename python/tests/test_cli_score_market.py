@@ -530,6 +530,11 @@ def test_station_history_command_fetches_direct_resolution_station_history() -> 
     assert payload["market"]["measurement_kind"] == "low"
     assert payload["resolution"]["provider"] == "wunderground"
     assert payload["resolution"]["station_code"] == "KMIA"
+    assert payload["source_route"]["provider"] == "wunderground"
+    assert payload["source_route"]["station_code"] == "KMIA"
+    assert payload["source_route"]["direct"] is True
+    assert payload["source_route"]["history_url"] == "https://www.wunderground.com/history/daily/us/fl/miami/KMIA/date/2026-04-23"
+    assert payload["source_route"]["polling_focus"] == "station_history_page"
     assert payload["history"]["latency_tier"] == "direct"
     assert payload["history"]["source_url"].endswith("/KMIA/date/2026-04-23")
     assert payload["history"]["summary"] == {"min": 71.0, "max": 72.0, "mean": 71.5, "latest": 71.0, "point_count": 2.0}
@@ -558,6 +563,64 @@ def test_station_history_parser_accepts_market_id_dates_and_source() -> None:
     assert args.source == "live"
     assert args.start_date == "2026-04-23"
     assert args.end_date == "2026-04-23"
+
+
+def test_station_latest_command_fetches_latest_direct_resolution_station_observation() -> None:
+    class FakeLatestClient:
+        def fetch_latest_bundle(self, structure, resolution):
+            from weather_pm.models import StationHistoryBundle, StationHistoryPoint
+
+            assert structure.city == "Denver"
+            assert structure.measurement_kind == "high"
+            assert resolution.provider == "noaa"
+            assert resolution.station_code == "KDEN"
+            return StationHistoryBundle(
+                source_provider="noaa",
+                station_code="KDEN",
+                source_url="https://api.weather.gov/stations/KDEN/observations/latest",
+                latency_tier="direct_latest",
+                points=[StationHistoryPoint(timestamp="2026-04-25T21:53:00+00:00", value=68.0, unit="f")],
+                summary={"min": 68.0, "max": 68.0, "mean": 68.0},
+            )
+
+    market = {
+        "id": "denver-latest",
+        "question": "Will the highest temperature in Denver be 64F or higher on April 25?",
+        "resolution_source": "Resolution source: NOAA daily climate report for station KDEN",
+        "description": "Official observed high temperature at Denver International Airport station KDEN.",
+        "rules": "Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
+    }
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=market):
+        payload = weather_cli.station_latest_for_market_id("denver-latest", source="live", client=FakeLatestClient())
+
+    assert payload["market"]["city"] == "Denver"
+    assert payload["resolution"]["station_code"] == "KDEN"
+    assert payload["source_route"]["direct"] is True
+    assert payload["source_route"]["latest_url"] == "https://api.weather.gov/stations/KDEN/observations/latest"
+    assert payload["source_route"]["polling_focus"] == "station_observations_latest"
+    assert payload["latest"] == {"timestamp": "2026-04-25T21:53:00+00:00", "value": 68.0, "unit": "f"}
+    assert payload["latency"] == {
+        "provider": "noaa",
+        "station_code": "KDEN",
+        "tier": "direct_latest",
+        "direct": True,
+        "point_count": 1,
+        "latest_timestamp": "2026-04-25T21:53:00+00:00",
+        "latest_value": 68.0,
+        "unit": "f",
+        "source_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+    }
+
+
+def test_station_latest_parser_accepts_market_id_and_source() -> None:
+    parser = weather_cli.build_parser()
+
+    args = parser.parse_args(["station-latest", "--market-id", "404359", "--source", "live"])
+
+    assert args.command == "station-latest"
+    assert args.market_id == "404359"
+    assert args.source == "live"
 
 
 def test_score_market_command_with_live_market_id_supports_event_style_highest_temperature_resolution_via_event_payload() -> None:

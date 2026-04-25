@@ -82,7 +82,7 @@ class StationHistoryBundle:
             "provider": self.source_provider,
             "station_code": self.station_code,
             "tier": self.latency_tier,
-            "direct": self.latency_tier == "direct",
+            "direct": self.latency_tier.startswith("direct"),
             "point_count": len(self.points),
             "latest_timestamp": latest.timestamp if latest else None,
             "latest_value": latest.value if latest else None,

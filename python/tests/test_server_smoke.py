@@ -206,6 +206,39 @@ def test_station_history_endpoint_rejects_missing_market_id() -> None:
     assert payload["message"] == "market_id is required"
 
 
+def test_station_latest_endpoint_fetches_latest_direct_resolution_station_observation() -> None:
+    from unittest.mock import patch
+
+    from weather_pm.models import StationHistoryBundle, StationHistoryPoint
+
+    latest = StationHistoryBundle(
+        source_provider="noaa",
+        station_code="KDEN",
+        source_url="https://api.weather.gov/stations/KDEN/observations/latest",
+        latency_tier="direct_latest",
+        points=[StationHistoryPoint(timestamp="2026-04-25T21:53:00+00:00", value=68.0, unit="f")],
+        summary={"min": 68.0, "max": 68.0, "mean": 68.0},
+    )
+
+    with patch("prediction_core.server.station_latest_for_market_id", return_value={"latest": latest.latest().to_dict(), "latency": latest.latency_diagnostics()}):
+        server, thread, port = _start_server()
+        try:
+            status, payload = _json_request(
+                f"http://127.0.0.1:{port}/weather/station-latest",
+                method="POST",
+                payload={"market_id": "denver-latest", "source": "live"},
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    assert status == 200
+    assert payload["latest"] == {"timestamp": "2026-04-25T21:53:00+00:00", "value": 68.0, "unit": "f"}
+    assert payload["latency"]["tier"] == "direct_latest"
+    assert payload["latency"]["latest_value"] == 68.0
+
+
 def test_live_paper_cycle_overfetches_to_fill_limit_after_pre_filtering() -> None:
     from unittest.mock import patch
 

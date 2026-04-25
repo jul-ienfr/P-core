@@ -18,7 +18,7 @@ from prediction_core.paper import (
     derive_filled_execution,
     derive_requested_quantity,
 )
-from weather_pm.cli import _score_market_from_market_id, station_history_for_market_id
+from weather_pm.cli import _score_market_from_market_id, station_history_for_market_id, station_latest_for_market_id
 from weather_pm.market_parser import parse_market_question
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import list_weather_markets, normalize_market_record
@@ -69,6 +69,11 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
 
             if self.path == "/weather/station-history":
                 result = station_history_request(payload)
+                self._json_response(200, result)
+                return
+
+            if self.path == "/weather/station-latest":
+                result = station_latest_request(payload)
                 self._json_response(200, result)
                 return
 
@@ -197,6 +202,12 @@ def station_history_request(payload: dict[str, Any]) -> dict[str, Any]:
     start_date = _required_string(payload, "start_date")
     end_date = _required_string(payload, "end_date")
     return station_history_for_market_id(market_id, source=source, start_date=start_date, end_date=end_date)
+
+
+def station_latest_request(payload: dict[str, Any]) -> dict[str, Any]:
+    market_id = _required_string(payload, "market_id")
+    source = _coerce_source(payload.get("source", "live"))
+    return station_latest_for_market_id(market_id, source=source)
 
 
 def paper_cycle_request(payload: dict[str, Any]) -> dict[str, Any]:

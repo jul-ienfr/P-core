@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 from typing import Any
 
 from weather_pm.decision import build_decision
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
-from weather_pm.history_client import build_station_history_bundle
+from weather_pm.history_client import StationHistoryClient, build_station_history_bundle
 from weather_pm.market_parser import parse_market_question
 from weather_pm.models import ForecastBundle
 from weather_pm.neighbor_context import build_neighbor_context
@@ -16,6 +17,8 @@ from weather_pm.polymarket_client import get_event_book_by_id, get_market_by_id,
 from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
+from weather_pm.source_routing import build_resolution_source_route
+from weather_pm.traders import build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
 
 
 _VALID_SOURCES = ("fixture", "live")
@@ -52,8 +55,18 @@ def build_parser() -> argparse.ArgumentParser:
     station_history.add_argument("--start-date", required=True, help="Start date YYYY-MM-DD")
     station_history.add_argument("--end-date", required=True, help="End date YYYY-MM-DD")
 
+    station_latest = subparsers.add_parser("station-latest", help="Fetch latest direct observation from a market's resolution station")
+    station_latest.add_argument("--market-id", required=True, help="Market id whose latest resolution station observation should be followed")
+    station_latest.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+
     price_market = subparsers.add_parser("price-market", help="Produce a theoretical price for a market")
     price_market.add_argument("--market-id", required=False, help="Market identifier")
+
+    import_traders = subparsers.add_parser("import-weather-traders", help="Import classified weather trader leaderboard data")
+    import_traders.add_argument("--classified-csv", required=True, help="Classified Polymarket weather leaderboard CSV")
+    import_traders.add_argument("--registry-out", required=True, help="Output JSON registry path")
+    import_traders.add_argument("--reverse-engineering-out", required=True, help="Output JSON reverse-engineering report path")
+    import_traders.add_argument("--min-pnl", required=False, type=float, default=0.0, help="Minimum weather PnL for reverse engineering report")
 
     paper_cycle = subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
     _add_paper_cycle_arguments(paper_cycle)
@@ -124,6 +137,14 @@ def main() -> int:
         print(json.dumps(station_history_for_market_id(args.market_id, source=args.source, start_date=args.start_date, end_date=args.end_date)))
         return 0
 
+    if args.command == "station-latest":
+        print(json.dumps(station_latest_for_market_id(args.market_id, source=args.source)))
+        return 0
+
+    if args.command == "import-weather-traders":
+        print(json.dumps(import_weather_traders(args.classified_csv, args.registry_out, args.reverse_engineering_out, min_pnl=args.min_pnl)))
+        return 0
+
     if args.command == "paper-cycle":
         from prediction_core.server import live_paper_cycle_request
 
@@ -137,6 +158,30 @@ def main() -> int:
         return 0
 
     return 0
+
+
+def import_weather_traders(
+    classified_csv: str | Path,
+    registry_out: str | Path,
+    reverse_engineering_out: str | Path,
+    *,
+    min_pnl: float = 0.0,
+) -> dict[str, Any]:
+    traders = load_weather_traders(classified_csv)
+    registry = build_weather_trader_registry(traders)
+    report = reverse_engineer_weather_traders(traders, min_pnl_usd=min_pnl)
+    registry_path = Path(registry_out)
+    report_path = Path(reverse_engineering_out)
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    registry_path.write_text(json.dumps(registry, indent=2, sort_keys=True))
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True))
+    return {
+        "registry_path": str(registry_path),
+        "reverse_engineering_path": str(report_path),
+        "total_accounts": report["total_accounts"],
+        "weather_heavy_count": report["weather_heavy_count"],
+    }
 
 
 def _paper_cycle_payload_from_args(args: argparse.Namespace) -> dict[str, Any]:
@@ -180,13 +225,49 @@ def station_history_for_market_id(
         end_date=end_date,
         client=client,
     )
+    route = build_resolution_source_route(structure, resolution, start_date=start_date, end_date=end_date)
     return {
         "market_id": market_id,
         "source": source,
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
+        "source_route": route.to_dict(),
         "history": history.to_dict(),
         "latency": history.latency_diagnostics(),
+    }
+
+
+def station_latest_for_market_id(
+    market_id: str,
+    *,
+    source: str = "live",
+    client: Any | None = None,
+) -> dict[str, Any]:
+    if source not in _VALID_SOURCES:
+        raise ValueError("source must be 'fixture' or 'live'")
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    structure = parse_market_question(str(raw_market["question"]))
+    resolution = parse_resolution_metadata(
+        resolution_source=raw_market.get("resolution_source"),
+        description=raw_market.get("description"),
+        rules=raw_market.get("rules"),
+    )
+    latest_client = client or StationHistoryClient()
+    try:
+        bundle = latest_client.fetch_latest_bundle(structure, resolution)
+    except Exception:
+        bundle = build_station_history_bundle(structure, resolution, start_date="", end_date="", client=latest_client)
+    latest = bundle.latest()
+    route = build_resolution_source_route(structure, resolution)
+    return {
+        "market_id": market_id,
+        "source": source,
+        "market": structure.to_dict(),
+        "resolution": resolution.to_dict(),
+        "source_route": route.to_dict(),
+        "latest": latest.to_dict() if latest else None,
+        "history": bundle.to_dict(),
+        "latency": bundle.latency_diagnostics(),
     }
 
 
