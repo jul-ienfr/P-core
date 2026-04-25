@@ -196,6 +196,53 @@ def test_build_strategy_shortlist_turns_execution_blockers_into_operational_next
     assert rows["no-quote"]["next_actions"] == ["poll_direct_resolution_source", "wait_for_executable_depth"]
 
 
+def test_summary_recommends_watch_only_when_all_matched_markets_are_blocked() -> None:
+    recommendation = build_profitable_accounts_operator_summary(
+        classified_accounts_csv="classified.csv",
+        reverse_engineering_json=_write_json_fixture(
+            {
+                "accounts": [
+                    {
+                        "handle": "SharpWx",
+                        "classification": "weather specialist / weather-heavy",
+                        "weather_pnl_usd": 4200,
+                        "weather_volume_usd": 100000,
+                        "top_cities": [{"city": "Dallas", "count": 8}],
+                    }
+                ]
+            }
+        ),
+        operator_report_json=_write_json_fixture(
+            {
+                "summary": {"shortlisted": 1, "blocked_count": 1, "tradeable_count": 0},
+                "watchlist": [
+                    {
+                        "market_id": "dallas-noquote",
+                        "city": "Dallas",
+                        "date": "April 27",
+                        "matched_traders": ["SharpWx"],
+                        "blocker": "missing_tradeable_quote",
+                        "decision_status": "skip",
+                    }
+                ],
+            }
+        ),
+    )["live_matched_profitable_weather_summary"]["operator_recommendation"]
+
+    assert recommendation["status"] == "watch_only"
+    assert recommendation["confidence"] == "profitable_weather_signal_but_no_executable_market"
+    assert recommendation["next_actions"] == ["wait_for_executable_depth", "keep_polling_direct_resolution_sources"]
+
+
+def _write_json_fixture(payload: dict) -> Path:
+    import tempfile
+
+    handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+    with handle:
+        json.dump(payload, handle)
+    return Path(handle.name)
+
+
 def test_cli_strategy_shortlist_report_builds_inputs_and_outputs_ranked_json(tmp_path: Path) -> None:
     reverse_path = tmp_path / "reverse.json"
     out_path = tmp_path / "shortlist.json"

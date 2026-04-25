@@ -254,7 +254,9 @@ def _summary_operator_recommendation(
     *,
     enriched_watchlist: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    blockers = {str(row.get("blocker") or row.get("execution_blocker") or "") for row in enriched_watchlist}
+    matched_rows = [row for row in enriched_watchlist if _to_int(row.get("matched_profitable_weather_count")) > 0]
+    tradeable_matched_rows = [row for row in matched_rows if row.get("decision_status") in {"trade", "trade_small"}]
+    blockers = {str(row.get("blocker") or row.get("execution_blocker") or "") for row in matched_rows}
     if accounts and "extreme_price" in blockers:
         return {
             "status": "paper_micro_only",
@@ -265,6 +267,13 @@ def _summary_operator_recommendation(
                 "paper_micro_order_with_strict_limit_and_fill_tracking",
                 "do_not_use_normal_size_until_extreme_price_clears",
             ],
+        }
+    if accounts and not tradeable_matched_rows:
+        return {
+            "status": "watch_only",
+            "confidence": "profitable_weather_signal_but_no_executable_market",
+            "reason": "profitable_weather_accounts_match_live_markets_but_all_rows_are_execution_blocked",
+            "next_actions": ["wait_for_executable_depth", "keep_polling_direct_resolution_sources"],
         }
     if accounts:
         return {
