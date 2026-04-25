@@ -15,7 +15,24 @@ _STATION_NAME_PATTERNS = (
     re.compile(r"\b(?:recorded|observed|published)\s+at\s+(?:the\s+)?(?P<name>[A-Za-z0-9 .'-]+?)\s+Station\b", re.IGNORECASE),
     re.compile(r"\bfor\s+(?P<name>[A-Za-z0-9 .'-]+?)\s+station\s+[A-Z]{4}\b", re.IGNORECASE),
 )
-_COMMERCIAL_WEATHER_PROVIDERS = {"weather_com", "weatherapi", "visual_crossing", "weatherbit", "tomorrow_io", "meteoblue"}
+_COMMERCIAL_WEATHER_PROVIDERS = {
+    "weather_com",
+    "weatherapi",
+    "visual_crossing",
+    "weatherbit",
+    "tomorrow_io",
+    "meteoblue",
+    "open_meteo",
+    "openweather",
+    "yr_no",
+    "world_weather_online",
+    "meteomatics",
+    "weatherlink",
+    "ambient_weather",
+    "netatmo",
+    "windy",
+    "aerisweather",
+}
 
 
 def parse_resolution_metadata(*, resolution_source: str | None, description: str | None, rules: str | None) -> ResolutionMetadata:
@@ -77,7 +94,9 @@ def _detect_provider(lowered: str, *, source_url: str | None) -> str:
         return "imd"
     if re.search(r"\bimd\b", lowered):
         return "imd"
-    if any(token in lowered for token in ["weatherapi.com", "weatherapi"]):
+    if any(token in lowered for token in ["api.met.no", "yr.no", "met norway", "norwegian meteorological institute"]):
+        return "yr_no"
+    if any(token in lowered for token in ["weatherapi.com", "weatherapi json", "weatherapi payload"]):
         return "weatherapi"
     if any(token in lowered for token in ["visual crossing", "visualcrossing.com", "weather.visualcrossing.com"]):
         return "visual_crossing"
@@ -87,6 +106,24 @@ def _detect_provider(lowered: str, *, source_url: str | None) -> str:
         return "tomorrow_io"
     if any(token in lowered for token in ["meteoblue", "meteo blue"]):
         return "meteoblue"
+    if any(token in lowered for token in ["open-meteo", "openmeteo", "api.open-meteo.com"]):
+        return "open_meteo"
+    if any(token in lowered for token in ["openweathermap", "open weather map", "api.openweathermap.org", "openweather"]):
+        return "openweather"
+    if any(token in lowered for token in ["worldweatheronline", "world weather online", "api.worldweatheronline.com"]):
+        return "world_weather_online"
+    if any(token in lowered for token in ["meteomatics", "api.meteomatics.com"]):
+        return "meteomatics"
+    if any(token in lowered for token in ["weatherlink", "weatherlink.com", "api.weatherlink.com"]):
+        return "weatherlink"
+    if any(token in lowered for token in ["ambientweather", "ambient weather", "api.ambientweather.net"]):
+        return "ambient_weather"
+    if any(token in lowered for token in ["netatmo", "api.netatmo.com"]):
+        return "netatmo"
+    if any(token in lowered for token in ["windy.com", "api.windy.com", "windy api"]):
+        return "windy"
+    if any(token in lowered for token in ["aerisweather", "aeris weather", "api.aerisapi.com"]):
+        return "aerisweather"
     if any(token in lowered for token in ["wunderground", "weather underground"]):
         return "wunderground"
     if any(token in lowered for token in ["accuweather"]):
@@ -250,7 +287,7 @@ def _are_rules_clear(lowered: str, provider: str, station_code: str | None) -> b
         clarity_tokens = ["official national meteorological service", "local official weather service", "official weather service", "source"]
         return any(token in lowered for token in clarity_tokens)
     if provider in _COMMERCIAL_WEATHER_PROVIDERS:
-        clarity_tokens = ["source", "api", "json", "payload", "weather.com", "weatherapi", "visual crossing", "weatherbit", "tomorrow.io", "meteoblue", "the weather channel"]
+        clarity_tokens = ["source", "api", "json", "payload", "weather.com", "weatherapi", "visual crossing", "weatherbit", "tomorrow.io", "meteoblue", "open-meteo", "openweathermap", "api.met.no", "yr.no", "worldweatheronline", "meteomatics", "weatherlink", "ambient weather", "netatmo", "windy", "aerisweather", "the weather channel"]
         return any(token in lowered for token in clarity_tokens)
     if provider == "accuweather":
         clarity_tokens = ["source", "accuweather", "location key", "daily forecast", "current conditions"]

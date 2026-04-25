@@ -7,7 +7,23 @@ from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 from weather_pm.models import MarketStructure, ResolutionMetadata
 
-_COMMERCIAL_API_PROVIDERS = {"weatherapi", "visual_crossing", "weatherbit", "tomorrow_io", "meteoblue"}
+_COMMERCIAL_API_PROVIDERS = {
+    "weatherapi",
+    "visual_crossing",
+    "weatherbit",
+    "tomorrow_io",
+    "meteoblue",
+    "open_meteo",
+    "openweather",
+    "yr_no",
+    "world_weather_online",
+    "meteomatics",
+    "weatherlink",
+    "ambient_weather",
+    "netatmo",
+    "windy",
+    "aerisweather",
+}
 _DIRECT_OFFICIAL_URL_PROVIDERS = {
     "uk_met_office": "uk_met_office_injected_payload_or_explicit_endpoint",
     "dwd": "dwd_open_data_daily_observations",

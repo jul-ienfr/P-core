@@ -467,8 +467,11 @@ class StationHistoryClient:
                 continue
             timestamp = _extract_row_timestamp(row)
             row_date = _normalize_date(timestamp)
-            if start and end and row_date and (row_date < start or row_date > end):
-                continue
+            if start and end:
+                if row_date and (row_date < start or row_date > end):
+                    continue
+                if not row_date and latest is False and _row_has_explicit_timestamp(row):
+                    continue
             extracted = _extract_generic_temperature(row, structure)
             if extracted is None:
                 continue
@@ -517,6 +520,16 @@ def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str |
         "weatherbit": "weatherbit_injected_payload",
         "tomorrow_io": "tomorrow_io_injected_payload",
         "meteoblue": "meteoblue_injected_payload",
+        "open_meteo": "open_meteo_injected_payload",
+        "openweather": "openweather_injected_payload",
+        "yr_no": "yr_no_injected_payload",
+        "world_weather_online": "world_weather_online_injected_payload",
+        "meteomatics": "meteomatics_injected_payload",
+        "weatherlink": "weatherlink_injected_payload",
+        "ambient_weather": "ambient_weather_injected_payload",
+        "netatmo": "netatmo_injected_payload",
+        "windy": "windy_injected_payload",
+        "aerisweather": "aerisweather_injected_payload",
         "meteo_france": "meteo_france_daily_payload",
         "uk_met_office": "uk_met_office_daily_payload" if latency_tier != "direct_latest" else "uk_met_office_injected_payload_or_explicit_endpoint",
         "dwd": "dwd_open_data_daily_observations",
@@ -673,7 +686,24 @@ def _extract_meteostat_row_value(row: dict[str, Any], structure: MarketStructure
     return None
 
 
-_DIRECT_API_PROVIDERS = {"weatherapi", "visual_crossing", "weatherbit", "tomorrow_io", "meteoblue", "meteo_france"}
+_DIRECT_API_PROVIDERS = {
+    "weatherapi",
+    "visual_crossing",
+    "weatherbit",
+    "tomorrow_io",
+    "meteoblue",
+    "open_meteo",
+    "openweather",
+    "yr_no",
+    "world_weather_online",
+    "meteomatics",
+    "weatherlink",
+    "ambient_weather",
+    "netatmo",
+    "windy",
+    "aerisweather",
+    "meteo_france",
+}
 _DIRECT_SOURCE_PROVIDERS = {"uk_met_office", "dwd", "bom", "jma", "pagasa", "imd", "environment_canada", "web_scrape", "local_official_weather_source"}
 
 
@@ -695,7 +725,8 @@ def _extract_rows(payload: Any) -> list[Any]:
     if not isinstance(payload, dict):
         return []
     if set(payload.keys()).issubset({"content", "text", "html", "body"}):
-        return []
+        body = payload.get("body")
+        return body if isinstance(body, list) else []
 
     siterep = payload.get("SiteRep")
     if isinstance(siterep, dict):
@@ -713,7 +744,18 @@ def _extract_rows(payload: Any) -> list[Any]:
                             rows.append({**rep, "date": date, "unit": "C"})
         return rows
 
-    for key in ("observations", "data", "daily", "history", "records", "rows", "climateData"):
+    daily = payload.get("daily")
+    if isinstance(daily, dict):
+        rows = _rows_from_columnar_daily(daily)
+        if rows:
+            return rows
+    current_weather = payload.get("current_weather")
+    if isinstance(current_weather, dict):
+        return [current_weather]
+    properties = payload.get("properties")
+    if isinstance(properties, dict) and isinstance(properties.get("timeseries"), list):
+        return properties["timeseries"]
+    for key in ("observations", "data", "daily", "history", "records", "rows", "climateData", "list"):
         value = payload.get(key)
         if isinstance(value, list):
             return value
@@ -733,9 +775,13 @@ def _extract_rows(payload: Any) -> list[Any]:
             if isinstance(timeline, dict) and isinstance(timeline.get("intervals"), list):
                 rows.extend(timeline["intervals"])
         return rows
-    current = payload.get("current") or payload.get("currentConditions")
+    current = payload.get("current") or payload.get("currentConditions") or payload.get("main")
     if isinstance(current, dict):
-        return [current]
+        row = dict(current)
+        for key in ("dt", "dt_txt", "time", "timestamp"):
+            if key in payload and key not in row:
+                row[key] = payload[key]
+        return [row]
     return [payload]
 
 
@@ -755,7 +801,32 @@ def _extract_row_timestamp(row: dict[str, Any]) -> str:
             if key == "MESS_DATUM" and text.isdigit() and len(text) == 8:
                 return f"{text[:4]}-{text[4:6]}-{text[6:8]}"
             return text[:10] if key in {"Date"} else text
+    for key in ("ts", "dateutc", "epoch", "dt"):
+        value = row.get(key)
+        if value not in {None, ""}:
+            return str(value)
     return ""
+
+
+def _row_has_explicit_timestamp(row: dict[str, Any]) -> bool:
+    timestamp_keys = (
+        "timestamp",
+        "time",
+        "datetime",
+        "date",
+        "Date",
+        "startTime",
+        "LocalObservationDateTime",
+        "obsTime",
+        "obsTimeUtc",
+        "obsTimeLocal",
+        "MESS_DATUM",
+        "ts",
+        "dateutc",
+        "epoch",
+        "dt",
+    )
+    return any(row.get(key) not in {None, ""} for key in timestamp_keys)
 
 
 def _normalize_date(timestamp: str) -> str | None:
@@ -775,9 +846,24 @@ def _normalize_date(timestamp: str) -> str | None:
 def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure) -> tuple[float, str] | None:
     day = row.get("day") if isinstance(row.get("day"), dict) else None
     values = row.get("values") if isinstance(row.get("values"), dict) else None
+    data = row.get("data") if isinstance(row.get("data"), dict) else None
+    instant_details = (((data or {}).get("instant") or {}).get("details")) if data else None
+    next_6h_details = (((data or {}).get("next_6_hours") or {}).get("details")) if data else None
+    main = row.get("main") if isinstance(row.get("main"), dict) else None
+    measurements = row.get("measurements") if isinstance(row.get("measurements"), dict) else None
     candidates: list[dict[str, Any]] = [row]
     if day: candidates.append(day)
     if values: candidates.append(values)
+    if data:
+        candidates.append(data)
+    if isinstance(instant_details, dict):
+        candidates.append(instant_details)
+    if isinstance(next_6h_details, dict):
+        candidates.append(next_6h_details)
+    if main:
+        candidates.append(main)
+    if measurements:
+        candidates.append(measurements)
     temp = row.get("Temperature") or row.get("temperature")
     if isinstance(temp, dict):
         if temp.get("value") is not None:
@@ -791,9 +877,9 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         if isinstance(nested, dict) and nested.get("Value") is not None:
             return float(nested["Value"]), str(nested.get("Unit") or structure.unit).lower()
     key_groups = {
-        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "tmax", "TXK", "tempmax", "temperatureMax", "maxTemp"),
-        "low": ("mintemp_f", "mintemp_c", "min_temp", "tmin", "TNK", "tempmin", "temperatureMin", "minTemp"),
-        "current": ("temp_f", "temp_c", "temp", "current", "temperature", "T"),
+        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "tmax", "TXK", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "maxtempC", "maxtempF"),
+        "low": ("mintemp_f", "mintemp_c", "min_temp", "tmin", "TNK", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "mintempC", "mintempF"),
+        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "T", "temperature_2m", "air_temperature", "temperatureC", "temperatureF"),
     }
     keys = key_groups.get(structure.measurement_kind, key_groups["current"]) + key_groups["current"]
     temperature_fields = {"temperature"}
@@ -813,6 +899,25 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
                     return float(nested_value), unit
             if value is None or value == "" or value == "-" or isinstance(value, dict):
                 continue
-            unit = str(mapping.get("unit") or mapping.get("Unit") or ("F" if str(original_key).lower().endswith("_f") else "C" if str(original_key).lower().endswith("_c") else structure.unit)).lower()
+            key_lower = str(original_key).lower()
+            unit = str(
+                mapping.get("unit")
+                or mapping.get("Unit")
+                or ("F" if key_lower.endswith("_f") or key_lower.endswith("f") else "C" if key_lower.endswith("_c") or key_lower.endswith("c") or "temperature_2m" in key_lower or "air_temperature" in key_lower else structure.unit)
+            ).lower()
             return float(value), unit
     return None
+
+
+def _rows_from_columnar_daily(daily: dict[str, Any]) -> list[dict[str, Any]]:
+    times = daily.get("time") or daily.get("date") or daily.get("dates")
+    if not isinstance(times, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for index, timestamp in enumerate(times):
+        row: dict[str, Any] = {"date": timestamp}
+        for key, value in daily.items():
+            if isinstance(value, list) and index < len(value):
+                row[key] = value[index]
+        rows.append(row)
+    return rows

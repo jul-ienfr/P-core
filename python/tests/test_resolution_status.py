@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import pytest
@@ -70,12 +71,18 @@ def test_resolution_status_reports_provisional_latest_until_official_daily_extra
         "value": 29.2,
         "timestamp": "2026-04-25T15:45:00+08:00",
         "latency_tier": "direct_latest",
+        "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+        "polling_focus": "hko_current_weather_api",
+        "expected_lag_seconds": None,
     }
     assert payload["official_daily_extract"] == {
         "available": False,
         "value": None,
         "timestamp": None,
         "latency_tier": "direct_history",
+        "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "polling_focus": "hko_official_daily_extract",
+        "expected_lag_seconds": 86400,
     }
     assert payload["provisional_outcome"] == "yes"
     assert payload["confirmed_outcome"] == "pending"
@@ -83,6 +90,41 @@ def test_resolution_status_reports_provisional_latest_until_official_daily_extra
     assert payload["latency"]["latest"]["polling_focus"] == "hko_current_weather_api"
     assert payload["latency"]["official"]["polling_focus"] == "hko_official_daily_extract"
     assert payload["latency"]["official"]["expected_lag_seconds"] == 86400
+
+
+def test_resolution_status_reports_source_lag_seconds_for_latest_and_official_points() -> None:
+    latest = StationHistoryBundle(
+        source_provider="hong_kong_observatory",
+        station_code="HKO",
+        source_url="latest-url",
+        latency_tier="direct_latest",
+        points=[StationHistoryPoint(timestamp="2026-04-25T15:45:00+08:00", value=29.2, unit="c")],
+        summary={"min": 29.2, "max": 29.2, "mean": 29.2},
+    )
+    official = StationHistoryBundle(
+        source_provider="hong_kong_observatory",
+        station_code="HKO",
+        source_url="official-url",
+        latency_tier="direct_history",
+        points=[StationHistoryPoint(timestamp="2026-04-25", value=29.6, unit="c")],
+        summary={"min": 29.6, "max": 29.6, "mean": 29.6},
+    )
+
+    with patch("weather_pm.cli.get_market_by_id", return_value=_hko_market()), patch(
+        "weather_pm.cli._utc_now", return_value=datetime(2026, 4, 25, 8, 0, tzinfo=timezone.utc)
+    ):
+        payload = weather_cli.resolution_status_for_market_id(
+            "hko-high-29",
+            source="live",
+            date="2026-04-25",
+            client=FakeResolutionStatusClient(latest=latest, history=official),
+        )
+
+    assert payload["latest_direct"]["source_lag_seconds"] == 900
+    assert payload["official_daily_extract"]["source_lag_seconds"] == 28800
+    assert payload["latency"]["latest"]["source_lag_seconds"] == 900
+    assert payload["latency"]["official"]["source_lag_seconds"] == 28800
+
 
 
 def test_resolution_status_confirms_outcome_from_official_daily_extract_when_published() -> None:

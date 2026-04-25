@@ -386,3 +386,32 @@ def test_parse_resolution_metadata_detects_generic_web_scrape_page_with_url() ->
     assert result.wording_clear is True
     assert result.rules_clear is True
     assert result.manual_review_needed is True
+
+
+
+def test_parse_resolution_metadata_detects_additional_global_api_and_iot_sources() -> None:
+    cases = [
+        ("Open-Meteo forecast API", "https://api.open-meteo.com/v1/forecast?latitude=25.76&longitude=-80.19", "open_meteo"),
+        ("OpenWeatherMap One Call API", "https://api.openweathermap.org/data/3.0/onecall?lat=25.76&lon=-80.19", "openweather"),
+        ("MET Norway api.met.no locationforecast", "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=59.9&lon=10.7", "yr_no"),
+        ("World Weather Online historical API", "https://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=Miami", "world_weather_online"),
+        ("Meteomatics timeseries API", "https://api.meteomatics.com/2026-04-25T00:00:00Z/t_2m:C/25.76,-80.19/json", "meteomatics"),
+        ("WeatherLink station API", "https://api.weatherlink.com/v2/current/12345", "weatherlink"),
+        ("Ambient Weather station API", "https://api.ambientweather.net/v1/devices", "ambient_weather"),
+        ("Netatmo weather station API", "https://api.netatmo.com/api/getmeasure", "netatmo"),
+        ("Windy API point forecast", "https://api.windy.com/api/point-forecast/v2", "windy"),
+        ("AerisWeather observations API", "https://api.aerisapi.com/observations/miami,fl", "aerisweather"),
+    ]
+
+    for name, url, provider in cases:
+        result = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {name}",
+            description="This market resolves to the highest temperature observed for Miami.",
+            rules=f"Source: {url} JSON payload.",
+        )
+
+        assert result.provider == provider
+        assert result.source_url == url
+        assert result.wording_clear is True
+        assert result.rules_clear is True
+        assert result.manual_review_needed is False

@@ -850,3 +850,97 @@ def test_build_station_history_bundle_returns_empty_fallback_when_generic_payloa
     assert bundle.latency_tier == "unsupported"
     assert bundle.points == []
     assert bundle.summary == {}
+
+
+
+def test_station_history_client_parses_open_meteo_columnar_daily_and_current_payloads() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 28C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.open-meteo.com/v1/forecast?latitude=25.76&longitude=-80.19&daily=temperature_2m_max,temperature_2m_min&current_weather=true",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Source: Open-Meteo API JSON payload.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"current_weather": {"time": "2026-04-25T10:00", "temperature": 27.0}},
+            {"daily": {"time": ["2026-04-25"], "temperature_2m_max": [29.0], "temperature_2m_min": [23.0]}},
+        ]
+    )
+
+    latest = client.fetch_latest_bundle(structure, resolution)
+    history = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url, resolution.source_url]
+    assert latest.source_provider == "open_meteo"
+    assert latest.latency_tier == "direct_api"
+    assert latest.polling_focus == "open_meteo_injected_payload"
+    assert latest.points[0].value == 27.0
+    assert history.points[0].timestamp == "2026-04-25"
+    assert history.points[0].value == 29.0
+
+
+def test_station_history_client_parses_openweather_main_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 82F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.openweathermap.org/data/3.0/onecall?lat=25.76&lon=-80.19&units=imperial",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Source: OpenWeatherMap JSON payload.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"dt_txt": "2026-04-25 10:00:00", "main": {"temp": 80.0, "temp_max": 84.0, "temp_min": 73.0}},
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url]
+    assert bundle.source_provider == "openweather"
+    assert bundle.latency_tier == "direct_api"
+    assert bundle.polling_focus == "openweather_injected_payload"
+    assert bundle.points[0].value == 84.0
+
+
+def test_station_history_client_parses_yr_no_timeseries_payload() -> None:
+    structure = parse_market_question("Will the lowest temperature in Oslo be 4C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=59.9&lon=10.7",
+        description="This market resolves to the lowest temperature observed for Oslo.",
+        rules="Source: api.met.no JSON payload.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {"properties": {"timeseries": [{"time": "2026-04-25T00:00:00Z", "data": {"instant": {"details": {"air_temperature": 3.5}}}}]}},
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert bundle.source_provider == "yr_no"
+    assert bundle.polling_focus == "yr_no_injected_payload"
+    assert bundle.points[0].value == 3.5
+
+
+def test_station_history_client_parses_iot_station_measurement_payloads() -> None:
+    structure = parse_market_question("Will the current temperature in Miami be 80F or higher on April 25?")
+    cases = [
+        ("WeatherLink station API", "https://api.weatherlink.com/v2/current/12345", "weatherlink", {"data": [{"ts": "2026-04-25T10:00:00Z", "temp_f": 80.5}]}),
+        ("Ambient Weather station API", "https://api.ambientweather.net/v1/devices", "ambient_weather", {"data": [{"dateutc": "2026-04-25T10:00:00Z", "tempf": 80.5}]}),
+        ("Netatmo weather station API", "https://api.netatmo.com/api/getmeasure", "netatmo", {"body": [{"time": "2026-04-25T10:00:00Z", "temperature": 80.5, "unit": "F"}]}),
+    ]
+
+    for name, url, provider, payload in cases:
+        resolution = parse_resolution_metadata(
+            resolution_source=name,
+            description="This market resolves to the current temperature observed for Miami.",
+            rules=f"Source: {url} JSON payload.",
+        )
+        client = _FakeStationHistoryClient([payload])
+
+        bundle = client.fetch_latest_bundle(structure, resolution)
+
+        assert resolution.provider == provider
+        assert bundle.source_provider == provider
+        assert bundle.latency_tier == "direct_api"
+        assert bundle.polling_focus == f"{provider}_injected_payload"
+        assert bundle.points[0].value == 80.5

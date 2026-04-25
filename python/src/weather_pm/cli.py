@@ -906,6 +906,9 @@ def _status_point_payload(bundle: Any) -> dict[str, Any]:
         "value": point.value if point else None,
         "timestamp": point.timestamp if point else None,
         "latency_tier": bundle.latency_tier,
+        "source_url": getattr(bundle, "source_url", None),
+        "polling_focus": getattr(bundle, "polling_focus", None),
+        "expected_lag_seconds": getattr(bundle, "expected_lag_seconds", None),
     }
 
 
