@@ -9,7 +9,7 @@ from pathlib import Path
 
 from unittest.mock import patch
 
-from weather_pm.models import ForecastBundle
+from weather_pm.models import ForecastBundle, StationHistoryBundle, StationHistoryPoint
 
 import weather_pm.cli as weather_cli
 
@@ -59,6 +59,36 @@ def test_score_market_command_outputs_score_and_decision() -> None:
     assert payload["resolution"]["station_code"] == "KDEN"
     assert payload["source_route"]["direct"] is True
     assert payload["source_route"]["latency_priority"] == "direct_source_low_latency"
+
+
+def test_station_source_plan_helper_exposes_best_direct_station_source() -> None:
+    class FakeLatestClient:
+        def fetch_latest_bundle(self, structure, resolution):
+            return StationHistoryBundle(
+                source_provider="noaa",
+                station_code="KDEN",
+                source_url="https://api.weather.gov/stations/KDEN/observations/latest",
+                latency_tier="direct_latest",
+                points=[StationHistoryPoint(timestamp="2026-04-25T18:55:00+00:00", value=71.0, unit="f")],
+                summary={"max": 71.0},
+                polling_focus="station_observations_latest",
+            )
+
+    payload = weather_cli.station_source_plan_for_market_id(
+        "denver-high-64",
+        source="fixture",
+        start_date="2026-04-25",
+        end_date="2026-04-25",
+        client=FakeLatestClient(),
+        now=datetime(2026, 4, 25, 19, 0, tzinfo=timezone.utc),
+    )
+
+    assert payload["station_binding"]["exact_station_match"] is True
+    assert payload["station_binding"]["latest_candidates"][0]["url"] == "https://api.weather.gov/stations/KDEN/observations/latest"
+    assert payload["source_selection"]["best_latest"]["provider"] == "noaa"
+    assert payload["source_selection"]["best_latest"]["source_lag_seconds"] == 300
+    assert payload["source_selection"]["best_final"]["polling_focus"] == "noaa_official_daily_summary"
+    assert payload["source_selection"]["operator_action"] == "poll_best_latest_station_until_threshold_then_confirm_with_official_final"
 
 
 def test_score_market_command_question_accepts_max_impact_bps_override() -> None:

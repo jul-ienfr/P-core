@@ -23,6 +23,8 @@ from weather_pm.resolution_monitor import write_paper_resolution_monitor
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
 from weather_pm.source_routing import build_resolution_source_route
+from weather_pm.source_selection import select_best_station_sources
+from weather_pm.station_binding import build_station_binding
 from weather_pm.strategy_extractor import extract_weather_strategy_rules
 from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 from weather_pm.traders import WeatherTrader, build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
@@ -65,6 +67,12 @@ def build_parser() -> argparse.ArgumentParser:
     station_latest = subparsers.add_parser("station-latest", help="Fetch latest direct observation from a market's resolution station")
     station_latest.add_argument("--market-id", required=True, help="Market id whose latest resolution station observation should be followed")
     station_latest.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+
+    station_source_plan = subparsers.add_parser("station-source-plan", help="Select the lowest-latency exact station source and official final confirmation route")
+    station_source_plan.add_argument("--market-id", required=True, help="Market id whose station source plan should be built")
+    station_source_plan.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+    station_source_plan.add_argument("--start-date", required=False, help="Optional start date YYYY-MM-DD for final source routing")
+    station_source_plan.add_argument("--end-date", required=False, help="Optional end date YYYY-MM-DD for final source routing")
 
     resolution_status = subparsers.add_parser("resolution-status", help="Check provisional latest vs official final resolution status")
     resolution_status.add_argument("--market-id", required=True, help="Market id whose resolution status should be checked")
@@ -214,6 +222,10 @@ def main() -> int:
 
     if args.command == "station-latest":
         print(json.dumps(station_latest_for_market_id(args.market_id, source=args.source)))
+        return 0
+
+    if args.command == "station-source-plan":
+        print(json.dumps(station_source_plan_for_market_id(args.market_id, source=args.source, start_date=args.start_date, end_date=args.end_date)))
         return 0
 
     if args.command == "resolution-status":
@@ -828,6 +840,36 @@ def station_latest_for_market_id(
         "latency": bundle.latency_diagnostics(),
     }
 
+
+
+def station_source_plan_for_market_id(
+    market_id: str,
+    *,
+    source: str = "live",
+    start_date: str | None = None,
+    end_date: str | None = None,
+    client: Any | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    if source not in _VALID_SOURCES:
+        raise ValueError("source must be 'fixture' or 'live'")
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    structure = parse_market_question(str(raw_market["question"]))
+    resolution = parse_resolution_metadata(
+        resolution_source=raw_market.get("resolution_source"),
+        description=raw_market.get("description"),
+        rules=raw_market.get("rules"),
+    )
+    binding = build_station_binding(structure, resolution, start_date=start_date, end_date=end_date)
+    report = select_best_station_sources(structure, [binding], client=client, now=now)
+    return {
+        "market_id": market_id,
+        "source": source,
+        "market": structure.to_dict(),
+        "resolution": resolution.to_dict(),
+        "station_binding": binding.to_dict(),
+        "source_selection": report.to_dict(),
+    }
 
 
 def resolution_status_for_market_id(
