@@ -58,6 +58,33 @@ def test_parse_market_endpoint_returns_parsed_market_json() -> None:
         thread.join(timeout=2)
 
 
+def test_score_market_endpoint_returns_resolution_source_route_for_direct_station_source() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/score-market",
+            method="POST",
+            payload={
+                "question": "Will the highest temperature in Denver be 64F or higher?",
+                "yes_price": 0.43,
+                "resolution_source": "Resolution source: NOAA daily climate report for station KDEN",
+                "description": "Official observed high temperature at Denver International Airport station KDEN.",
+                "rules": "Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
+            },
+        )
+        assert status == 200
+        assert payload["resolution"]["provider"] == "noaa"
+        assert payload["source_route"]["station_code"] == "KDEN"
+        assert payload["source_route"]["direct"] is True
+        assert payload["source_route"]["latest_url"] == "https://api.weather.gov/stations/KDEN/observations/latest"
+        assert payload["source_route"]["latency_tier"] == "direct_latest"
+        assert payload["source_route"]["polling_focus"] == "station_observations_latest"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def test_score_market_endpoint_rejects_invalid_request_payload() -> None:
     server, thread, port = _start_server()
     try:

@@ -212,6 +212,11 @@ def test_score_market_command_live_event_extracts_clean_resolution_metadata() ->
     assert payload["model"]["source_provider"] == "wunderground"
     assert payload["model"]["source_station_code"] == "KMIA"
     assert payload["model"]["source_latency_tier"] in {"direct", "resolution_direct_target"}
+    assert payload["source_route"]["provider"] == "wunderground"
+    assert payload["source_route"]["station_code"] == "KMIA"
+    assert payload["source_route"]["direct"] is True
+    assert payload["source_route"]["latest_url"] == "https://www.wunderground.com/history/daily/us/fl/miami/KMIA"
+    assert payload["source_route"]["polling_focus"] == "station_history_page"
 
 
 def test_score_market_command_live_event_already_resolved_is_not_tradeable() -> None:

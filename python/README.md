@@ -84,7 +84,7 @@ Le bootstrap Python expose une petite surface HTTP locale pour rendre `predictio
 Endpoints actuels :
 - `GET /health`
 - `POST /weather/parse-market`
-- `POST /weather/score-market`
+- `POST /weather/score-market` (retourne aussi `source_route`, le chemin direct de résolution quand les règles exposent une station NOAA/Wunderground : URL latest/history, station, focus de polling et besoin éventuel de review manuelle)
 - `POST /weather/paper-cycle` (construit une simulation paper + postmortem ; si `question` + `yes_price` sont fournis, il score le marché puis peut auto-dériver `requested_quantity` depuis `bankroll_usd`, puis `filled_quantity` et `fill_price` depuis la décision ; si `market_id` est absent/vide, lance un cycle live multi-marchés borné)
 
 CLI screener compact :

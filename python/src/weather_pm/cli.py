@@ -323,9 +323,11 @@ def _score_market_from_market_id(market_id: str, *, source: str, max_impact_bps:
             "source_latency_tier": forecast_bundle.source_latency_tier if forecast_bundle.source_provider else "resolution_direct_target",
         }
     )
+    source_route = build_resolution_source_route(structure, resolution)
     return {
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
+        "source_route": source_route.to_dict(),
         "model": model_payload,
         "forecast": forecast_bundle.to_dict(),
         "edge": {

@@ -10,6 +10,7 @@ from weather_pm.polymarket_client import get_fixture_market_by_id, list_fixture_
 from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
+from weather_pm.source_routing import build_resolution_source_route
 
 
 def _default_forecast(structure: MarketStructure, resolution=None, *, live: bool = False):
@@ -60,9 +61,11 @@ def score_market_from_question(
         execution=execution,
     )
     model_payload = _model_payload_with_source(model_output, forecast_bundle)
+    source_route = build_resolution_source_route(structure, resolution)
     return {
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
+        "source_route": source_route.to_dict(),
         "model": model_payload,
         "forecast": forecast_bundle.to_dict(),
         "edge": {
@@ -107,9 +110,11 @@ def score_market_from_fixture_market_id(market_id: str) -> dict[str, object]:
         execution=execution,
     )
     model_payload = _model_payload_with_source(model_output, forecast_bundle)
+    source_route = build_resolution_source_route(structure, resolution)
     return {
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
+        "source_route": source_route.to_dict(),
         "model": model_payload,
         "forecast": forecast_bundle.to_dict(),
         "edge": {
