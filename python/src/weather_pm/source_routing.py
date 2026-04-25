@@ -37,6 +37,12 @@ _DIRECT_OFFICIAL_URL_PROVIDERS = {
     "aemet": "aemet_official_observations",
     "met_eireann": "met_eireann_official_observations",
     "dmi": "dmi_official_observations",
+    "meteochile": "meteochile_official_observations",
+    "inmet": "inmet_official_observations",
+    "senamhi_peru": "senamhi_peru_official_observations",
+    "ideam_colombia": "ideam_colombia_official_observations",
+    "smn_argentina": "smn_argentina_official_observations",
+    "smn_mexico": "smn_mexico_official_observations",
 }
 
 
@@ -135,7 +141,7 @@ def build_resolution_source_route(
 
     if resolution.provider in _DIRECT_OFFICIAL_URL_PROVIDERS:
         if resolution.source_url:
-            latency_priority = "direct_source_official_open_data" if resolution.provider in {"dwd", "meteoswiss", "smhi", "knmi", "aemet", "met_eireann", "dmi"} else "direct_source_low_latency"
+            latency_priority = "direct_source_official_open_data" if resolution.provider in {"dwd", "meteoswiss", "smhi", "knmi", "aemet", "met_eireann", "dmi", "meteochile", "inmet", "senamhi_peru", "ideam_colombia", "smn_argentina", "smn_mexico"} else "direct_source_low_latency"
             key_note = " API key may be required outside route metadata." if resolution.provider == "uk_met_office" else ""
             return _route(structure, resolution, latest_url=resolution.source_url, history_url=resolution.source_url, direct=True, supported=True, latency_tier="direct_history", latency_priority=latency_priority, polling_focus=_DIRECT_OFFICIAL_URL_PROVIDERS[resolution.provider], reason=f"{resolution.provider} explicit official source URL found; parse official/injected observations directly.{key_note}")
         return _unsupported(structure, resolution, latency_tier="unsupported", polling_focus="manual_review", reason=f"{resolution.provider} requires an explicit source_url before automated polling; manual review required.")

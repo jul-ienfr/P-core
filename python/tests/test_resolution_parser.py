@@ -439,3 +439,27 @@ def test_parse_resolution_metadata_detects_additional_european_official_sources(
         assert result.wording_clear is True
         assert result.rules_clear is True
         assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_latin_american_official_sources() -> None:
+    cases = [
+        ("MeteoChile official observations", "https://climatologia.meteochile.gob.cl/application/diario/visorDeDatos", "meteochile"),
+        ("INMET Brazil official station data", "https://apitempo.inmet.gov.br/estacao/2026-04-25/2026-04-25/A701", "inmet"),
+        ("SENAMHI Peru official observations", "https://www.senamhi.gob.pe/mapas/mapa-estaciones-2/", "senamhi_peru"),
+        ("IDEAM Colombia official observations", "https://www.ideam.gov.co/web/tiempo-y-clima/consulta-y-descarga-de-datos-hidrometeorologicos", "ideam_colombia"),
+        ("SMN Argentina official observations", "https://www.smn.gob.ar/descarga-de-datos", "smn_argentina"),
+        ("SMN CONAGUA Mexico official observations", "https://smn.conagua.gob.mx/tools/RESOURCES/Diarios/", "smn_mexico"),
+    ]
+
+    for name, url, provider in cases:
+        result = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {name}",
+            description="This market resolves to the highest temperature observed by the official weather service.",
+            rules=f"Source: {url} official station payload.",
+        )
+
+        assert result.provider == provider
+        assert result.source_url == url
+        assert result.wording_clear is True
+        assert result.rules_clear is True
+        assert result.manual_review_needed is False

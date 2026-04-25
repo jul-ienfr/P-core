@@ -38,6 +38,12 @@ _COMMERCIAL_WEATHER_PROVIDERS = {
     "aemet",
     "met_eireann",
     "dmi",
+    "meteochile",
+    "inmet",
+    "senamhi_peru",
+    "ideam_colombia",
+    "smn_argentina",
+    "smn_mexico",
 }
 
 
@@ -102,6 +108,18 @@ def _detect_provider(lowered: str, *, source_url: str | None) -> str:
         return "met_eireann"
     if any(token in lowered for token in ["dmigw.govcloud.dk", "dmi danish meteorological institute", "danish meteorological institute"]):
         return "dmi"
+    if any(token in lowered for token in ["meteochile", "climatologia.meteochile.gob.cl", "dirección meteorológica de chile", "direccion meteorologica de chile"]):
+        return "meteochile"
+    if any(token in lowered for token in ["inmet", "apitempo.inmet.gov.br", "portal.inmet.gov.br", "instituto nacional de meteorologia"]):
+        return "inmet"
+    if any(token in lowered for token in ["senamhi", "senamhi.gob.pe"]):
+        return "senamhi_peru"
+    if any(token in lowered for token in ["ideam", "ideam.gov.co"]):
+        return "ideam_colombia"
+    if any(token in lowered for token in ["smn argentina", "smn.gob.ar", "servicio meteorológico nacional argentina", "servicio meteorologico nacional argentina"]):
+        return "smn_argentina"
+    if any(token in lowered for token in ["smn conagua", "smn.conagua.gob.mx", "conagua"]):
+        return "smn_mexico"
     if any(token in lowered for token in ["bom.gov.au", "bureau of meteorology"]):
         return "bom"
     if any(token in lowered for token in ["jma.go.jp", "japan meteorological agency"]):

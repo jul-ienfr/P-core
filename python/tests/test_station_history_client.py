@@ -1042,3 +1042,38 @@ def test_station_history_client_parses_additional_european_official_payload_shap
         assert bundle.polling_focus == f"{provider}_official_observations"
         assert bundle.points
         assert bundle.points[-1].unit == "c"
+
+
+def test_station_history_client_parses_latin_american_official_payload_shapes() -> None:
+    client = StationHistoryClient()
+    structure = parse_market_question("Will the highest temperature in São Paulo be 30C or higher on April 25?")
+    cases = [
+        ("meteochile", [{"fecha": "2026-04-25", "temperaturaMaxima": 30.4, "estacion": "330007"}]),
+        ("inmet", [{"DT_MEDICAO": "2026-04-25", "TEM_MAX": 30.1, "CD_ESTACAO": "A701"}]),
+        ("senamhi_peru", {"data": [{"fecha": "2026-04-25", "tmax": 30.3, "estacion": "Lima"}]}),
+        ("ideam_colombia", {"records": [{"Fecha": "2026-04-25", "Valor": 30.6, "Variable": "Temperatura máxima"}]}),
+        ("smn_argentina", [{"fecha": "2026-04-25", "temperatura": 30.2, "nombre": "Buenos Aires"}]),
+        ("smn_mexico", {"datos": [{"fecha": "2026-04-25", "tmax": 30.7, "estacion": "Observatorio"}]}),
+    ]
+
+    for provider, payload in cases:
+        resolution = ResolutionMetadata(
+            provider=provider,
+            source_url=f"https://example.test/{provider}",
+            station_code=None,
+            station_name=None,
+            station_type="unknown",
+            wording_clear=True,
+            rules_clear=True,
+            manual_review_needed=False,
+            revision_risk="low",
+        )
+        client._fetch_json = lambda url, payload=payload: payload  # type: ignore[method-assign]
+
+        bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+        assert bundle.source_provider == provider
+        assert bundle.latency_tier == "direct_history"
+        assert bundle.polling_focus == f"{provider}_official_observations"
+        assert bundle.points
+        assert bundle.summary["max"] >= 30.1
