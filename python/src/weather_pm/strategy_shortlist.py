@@ -82,9 +82,11 @@ def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
         "matched_traders": list(row.get("matched_traders") or []),
         "anomalies": list(row.get("surface_inconsistency_types") or []),
         "blocker": row.get("execution_blocker"),
-        "next": list(row.get("next_actions") or []),
+        "next": _operator_next_actions(row),
         "polling_focus": row.get("source_polling_focus"),
         "source_latest_url": row.get("source_latest_url"),
+        "latency_tier": row.get("source_latency_tier"),
+        "latency_priority": _optional_number(row.get("source_latency_priority")),
         "blocker_detail": _blocker_detail(row),
         "execution_diagnostic": _execution_diagnostic(row),
     }
@@ -101,6 +103,19 @@ def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _operator_next_actions(row: dict[str, Any]) -> list[str]:
+    if row.get("execution_blocker") == "extreme_price" and row.get("decision_status") in {"trade", "trade_small"}:
+        return _unique(
+            [
+                action
+                for action in list(row.get("next_actions") or [])
+                if action != "skip_until_next_daily_market"
+            ]
+            + ["paper_micro_order_with_strict_limit_and_fill_tracking"]
+        )
+    return list(row.get("next_actions") or [])
+
+
 def _liquidity_state(row: dict[str, Any]) -> str:
     blocker = row.get("execution_blocker")
     if blocker == "missing_tradeable_quote":
@@ -109,6 +124,8 @@ def _liquidity_state(row: dict[str, Any]) -> str:
         return "insufficient_depth"
     if blocker in {"high_slippage_risk", "wide_spread"}:
         return "costly_execution"
+    if blocker == "extreme_price" and row.get("decision_status") in {"trade", "trade_small"}:
+        return "executable_extreme_price"
     if row.get("decision_status") in {"trade", "trade_small"}:
         return "executable"
     return "watch"
@@ -130,10 +147,11 @@ def _blocker_detail(row: dict[str, Any]) -> dict[str, Any] | None:
     if not blocker:
         return None
     blocker_key = str(blocker)
+    executable_extreme_price = blocker_key == "extreme_price" and row.get("decision_status") in {"trade", "trade_small"}
     return {
         "kind": _blocker_kind(blocker_key),
-        "severity": "blocking",
-        "operator_action": _next_action_for_blocker(blocker_key),
+        "severity": "caution" if executable_extreme_price else "blocking",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking" if executable_extreme_price else _next_action_for_blocker(blocker_key),
         "polling_focus": row.get("source_polling_focus"),
         "source_latest_url": row.get("source_latest_url"),
     }
@@ -262,6 +280,9 @@ def _action(opportunity: dict[str, Any], *, direct: bool, inconsistencies: list[
 
 
 def _execution_blocker(opportunity: dict[str, Any]) -> str | None:
+    explicit_blocker = opportunity.get("execution_blocker")
+    if isinstance(explicit_blocker, str) and explicit_blocker:
+        return explicit_blocker
     skip_reason = opportunity.get("skip_reason")
     if isinstance(skip_reason, str) and skip_reason:
         return skip_reason
@@ -278,7 +299,9 @@ def _next_actions(opportunity: dict[str, Any], *, action: str, direct: bool, inc
     if inconsistencies:
         actions.append("inspect_event_surface_prices")
     blocker = _execution_blocker(opportunity)
-    if blocker:
+    if blocker == "extreme_price" and opportunity.get("decision_status") in {"trade", "trade_small"}:
+        actions.append("paper_micro_order_with_strict_limit_and_fill_tracking")
+    elif blocker:
         actions.append(_next_action_for_blocker(blocker))
     elif action.startswith("paper_trade"):
         actions.append("paper_order_with_limit_and_fill_tracking")

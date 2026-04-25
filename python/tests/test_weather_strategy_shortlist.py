@@ -495,6 +495,8 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
                 "source_direct": True,
                 "source_provider": "noaa",
                 "source_station_code": "KDEN",
+                "source_latency_tier": "direct_latest",
+                "source_latency_priority": 1,
                 "source_polling_focus": "station_observations_latest",
                 "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
                 "matched_traders": ["DenverSharp", "ColdMath"],
@@ -525,19 +527,49 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
                 "next_actions": ["poll_direct_resolution_source", "wait_for_executable_depth"],
                 "reasons": ["direct_resolution_source"],
             },
+            {
+                "rank": 3,
+                "market_id": "dallas-extreme",
+                "question": "Will the highest temperature in Dallas be 67F or below?",
+                "city": "Dallas",
+                "decision_status": "trade_small",
+                "spread": 0.0,
+                "hours_to_resolution": 25.34,
+                "grade": "C",
+                "score": 53.3,
+                "source_direct": True,
+                "matched_traders": ["DallasSharp"],
+                "surface_inconsistency_count": 0,
+                "execution_blocker": "extreme_price",
+                "source_polling_focus": "station_history_page",
+                "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+                "action": "paper_trade_watch_direct_station",
+                "next_actions": ["poll_direct_resolution_source", "skip_until_next_daily_market"],
+                "reasons": ["tradeable_decision", "direct_resolution_source"],
+            },
         ],
     }
 
-    report = build_operator_shortlist_report(payload, limit=2)
+    direct_shortlist = build_strategy_shortlist(
+        {"accounts": []},
+        {"opportunities": [payload["shortlist"][2]]},
+        limit=1,
+    )
+    assert direct_shortlist["shortlist"][0]["next_actions"] == [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking",
+    ]
+
+    report = build_operator_shortlist_report(payload, limit=3)
 
     assert report["run_id"] == "operator-run"
     assert report["source"] == "live"
     assert report["summary"] == {
         "shortlisted": 3,
-        "tradeable_count": 1,
-        "direct_source_count": 2,
+        "tradeable_count": 2,
+        "direct_source_count": 3,
         "surface_anomaly_count": 1,
-        "blocked_count": 1,
+        "blocked_count": 2,
         "top_actions": ["paper_trade_watch_direct_station", "review_surface_anomaly", "watch_only"],
         "top_blockers": ["missing_tradeable_quote"],
     }
@@ -562,6 +594,8 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
         "next": ["poll_direct_resolution_source", "inspect_event_surface_prices", "paper_order_with_limit_and_fill_tracking"],
         "polling_focus": "station_observations_latest",
         "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+        "latency_tier": "direct_latest",
+        "latency_priority": 1,
         "blocker_detail": None,
         "execution_diagnostic": {
             "spread": 0.04,
@@ -588,6 +622,16 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
         "polling_focus": "station_history_page",
         "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
     }
+    assert report["watchlist"][2]["blocker"] == "extreme_price"
+    assert report["watchlist"][2]["next"] == ["poll_direct_resolution_source", "paper_micro_order_with_strict_limit_and_fill_tracking"]
+    assert report["watchlist"][2]["blocker_detail"] == {
+        "kind": "market_state",
+        "severity": "caution",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "polling_focus": "station_history_page",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+    }
+    assert report["watchlist"][2]["execution_diagnostic"]["liquidity_state"] == "executable_extreme_price"
     assert report["artifacts"] == {"source_shortlist_json": "/tmp/shortlist.json"}
 
 

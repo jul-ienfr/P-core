@@ -94,7 +94,8 @@ CLI screener compact :
 - `python3 -m weather_pm.cli paper-cycle-report --run-id ... --source fixture|live --limit N`
 - `python3 -m weather_pm.cli event-surface --markets-json markets.json` groupe les marchés météo par événement ville/date/kind/unité et signale les anomalies de seuil/bin ; ajouter `--output-json event-surface.json` pour écrire le rapport complet et ne printer qu’un résumé compact
 - `python3 -m weather_pm.cli strategy-shortlist --strategy-report-json strategies.json --opportunity-report-json opportunities.json --event-surface-json event-surface.json` conserve les champs `source_*` pour que le shortlist garde la station/URL à poller en low-latency
-- `python3 -m weather_pm.cli strategy-shortlist-report --reverse-engineering-json reverse.json --run-id ... --source fixture|live --output-json shortlist.json` construit en une passe stratégie + opportunités + event surface + shortlist ; avec `--output-json`, stdout reste compact et le fichier contient les payloads complets
+- `python3 -m weather_pm.cli strategy-shortlist-report --reverse-engineering-json reverse.json --run-id ... --source fixture|live --operator-limit 10 --output-json shortlist.json` construit en une passe stratégie + opportunités + event surface + shortlist ; avec `--output-json`, stdout reste compact et le fichier contient les payloads complets ; `--operator-limit` embarque une watchlist opérateur avec station directe, URL latest, priorité de latence et diagnostic d’exécution
+- `python3 -m weather_pm.cli operator-shortlist --shortlist-json shortlist.json --limit 10` compacte un shortlist sauvegardé en rapport d’action opérateur sans relancer le scan
 - par défaut, le report n’affiche que les candidats exécutables (`trade` / `trade_small`) pour éviter le bruit ; ajouter `--include-skipped` pour diagnostiquer les marchés ignorés
 - filtres report : `--tradeable-only`, `--include-skipped`, `--min-edge`, `--max-cost-bps`, `--min-depth-usd`
 
