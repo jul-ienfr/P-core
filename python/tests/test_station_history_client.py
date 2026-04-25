@@ -1086,6 +1086,46 @@ def test_station_history_client_parses_openweather_main_payload() -> None:
     assert bundle.points[0].value == 84.0
 
 
+def test_station_history_client_parses_meteomatics_nested_dates_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Miami be 28C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.meteomatics.com/2026-04-25T00:00:00Z--2026-04-25T23:00:00Z:PT1H/t_2m:C/25.76,-80.19/json",
+        description="This market resolves to the highest temperature observed for Miami.",
+        rules="Source: Meteomatics API JSON payload.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "data": [
+                    {
+                        "parameter": "t_2m:C",
+                        "coordinates": [
+                            {
+                                "lat": 25.76,
+                                "lon": -80.19,
+                                "dates": [
+                                    {"date": "2026-04-25T12:00:00Z", "value": 27.8},
+                                    {"date": "2026-04-25T20:00:00Z", "value": 29.3},
+                                ],
+                            }
+                        ],
+                    }
+                ]
+            }
+        ]
+    )
+
+    bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert client.requested_urls == [resolution.source_url]
+    assert bundle.source_provider == "meteomatics"
+    assert bundle.latency_tier == "direct_api"
+    assert bundle.polling_focus == "meteomatics_injected_payload"
+    assert [point.timestamp for point in bundle.points] == ["2026-04-25", "2026-04-25"]
+    assert [point.value for point in bundle.points] == [27.8, 29.3]
+    assert bundle.summary["max"] == 29.3
+
+
 def test_station_history_client_parses_yr_no_timeseries_payload() -> None:
     structure = parse_market_question("Will the lowest temperature in Oslo be 4C or below on April 25?")
     resolution = parse_resolution_metadata(

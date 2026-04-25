@@ -902,6 +902,9 @@ def _extract_rows(payload: Any) -> list[Any]:
     current_weather = payload.get("current_weather")
     if isinstance(current_weather, dict):
         return [current_weather]
+    meteomatics_rows = _rows_from_meteomatics(payload)
+    if meteomatics_rows:
+        return meteomatics_rows
     synoptic_rows = _rows_from_synoptic_mesowest(payload)
     if synoptic_rows:
         return synoptic_rows
@@ -964,6 +967,34 @@ def _extract_rows(payload: Any) -> list[Any]:
     return [payload]
 
 
+
+def _rows_from_meteomatics(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    data = payload.get("data")
+    if not isinstance(data, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for series in data:
+        if not isinstance(series, dict):
+            continue
+        parameter = str(series.get("parameter") or "")
+        unit = parameter.rsplit(":", 1)[1].lower() if ":" in parameter else "c"
+        coordinates = series.get("coordinates")
+        if not isinstance(coordinates, list):
+            continue
+        for coordinate in coordinates:
+            if not isinstance(coordinate, dict):
+                continue
+            dates = coordinate.get("dates")
+            if not isinstance(dates, list):
+                continue
+            for point in dates:
+                if not isinstance(point, dict):
+                    continue
+                value = point.get("value")
+                if value in {None, "", "-"}:
+                    continue
+                rows.append({"date": point.get("date") or point.get("time") or point.get("timestamp") or "", "value": value, "unit": unit})
+    return rows
 
 
 def _rows_from_synoptic_mesowest(payload: dict[str, Any]) -> list[dict[str, Any]]:
