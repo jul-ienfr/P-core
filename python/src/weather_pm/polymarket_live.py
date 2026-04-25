@@ -620,6 +620,49 @@ def get_live_market_by_id(market_id: str) -> dict[str, Any]:
     return _normalize_gamma_market(raw_market)
 
 
+def fetch_market_execution_snapshot(market_id: str) -> dict[str, Any]:
+    market = get_live_market_by_id(market_id)
+    yes_ask = market.get("best_ask")
+    yes_bid = market.get("best_bid")
+    yes_ask_size = market.get("best_ask_size")
+    yes_bid_size = market.get("best_bid_size")
+    ask_levels = market.get("ask_levels") if isinstance(market.get("ask_levels"), list) else []
+    bid_levels = market.get("bid_levels") if isinstance(market.get("bid_levels"), list) else []
+    no_bid = None if yes_ask is None else round(max(0.0, 1.0 - float(yes_ask)), 6)
+    no_ask = None if yes_bid is None else round(max(0.0, 1.0 - float(yes_bid)), 6)
+    return {
+        "market_id": str(market.get("id") or market_id),
+        "question": market.get("question"),
+        "tokens": {"yes": {"token_id": market.get("clob_token_id")}, "no": {"token_id": None}},
+        "book": {
+            "yes": {
+                "best_bid": yes_bid,
+                "best_ask": yes_ask,
+                "bid_size": yes_bid_size,
+                "ask_size": yes_ask_size,
+                "bid_depth_usd": market.get("bid_depth_usd"),
+                "ask_depth_usd": market.get("ask_depth_usd"),
+                "levels": {"bids": bid_levels, "asks": ask_levels},
+            },
+            "no": {
+                "best_bid": no_bid,
+                "best_ask": no_ask,
+                "bid_size": yes_ask_size,
+                "ask_size": yes_bid_size,
+                "bid_depth_usd": market.get("ask_depth_usd"),
+                "ask_depth_usd": market.get("bid_depth_usd"),
+                "levels": {"bids": [], "asks": []},
+            },
+        },
+        "spread": {
+            "yes": round(float(yes_ask - yes_bid), 6) if yes_ask is not None and yes_bid is not None else None,
+            "no": round(float(no_ask - no_bid), 6) if no_ask is not None and no_bid is not None else None,
+        },
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "source": "clob_gamma",
+    }
+
+
 def get_live_event_book_by_id(event_id: str) -> dict[str, Any]:
     event_payload = _fetch_gamma_json(f"/events/{event_id}")
     if not isinstance(event_payload, dict):
@@ -656,6 +699,7 @@ __all__ = [
     "list_live_weather_markets",
     "get_live_market_by_id",
     "get_live_event_book_by_id",
+    "fetch_market_execution_snapshot",
     "_parse_jsonish_list",
     "_as_float",
     "_compute_hours_to_resolution",

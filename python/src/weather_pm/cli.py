@@ -17,6 +17,7 @@ from weather_pm.neighbor_context import build_neighbor_context
 from weather_pm.operator_summary import write_profitable_accounts_operator_summary
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import get_event_book_by_id, get_market_by_id, list_weather_markets, normalize_market_record
+from weather_pm.polymarket_live import fetch_market_execution_snapshot
 from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_monitor import write_paper_resolution_monitor
 from weather_pm.resolution_parser import parse_resolution_metadata
@@ -306,6 +307,7 @@ def main() -> int:
             resolution_date=args.resolution_date,
             operator_limit=args.operator_limit,
             source_input_json=str(args.input_json),
+            skip_orderbook=bool(args.skip_orderbook),
         )
         output_payload = compact_operator_refresh_report(report)
         if args.output_json:
@@ -459,9 +461,17 @@ def build_operator_refresh_report(
     resolution_date: str,
     operator_limit: int = 10,
     source_input_json: str | None = None,
+    skip_orderbook: bool = False,
 ) -> dict[str, Any]:
     shortlist_payload = _operator_refresh_shortlist_payload(payload)
     enrich_shortlist_with_resolution_status(shortlist_payload, source=source, date=resolution_date)
+    if skip_orderbook:
+        execution_refreshed = 0
+        execution_errors = 0
+    else:
+        enrich_shortlist_with_execution_snapshot(shortlist_payload)
+        execution_refreshed = _execution_snapshot_refreshed_count(shortlist_payload)
+        execution_errors = _execution_snapshot_error_count(shortlist_payload)
     operator = build_operator_shortlist_report(shortlist_payload, limit=operator_limit)
     artifacts = {"source_operator_refresh_input": source_input_json}
     return {
@@ -470,6 +480,8 @@ def build_operator_refresh_report(
             "input_kind": _operator_refresh_input_kind(payload),
             "rows": len(shortlist_payload.get("shortlist", [])),
             "resolution_status_refreshed": _resolution_status_refreshed_count(shortlist_payload),
+            "execution_snapshot_refreshed": execution_refreshed,
+            "execution_snapshot_errors": execution_errors,
             "operator_watchlist_rows": len(operator.get("watchlist", [])),
         },
         "shortlist": shortlist_payload.get("shortlist", []),
@@ -543,6 +555,14 @@ def _resolution_status_refreshed_count(payload: dict[str, Any]) -> int:
     return sum(1 for row in payload.get("shortlist", []) if isinstance(row, dict) and row.get("resolution_status"))
 
 
+def _execution_snapshot_refreshed_count(payload: dict[str, Any]) -> int:
+    return sum(1 for row in payload.get("shortlist", []) if isinstance(row, dict) and row.get("execution_snapshot"))
+
+
+def _execution_snapshot_error_count(payload: dict[str, Any]) -> int:
+    return sum(1 for row in payload.get("shortlist", []) if isinstance(row, dict) and row.get("execution_refresh_error"))
+
+
 def enrich_shortlist_with_resolution_status(report: dict[str, Any], *, source: str, date: str) -> dict[str, Any]:
     """Attach per-market resolution status while preserving each market's settlement date."""
     for row in [item for item in report.get("shortlist", []) if isinstance(item, dict)]:
@@ -557,6 +577,39 @@ def enrich_shortlist_with_resolution_status(report: dict[str, Any], *, source: s
         route = status.get("source_route") if isinstance(status.get("source_route"), dict) else {}
         _copy_source_route_to_row(row, route)
     return report
+
+
+def enrich_shortlist_with_execution_snapshot(report: dict[str, Any]) -> dict[str, Any]:
+    for row in [item for item in report.get("shortlist", []) if isinstance(item, dict)]:
+        market_id = str(row.get("market_id") or "")
+        if not market_id:
+            continue
+        try:
+            row["execution_snapshot"] = _compact_execution_snapshot(fetch_market_execution_snapshot(market_id))
+            row.pop("execution_refresh_error", None)
+        except Exception as exc:
+            row["execution_refresh_error"] = str(exc)
+    return report
+
+
+def _compact_execution_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    book = snapshot.get("book") if isinstance(snapshot.get("book"), dict) else {}
+    yes = book.get("yes") if isinstance(book.get("yes"), dict) else {}
+    no = book.get("no") if isinstance(book.get("no"), dict) else {}
+    spread = snapshot.get("spread") if isinstance(snapshot.get("spread"), dict) else {}
+    return {
+        "best_bid_yes": yes.get("best_bid"),
+        "best_ask_yes": yes.get("best_ask"),
+        "best_bid_no": no.get("best_bid"),
+        "best_ask_no": no.get("best_ask"),
+        "spread_yes": spread.get("yes"),
+        "spread_no": spread.get("no"),
+        "yes_bid_depth_usd": yes.get("bid_depth_usd"),
+        "yes_ask_depth_usd": yes.get("ask_depth_usd"),
+        "no_bid_depth_usd": no.get("bid_depth_usd"),
+        "no_ask_depth_usd": no.get("ask_depth_usd"),
+        "fetched_at": snapshot.get("fetched_at"),
+    }
 
 
 def _compact_resolution_status(status: dict[str, Any]) -> dict[str, Any]:

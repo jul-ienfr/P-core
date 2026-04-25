@@ -91,6 +91,8 @@ def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
         "execution_diagnostic": _execution_diagnostic(row),
         **(_resolution_status_payload(row) if row.get("resolution_status") else {}),
     }
+    if isinstance(row.get("execution_snapshot"), dict):
+        watch_row["execution_snapshot"] = dict(row["execution_snapshot"])
     monitor_payload = _monitor_paper_resolution_payload(row)
     if monitor_payload is not None:
         watch_row["monitor_paper_resolution"] = monitor_payload
@@ -143,13 +145,17 @@ def _monitor_paper_resolution_payload(row: dict[str, Any]) -> dict[str, Any] | N
 
 
 def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
+    snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
+    depth = _snapshot_depth_usd(snapshot)
     return {
-        "spread": _optional_number(row.get("spread")),
+        "spread": _optional_number(snapshot.get("spread_yes") if snapshot else row.get("spread")),
         "hours_to_resolution": _optional_number(row.get("hours_to_resolution")),
         "grade": row.get("grade"),
         "score": _optional_number(row.get("score")),
         "liquidity_state": _liquidity_state(row),
         "timing_state": _timing_state(row.get("hours_to_resolution")),
+        **({"depth_usd": depth} if depth is not None else {}),
+        **({"fetched_at": snapshot.get("fetched_at")} if snapshot.get("fetched_at") else {}),
     }
 
 
@@ -168,17 +174,28 @@ def _operator_next_actions(row: dict[str, Any]) -> list[str]:
 
 def _liquidity_state(row: dict[str, Any]) -> str:
     blocker = row.get("execution_blocker")
+    snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
     if blocker == "missing_tradeable_quote":
         return "missing_quote"
     if blocker in {"insufficient_executable_depth", "tiny_fillable_size"}:
         return "insufficient_depth"
     if blocker in {"high_slippage_risk", "wide_spread"}:
         return "costly_execution"
+    if snapshot:
+        return "executable_extreme_price" if blocker == "extreme_price" and row.get("decision_status") in {"trade", "trade_small"} else "executable"
     if blocker == "extreme_price" and row.get("decision_status") in {"trade", "trade_small"}:
         return "executable_extreme_price"
     if row.get("decision_status") in {"trade", "trade_small"}:
         return "executable"
     return "watch"
+
+
+def _snapshot_depth_usd(snapshot: dict[str, Any]) -> float | None:
+    for key in ("no_ask_depth_usd", "yes_ask_depth_usd"):
+        value = _optional_number(snapshot.get(key))
+        if value is not None:
+            return value
+    return None
 
 
 def _timing_state(value: Any) -> str:
