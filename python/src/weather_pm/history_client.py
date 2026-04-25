@@ -596,6 +596,13 @@ def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str |
         "israel_meteorological_service": "israel_meteorological_service_official_observations",
         "turkish_meteorological_service": "turkish_meteorological_service_official_observations",
         "saudi_ncm": "saudi_ncm_official_observations",
+        "kma_korea": "kma_korea_official_observations",
+        "taiwan_cwa": "taiwan_cwa_official_observations",
+        "mss_singapore": "mss_singapore_official_observations",
+        "metmalaysia": "metmalaysia_official_observations",
+        "bmkg_indonesia": "bmkg_indonesia_official_observations",
+        "tmd_thailand": "tmd_thailand_official_observations",
+        "metservice_nz": "metservice_nz_official_observations",
         "environment_canada": "environment_canada_official_observation" if latency_tier == "direct_latest" else "environment_canada_official_history",
         "ecmwf_copernicus": "ecmwf_copernicus_reanalysis_daily",
         "web_scrape": "manual_html_extraction",
@@ -788,6 +795,13 @@ _DIRECT_SOURCE_PROVIDERS = {
     "israel_meteorological_service",
     "turkish_meteorological_service",
     "saudi_ncm",
+    "kma_korea",
+    "taiwan_cwa",
+    "mss_singapore",
+    "metmalaysia",
+    "bmkg_indonesia",
+    "tmd_thailand",
+    "metservice_nz",
     "environment_canada",
     "web_scrape",
     "local_official_weather_source",
@@ -863,6 +877,25 @@ def _extract_rows(payload: Any) -> list[Any]:
         return payload["DailyForecasts"]
     if isinstance(payload.get("days"), list):
         return payload["days"]
+    records = payload.get("records")
+    if isinstance(records, dict) and isinstance(records.get("Station"), list):
+        return records["Station"]
+    if isinstance(payload.get("items"), list):
+        rows: list[Any] = []
+        for item in payload["items"]:
+            if not isinstance(item, dict):
+                continue
+            readings = item.get("readings")
+            if isinstance(readings, list):
+                for reading in readings:
+                    if isinstance(reading, dict):
+                        rows.append({**reading, "timestamp": item.get("timestamp")})
+        if rows:
+            return rows
+    for key in ("results", "WeatherToday"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return value
     timelines = payload.get("data", {}).get("timelines") if isinstance(payload.get("data"), dict) else None
     if isinstance(timelines, list):
         rows: list[Any] = []
@@ -889,7 +922,10 @@ def _row_matches_station(row: dict[str, Any], station_code: str) -> bool:
 
 
 def _extract_row_timestamp(row: dict[str, Any]) -> str:
-    for key in ("timestamp", "time", "datetime", "date", "Date", "fecha", "Fecha", "DT_MEDICAO", "tarih", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
+    obs_time = row.get("ObsTime")
+    if isinstance(obs_time, dict) and obs_time.get("DateTime") not in {None, ""}:
+        return str(obs_time["DateTime"])
+    for key in ("timestamp", "time", "datetime", "date", "Date", "DateTime", "fecha", "Fecha", "DT_MEDICAO", "tarih", "tm", "startTime", "LocalObservationDateTime", "obsTime", "obsTimeUtc", "obsTimeLocal", "MESS_DATUM", "reference_ts", "fint", "observed"):
         value = row.get(key)
         if value not in {None, ""}:
             text = str(value)
@@ -914,6 +950,8 @@ def _row_has_explicit_timestamp(row: dict[str, Any]) -> bool:
         "Fecha",
         "DT_MEDICAO",
         "tarih",
+        "tm",
+        "DateTime",
         "startTime",
         "LocalObservationDateTime",
         "obsTime",
@@ -953,6 +991,7 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
     next_6h_details = (((data or {}).get("next_6_hours") or {}).get("details")) if data else None
     main = row.get("main") if isinstance(row.get("main"), dict) else None
     measurements = row.get("measurements") if isinstance(row.get("measurements"), dict) else None
+    weather_element = row.get("WeatherElement") if isinstance(row.get("WeatherElement"), dict) else None
     candidates: list[dict[str, Any]] = [row]
     if day: candidates.append(day)
     if values: candidates.append(values)
@@ -966,6 +1005,8 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         candidates.append(main)
     if measurements:
         candidates.append(measurements)
+    if weather_element:
+        candidates.append(weather_element)
     temp = row.get("Temperature") or row.get("temperature")
     if isinstance(temp, dict):
         if temp.get("value") is not None:
@@ -979,9 +1020,9 @@ def _extract_generic_temperature(row: dict[str, Any], structure: MarketStructure
         if isinstance(nested, dict) and nested.get("Value") is not None:
             return float(nested["Value"]), str(nested.get("Unit") or structure.unit).lower()
     key_groups = {
-        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "maximum_temperature", "max_temperature", "tmax", "TXK", "TX", "tre200s0", "ta", "temperaturaMaxima", "maksimumSicaklik", "TEM_MAX", "Valor", "TD", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "maxtempC", "maxtempF"),
-        "low": ("mintemp_f", "mintemp_c", "min_temp", "minimum_temperature", "min_temperature", "tmin", "TNK", "TN", "tre200s0", "ta", "temperaturaMinima", "minimumSicaklik", "TEM_MIN", "Valor", "TD", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "mintempC", "mintempF"),
-        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "temperatura", "T", "TX", "TN", "tre200s0", "ta", "Valor", "value", "temperature_2m", "air_temperature", "temperatureC", "temperatureF"),
+        "high": ("maxtemp_f", "maxtemp_c", "max_temp", "maximum_temperature", "max_temperature", "tmax", "TXK", "TX", "tre200s0", "ta", "TA", "t", "temperaturaMaxima", "maksimumSicaklik", "TEM_MAX", "Valor", "TD", "tempmax", "temperatureMax", "maxTemp", "temperature_2m_max", "temp_max", "air_temperature_max", "AirTemperature", "maxtempC", "maxtempF"),
+        "low": ("mintemp_f", "mintemp_c", "min_temp", "minimum_temperature", "min_temperature", "tmin", "TNK", "TN", "tre200s0", "ta", "TA", "t", "temperaturaMinima", "minimumSicaklik", "TEM_MIN", "Valor", "TD", "tempmin", "temperatureMin", "minTemp", "temperature_2m_min", "temp_min", "air_temperature_min", "AirTemperature", "mintempC", "mintempF"),
+        "current": ("temp_f", "temp_c", "tempf", "tempc", "temp", "current", "temperature", "temperatura", "T", "TX", "TN", "TA", "t", "tre200s0", "ta", "Valor", "value", "temperature_2m", "air_temperature", "AirTemperature", "temperatureC", "temperatureF"),
     }
     keys = key_groups.get(structure.measurement_kind, key_groups["current"]) + key_groups["current"]
     temperature_fields = {"temperature"}

@@ -643,3 +643,34 @@ def test_build_resolution_source_route_preserves_africa_middle_east_official_sou
         assert route.latency_tier == "direct_history"
         assert route.latency_priority == "direct_source_official_open_data"
         assert route.polling_focus == polling_focus
+
+
+def test_build_resolution_source_route_preserves_asia_pacific_official_source_urls() -> None:
+    structure = parse_market_question("Will the highest temperature in Seoul be 25C or higher on April 25?")
+    cases = [
+        ("kma_korea", "https://apihub.kma.go.kr/api/typ01/url/kma_sfctm.php?tm=20260425&stn=108", "kma_korea_official_observations"),
+        ("taiwan_cwa", "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001", "taiwan_cwa_official_observations"),
+        ("mss_singapore", "https://api.data.gov.sg/v1/environment/air-temperature", "mss_singapore_official_observations"),
+        ("metmalaysia", "https://api.met.gov.my/v2/data?datasetid=OBSERVATION_HOURLY", "metmalaysia_official_observations"),
+        ("bmkg_indonesia", "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json", "bmkg_indonesia_official_observations"),
+        ("tmd_thailand", "https://data.tmd.go.th/api/WeatherToday/V2/", "tmd_thailand_official_observations"),
+        ("metservice_nz", "https://api.metservice.com/publicData/localObs/auckland", "metservice_nz_official_observations"),
+    ]
+
+    for provider, source_url, polling_focus in cases:
+        resolution = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {provider} official observations",
+            description="Official observed high temperature.",
+            rules=f"Source: {source_url} official payload.",
+        )
+
+        route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+        assert route.provider == provider
+        assert route.latest_url == source_url
+        assert route.history_url == source_url
+        assert route.direct is True
+        assert route.supported is True
+        assert route.latency_tier == "direct_history"
+        assert route.latency_priority == "direct_source_official_open_data"
+        assert route.polling_focus == polling_focus

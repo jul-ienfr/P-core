@@ -487,3 +487,28 @@ def test_parse_resolution_metadata_detects_africa_middle_east_official_sources()
         assert result.wording_clear is True
         assert result.rules_clear is True
         assert result.manual_review_needed is False
+
+
+def test_parse_resolution_metadata_detects_asia_pacific_official_sources() -> None:
+    cases = [
+        ("Korea Meteorological Administration official observations", "https://apihub.kma.go.kr/api/typ01/url/kma_sfctm.php?tm=20260425&stn=108", "kma_korea"),
+        ("Taiwan Central Weather Administration observations", "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001", "taiwan_cwa"),
+        ("Meteorological Service Singapore observations", "https://api.data.gov.sg/v1/environment/air-temperature", "mss_singapore"),
+        ("MetMalaysia official observations", "https://api.met.gov.my/v2/data?datasetid=OBSERVATION_HOURLY", "metmalaysia"),
+        ("BMKG Indonesia official observations", "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json", "bmkg_indonesia"),
+        ("Thai Meteorological Department observations", "https://data.tmd.go.th/api/WeatherToday/V2/", "tmd_thailand"),
+        ("MetService New Zealand official observations", "https://api.metservice.com/publicData/localObs/auckland", "metservice_nz"),
+    ]
+
+    for name, url, provider in cases:
+        result = parse_resolution_metadata(
+            resolution_source=f"Resolution source: {name}",
+            description="This market resolves to the highest temperature observed by the official meteorological service.",
+            rules=f"Source: {url} official station payload.",
+        )
+
+        assert result.provider == provider
+        assert result.source_url == url
+        assert result.wording_clear is True
+        assert result.rules_clear is True
+        assert result.manual_review_needed is False

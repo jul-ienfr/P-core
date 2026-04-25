@@ -1112,3 +1112,39 @@ def test_station_history_client_parses_africa_middle_east_official_payload_shape
         assert bundle.polling_focus == f"{provider}_official_observations"
         assert bundle.points
         assert bundle.summary["max"] >= 28.4
+
+
+def test_station_history_client_parses_asia_pacific_official_payload_shapes() -> None:
+    client = StationHistoryClient()
+    structure = parse_market_question("Will the highest temperature in Seoul be 25C or higher on April 25?")
+    cases = [
+        ("kma_korea", [{"tm": "2026-04-25 15:00", "TA": 25.4, "stnId": "108"}]),
+        ("taiwan_cwa", {"records": {"Station": [{"ObsTime": {"DateTime": "2026-04-25T14:00:00+08:00"}, "WeatherElement": {"AirTemperature": 26.1}, "StationName": "Taipei"}]}}),
+        ("mss_singapore", {"items": [{"timestamp": "2026-04-25T14:00:00+08:00", "readings": [{"station_id": "S109", "value": 31.2}]}]}),
+        ("metmalaysia", {"results": [{"date": "2026-04-25", "temperature": 33.1, "stationid": "WMKK"}]}),
+        ("bmkg_indonesia", {"data": [{"datetime": "2026-04-25T12:00:00+07:00", "t": 30.8, "id_stasiun": "96745"}]}),
+        ("tmd_thailand", {"WeatherToday": [{"DateTime": "2026-04-25T13:00:00+07:00", "Temperature": 35.2, "StationNameThai": "Bangkok"}]}),
+        ("metservice_nz", {"observations": [{"time": "2026-04-25T12:00:00+12:00", "temperature": 18.7, "station": "Auckland"}]}),
+    ]
+
+    for provider, payload in cases:
+        resolution = ResolutionMetadata(
+            provider=provider,
+            source_url=f"https://example.test/{provider}",
+            station_code=None,
+            station_name=None,
+            station_type="unknown",
+            wording_clear=True,
+            rules_clear=True,
+            manual_review_needed=False,
+            revision_risk="low",
+        )
+        client._fetch_json = lambda url, payload=payload: payload  # type: ignore[method-assign]
+
+        bundle = client.fetch_history_bundle(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+        assert bundle.source_provider == provider
+        assert bundle.latency_tier == "direct_history"
+        assert bundle.polling_focus == f"{provider}_official_observations"
+        assert bundle.points
+        assert bundle.summary["max"] >= 18.7

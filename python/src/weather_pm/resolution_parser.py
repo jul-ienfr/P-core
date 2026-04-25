@@ -50,6 +50,13 @@ _COMMERCIAL_WEATHER_PROVIDERS = {
     "israel_meteorological_service",
     "turkish_meteorological_service",
     "saudi_ncm",
+    "kma_korea",
+    "taiwan_cwa",
+    "mss_singapore",
+    "metmalaysia",
+    "bmkg_indonesia",
+    "tmd_thailand",
+    "metservice_nz",
 }
 
 
@@ -138,6 +145,20 @@ def _detect_provider(lowered: str, *, source_url: str | None) -> str:
         return "turkish_meteorological_service"
     if any(token in lowered for token in ["saudi national center for meteorology", "ncm.gov.sa", "saudi ncm"]):
         return "saudi_ncm"
+    if any(token in lowered for token in ["korea meteorological administration", "apihub.kma.go.kr", "kma korea", "kma_korea"]):
+        return "kma_korea"
+    if any(token in lowered for token in ["central weather administration", "opendata.cwa.gov.tw", "taiwan cwa", "taiwan_cwa"]):
+        return "taiwan_cwa"
+    if any(token in lowered for token in ["meteorological service singapore", "api.data.gov.sg/v1/environment", "mss singapore", "mss_singapore"]):
+        return "mss_singapore"
+    if any(token in lowered for token in ["metmalaysia", "api.met.gov.my", "malaysian meteorological department"]):
+        return "metmalaysia"
+    if any(token in lowered for token in ["bmkg", "data.bmkg.go.id", "bmkg indonesia", "bmkg_indonesia"]):
+        return "bmkg_indonesia"
+    if any(token in lowered for token in ["thai meteorological department", "data.tmd.go.th", "tmd thailand", "tmd_thailand"]):
+        return "tmd_thailand"
+    if any(token in lowered for token in ["metservice new zealand", "api.metservice.com", "metservice nz", "metservice_nz"]):
+        return "metservice_nz"
     if any(token in lowered for token in ["bom.gov.au", "bureau of meteorology"]):
         return "bom"
     if any(token in lowered for token in ["jma.go.jp", "japan meteorological agency"]):
