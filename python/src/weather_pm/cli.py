@@ -11,7 +11,7 @@ from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
 from weather_pm.history_client import StationHistoryClient, build_station_history_bundle
 from weather_pm.market_parser import parse_market_question
-from weather_pm.models import ForecastBundle
+from weather_pm.models import ForecastBundle, StationHistoryPoint
 from weather_pm.neighbor_context import build_neighbor_context
 from weather_pm.operator_summary import write_profitable_accounts_operator_summary
 from weather_pm.pipeline import score_market_from_question
@@ -62,6 +62,11 @@ def build_parser() -> argparse.ArgumentParser:
     station_latest = subparsers.add_parser("station-latest", help="Fetch latest direct observation from a market's resolution station")
     station_latest.add_argument("--market-id", required=True, help="Market id whose latest resolution station observation should be followed")
     station_latest.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+
+    resolution_status = subparsers.add_parser("resolution-status", help="Check provisional latest vs official final resolution status")
+    resolution_status.add_argument("--market-id", required=True, help="Market id whose resolution status should be checked")
+    resolution_status.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+    resolution_status.add_argument("--date", required=True, help="Settlement date YYYY-MM-DD")
 
     price_market = subparsers.add_parser("price-market", help="Produce a theoretical price for a market")
     price_market.add_argument("--market-id", required=False, help="Market identifier")
@@ -188,6 +193,10 @@ def main() -> int:
 
     if args.command == "station-latest":
         print(json.dumps(station_latest_for_market_id(args.market_id, source=args.source)))
+        return 0
+
+    if args.command == "resolution-status":
+        print(json.dumps(resolution_status_for_market_id(args.market_id, source=args.source, date=args.date)))
         return 0
 
     if args.command == "import-weather-traders":
@@ -530,6 +539,97 @@ def station_latest_for_market_id(
         "latency": bundle.latency_diagnostics(),
     }
 
+
+
+def resolution_status_for_market_id(
+    market_id: str,
+    *,
+    source: str = "live",
+    date: str,
+    client: Any | None = None,
+) -> dict[str, Any]:
+    if source not in _VALID_SOURCES:
+        raise ValueError("source must be 'fixture' or 'live'")
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    structure = parse_market_question(str(raw_market["question"]))
+    resolution = parse_resolution_metadata(
+        resolution_source=raw_market.get("resolution_source"),
+        description=raw_market.get("description"),
+        rules=raw_market.get("rules"),
+    )
+    status_client = client or StationHistoryClient()
+    latest_bundle = _safe_fetch_latest_status_bundle(structure, resolution, status_client)
+    official_bundle = build_station_history_bundle(
+        structure,
+        resolution,
+        start_date=date,
+        end_date=date,
+        client=status_client,
+    )
+    latest_bundle = _ensure_status_latency_fields(latest_bundle, polling_focus="hko_current_weather_api" if resolution.provider == "hong_kong_observatory" else None)
+    official_bundle = _ensure_status_latency_fields(
+        official_bundle,
+        polling_focus="hko_official_daily_extract" if resolution.provider == "hong_kong_observatory" else None,
+        expected_lag_seconds=86400 if resolution.provider == "hong_kong_observatory" else None,
+    )
+    latest_point = latest_bundle.latest()
+    official_point = official_bundle.latest()
+    route = build_resolution_source_route(structure, resolution, start_date=date, end_date=date)
+    provisional = _outcome_for_point(structure, latest_point) if latest_point else "pending"
+    confirmed = _outcome_for_point(structure, official_point) if official_point else "pending"
+    return {
+        "market_id": market_id,
+        "source": source,
+        "date": date,
+        "market": structure.to_dict(),
+        "resolution": resolution.to_dict(),
+        "source_route": route.to_dict(),
+        "latest_direct": _status_point_payload(latest_bundle),
+        "official_daily_extract": _status_point_payload(official_bundle),
+        "provisional_outcome": provisional,
+        "confirmed_outcome": confirmed,
+        "action_operator": "resolution_confirmed" if confirmed != "pending" else "monitor_until_official_daily_extract",
+        "latency": {
+            "latest": latest_bundle.latency_diagnostics(),
+            "official": official_bundle.latency_diagnostics(),
+        },
+    }
+
+
+def _safe_fetch_latest_status_bundle(structure, resolution, client: Any) -> Any:
+    try:
+        return client.fetch_latest_bundle(structure, resolution)
+    except Exception:
+        return build_station_history_bundle(structure, resolution, start_date="", end_date="", client=client)
+
+
+def _ensure_status_latency_fields(bundle: Any, *, polling_focus: str | None = None, expected_lag_seconds: int | None = None) -> Any:
+    if polling_focus is not None and getattr(bundle, "polling_focus", None) is None:
+        bundle.polling_focus = polling_focus
+    if expected_lag_seconds is not None and getattr(bundle, "expected_lag_seconds", None) is None:
+        bundle.expected_lag_seconds = expected_lag_seconds
+    return bundle
+
+
+def _status_point_payload(bundle: Any) -> dict[str, Any]:
+    point = bundle.latest()
+    return {
+        "available": point is not None,
+        "value": point.value if point else None,
+        "timestamp": point.timestamp if point else None,
+        "latency_tier": bundle.latency_tier,
+    }
+
+
+def _outcome_for_point(structure, point: StationHistoryPoint) -> str:
+    value = point.value
+    if structure.is_exact_bin and structure.range_low is not None and structure.range_high is not None:
+        return "yes" if structure.range_low <= value < structure.range_high else "no"
+    if structure.threshold_direction == "below" and structure.target_value is not None:
+        return "yes" if value <= structure.target_value else "no"
+    if structure.target_value is not None:
+        return "yes" if value >= structure.target_value else "no"
+    return "pending"
 
 def _normalize_event_book_payload(event_book: dict[str, Any]) -> dict[str, Any]:
     event = {

@@ -70,6 +70,9 @@ class StationHistoryBundle:
     latency_tier: str
     points: list[StationHistoryPoint]
     summary: dict[str, float]
+    polling_focus: str | None = None
+    expected_lag_seconds: int | None = None
+    source_lag_seconds: int | None = None
 
     def latest(self) -> StationHistoryPoint | None:
         if not self.points:
@@ -78,7 +81,7 @@ class StationHistoryBundle:
 
     def latency_diagnostics(self) -> dict[str, Any]:
         latest = self.latest()
-        return {
+        payload: dict[str, Any] = {
             "provider": self.source_provider,
             "station_code": self.station_code,
             "tier": self.latency_tier,
@@ -89,6 +92,13 @@ class StationHistoryBundle:
             "unit": latest.unit if latest else None,
             "source_url": self.source_url,
         }
+        if self.polling_focus is not None:
+            payload["polling_focus"] = self.polling_focus
+        if self.expected_lag_seconds is not None:
+            payload["expected_lag_seconds"] = self.expected_lag_seconds
+        if self.source_lag_seconds is not None:
+            payload["source_lag_seconds"] = self.source_lag_seconds
+        return payload
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)

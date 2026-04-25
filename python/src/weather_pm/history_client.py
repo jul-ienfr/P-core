@@ -240,6 +240,7 @@ class StationHistoryClient:
         points: list[StationHistoryPoint],
         latency_tier: str = "direct",
     ) -> StationHistoryBundle:
+        polling_focus, expected_lag_seconds = _latency_operational_fields(resolution.provider, latency_tier)
         return StationHistoryBundle(
             source_provider=resolution.provider,
             station_code=resolution.station_code,
@@ -247,11 +248,29 @@ class StationHistoryClient:
             latency_tier=latency_tier,
             points=points,
             summary=_summarize(points),
+            polling_focus=polling_focus,
+            expected_lag_seconds=expected_lag_seconds,
         )
 
     def _fetch_json(self, url: str) -> dict[str, Any]:
         with urlopen(url, timeout=self.timeout) as response:
             return json.loads(response.read().decode("utf-8"))
+
+
+def _latency_operational_fields(provider: str, latency_tier: str) -> tuple[str | None, int | None]:
+    if provider == "hong_kong_observatory" and latency_tier == "direct_latest":
+        return "hko_current_weather_api", None
+    if provider == "hong_kong_observatory" and latency_tier == "direct_history":
+        return "hko_official_daily_extract", 86400
+    if provider == "noaa" and latency_tier == "direct_latest":
+        return "station_observations_latest", None
+    if provider == "noaa":
+        return "station_observations_history", None
+    if provider == "wunderground" and latency_tier == "direct_latest":
+        return "station_history_page", None
+    if provider == "wunderground":
+        return "station_history_page", None
+    return None, None
 
 
 def _summarize(points: list[StationHistoryPoint]) -> dict[str, float]:

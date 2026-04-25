@@ -266,6 +266,53 @@ def test_station_latest_endpoint_fetches_latest_direct_resolution_station_observ
     assert payload["latency"]["latest_value"] == 68.0
 
 
+def test_resolution_status_endpoint_returns_resolution_status_envelope() -> None:
+    from unittest.mock import patch
+
+    expected = {
+        "market_id": "hko-high-29",
+        "latest_direct": {"available": True, "value": 29.2, "timestamp": "2026-04-25T15:45:00+08:00", "latency_tier": "direct_latest"},
+        "official_daily_extract": {"available": False, "value": None, "timestamp": None, "latency_tier": "direct_history"},
+        "confirmed_outcome": "pending",
+        "action_operator": "monitor_until_official_daily_extract",
+    }
+
+    with patch("prediction_core.server.resolution_status_for_market_id", return_value=expected) as status_mock:
+        server, thread, port = _start_server()
+        try:
+            status, payload = _json_request(
+                f"http://127.0.0.1:{port}/weather/resolution-status",
+                method="POST",
+                payload={"market_id": "hko-high-29", "source": "live", "date": "2026-04-25"},
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    assert status == 200
+    assert payload == expected
+    status_mock.assert_called_once_with("hko-high-29", source="live", date="2026-04-25")
+
+
+def test_resolution_status_endpoint_rejects_missing_date() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/resolution-status",
+            method="POST",
+            payload={"market_id": "hko-high-29", "source": "live"},
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+    assert status == 400
+    assert payload["status"] == "error"
+    assert payload["message"] == "date is required"
+
+
 def test_live_paper_cycle_overfetches_to_fill_limit_after_pre_filtering() -> None:
     from unittest.mock import patch
 
