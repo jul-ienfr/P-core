@@ -44,6 +44,137 @@ def build_strategy_shortlist(
     }
 
 
+def build_operator_shortlist_report(payload: dict[str, Any], *, limit: int = 10) -> dict[str, Any]:
+    shortlist = [item for item in payload.get("shortlist", []) if isinstance(item, dict)]
+    action_counts = _dict_counts(payload.get("summary", {}).get("action_counts", {}))
+    blocker_counts = _dict_counts(payload.get("summary", {}).get("execution_blocker_counts", {}))
+    artifacts = payload.get("artifacts", {}) if isinstance(payload.get("artifacts"), dict) else {}
+    return {
+        "run_id": payload.get("run_id"),
+        "source": payload.get("source"),
+        "summary": {
+            "shortlisted": int(payload.get("summary", {}).get("shortlisted") or len(shortlist)),
+            "tradeable_count": sum(1 for row in shortlist if row.get("decision_status") in {"trade", "trade_small"}),
+            "direct_source_count": sum(1 for row in shortlist if row.get("source_direct")),
+            "surface_anomaly_count": sum(1 for row in shortlist if int(row.get("surface_inconsistency_count") or 0) > 0),
+            "blocked_count": sum(1 for row in shortlist if row.get("execution_blocker")),
+            "top_actions": list(action_counts),
+            "top_blockers": list(blocker_counts),
+        },
+        "operator_focus": _operator_focus(action_counts, blocker_counts),
+        "watchlist": [_operator_watch_row(row) for row in shortlist[: max(int(limit), 0)]],
+        "artifacts": {"source_shortlist_json": artifacts.get("output_json")},
+    }
+
+
+def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "rank": row.get("rank"),
+        "market_id": row.get("market_id"),
+        "city": row.get("city"),
+        "date": row.get("date"),
+        "action": row.get("action"),
+        "decision_status": row.get("decision_status"),
+        "edge": row.get("probability_edge"),
+        "all_in_cost_bps": row.get("all_in_cost_bps"),
+        "depth_usd": row.get("order_book_depth_usd"),
+        "direct_source": _direct_source_label(row),
+        "matched_traders": list(row.get("matched_traders") or []),
+        "anomalies": list(row.get("surface_inconsistency_types") or []),
+        "blocker": row.get("execution_blocker"),
+        "next": list(row.get("next_actions") or []),
+        "polling_focus": row.get("source_polling_focus"),
+        "source_latest_url": row.get("source_latest_url"),
+        "blocker_detail": _blocker_detail(row),
+        "execution_diagnostic": _execution_diagnostic(row),
+    }
+
+
+def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "spread": _optional_number(row.get("spread")),
+        "hours_to_resolution": _optional_number(row.get("hours_to_resolution")),
+        "grade": row.get("grade"),
+        "score": _optional_number(row.get("score")),
+        "liquidity_state": _liquidity_state(row),
+        "timing_state": _timing_state(row.get("hours_to_resolution")),
+    }
+
+
+def _liquidity_state(row: dict[str, Any]) -> str:
+    blocker = row.get("execution_blocker")
+    if blocker == "missing_tradeable_quote":
+        return "missing_quote"
+    if blocker in {"insufficient_executable_depth", "tiny_fillable_size"}:
+        return "insufficient_depth"
+    if blocker in {"high_slippage_risk", "wide_spread"}:
+        return "costly_execution"
+    if row.get("decision_status") in {"trade", "trade_small"}:
+        return "executable"
+    return "watch"
+
+
+def _timing_state(value: Any) -> str:
+    hours = _optional_number(value)
+    if hours is None:
+        return "unknown"
+    if hours <= 12:
+        return "near_resolution"
+    if hours <= 36:
+        return "next_day"
+    return "later"
+
+
+def _blocker_detail(row: dict[str, Any]) -> dict[str, Any] | None:
+    blocker = row.get("execution_blocker")
+    if not blocker:
+        return None
+    blocker_key = str(blocker)
+    return {
+        "kind": _blocker_kind(blocker_key),
+        "severity": "blocking",
+        "operator_action": _next_action_for_blocker(blocker_key),
+        "polling_focus": row.get("source_polling_focus"),
+        "source_latest_url": row.get("source_latest_url"),
+    }
+
+
+def _blocker_kind(blocker: str) -> str:
+    if blocker in {"missing_tradeable_quote", "insufficient_executable_depth", "tiny_fillable_size"}:
+        return "quote_missing" if blocker == "missing_tradeable_quote" else "depth_insufficient"
+    if blocker in {"high_slippage_risk", "wide_spread"}:
+        return "execution_cost"
+    if blocker in {"market_already_resolving_or_resolved", "extreme_price"}:
+        return "market_state"
+    if blocker == "decision_not_tradeable":
+        return "edge_insufficient"
+    return "execution_blocker"
+
+
+def _direct_source_label(row: dict[str, Any]) -> str | None:
+    if not row.get("source_direct"):
+        return None
+    provider = row.get("source_provider") or "direct"
+    station = row.get("source_station_code")
+    return f"{provider}:{station}" if station else str(provider)
+
+
+def _operator_focus(action_counts: dict[str, int], blocker_counts: dict[str, int]) -> list[str]:
+    focus: list[str] = []
+    for key, value in action_counts.items():
+        if key.startswith("paper_trade"):
+            focus.append(f"{key}: {value}")
+    for key, value in blocker_counts.items():
+        focus.append(f"{key}: {value}")
+    return focus
+
+
+def _dict_counts(value: Any) -> dict[str, int]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): int(count) for key, count in value.items() if key and int(count or 0) > 0}
+
+
 def _accounts_by_city(accounts: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     result: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for account in accounts:

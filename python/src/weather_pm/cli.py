@@ -20,7 +20,7 @@ from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
 from weather_pm.source_routing import build_resolution_source_route
 from weather_pm.strategy_extractor import extract_weather_strategy_rules
-from weather_pm.strategy_shortlist import build_strategy_shortlist
+from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 from weather_pm.traders import WeatherTrader, build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
 
 
@@ -80,6 +80,10 @@ def build_parser() -> argparse.ArgumentParser:
     strategy_shortlist.add_argument("--event-surface-json", required=False, help="Optional event surface JSON produced by event-surface tooling")
     strategy_shortlist.add_argument("--limit", required=False, type=int, default=25, help="Maximum shortlisted opportunities")
 
+    operator_shortlist = subparsers.add_parser("operator-shortlist", help="Compress a saved strategy shortlist into an operator action report")
+    operator_shortlist.add_argument("--shortlist-json", required=True, help="Full or compact strategy shortlist JSON")
+    operator_shortlist.add_argument("--limit", required=False, type=int, default=10, help="Maximum watchlist rows to include")
+
     event_surface = subparsers.add_parser("event-surface", help="Build city/date weather event surfaces and flag threshold/bin anomalies")
     event_surface.add_argument("--markets-json", required=True, help="JSON file containing either a markets list or an object with markets/opportunities")
     event_surface.add_argument("--exact-mass-tolerance", required=False, type=float, default=1.0, help="Maximum acceptable exact-bin YES price mass")
@@ -97,6 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
     strategy_shortlist_report.add_argument("--max-cost-bps", required=False, type=float, help="Maximum all-in execution cost in basis points")
     strategy_shortlist_report.add_argument("--min-depth-usd", required=False, type=float, help="Minimum order book depth in USD")
     strategy_shortlist_report.add_argument("--event-surface-json", required=False, help="Optional prebuilt event surface JSON to reuse instead of deriving one from opportunities")
+    strategy_shortlist_report.add_argument("--operator-limit", required=False, type=int, help="Embed a compact operator action snapshot limited to this many rows")
     strategy_shortlist_report.add_argument("--output-json", required=False, help="Optional path to write the combined shortlist report")
 
     paper_cycle = subparsers.add_parser("paper-cycle", help="Run one paper trading cycle")
@@ -205,6 +210,13 @@ def main() -> int:
                 )
             )
         )
+        return 0
+
+    if args.command == "operator-shortlist":
+        payload = json.loads(Path(args.shortlist_json).read_text())
+        if not isinstance(payload, dict):
+            raise ValueError("shortlist JSON must be an object")
+        print(json.dumps(build_operator_shortlist_report(payload, limit=args.limit)))
         return 0
 
     if args.command == "strategy-shortlist-report":
@@ -322,13 +334,16 @@ def compact_event_surface_report(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def compact_strategy_shortlist_report(payload: dict[str, Any]) -> dict[str, Any]:
-    return {
+    compact = {
         "summary": payload.get("summary", {}),
         "shortlist": payload.get("shortlist", []),
         "run_id": payload.get("run_id"),
         "source": payload.get("source"),
         "artifacts": payload.get("artifacts", {}),
     }
+    if "operator" in payload:
+        compact["operator"] = payload.get("operator")
+    return compact
 
 
 def build_strategy_shortlist_report_from_args(args: argparse.Namespace) -> dict[str, Any]:
@@ -360,7 +375,7 @@ def build_strategy_shortlist_report_from_args(args: argparse.Namespace) -> dict[
         "reverse_engineering_json": str(args.reverse_engineering_json),
         "generated_reports": ["strategy_report", "opportunity_report", "event_surface", "shortlist"],
     }
-    return {
+    report = {
         **shortlist_payload,
         "run_id": args.run_id,
         "source": args.source,
@@ -369,6 +384,10 @@ def build_strategy_shortlist_report_from_args(args: argparse.Namespace) -> dict[
         "opportunity_report": opportunity_payload,
         "event_surface": surface_payload,
     }
+    if getattr(args, "operator_limit", None) is not None:
+        artifacts["generated_reports"].append("operator")
+        report["operator"] = build_operator_shortlist_report(report, limit=args.operator_limit)
+    return report
 
 
 def _weather_trader_from_report_account(account: dict[str, Any]) -> WeatherTrader:

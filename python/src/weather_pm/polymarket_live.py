@@ -318,6 +318,15 @@ def _pick_yes_token_id(raw: dict[str, Any], yes_index: int) -> str | None:
 
 
 
+def _choose_best_ask(book_best_ask: float | None, gamma_best_ask: float) -> float:
+    if gamma_best_ask > 0.0 and (book_best_ask is None or gamma_best_ask < book_best_ask):
+        return gamma_best_ask
+    if book_best_ask is not None:
+        return book_best_ask
+    return 0.0
+
+
+
 def _normalize_book_levels(levels: Any) -> list[dict[str, float]]:
     if not isinstance(levels, list):
         return []
@@ -392,8 +401,10 @@ def _normalize_gamma_market(raw: dict[str, Any]) -> dict[str, Any]:
     question = str(raw.get("question") or raw.get("title") or "").strip()
     yes_index = _infer_yes_index(raw)
     book_metrics = _extract_clob_book_metrics(raw, yes_index)
-    best_bid = book_metrics["best_bid"] if book_metrics["best_bid"] is not None else _pick_best_bid(raw, yes_index)
-    best_ask = book_metrics["best_ask"] if book_metrics["best_ask"] is not None else _pick_best_ask(raw, yes_index)
+    gamma_best_bid = _pick_best_bid(raw, yes_index)
+    gamma_best_ask = _pick_best_ask(raw, yes_index)
+    best_bid = book_metrics["best_bid"] if book_metrics["best_bid"] is not None else gamma_best_bid
+    best_ask = _choose_best_ask(book_metrics["best_ask"], gamma_best_ask)
     description = raw.get("description") or raw.get("marketDescription") or raw.get("descriptionMarkdown")
     rules = raw.get("rules") or raw.get("resolutionCriteria") or raw.get("resolution_criteria") or raw.get("clarification") or description
     resolution_source = raw.get("resolutionSource") or raw.get("resolution_source") or raw.get("resolutionCriteria") or rules or description
@@ -481,13 +492,15 @@ def _normalize_gamma_series_event(raw: dict[str, Any]) -> dict[str, Any]:
     resolution_source = raw.get("resolutionSource") or raw.get("resolution_source") or description
     yes_index = _infer_yes_index(raw)
     book_metrics = _extract_clob_book_metrics(raw, yes_index)
+    gamma_best_bid = _pick_best_bid(raw, yes_index)
+    gamma_best_ask = _pick_best_ask(raw, yes_index)
     return {
         "id": str(raw.get("id") or raw.get("slug") or ""),
         "category": "weather",
         "question": str(raw.get("question") or raw.get("title") or "").strip(),
         "yes_price": _pick_yes_price(raw, yes_index),
-        "best_bid": book_metrics["best_bid"] if book_metrics["best_bid"] is not None else _pick_best_bid(raw, yes_index),
-        "best_ask": book_metrics["best_ask"] if book_metrics["best_ask"] is not None else _pick_best_ask(raw, yes_index),
+        "best_bid": book_metrics["best_bid"] if book_metrics["best_bid"] is not None else gamma_best_bid,
+        "best_ask": _choose_best_ask(book_metrics["best_ask"], gamma_best_ask),
         "best_bid_size": book_metrics["best_bid_size"],
         "best_ask_size": book_metrics["best_ask_size"],
         "bid_depth_usd": book_metrics["bid_depth_usd"],

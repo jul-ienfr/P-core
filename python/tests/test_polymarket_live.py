@@ -78,6 +78,37 @@ def test_normalize_gamma_market_maps_representative_gamma_payload_to_pipeline_sh
     assert normalized["hours_to_resolution"] is not None
 
 
+def test_normalize_gamma_market_uses_gamma_quote_when_clob_yes_book_has_only_expensive_asks() -> None:
+    from weather_pm import polymarket_live
+
+    original_fetch_clob_book = polymarket_live._fetch_clob_book
+    polymarket_live._fetch_clob_book = lambda token_id: {
+        "bids": [],
+        "asks": [{"price": "0.999", "size": "2243.99"}],
+    }
+    try:
+        normalized = _normalize_gamma_market(
+            _sample_gamma_market(
+                id="dallas-low-quote",
+                question="Will the highest temperature in Dallas be 67°F or below on April 26?",
+                outcomePrices='["0.001", "0.999"]',
+                bestBids=None,
+                bestAsks=None,
+                bestBid=None,
+                bestAsk="0.002",
+                clobTokenIds='["yes-token", "no-token"]',
+            )
+        )
+    finally:
+        polymarket_live._fetch_clob_book = original_fetch_clob_book
+
+    assert normalized["yes_price"] == 0.001
+    assert normalized["best_bid"] == 0.0
+    assert normalized["best_ask"] == 0.002
+    assert normalized["book_depth_source"] == "clob_book"
+    assert normalized["asks"] == [{"price": 0.999, "size": 2243.99}]
+
+
 def test_normalize_gamma_market_falls_back_to_description_when_live_market_lacks_resolution_source_and_rules() -> None:
     normalized = _normalize_gamma_market(
         _sample_gamma_market(

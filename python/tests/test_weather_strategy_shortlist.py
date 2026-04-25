@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from weather_pm.strategy_shortlist import build_strategy_shortlist
+from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
@@ -348,6 +348,57 @@ def test_cli_strategy_shortlist_report_can_reuse_event_surface_json_override(tmp
     assert full["event_surface"]["artifacts"]["source_markets_json"] == "prebuilt-markets.json"
 
 
+def test_cli_strategy_shortlist_report_can_embed_operator_action_snapshot(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    out_path = tmp_path / "shortlist-full.json"
+    reverse_path.write_text(
+        json.dumps(
+            {
+                "accounts": [
+                    {
+                        "rank": 1,
+                        "handle": "DenverSharp",
+                        "slug": "denversharp",
+                        "weather_pnl_usd": 10000.0,
+                        "markets_traded": 12,
+                        "profitable_market_count": 9,
+                        "top_cities": [{"city": "Denver", "count": 9}],
+                        "top_market_types": [{"type": "threshold", "count": 8}],
+                        "sample_weather_titles": ["Will the highest temperature in Denver be 65F or higher?"],
+                    }
+                ]
+            }
+        )
+    )
+
+    result = _run_cli(
+        "strategy-shortlist-report",
+        "--reverse-engineering-json",
+        str(reverse_path),
+        "--run-id",
+        "shortlist-operator",
+        "--source",
+        "fixture",
+        "--limit",
+        "5",
+        "--operator-limit",
+        "1",
+        "--output-json",
+        str(out_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    full = json.loads(out_path.read_text())
+    assert compact["operator"]["run_id"] == "shortlist-operator"
+    assert compact["operator"]["summary"]["tradeable_count"] >= 1
+    assert compact["operator"]["watchlist"][0]["direct_source"] == "noaa:KDEN"
+    assert compact["operator"]["watchlist"][0]["source_latest_url"] == "https://api.weather.gov/stations/KDEN/observations/latest"
+    assert len(compact["operator"]["watchlist"]) == 1
+    assert full["operator"] == compact["operator"]
+
+
+
 def test_cli_strategy_shortlist_reads_reports_and_writes_ranked_json(tmp_path: Path) -> None:
     strategy_path = tmp_path / "strategy.json"
     opportunities_path = tmp_path / "opportunities.json"
@@ -414,3 +465,172 @@ def test_cli_strategy_shortlist_reads_reports_and_writes_ranked_json(tmp_path: P
     assert payload["summary"]["shortlisted"] == 1
     assert payload["shortlist"][0]["market_id"] == "london-20"
     assert payload["shortlist"][0]["action"] == "paper_trade_watch_direct_station"
+
+
+def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
+    payload = {
+        "summary": {
+            "shortlisted": 3,
+            "action_counts": {"paper_trade_watch_direct_station": 1, "review_surface_anomaly": 1, "watch_only": 1},
+            "execution_blocker_counts": {"missing_tradeable_quote": 1},
+        },
+        "run_id": "operator-run",
+        "source": "live",
+        "artifacts": {"output_json": "/tmp/shortlist.json"},
+        "shortlist": [
+            {
+                "rank": 1,
+                "market_id": "denver-65",
+                "question": "Will the highest temperature in Denver be 65F or higher?",
+                "city": "Denver",
+                "date": "April 25",
+                "decision_status": "trade_small",
+                "probability_edge": 0.14,
+                "all_in_cost_bps": 85.4,
+                "order_book_depth_usd": 920.0,
+                "spread": 0.04,
+                "hours_to_resolution": 6.5,
+                "grade": "A",
+                "score": 77.2,
+                "source_direct": True,
+                "source_provider": "noaa",
+                "source_station_code": "KDEN",
+                "source_polling_focus": "station_observations_latest",
+                "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+                "matched_traders": ["DenverSharp", "ColdMath"],
+                "surface_inconsistency_count": 1,
+                "surface_inconsistency_types": ["threshold_monotonicity_violation"],
+                "execution_blocker": None,
+                "action": "paper_trade_watch_direct_station",
+                "next_actions": ["poll_direct_resolution_source", "inspect_event_surface_prices", "paper_order_with_limit_and_fill_tracking"],
+                "reasons": ["tradeable_decision", "surface_anomaly", "profitable_trader_city", "direct_resolution_source"],
+            },
+            {
+                "rank": 2,
+                "market_id": "dallas-70",
+                "question": "Will the highest temperature in Dallas be 70F or higher?",
+                "city": "Dallas",
+                "decision_status": "skipped",
+                "spread": 1.0,
+                "hours_to_resolution": 25.34,
+                "grade": "C",
+                "score": 53.3,
+                "source_direct": True,
+                "matched_traders": [],
+                "surface_inconsistency_count": 0,
+                "execution_blocker": "missing_tradeable_quote",
+                "source_polling_focus": "station_history_page",
+                "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+                "action": "watch_only",
+                "next_actions": ["poll_direct_resolution_source", "wait_for_executable_depth"],
+                "reasons": ["direct_resolution_source"],
+            },
+        ],
+    }
+
+    report = build_operator_shortlist_report(payload, limit=2)
+
+    assert report["run_id"] == "operator-run"
+    assert report["source"] == "live"
+    assert report["summary"] == {
+        "shortlisted": 3,
+        "tradeable_count": 1,
+        "direct_source_count": 2,
+        "surface_anomaly_count": 1,
+        "blocked_count": 1,
+        "top_actions": ["paper_trade_watch_direct_station", "review_surface_anomaly", "watch_only"],
+        "top_blockers": ["missing_tradeable_quote"],
+    }
+    assert report["operator_focus"] == [
+        "paper_trade_watch_direct_station: 1",
+        "missing_tradeable_quote: 1",
+    ]
+    assert report["watchlist"][0] == {
+        "rank": 1,
+        "market_id": "denver-65",
+        "city": "Denver",
+        "date": "April 25",
+        "action": "paper_trade_watch_direct_station",
+        "decision_status": "trade_small",
+        "edge": 0.14,
+        "all_in_cost_bps": 85.4,
+        "depth_usd": 920.0,
+        "direct_source": "noaa:KDEN",
+        "matched_traders": ["DenverSharp", "ColdMath"],
+        "anomalies": ["threshold_monotonicity_violation"],
+        "blocker": None,
+        "next": ["poll_direct_resolution_source", "inspect_event_surface_prices", "paper_order_with_limit_and_fill_tracking"],
+        "polling_focus": "station_observations_latest",
+        "source_latest_url": "https://api.weather.gov/stations/KDEN/observations/latest",
+        "blocker_detail": None,
+        "execution_diagnostic": {
+            "spread": 0.04,
+            "hours_to_resolution": 6.5,
+            "grade": "A",
+            "score": 77.2,
+            "liquidity_state": "executable",
+            "timing_state": "near_resolution",
+        },
+    }
+    assert report["watchlist"][1]["blocker"] == "missing_tradeable_quote"
+    assert report["watchlist"][1]["execution_diagnostic"] == {
+        "spread": 1.0,
+        "hours_to_resolution": 25.34,
+        "grade": "C",
+        "score": 53.3,
+        "liquidity_state": "missing_quote",
+        "timing_state": "next_day",
+    }
+    assert report["watchlist"][1]["blocker_detail"] == {
+        "kind": "quote_missing",
+        "severity": "blocking",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "station_history_page",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+    }
+    assert report["artifacts"] == {"source_shortlist_json": "/tmp/shortlist.json"}
+
+
+def test_cli_operator_shortlist_reads_saved_shortlist_and_outputs_action_report(tmp_path: Path) -> None:
+    shortlist_path = tmp_path / "shortlist.json"
+    shortlist_path.write_text(
+        json.dumps(
+            {
+                "run_id": "saved-run",
+                "source": "live",
+                "summary": {
+                    "shortlisted": 1,
+                    "action_counts": {"paper_trade_watch_direct_station": 1},
+                    "execution_blocker_counts": {},
+                },
+                "artifacts": {"output_json": str(shortlist_path)},
+                "shortlist": [
+                    {
+                        "rank": 1,
+                        "market_id": "denver-65",
+                        "city": "Denver",
+                        "decision_status": "trade",
+                        "probability_edge": 0.22,
+                        "all_in_cost_bps": 42.0,
+                        "order_book_depth_usd": 1200.0,
+                        "source_direct": True,
+                        "source_provider": "noaa",
+                        "source_station_code": "KDEN",
+                        "matched_traders": ["DenverSharp"],
+                        "surface_inconsistency_types": [],
+                        "action": "paper_trade_watch_direct_station",
+                        "next_actions": ["poll_direct_resolution_source", "paper_order_with_limit_and_fill_tracking"],
+                    }
+                ],
+            }
+        )
+    )
+
+    result = _run_cli("operator-shortlist", "--shortlist-json", str(shortlist_path), "--limit", "1")
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["run_id"] == "saved-run"
+    assert payload["summary"]["tradeable_count"] == 1
+    assert payload["watchlist"][0]["direct_source"] == "noaa:KDEN"
+    assert payload["artifacts"]["source_shortlist_json"] == str(shortlist_path)
