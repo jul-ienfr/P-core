@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import Any
 from urllib.parse import quote, urlencode
 from urllib.request import urlopen
@@ -71,6 +72,23 @@ class StationHistoryClient:
             points = self._parse_wunderground_points(structure, payload)
             return self._bundle(resolution, url=url, points=points)
 
+        if resolution.provider == "hong_kong_observatory":
+            url = self._build_hko_daily_extract_url(structure, start_date=start_date, end_date=end_date)
+            payload = self._fetch_json(url)
+            points = self._parse_hko_daily_extract_points(structure, payload, start_date=start_date, end_date=end_date)
+            hko_resolution = ResolutionMetadata(
+                provider=resolution.provider,
+                source_url=resolution.source_url,
+                station_code=resolution.station_code or "HKO",
+                station_name=resolution.station_name,
+                station_type=resolution.station_type,
+                wording_clear=resolution.wording_clear,
+                rules_clear=resolution.rules_clear,
+                manual_review_needed=resolution.manual_review_needed,
+                revision_risk=resolution.revision_risk,
+            )
+            return self._bundle(hko_resolution, url=url, points=points, latency_tier="direct_history")
+
         raise ValueError(f"no direct history route for provider={resolution.provider!r}")
 
     def _build_noaa_history_url(self, station_code: str, *, start_date: str, end_date: str) -> str:
@@ -81,6 +99,22 @@ class StationHistoryClient:
         if start_date != end_date:
             raise ValueError("Wunderground direct history currently supports a single day per request")
         return f"{source_url.rstrip('/')}/date/{start_date}"
+
+    def _build_hko_daily_extract_url(self, structure: MarketStructure, *, start_date: str, end_date: str) -> str:
+        if start_date != end_date:
+            raise ValueError("HKO direct daily extract currently supports a single day per request")
+        parsed_date = _parse_iso_date(start_date)
+        data_type = "CLMMINT" if structure.measurement_kind == "low" else "CLMMAXT"
+        query = urlencode(
+            {
+                "dataType": data_type,
+                "rformat": "json",
+                "station": "HKO",
+                "year": parsed_date.year,
+                "month": parsed_date.month,
+            }
+        )
+        return f"https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?{query}"
 
     def _parse_noaa_latest_point(self, structure: MarketStructure, payload: dict[str, Any]) -> list[StationHistoryPoint]:
         properties = payload.get("properties")
@@ -133,6 +167,34 @@ class StationHistoryClient:
             points.append(StationHistoryPoint(timestamp=timestamp, value=round(value, 2), unit=structure.unit))
         return points
 
+    def _parse_hko_daily_extract_points(
+        self,
+        structure: MarketStructure,
+        payload: dict[str, Any],
+        *,
+        start_date: str,
+        end_date: str,
+    ) -> list[StationHistoryPoint]:
+        if start_date != end_date:
+            raise ValueError("HKO direct daily extract currently supports a single day per request")
+        target = _parse_iso_date(start_date)
+        raw_rows = payload.get("data") or payload.get("records") or payload.get("observations")
+        if not isinstance(raw_rows, list):
+            raise ValueError("HKO daily extract payload missing data rows")
+        points: list[StationHistoryPoint] = []
+        for row in raw_rows:
+            if not isinstance(row, dict):
+                continue
+            row_date = _parse_hko_row_date(row.get("date") or row.get("Date") or row.get("recordDate") or row.get("day"), year=target.year, month=target.month)
+            if row_date != target.date().isoformat():
+                continue
+            value = _extract_hko_row_value(row, structure)
+            if value is None:
+                continue
+            converted = _convert_temperature(value, from_unit=str(row.get("unit") or row.get("Unit") or "C").lower(), to_unit=structure.unit)
+            points.append(StationHistoryPoint(timestamp=row_date, value=round(converted, 2), unit=structure.unit))
+        return points
+
     def _bundle(
         self,
         resolution: ResolutionMetadata,
@@ -166,3 +228,40 @@ def _summarize(points: list[StationHistoryPoint]) -> dict[str, float]:
         "latest": round(points[-1].value, 2),
         "point_count": float(len(points)),
     }
+
+
+def _parse_iso_date(raw_value: str) -> datetime:
+    try:
+        return datetime.strptime(raw_value, "%Y-%m-%d")
+    except ValueError as exc:
+        raise ValueError(f"date must be YYYY-MM-DD: {raw_value}") from exc
+
+
+def _parse_hko_row_date(raw_value: Any, *, year: int, month: int) -> str | None:
+    if raw_value is None:
+        return None
+    text = str(raw_value).strip()
+    for fmt in ("%Y-%m-%d", "%Y%m%d", "%d/%m/%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(text, fmt).date().isoformat()
+        except ValueError:
+            pass
+    if text.isdigit():
+        try:
+            return datetime(year, month, int(text)).date().isoformat()
+        except ValueError:
+            return None
+    return None
+
+
+def _extract_hko_row_value(row: dict[str, Any], structure: MarketStructure) -> float | None:
+    preferred_keys = (
+        ("max", "maximum", "maxt", "tempmax", "value")
+        if structure.measurement_kind == "high"
+        else ("min", "minimum", "mint", "tempmin", "value")
+    )
+    lowered = {str(key).lower(): value for key, value in row.items()}
+    for key in preferred_keys:
+        if key in lowered and lowered[key] not in {None, "", "-"}:
+            return float(lowered[key])
+    return None

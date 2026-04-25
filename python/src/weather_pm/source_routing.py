@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Any
 from urllib.parse import quote, urlencode
 
@@ -40,8 +41,6 @@ def build_resolution_source_route(
     use it to know exactly which station/source to poll, and avoid city geocoding or
     aggregator fallbacks whenever the resolution metadata exposes a direct source.
     """
-    del structure  # reserved for provider-specific routing decisions that need market kind/unit/date.
-
     if resolution.provider == "noaa" and resolution.station_code:
         latest_url = _noaa_latest_url(resolution.station_code)
         history_url = _noaa_history_url(resolution.station_code, start_date=start_date, end_date=end_date)
@@ -81,20 +80,21 @@ def build_resolution_source_route(
 
     if resolution.provider == "hong_kong_observatory":
         latest_url = _hko_latest_url(resolution.source_url)
+        history_url = _hko_daily_extract_url(structure, start_date=start_date, end_date=end_date)
         return ResolutionSourceRoute(
             provider=resolution.provider,
-            station_code=resolution.station_code,
+            station_code=resolution.station_code or "HKO",
             station_name=resolution.station_name or "Hong Kong Observatory",
             source_url=resolution.source_url,
             latest_url=latest_url,
-            history_url=_hko_daily_extract_url(),
+            history_url=history_url,
             direct=True,
             supported=True,
             latency_tier="direct_latest",
             latency_priority="direct_source_low_latency",
             polling_focus="hko_current_weather_and_daily_extract",
             manual_review_needed=resolution.manual_review_needed,
-            reason="Hong Kong Observatory source found in resolution rules; poll HKO current weather and daily extract directly.",
+            reason="Hong Kong Observatory source found in resolution rules; poll HKO current weather and official monthly daily extract directly.",
         )
 
     return ResolutionSourceRoute(
@@ -134,10 +134,35 @@ def _wunderground_history_url(source_url: str, *, start_date: str | None, end_da
 
 
 def _hko_latest_url(source_url: str | None) -> str:
-    if source_url and "hko.gov.hk" in source_url.lower():
-        return source_url
-    return "https://www.hko.gov.hk/en/wxinfo/currwx/current.htm"
+    del source_url
+    return "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
 
 
-def _hko_daily_extract_url() -> str:
+def _hko_daily_extract_url(
+    structure: MarketStructure,
+    *,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> str:
+    if start_date and end_date and start_date == end_date:
+        parsed_date = _parse_iso_date(start_date)
+        if parsed_date is not None:
+            data_type = "CLMMINT" if structure.measurement_kind == "low" else "CLMMAXT"
+            query = urlencode(
+                {
+                    "dataType": data_type,
+                    "rformat": "json",
+                    "station": "HKO",
+                    "year": parsed_date.year,
+                    "month": parsed_date.month,
+                }
+            )
+            return f"https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?{query}"
     return "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm"
+
+
+def _parse_iso_date(raw_value: str) -> datetime | None:
+    try:
+        return datetime.strptime(raw_value, "%Y-%m-%d")
+    except ValueError:
+        return None

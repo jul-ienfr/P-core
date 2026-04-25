@@ -66,3 +66,33 @@ def test_build_resolution_source_route_marks_unknown_source_as_unsupported_focus
     assert route.latency_priority == "manual_review_required"
     assert route.manual_review_needed is True
     assert "No direct route" in route.reason
+
+
+def test_build_resolution_source_route_targets_hko_official_monthly_opendata_for_high_temperature() -> None:
+    structure = parse_market_question("Will the highest temperature in Hong Kong be 29°C or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.hko.gov.hk/en/wxinfo/currwx/current.htm",
+        description="This market resolves according to the official highest temperature recorded by the Hong Kong Observatory.",
+        rules="Source: Hong Kong Observatory daily extract, finalized by weather.gov.hk.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.direct is True
+    assert route.provider == "hong_kong_observatory"
+    assert route.latest_url == "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    assert route.history_url == "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4"
+    assert route.polling_focus == "hko_current_weather_and_daily_extract"
+
+
+def test_build_resolution_source_route_targets_hko_official_monthly_opendata_for_low_temperature() -> None:
+    structure = parse_market_question("Will the lowest temperature in Hong Kong be 20°C or below on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.weather.gov.hk/en/wxinfo/dailywx/extract.htm",
+        description="This market resolves according to the official lowest temperature recorded by the Hong Kong Observatory.",
+        rules="Source: Hong Kong Observatory daily extract, finalized by weather.gov.hk.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert route.history_url == "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMINT&rformat=json&station=HKO&year=2026&month=4"

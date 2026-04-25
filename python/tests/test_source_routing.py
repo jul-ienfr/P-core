@@ -29,6 +29,6 @@ def test_hong_kong_observatory_routes_to_direct_current_weather_and_daily_extrac
     assert route.supported is True
     assert route.latency_tier == "direct_latest"
     assert route.polling_focus == "hko_current_weather_and_daily_extract"
-    assert route.latest_url == "https://www.hko.gov.hk/en/wxinfo/currwx/current.htm"
+    assert route.latest_url == "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
     assert route.history_url == "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm"
     assert route.manual_review_needed is False
