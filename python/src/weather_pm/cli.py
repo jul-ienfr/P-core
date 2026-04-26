@@ -19,6 +19,7 @@ from weather_pm.miro_seed import build_miro_seed_markdown
 from weather_pm.models import ForecastBundle
 from weather_pm.neighbor_context import build_neighbor_context
 from weather_pm.operator_summary import write_profitable_accounts_operator_summary
+from weather_pm.paper_ledger import load_candidate, load_paper_ledger, load_refresh_payload, paper_ledger_place, paper_ledger_refresh, write_paper_ledger_artifacts
 from weather_pm.paper_watchlist import compact_paper_watchlist_report, write_paper_watchlist_csv, write_paper_watchlist_markdown, write_paper_watchlist_report
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import get_event_book_by_id, get_market_by_id, list_weather_markets, normalize_market_record
@@ -194,6 +195,21 @@ def build_parser() -> argparse.ArgumentParser:
     paper_watchlist.add_argument("--output-csv", required=False, help="Optional path to write an operator CSV table")
     paper_watchlist.add_argument("--output-md", required=False, help="Optional path to write an operator markdown table")
     paper_watchlist.add_argument("--compact", action="store_true", help="Print compact operator payload instead of full watchlist JSON")
+
+    paper_ledger_place_parser = subparsers.add_parser("paper-ledger-place", help="Record a strict-limit paper ledger order from a refreshed candidate")
+    paper_ledger_place_parser.add_argument("--candidate-json", required=True, help="Candidate JSON with source/orderbook refresh context")
+    paper_ledger_place_parser.add_argument("--ledger-json", required=True, help="Ledger JSON to create or append")
+    paper_ledger_place_parser.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for ledger JSON/CSV/Markdown artifacts")
+
+    paper_ledger_refresh_parser = subparsers.add_parser("paper-ledger-refresh", help="Refresh strict-limit paper ledger MTM/PnL and actions")
+    paper_ledger_refresh_parser.add_argument("--ledger-json", required=True, help="Ledger JSON to refresh in place")
+    paper_ledger_refresh_parser.add_argument("--refresh-json", required=False, help="JSON containing refreshes and optional settlements")
+    paper_ledger_refresh_parser.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for ledger JSON/CSV/Markdown artifacts")
+    paper_ledger_refresh_parser.add_argument("--max-position-usdc", required=False, type=float, default=10.0, help="Filled spend at or above this cap emits HOLD_CAPPED")
+
+    paper_ledger_report_parser = subparsers.add_parser("paper-ledger-report", help="Write strict-limit paper ledger JSON/CSV/Markdown artifacts")
+    paper_ledger_report_parser.add_argument("--ledger-json", required=True, help="Ledger JSON to report")
+    paper_ledger_report_parser.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for ledger JSON/CSV/Markdown artifacts")
 
     miro_seed_export_parser = subparsers.add_parser("miro-seed-export", help="Export a fact-only Miro/MiroFish seed markdown from a saved market/research payload")
     miro_seed_export_parser.add_argument("--input-json", required=False, help="JSON containing market and optional research_items")
@@ -444,6 +460,30 @@ def main() -> int:
             )
         else:
             print(json.dumps(report))
+        return 0
+
+    if args.command == "paper-ledger-place":
+        candidate = load_candidate(args.candidate_json)
+        ledger = load_paper_ledger(args.ledger_json) if Path(args.ledger_json).exists() else {"orders": []}
+        payload = paper_ledger_place(candidate, ledger=ledger)
+        Path(args.ledger_json).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.ledger_json).write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        artifact = write_paper_ledger_artifacts(payload, output_dir=args.output_dir)
+        print(json.dumps(artifact))
+        return 0
+
+    if args.command == "paper-ledger-refresh":
+        ledger = load_paper_ledger(args.ledger_json)
+        refreshes, settlements = load_refresh_payload(args.refresh_json) if args.refresh_json else ({}, {})
+        payload = paper_ledger_refresh(ledger, refreshes=refreshes, settlements=settlements, max_position_usdc=args.max_position_usdc)
+        Path(args.ledger_json).write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        artifact = write_paper_ledger_artifacts(payload, output_dir=args.output_dir)
+        print(json.dumps(artifact))
+        return 0
+
+    if args.command == "paper-ledger-report":
+        payload = write_paper_ledger_artifacts(load_paper_ledger(args.ledger_json), output_dir=args.output_dir)
+        print(json.dumps(payload))
         return 0
 
     if args.command == "miro-seed-export":
