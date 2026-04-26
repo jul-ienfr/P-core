@@ -19,11 +19,11 @@ def build_paper_watchlist_report(payload: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("paper position must contain p_side_now or base_p_side")
         watchlist.append(
             build_paper_watch_row(
-                position,
+                _normalize_paper_monitor_position(position),
                 p_side=float(p_side),
-                best_bid=position.get("best_bid_now", position.get("best_bid")),
-                best_ask=position.get("best_ask_now", position.get("best_ask")),
-                forecast_c=position.get("current_forecast_max_c", position.get("station_forecast_max_c")),
+                best_bid=position.get("best_bid_now", position.get("live_best_bid_now", position.get("best_bid"))),
+                best_ask=position.get("best_ask_now", position.get("live_best_ask_now", position.get("best_ask"))),
+                forecast_c=position.get("current_forecast_max_c", position.get("station_forecast_max_c_now", position.get("station_forecast_max_c"))),
             )
         )
     return {
@@ -247,6 +247,20 @@ def _format_float(value: Any, digits: int) -> str:
 
 def _format_cell(value: Any) -> str:
     return "" if value is None else str(value).replace("|", "\\|")
+
+
+def _normalize_paper_monitor_position(position: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(position)
+    paper_fill = position.get("paper_fill") if isinstance(position.get("paper_fill"), dict) else {}
+    if "entry_avg" not in normalized and paper_fill.get("avg_price") is not None:
+        normalized["entry_avg"] = paper_fill.get("avg_price")
+    if "filled_usdc" not in normalized and paper_fill.get("filled_usdc") is not None:
+        normalized["filled_usdc"] = paper_fill.get("filled_usdc")
+    if "shares" not in normalized and paper_fill.get("shares") is not None:
+        normalized["shares"] = paper_fill.get("shares")
+    if "side" not in normalized and normalized.get("best_side") is not None:
+        normalized["side"] = normalized.get("best_side")
+    return normalized
 
 
 def build_paper_watch_row(

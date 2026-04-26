@@ -4,6 +4,7 @@ import prediction_core.execution as execution
 
 
 EXPECTED_PUBLIC_SYMBOLS = {
+    "AmmTradeQuote",
     "BookLevel",
     "ExecutionCostBreakdown",
     "FillEstimate",
@@ -12,6 +13,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
     "TradingFeeSchedule",
     "TransferCostEstimate",
     "TransferFeeSchedule",
+    "amm_prices",
     "build_execution_cost_breakdown",
     "compute_trading_fee",
     "compute_transfer_costs",
@@ -21,6 +23,8 @@ EXPECTED_PUBLIC_SYMBOLS = {
     "estimate_order_cost",
     "estimate_trading_fee",
     "estimate_transfer_costs",
+    "quote_amm_buy",
+    "quote_amm_sell",
     "quote_execution_cost",
 }
 
@@ -40,10 +44,14 @@ def test_execution_package_exposes_callable_entrypoints() -> None:
     assert callable(execution.estimate_execution_costs)
     assert callable(execution.quote_execution_cost)
     assert callable(execution.estimate_order_cost)
+    assert callable(execution.amm_prices)
+    assert callable(execution.quote_amm_buy)
+    assert callable(execution.quote_amm_sell)
 
 
 def test_execution_package_exposes_model_types() -> None:
     for symbol in [
+        "AmmTradeQuote",
         "BookLevel",
         "ExecutionCostBreakdown",
         "FillEstimate",

@@ -59,6 +59,40 @@ def test_paper_watchlist_cli_builds_operator_report_from_saved_monitor(tmp_path:
     assert written["watchlist"][0]["hard_stop_if_p_below"] == 0.2146
 
 
+def test_paper_watchlist_cli_builds_operator_report_from_saved_monitor_with_nested_paper_fill(tmp_path: Path) -> None:
+    monitor = {
+        "positions": [
+            {
+                "city": "Warsaw",
+                "date": "April 26",
+                "station": "EPWA",
+                "side": "NO",
+                "temp": 11,
+                "unit": "C",
+                "kind": "exact",
+                "paper_fill": {"filled_usdc": 5.0, "shares": 9.0909, "avg_price": 0.55},
+                "p_side_now": 0.7339,
+                "live_best_bid_now": 0.52,
+                "live_best_ask_now": 0.55,
+            }
+        ]
+    }
+    input_json = tmp_path / "monitor.json"
+    output_json = tmp_path / "watchlist.json"
+    input_json.write_text(json.dumps(monitor), encoding="utf-8")
+
+    result = _run_weather_pm("paper-watchlist", "--input-json", str(input_json), "--output-json", str(output_json))
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["summary"]["positions"] == 1
+    assert payload["summary"]["total_spend"] == 5.0
+    assert payload["watchlist"][0]["entry_avg"] == 0.55
+    assert payload["watchlist"][0]["spend_usdc"] == 5.0
+    assert payload["watchlist"][0]["paper_ev_now_usdc"] == 1.672
+    assert output_json.exists()
+
+
 def test_paper_watchlist_cli_can_print_compact_operator_payload(tmp_path: Path) -> None:
     monitor = {
         "positions": [

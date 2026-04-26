@@ -4,6 +4,7 @@ import re
 from collections import defaultdict
 from typing import Any
 
+from prediction_core.decision import EntryPolicy, evaluate_entry
 from weather_pm.edge_sizing import calculate_edge_sizing
 
 
@@ -91,61 +92,14 @@ def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
         "latency_priority": _optional_number(row.get("source_latency_priority")),
         "blocker_detail": _blocker_detail(row),
         "execution_diagnostic": _execution_diagnostic(row),
-        **(_resolution_status_payload(row) if row.get("resolution_status") else {}),
-    }
-    if isinstance(row.get("execution_snapshot"), dict):
-        watch_row["execution_snapshot"] = dict(row["execution_snapshot"])
-    monitor_payload = _monitor_paper_resolution_payload(row)
-    if monitor_payload is not None:
-        watch_row["monitor_paper_resolution"] = monitor_payload
-    return watch_row
-
-
-def _resolution_status_payload(row: dict[str, Any]) -> dict[str, Any]:
-    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
-    payload = dict(status)
-    if row.get("resolution_latency") is not None:
-        payload["latency"] = row.get("resolution_latency")
-    if row.get("resolution_status_date") is not None:
-        payload["date"] = row.get("resolution_status_date")
-    return {"resolution_status": payload}
-
-
-def _monitor_paper_resolution_payload(row: dict[str, Any]) -> dict[str, Any] | None:
-    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
-    if status.get("confirmed_outcome") != "pending":
-        return None
-    market_id = row.get("market_id")
-    date = row.get("resolution_status_date")
-    paper_side = row.get("paper_side")
-    paper_notional_usd = _optional_number(row.get("paper_notional_usd"))
-    paper_shares = _optional_number(row.get("paper_shares"))
-    if not market_id or not date or not paper_side or paper_notional_usd is None or paper_shares is None:
-        return None
-    payload = {
-        "market_id": str(market_id),
-        "source": "live",
-        "date": str(date),
-        "paper_side": str(paper_side),
-        "paper_notional_usd": paper_notional_usd,
-        "paper_shares": paper_shares,
-    }
-    cli = (
-        "PYTHONPATH=python/src python3 -m weather_pm.cli monitor-paper-resolution "
-        f"--market-id {payload['market_id']} --source live --date {payload['date']} "
-        f"--paper-side {payload['paper_side']} --paper-notional-usd {payload['paper_notional_usd']} "
-        f"--paper-shares {payload['paper_shares']}"
-    )
-    return {
-        "endpoint": "/weather/monitor-paper-resolution",
-        "method": "POST",
-        "payload": payload,
-        "cli": cli,
-        "mode": "paper_only",
-        "trigger": "confirmed_outcome_pending",
+        "operator_entry_summary": _operator_entry_summary(row),
     }
     if isinstance(row.get("edge_sizing"), dict):
         watch_row["edge_sizing"] = row.get("edge_sizing")
+    if isinstance(row.get("entry_policy"), dict):
+        watch_row["entry_policy"] = row.get("entry_policy")
+    if isinstance(row.get("entry_decision"), dict):
+        watch_row["entry_decision"] = row.get("entry_decision")
     if row.get("source_history_url") is not None:
         watch_row["source_history_url"] = row.get("source_history_url")
     resolution_status = _operator_resolution_status(row)
@@ -155,18 +109,33 @@ def _monitor_paper_resolution_payload(row: dict[str, Any]) -> dict[str, Any] | N
 
 
 def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
-    snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
-    depth = _snapshot_depth_usd(snapshot)
     return {
-        "spread": _optional_number(snapshot.get("spread_yes") if snapshot else row.get("spread")),
+        "spread": _optional_number(row.get("spread")),
         "hours_to_resolution": _optional_number(row.get("hours_to_resolution")),
         "grade": row.get("grade"),
         "score": _optional_number(row.get("score")),
         "liquidity_state": _liquidity_state(row),
         "timing_state": _timing_state(row.get("hours_to_resolution")),
-        **({"depth_usd": depth} if depth is not None else {}),
-        **({"fetched_at": snapshot.get("fetched_at")} if snapshot.get("fetched_at") else {}),
     }
+
+
+def _operator_entry_summary(row: dict[str, Any]) -> dict[str, Any] | None:
+    policy = row.get("entry_policy") if isinstance(row.get("entry_policy"), dict) else None
+    decision = row.get("entry_decision") if isinstance(row.get("entry_decision"), dict) else None
+    if policy is None and decision is None:
+        return None
+    summary: dict[str, Any] = {
+        "enter": bool(decision.get("enter")) if decision else None,
+        "action": decision.get("action") if decision else None,
+        "side": decision.get("side") if decision else None,
+        "price_window": [_optional_number(policy.get("q_min")), _optional_number(policy.get("q_max"))] if policy else None,
+        "market_price": _optional_number(decision.get("market_price")) if decision else None,
+        "model_probability": _optional_number(decision.get("model_probability")) if decision else None,
+        "edge_net_all_in": _optional_number(decision.get("edge_net_all_in")) if decision else None,
+        "size_hint_usd": _optional_number(decision.get("size_hint_usd")) if decision else None,
+        "blocked_by": list(decision.get("blocked_by") or []) if decision else [],
+    }
+    return summary
 
 
 def _operator_resolution_status(row: dict[str, Any]) -> dict[str, Any] | None:
@@ -206,28 +175,17 @@ def _operator_next_actions(row: dict[str, Any]) -> list[str]:
 
 def _liquidity_state(row: dict[str, Any]) -> str:
     blocker = row.get("execution_blocker")
-    snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
     if blocker == "missing_tradeable_quote":
         return "missing_quote"
     if blocker in {"insufficient_executable_depth", "tiny_fillable_size"}:
         return "insufficient_depth"
     if blocker in {"high_slippage_risk", "wide_spread"}:
         return "costly_execution"
-    if snapshot:
-        return "executable_extreme_price" if blocker == "extreme_price" and row.get("decision_status") in {"trade", "trade_small"} else "executable"
     if blocker == "extreme_price" and row.get("decision_status") in {"trade", "trade_small"}:
         return "executable_extreme_price"
     if row.get("decision_status") in {"trade", "trade_small"}:
         return "executable"
     return "watch"
-
-
-def _snapshot_depth_usd(snapshot: dict[str, Any]) -> float | None:
-    for key in ("no_ask_depth_usd", "yes_ask_depth_usd"):
-        value = _optional_number(snapshot.get(key))
-        if value is not None:
-            return value
-    return None
 
 
 def _timing_state(value: Any) -> str:
@@ -335,6 +293,8 @@ def _shortlist_row(
         "all_in_cost_bps": _optional_number(opportunity.get("all_in_cost_bps")),
         "order_book_depth_usd": _optional_number(opportunity.get("order_book_depth_usd")),
         "edge_sizing": _edge_sizing(opportunity),
+        "entry_policy": _entry_policy(opportunity).to_dict(),
+        "entry_decision": _entry_decision(opportunity),
         "source_direct": bool(opportunity.get("source_direct")),
         "source_provider": opportunity.get("source_provider"),
         "source_station_code": opportunity.get("source_station_code"),
@@ -373,6 +333,48 @@ def _edge_sizing(opportunity: dict[str, Any]) -> dict[str, Any] | None:
         side=str(opportunity.get("edge_side") or opportunity.get("side") or "buy"),
         edge_cost_bps=_optional_number(opportunity.get("all_in_cost_bps")) or 0.0,
     ).to_dict()
+
+
+def _entry_policy(opportunity: dict[str, Any]) -> EntryPolicy:
+    existing = opportunity.get("entry_policy")
+    if isinstance(existing, dict):
+        return EntryPolicy(
+            name=str(existing.get("name") or "weather_station"),
+            q_min=float(existing.get("q_min", 0.08)),
+            q_max=float(existing.get("q_max", 0.92)),
+            min_edge=float(existing.get("min_edge", 0.07)),
+            min_confidence=float(existing.get("min_confidence", 0.75)),
+            max_spread=float(existing.get("max_spread", 0.08)),
+            min_depth_usd=float(existing.get("min_depth_usd", 50.0)),
+            max_position_usd=float(existing.get("max_position_usd", 10.0)),
+        )
+    profile = str(opportunity.get("entry_profile") or "weather_station")
+    if profile == "tail_risk_micro":
+        return EntryPolicy(profile, 0.01, 0.20, 0.10, 0.90, 0.05, 20.0, 5.0)
+    if profile == "crypto_5m_conservative":
+        return EntryPolicy(profile, 0.60, 0.95, 0.05, 0.85, 0.02, 1000.0, 25.0)
+    return EntryPolicy("weather_station", 0.08, 0.92, 0.07, 0.75, 0.08, 50.0, 10.0)
+
+
+def _entry_decision(opportunity: dict[str, Any]) -> dict[str, Any] | None:
+    existing = opportunity.get("entry_decision")
+    if isinstance(existing, dict):
+        return existing
+    prediction = _optional_number(opportunity.get("prediction_probability"))
+    price = _optional_number(opportunity.get("market_price"))
+    if prediction is None or price is None:
+        return None
+    decision = evaluate_entry(
+        policy=_entry_policy(opportunity),
+        market_price=price,
+        model_probability=prediction,
+        confidence=_optional_number(opportunity.get("confidence")) or 0.8,
+        spread=_optional_number(opportunity.get("spread")) or 0.0,
+        depth_usd=_optional_number(opportunity.get("order_book_depth_usd")) or 0.0,
+        execution_cost_bps=_optional_number(opportunity.get("all_in_cost_bps")) or 0.0,
+        side=str(opportunity.get("entry_side") or "yes"),
+    )
+    return decision.to_dict()
 
 
 def _reasons(opportunity: dict[str, Any], *, matched_accounts: list[dict[str, Any]], inconsistencies: list[dict[str, Any]]) -> list[str]:

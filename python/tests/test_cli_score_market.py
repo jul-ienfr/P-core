@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from weather_pm.models import ForecastBundle, StationHistoryBundle, StationHistoryPoint
+from weather_pm.wallet_intel import TraderStrategyProfile
 
 import weather_pm.cli as weather_cli
 
@@ -25,6 +26,23 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
         env=env,
         check=False,
     )
+
+
+def test_trader_profile_command_prints_wallet_strategy_profile() -> None:
+    profile = TraderStrategyProfile(
+        wallet="0xabc",
+        total_markets_traded=7,
+        total_pnl=12.5,
+        primary_category="weather",
+        category_breakdown={"weather": {"trades": 2, "pnl": 12.5, "share": 1.0}},
+        tags=["weather_leader", "weather_specialist"],
+    )
+
+    with patch("weather_pm.cli.fetch_trader_strategy_profile", return_value=profile) as fetch_profile:
+        payload = weather_cli.trader_profile("0xabc", page_size=25)
+
+    fetch_profile.assert_called_once_with("0xabc", page_size=25)
+    assert payload == profile.to_dict()
 
 
 def test_parse_market_command_outputs_parsed_json() -> None:
