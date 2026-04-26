@@ -61,6 +61,14 @@ PYTHONPATH=src python3 -m weather_pm.cli paper-cycle-report \
   --min-depth-usd 0
 ./scripts/prediction-core serve --host 127.0.0.1 --port 8080
 ./scripts/prediction-core consume-markets --base-url http://127.0.0.1:8080 --source live --limit 3 --min-status watchlist
+./scripts/prediction-core polymarket-stack
+./scripts/prediction-core polymarket-stack --table
+./scripts/prediction-core marketdata-plan
+./scripts/prediction-core marketdata-replay --events-jsonl /tmp/clob-events.jsonl
+./scripts/prediction-core marketdata-stream --token-id <clob-token-id> --dry-run-events-jsonl /tmp/clob-events.jsonl --max-events 10
+./scripts/prediction-core marketdata-stream --token-id <clob-token-id> --live --max-events 10
+./scripts/prediction-core polymarket-runtime-plan
+./scripts/prediction-core polymarket-runtime-cycle --markets-json /tmp/markets.json --probabilities-json /tmp/probabilities.json --dry-run-events-jsonl /tmp/clob-events.jsonl --max-events 10
 ```
 
 Après installation editable éventuelle :
@@ -69,7 +77,58 @@ Après installation editable éventuelle :
 cd /home/jul/prediction_core/python
 prediction-core serve --host 127.0.0.1 --port 8080
 prediction-core consume-markets --base-url http://127.0.0.1:8080 --source live --limit 3 --min-status watchlist
+prediction-core polymarket-stack
+prediction-core polymarket-stack --table
+prediction-core marketdata-plan
+prediction-core marketdata-replay --events-jsonl /tmp/clob-events.jsonl
+prediction-core marketdata-stream --token-id <clob-token-id> --dry-run-events-jsonl /tmp/clob-events.jsonl --max-events 10
+prediction-core marketdata-stream --token-id <clob-token-id> --live --max-events 10
+prediction-core polymarket-runtime-plan
+prediction-core polymarket-runtime-cycle --markets-json /tmp/markets.json --probabilities-json /tmp/probabilities.json --dry-run-events-jsonl /tmp/clob-events.jsonl --max-events 10
 ```
+
+## Polymarket low-latency stack
+
+Le choix canonique ajouté pour `prediction_core` est :
+
+```text
+Gamma REST      -> découverte marché + règles + clobTokenIds, en cache hors hot path
+CLOB WebSocket  -> flux live orderbook/prix, hot path
+CLOB REST       -> passage/annulation d'ordres, hot path auth
+Data API        -> analytics wallets/trades/positions, hors hot path
+```
+
+Le repo officiel `Polymarket/polymarket-cli` est conservé comme surface opérateur/script JSON rapide, mais pas comme boucle trading serrée : chaque commande relance un process. Pour le moteur live, la cible rapide est un daemon Rust long-running basé sur `Polymarket/rs-clob-client` avec feature WebSocket.
+
+Commandes de référence :
+
+```bash
+./scripts/prediction-core polymarket-stack
+./scripts/prediction-core polymarket-stack --table
+./scripts/prediction-core marketdata-plan
+./scripts/prediction-core marketdata-plan --discovery-interval-seconds 45 --max-hot-markets 12
+./scripts/prediction-core marketdata-replay --events-jsonl /tmp/clob-events.jsonl
+./scripts/prediction-core marketdata-stream --token-id <clob-token-id> --dry-run-events-jsonl /tmp/clob-events.jsonl --max-events 10
+./scripts/prediction-core marketdata-stream --token-id <clob-token-id> --live --max-events 10
+./scripts/prediction-core polymarket-runtime-plan
+./scripts/prediction-core polymarket-runtime-cycle --markets-json /tmp/markets.json --probabilities-json /tmp/probabilities.json --dry-run-events-jsonl /tmp/clob-events.jsonl --max-events 10
+```
+
+`marketdata-replay` lit un JSONL d’événements WebSocket CLOB simulés/capturés (`book`, `price_change`) et rejoue le flux dans le cache local read-only. C’est volontairement sans réseau ni ordre réel : on valide le contrat hot-path avant de brancher un worker WebSocket long-running.
+
+`marketdata-stream` ajoute le worker async injectable qui consomme le même contrat dans un cache local. Par défaut il reste déterministe avec `--dry-run-events-jsonl`. Le mode réseau réel existe seulement derrière `--live` et impose `--max-events` pour éviter un run opérateur infini ; il reste read-only et ne place aucun ordre.
+
+`polymarket-runtime-plan` et `polymarket-runtime-cycle` mettent en place le pipeline complet demandé, même si l’exécution réelle n’est pas utilisée : découverte Gamma-like locale, sélection des `clobTokenIds`, marketdata CLOB WebSocket/replay, décision sur cache local, puis planification d’intentions **paper-only**. Le worker d’exécution CLOB REST est présent dans le scaffold mais `status=disabled`, `execution_enabled=false`, `orders_submitted=[]` ; toute tentative d’activer l’exécution réelle lève une erreur explicite.
+
+Le scaffold `marketdata-plan` formalise le prochain découpage rapide sans encore placer d'ordre réel :
+
+- `discovery_worker` : Gamma API, refresh metadata hors hot path ;
+- `marketdata_worker` : CLOB WebSocket, maintient bid/ask/spread/depth en mémoire ;
+- `decision_worker` : lit uniquement le cache local dans la boucle rapide ;
+- `execution_worker` : futur CLOB REST authentifié, désactivé dans ce scaffold ;
+- `analytics_worker` : Data API batch/post-trade, hors hot path.
+
+Le module `prediction_core.polymarket_marketdata` contient aussi un cache in-memory testable (`MarketDataCache`) qui calcule défensivement `best_bid=max(bids)` et `best_ask=min(asks)` au lieu de faire confiance à l'ordre des niveaux CLOB.
 
 ## Execution cost model
 
