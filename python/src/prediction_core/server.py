@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
@@ -110,6 +111,11 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
                 self._json_response(200, result)
                 return
 
+            if self.path == "/weather/external-seed-document":
+                result = build_external_seed_document(payload)
+                self._json_response(200, result)
+                return
+
             self._json_response(404, {"status": "error", "message": f"unknown path: {self.path}"})
         except ValueError as exc:
             self._json_response(400, {"status": "error", "message": str(exc)})
@@ -143,6 +149,59 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+
+def build_external_seed_document(payload: dict[str, Any]) -> dict[str, Any]:
+    question = _required_string(payload, "question")
+    seed_document, paths = _read_seed_document_paths(payload.get("seed_document_paths"))
+    title = _optional_string(payload.get("title")) or question
+    if len(title) > 120:
+        title = title[:117].rstrip() + "..."
+
+    simulation_requirement = _optional_string(payload.get("simulation_requirement"))
+    if simulation_requirement is None:
+        first_line = next((line.lstrip("# ").strip() for line in seed_document.splitlines() if line.strip()), question)
+        simulation_requirement = first_line
+    if len(simulation_requirement) < 40:
+        simulation_requirement = f"{question}\n\nSeed context:\n{seed_document[:600]}".strip()
+
+    return {
+        "title": title,
+        "simulation_requirement": simulation_requirement,
+        "seed_document": seed_document,
+        "key_actors": [],
+        "suggested_platforms": ["polymarket"],
+        "seed_document_source": "seed_document_paths",
+        "seed_document_paths": paths,
+        "paper_only": bool(payload.get("paper_only", False)),
+        "live_order_allowed": bool(payload.get("live_order_allowed", True)),
+        "model": "external_seed",
+    }
+
+
+def _read_seed_document_paths(seed_document_paths: Any) -> tuple[str, list[str]]:
+    if not isinstance(seed_document_paths, list):
+        raise ValueError("seed_document_paths must be a list of local file paths")
+    if not seed_document_paths:
+        raise ValueError("seed_document_paths must not be empty")
+
+    chunks: list[str] = []
+    normalized_paths: list[str] = []
+    for raw_path in seed_document_paths:
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            raise ValueError("seed_document_paths entries must be non-empty strings")
+        path = Path(raw_path).expanduser()
+        if not path.is_file():
+            raise ValueError(f"seed_document_paths entry not found: {raw_path}")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"seed_document_paths entry is not utf-8 text: {raw_path}") from exc
+        if not text.strip():
+            raise ValueError(f"seed_document_paths entry is empty: {raw_path}")
+        normalized_paths.append(str(path))
+        chunks.append(text)
+    return "\n\n---\n\n".join(chunks), normalized_paths
 
 
 def fetch_markets_request(payload: dict[str, Any]) -> list[dict[str, Any]]:

@@ -92,6 +92,7 @@ Endpoints actuels :
 - `POST /weather/resolution-status` (compare latest direct provisoire vs daily extract officiel final, expose `provisional_outcome`, `confirmed_outcome`, action opérateur et diagnostics de latence/polling)
 - `POST /weather/monitor-paper-resolution` (écrit les artefacts paper-only JSON + markdown opérateur depuis `market_id`, `date`, `paper_side`, optionnellement notional/shares/output_dir ; retourne `should_repoll` et une proposition de cron bornée si le final officiel est encore pending)
 - `POST /weather/paper-cycle` (construit une simulation paper + postmortem ; si `question` + `yes_price` sont fournis, il score le marché puis peut auto-dériver `requested_quantity` depuis `bankroll_usd`, puis `filled_quantity` et `fill_price` depuis la décision ; si `market_id` est absent/vide, lance un cycle live multi-marchés borné)
+- `POST /weather/external-seed-document` (lit des fichiers Markdown locaux via `seed_document_paths` et retourne un payload `model=external_seed` paper-only/ontology-handoff sans appel LLM)
 
 CLI screener compact :
 - `python3 -m weather_pm.cli paper-cycle --run-id ... --source fixture|live --limit N`
@@ -122,6 +123,9 @@ curl -X POST http://127.0.0.1:8080/weather/paper-cycle \
 curl -X POST http://127.0.0.1:8080/weather/paper-cycle \
   -H 'Content-Type: application/json' \
   -d '{"run_id":"run-http-3","market_id":"market-denver-64f","question":"Will the highest temperature in Denver be 64F or higher?","yes_price":0.53,"bankroll_usd":1000}'
+curl -X POST http://127.0.0.1:8080/weather/external-seed-document \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Build a KDEN paper-only seed","seed_document_paths":["/tmp/kden_seed.md"],"paper_only":true,"live_order_allowed":false}'
 ```
 
 Portée explicite :

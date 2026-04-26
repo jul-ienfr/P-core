@@ -61,6 +61,16 @@ class PredictionCoreClient:
         body = {"run_id": run_id, "market_id": market_id, **payload}
         return self._request_json("POST", "/weather/paper-cycle", body)
 
+    def external_seed_document(
+        self,
+        *,
+        question: str,
+        seed_document_paths: list[str],
+        **payload: Any,
+    ) -> dict[str, Any]:
+        body = {"question": question, "seed_document_paths": seed_document_paths, **payload}
+        return self._request_json("POST", "/weather/external-seed-document", body)
+
     def _request_json(self, method: str, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         data = None if payload is None else json.dumps(payload).encode("utf-8")
         http_request = request.Request(f"{self.base_url}{path}", data=data, method=method)
