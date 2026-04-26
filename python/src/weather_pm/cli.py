@@ -5,7 +5,7 @@ import json
 import shlex
 import time
 from datetime import date as date_type
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -13,7 +13,7 @@ from weather_pm.decision import build_decision
 from weather_pm.event_surface import build_weather_event_surface
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
-from weather_pm.history_client import StationHistoryClient, build_station_history_bundle
+from weather_pm.history_client import StationHistoryClient, _latency_operational_fields, _parse_observation_timestamp, build_station_history_bundle
 from weather_pm.market_parser import parse_market_question
 from weather_pm.miro_seed import build_miro_seed_markdown
 from weather_pm.models import ForecastBundle
@@ -22,10 +22,15 @@ from weather_pm.operator_summary import write_profitable_accounts_operator_summa
 from weather_pm.paper_watchlist import compact_paper_watchlist_report, write_paper_watchlist_csv, write_paper_watchlist_markdown, write_paper_watchlist_report
 from weather_pm.pipeline import score_market_from_question
 from weather_pm.polymarket_client import get_event_book_by_id, get_market_by_id, list_weather_markets, normalize_market_record
+from weather_pm.polymarket_live import fetch_market_execution_snapshot
 from weather_pm.probability_model import build_model_output
+from weather_pm.resolution_monitor import write_paper_resolution_monitor
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
+from weather_pm.source_coverage import build_weather_source_coverage_report
 from weather_pm.source_routing import build_resolution_source_route
+from weather_pm.station_binding import build_station_binding
+from weather_pm.source_selection import select_best_station_sources
 from weather_pm.strategy_extractor import extract_weather_strategy_rules
 from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 from weather_pm.traders import WeatherTrader, build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
@@ -61,6 +66,8 @@ def build_parser() -> argparse.ArgumentParser:
     score_market_parser.add_argument("--rules", required=False, help="Resolution rules text")
     score_market_parser.add_argument("--max-impact-bps", required=False, type=float, help="Override max executable price impact in bps")
 
+    subparsers.add_parser("source-coverage", help="Summarize integrated weather resolution source coverage")
+
     station_history = subparsers.add_parser("station-history", help="Fetch direct observed history from a market's resolution station")
     station_history.add_argument("--market-id", required=True, help="Market id whose resolution station should be followed")
     station_history.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
@@ -75,6 +82,15 @@ def build_parser() -> argparse.ArgumentParser:
     resolution_status.add_argument("--market-id", required=True, help="Market id whose resolution status should be checked")
     resolution_status.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
     resolution_status.add_argument("--date", required=True, help="Resolution date YYYY-MM-DD")
+
+    monitor_paper_resolution = subparsers.add_parser("monitor-paper-resolution", help="Persist paper-trade resolution status and operator monitor artifacts")
+    monitor_paper_resolution.add_argument("--market-id", required=True, help="Market id whose paper resolution should be monitored")
+    monitor_paper_resolution.add_argument("--source", choices=_VALID_SOURCES, default="live", help="Market source")
+    monitor_paper_resolution.add_argument("--date", required=True, help="Resolution date YYYY-MM-DD")
+    monitor_paper_resolution.add_argument("--paper-side", required=True, choices=("yes", "no"), help="Paper trade side")
+    monitor_paper_resolution.add_argument("--paper-notional-usd", required=True, type=float, help="Paper notional in USD")
+    monitor_paper_resolution.add_argument("--paper-shares", required=True, type=float, help="Paper shares")
+    monitor_paper_resolution.add_argument("--output-dir", required=True, help="Directory for monitor artifacts")
 
     price_market = subparsers.add_parser("price-market", help="Produce a theoretical price for a market")
     price_market.add_argument("--market-id", required=False, help="Market identifier")
@@ -242,6 +258,10 @@ def main() -> int:
         )
         return 0
 
+    if args.command == "source-coverage":
+        print(json.dumps(build_weather_source_coverage_report().to_dict()))
+        return 0
+
     if args.command == "station-history":
         print(json.dumps(station_history_for_market_id(args.market_id, source=args.source, start_date=args.start_date, end_date=args.end_date)))
         return 0
@@ -252,6 +272,23 @@ def main() -> int:
 
     if args.command == "resolution-status":
         print(json.dumps(resolution_status_for_market_id(args.market_id, source=args.source, date=args.date)))
+        return 0
+
+    if args.command == "monitor-paper-resolution":
+        print(
+            json.dumps(
+                write_paper_resolution_monitor(
+                    market_id=args.market_id,
+                    source=args.source,
+                    settlement_date=args.date,
+                    paper_side=args.paper_side,
+                    paper_notional_usd=args.paper_notional_usd,
+                    paper_shares=args.paper_shares,
+                    output_dir=Path(args.output_dir),
+                    status_fetcher=resolution_status_for_market_id,
+                )
+            )
+        )
         return 0
 
     if args.command == "import-weather-traders":
@@ -706,6 +743,223 @@ def compact_operator_refresh_report(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+def build_operator_refresh_report(
+    payload: dict[str, Any],
+    *,
+    source: str,
+    resolution_date: str,
+    operator_limit: int = 10,
+    source_input_json: str | None = None,
+    skip_orderbook: bool = False,
+) -> dict[str, Any]:
+    shortlist_payload = _operator_refresh_shortlist_payload(payload)
+    enrich_shortlist_with_resolution_status(shortlist_payload, source=source, date=resolution_date)
+    if skip_orderbook:
+        execution_refreshed = 0
+        execution_errors = 0
+    else:
+        enrich_shortlist_with_execution_snapshot(shortlist_payload)
+        execution_refreshed = _execution_snapshot_refreshed_count(shortlist_payload)
+        execution_errors = _execution_snapshot_error_count(shortlist_payload)
+    operator = build_operator_shortlist_report(shortlist_payload, limit=operator_limit)
+    artifacts = {"source_operator_refresh_input": source_input_json}
+    return {
+        "summary": {
+            "paper_only": True,
+            "input_kind": _operator_refresh_input_kind(payload),
+            "rows": len(shortlist_payload.get("shortlist", [])),
+            "resolution_status_refreshed": _resolution_status_refreshed_count(shortlist_payload),
+            "execution_snapshot_refreshed": execution_refreshed,
+            "execution_snapshot_errors": execution_errors,
+            "operator_watchlist_rows": len(operator.get("watchlist", [])),
+        },
+        "shortlist": shortlist_payload.get("shortlist", []),
+        "operator": operator,
+        "artifacts": artifacts,
+    }
+
+
+def _operator_refresh_shortlist_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(payload.get("operator"), dict) and isinstance(payload.get("shortlist"), list):
+        return {**payload, "shortlist": [dict(row) for row in payload.get("shortlist", []) if isinstance(row, dict)]}
+    if isinstance(payload.get("shortlist"), list):
+        return {**payload, "shortlist": [dict(row) for row in payload.get("shortlist", []) if isinstance(row, dict)]}
+    if isinstance(payload.get("watchlist"), list):
+        return {
+            "run_id": payload.get("run_id"),
+            "source": payload.get("source"),
+            "summary": payload.get("summary", {}),
+            "artifacts": payload.get("artifacts", {}),
+            "shortlist": [_shortlist_row_from_operator_watch_row(row) for row in payload.get("watchlist", []) if isinstance(row, dict)],
+        }
+    raise ValueError("operator refresh input must contain a shortlist or watchlist")
+
+
+def _operator_refresh_input_kind(payload: dict[str, Any]) -> str:
+    if isinstance(payload.get("operator"), dict) and isinstance(payload.get("shortlist"), list):
+        return "refresh_wrapper"
+    if isinstance(payload.get("shortlist"), list):
+        return "shortlist"
+    if isinstance(payload.get("watchlist"), list):
+        return "operator"
+    return "unknown"
+
+
+def _shortlist_row_from_operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
+    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    return {
+        "rank": row.get("rank"),
+        "market_id": row.get("market_id"),
+        "city": row.get("city"),
+        "date": row.get("date"),
+        "action": row.get("action"),
+        "decision_status": row.get("decision_status"),
+        "probability_edge": row.get("edge"),
+        "all_in_cost_bps": row.get("all_in_cost_bps"),
+        "order_book_depth_usd": row.get("depth_usd"),
+        "matched_traders": list(row.get("matched_traders") or []),
+        "surface_inconsistency_types": list(row.get("anomalies") or []),
+        "execution_blocker": row.get("blocker"),
+        "next_actions": list(row.get("next") or []),
+        "source_polling_focus": row.get("polling_focus"),
+        "source_latest_url": row.get("source_latest_url"),
+        "source_latency_tier": row.get("latency_tier"),
+        "source_latency_priority": row.get("latency_priority"),
+        "resolution_status_date": status.get("date"),
+        "resolution_status": {key: value for key, value in status.items() if key not in {"date", "latency"}},
+        "resolution_latency": status.get("latency"),
+        **_parse_direct_source_label(row.get("direct_source")),
+    }
+
+
+def _parse_direct_source_label(value: Any) -> dict[str, Any]:
+    if not value:
+        return {"source_direct": False}
+    label = str(value)
+    provider, _, station = label.partition(":")
+    return {"source_direct": True, "source_provider": provider or None, "source_station_code": station or None}
+
+
+def _resolution_status_refreshed_count(payload: dict[str, Any]) -> int:
+    return sum(
+        1
+        for row in payload.get("shortlist", [])
+        if isinstance(row, dict)
+        and any(
+            row.get(key) is not None
+            for key in (
+                "resolution_status",
+                "latest_direct",
+                "official_daily_extract",
+                "provisional_outcome",
+                "confirmed_outcome",
+                "resolution_action_operator",
+            )
+        )
+    )
+
+
+def _execution_snapshot_refreshed_count(payload: dict[str, Any]) -> int:
+    return sum(1 for row in payload.get("shortlist", []) if isinstance(row, dict) and row.get("execution_snapshot"))
+
+
+def _execution_snapshot_error_count(payload: dict[str, Any]) -> int:
+    return sum(1 for row in payload.get("shortlist", []) if isinstance(row, dict) and row.get("execution_refresh_error"))
+
+
+def _compact_execution_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    book = snapshot.get("book") if isinstance(snapshot.get("book"), dict) else {}
+    yes = book.get("yes") if isinstance(book.get("yes"), dict) else {}
+    no = book.get("no") if isinstance(book.get("no"), dict) else {}
+    spread = snapshot.get("spread") if isinstance(snapshot.get("spread"), dict) else {}
+    return {
+        "best_bid_yes": yes.get("best_bid"),
+        "best_ask_yes": yes.get("best_ask"),
+        "best_bid_no": no.get("best_bid"),
+        "best_ask_no": no.get("best_ask"),
+        "spread_yes": spread.get("yes"),
+        "spread_no": spread.get("no"),
+        "yes_bid_depth_usd": yes.get("bid_depth_usd"),
+        "yes_ask_depth_usd": yes.get("ask_depth_usd"),
+        "no_bid_depth_usd": no.get("bid_depth_usd"),
+        "no_ask_depth_usd": no.get("ask_depth_usd"),
+        "fetched_at": snapshot.get("fetched_at"),
+    }
+
+
+def enrich_shortlist_with_execution_snapshot(report: dict[str, Any]) -> dict[str, Any]:
+    for row in [item for item in report.get("shortlist", []) if isinstance(item, dict)]:
+        market_id = str(row.get("market_id") or "")
+        if not market_id:
+            continue
+        try:
+            row["execution_snapshot"] = _compact_execution_snapshot(fetch_market_execution_snapshot(market_id))
+            row.pop("execution_refresh_error", None)
+        except Exception as exc:
+            row["execution_refresh_error"] = str(exc)
+    return report
+
+
+def _compact_resolution_status(status: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: status.get(key)
+        for key in (
+            "latest_direct",
+            "official_daily_extract",
+            "provisional_outcome",
+            "confirmed_outcome",
+            "action_operator",
+        )
+        if key in status
+    }
+
+
+def _copy_source_route_to_row(row: dict[str, Any], route: dict[str, Any]) -> None:
+    if not route:
+        return
+    mapping = {
+        "direct": "source_direct",
+        "provider": "source_provider",
+        "station_code": "source_station_code",
+        "latency_tier": "source_latency_tier",
+        "latency_priority": "source_latency_priority",
+        "polling_focus": "source_polling_focus",
+        "latest_url": "source_latest_url",
+        "history_url": "source_history_url",
+    }
+    for source_key, row_key in mapping.items():
+        if source_key in route:
+            row[row_key] = route[source_key]
+
+
+def _resolution_status_date_for_row(row: dict[str, Any], *, fallback_date: str) -> str:
+    row_date = str(row.get("date") or "").strip()
+    if not row_date:
+        return fallback_date
+    year = _year_from_iso_date(fallback_date)
+    if year is None:
+        return fallback_date
+    parsed = _parse_month_day(row_date, year=year)
+    return parsed or fallback_date
+
+
+def _year_from_iso_date(raw_value: str) -> int | None:
+    try:
+        return date_type.fromisoformat(raw_value).year
+    except ValueError:
+        return None
+
+
+def _parse_month_day(raw_value: str, *, year: int) -> str | None:
+    for fmt in ("%b %d", "%B %d"):
+        try:
+            parsed = datetime.strptime(raw_value, fmt)
+        except ValueError:
+            continue
+        return date_type(year, parsed.month, parsed.day).isoformat()
+    return None
+
 def poll_live_operator_artifact(
     input_json: str | Path,
     *,
@@ -718,17 +972,46 @@ def poll_live_operator_artifact(
     iterations: int = 1,
     poll_interval_seconds: float = 0.0,
 ) -> dict[str, Any]:
+    input_path = Path(input_json)
     last_payload: dict[str, Any] | None = None
     for index in range(max(int(iterations), 1)):
-        last_payload = refresh_live_operator_artifact(
-            input_json,
-            output_json=output_json,
-            source=source,
-            resolution_date=resolution_date,
-            operator_limit=operator_limit,
-            refresh_resolution_status=refresh_resolution_status,
-            refresh_orderbook=refresh_orderbook,
-        )
+        payload = json.loads(input_path.read_text())
+        if not isinstance(payload, dict):
+            raise ValueError("input JSON must be an object")
+        resolved_source = _operator_refresh_source(payload, source)
+        if refresh_resolution_status:
+            last_payload = build_operator_refresh_report(
+                payload,
+                source=resolved_source,
+                resolution_date=resolution_date or date_type.today().isoformat(),
+                operator_limit=operator_limit,
+                source_input_json=str(input_path),
+                skip_orderbook=not refresh_orderbook,
+            )
+        else:
+            shortlist_payload = _operator_refresh_shortlist_payload(payload)
+            if refresh_orderbook:
+                enrich_shortlist_with_execution_snapshot(shortlist_payload)
+            operator = build_operator_shortlist_report(shortlist_payload, limit=operator_limit)
+            last_payload = {
+                "summary": {
+                    "paper_only": True,
+                    "input_kind": _operator_refresh_input_kind(payload),
+                    "rows": len(shortlist_payload.get("shortlist", [])),
+                    "resolution_status_refreshed": 0,
+                    "execution_snapshot_refreshed": _execution_snapshot_refreshed_count(shortlist_payload),
+                    "execution_snapshot_errors": _execution_snapshot_error_count(shortlist_payload),
+                    "operator_watchlist_rows": len(operator.get("watchlist", [])),
+                },
+                "shortlist": shortlist_payload.get("shortlist", []),
+                "operator": operator,
+                "artifacts": {"source_operator_refresh_input": str(input_path)},
+            }
+        if output_json:
+            output_path = Path(output_json)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            last_payload.setdefault("artifacts", {})["output_json"] = str(output_path)
+            output_path.write_text(json.dumps(last_payload, indent=2, sort_keys=True))
         if index < max(int(iterations), 1) - 1 and poll_interval_seconds > 0:
             time.sleep(float(poll_interval_seconds))
     assert last_payload is not None
@@ -902,6 +1185,8 @@ def enrich_shortlist_with_resolution_status(report: dict[str, Any], *, source: s
         except Exception as exc:
             row["resolution_status_error"] = str(exc)
             continue
+        row["resolution_status_date"] = row_date
+        row["resolution_status"] = _compact_resolution_status(status)
         row["latest_direct"] = status.get("latest_direct")
         row["official_daily_extract"] = status.get("official_daily_extract")
         row["provisional_outcome"] = status.get("provisional_outcome")
@@ -1088,6 +1373,144 @@ def station_latest_for_market_id(
     }
 
 
+def station_history_for_market_id(
+    market_id: str,
+    *,
+    source: str = "live",
+    start_date: str,
+    end_date: str,
+    client: Any | None = None,
+) -> dict[str, Any]:
+    if source not in _VALID_SOURCES:
+        raise ValueError("source must be 'fixture' or 'live'")
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    structure = parse_market_question(str(raw_market["question"]))
+    resolution = parse_resolution_metadata(
+        resolution_source=raw_market.get("resolution_source"),
+        description=raw_market.get("description"),
+        rules=raw_market.get("rules"),
+    )
+    history = build_station_history_bundle(
+        structure,
+        resolution,
+        start_date=start_date,
+        end_date=end_date,
+        client=client,
+    )
+    route = build_resolution_source_route(structure, resolution, start_date=start_date, end_date=end_date)
+    return {
+        "market_id": market_id,
+        "source": source,
+        "market": structure.to_dict(),
+        "resolution": resolution.to_dict(),
+        "source_route": route.to_dict(),
+        "history": history.to_dict(),
+        "latency": history.latency_diagnostics(),
+    }
+
+
+def station_latest_for_market_id(
+    market_id: str,
+    *,
+    source: str = "live",
+    client: Any | None = None,
+) -> dict[str, Any]:
+    if source not in _VALID_SOURCES:
+        raise ValueError("source must be 'fixture' or 'live'")
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    structure = parse_market_question(str(raw_market["question"]))
+    resolution = parse_resolution_metadata(
+        resolution_source=raw_market.get("resolution_source"),
+        description=raw_market.get("description"),
+        rules=raw_market.get("rules"),
+    )
+    latest_client = client or StationHistoryClient()
+    try:
+        bundle = latest_client.fetch_latest_bundle(structure, resolution)
+    except Exception:
+        bundle = build_station_history_bundle(structure, resolution, start_date="", end_date="", client=latest_client)
+    _annotate_source_lag_seconds(bundle, now=_utc_now())
+    latest = bundle.latest()
+    route = build_resolution_source_route(structure, resolution)
+    return {
+        "market_id": market_id,
+        "source": source,
+        "market": structure.to_dict(),
+        "resolution": resolution.to_dict(),
+        "source_route": route.to_dict(),
+        "latest": latest.to_dict() if latest else None,
+        "history": bundle.to_dict(),
+        "latency": bundle.latency_diagnostics(),
+    }
+
+
+
+def station_source_plan_for_market_id(
+    market_id: str,
+    *,
+    source: str = "live",
+    start_date: str | None = None,
+    end_date: str | None = None,
+    client: Any | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    if source not in _VALID_SOURCES:
+        raise ValueError("source must be 'fixture' or 'live'")
+    raw_market = dict(get_market_by_id(market_id, source=source))
+    structure = parse_market_question(str(raw_market["question"]))
+    resolution = parse_resolution_metadata(
+        resolution_source=raw_market.get("resolution_source"),
+        description=raw_market.get("description"),
+        rules=raw_market.get("rules"),
+    )
+    binding = build_station_binding(structure, resolution, start_date=start_date, end_date=end_date)
+    report = select_best_station_sources(structure, [binding], client=client, now=now)
+    return {
+        "market_id": market_id,
+        "source": source,
+        "market": structure.to_dict(),
+        "resolution": resolution.to_dict(),
+        "station_binding": binding.to_dict(),
+        "source_selection": report.to_dict(),
+    }
+
+
+def _annotate_source_lag_seconds(bundle: Any, *, now: datetime) -> None:
+    point = bundle.latest()
+    if point is None:
+        return
+    observed_at = _parse_observation_timestamp(point.timestamp)
+    if observed_at is None:
+        return
+    bundle.source_lag_seconds = max(0, int((now - observed_at).total_seconds()))
+
+
+
+def _parse_observation_timestamp(raw_timestamp: str) -> datetime | None:
+    text = str(raw_timestamp).strip()
+    if not text:
+        return None
+    candidates = [text]
+    if len(text) == 10 and text[4] == "-" and text[7] == "-":
+        candidates.append(f"{text}T00:00:00+00:00")
+    for candidate in candidates:
+        normalized = candidate.replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(normalized)
+        except ValueError:
+            continue
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    return None
+
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+
 def resolution_status_for_market_id(
     market_id: str,
     *,
@@ -1104,7 +1527,7 @@ def resolution_status_for_market_id(
         description=raw_market.get("description"),
         rules=raw_market.get("rules"),
     )
-    status_client = client or StationHistoryClient()
+    status_client = client or StationHistoryClient(now_utc=_utc_now())
     try:
         latest_bundle = status_client.fetch_latest_bundle(structure, resolution)
     except Exception:
@@ -1123,26 +1546,49 @@ def resolution_status_for_market_id(
         "market": structure.to_dict(),
         "resolution": resolution.to_dict(),
         "source_route": route.to_dict(),
-        "latest_direct": {
-            "available": latest is not None,
-            "value": latest.value if latest else None,
-            "timestamp": latest.timestamp if latest else None,
-            "latency_tier": latest_bundle.latency_tier,
-        },
-        "official_daily_extract": {
-            "available": official is not None,
-            "value": official.value if official else None,
-            "timestamp": official.timestamp if official else None,
-            "latency_tier": official_bundle.latency_tier,
-        },
-        "provisional_outcome": provisional,
-        "confirmed_outcome": confirmed,
+        "latest_direct": _resolution_observation_payload(latest_bundle, latest),
+        "official_daily_extract": _resolution_observation_payload(official_bundle, official),
+        "provisional_outcome": provisional["status"],
+        "confirmed_outcome": confirmed["status"],
         "latency": {
-            "latest": latest_bundle.latency_diagnostics(),
-            "official": official_bundle.latency_diagnostics(),
+            "latest": _resolution_latency_payload(latest_bundle, latest),
+            "official": _resolution_latency_payload(official_bundle, official),
         },
         "action_operator": action,
     }
+
+
+def _resolution_observation_payload(bundle: Any, point: Any | None) -> dict[str, Any]:
+    polling_focus = bundle.polling_focus
+    expected_lag_seconds = bundle.expected_lag_seconds
+    if polling_focus is None and expected_lag_seconds is None:
+        polling_focus, expected_lag_seconds = _latency_operational_fields(bundle.source_provider, bundle.latency_tier)
+    source_lag_seconds = bundle.source_lag_seconds
+    if source_lag_seconds is None and point is not None and str(bundle.latency_tier).startswith("direct"):
+        observed_at = _parse_observation_timestamp(point.timestamp)
+        if observed_at is not None:
+            now = _utc_now()
+            if now.tzinfo is None:
+                now = now.replace(tzinfo=timezone.utc)
+            source_lag_seconds = max(0, int((now.astimezone(timezone.utc) - observed_at).total_seconds()))
+    return {
+        "available": point is not None,
+        "value": point.value if point else None,
+        "timestamp": point.timestamp if point else None,
+        "latency_tier": bundle.latency_tier,
+        "source_url": bundle.source_url,
+        "polling_focus": polling_focus,
+        "expected_lag_seconds": expected_lag_seconds,
+        "source_lag_seconds": source_lag_seconds,
+    }
+
+
+def _resolution_latency_payload(bundle: Any, point: Any | None) -> dict[str, Any]:
+    payload = bundle.latency_diagnostics()
+    observation = _resolution_observation_payload(bundle, point)
+    for key in ("polling_focus", "expected_lag_seconds", "source_lag_seconds"):
+        payload[key] = observation[key]
+    return payload
 
 
 def _build_resolution_outcome(structure: Any, observed_value: float | None, *, basis: str) -> dict[str, Any]:

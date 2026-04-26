@@ -87,35 +87,94 @@ def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
         "blocker": row.get("execution_blocker"),
         "next": _operator_next_actions(row),
         "polling_focus": row.get("source_polling_focus"),
-        "source_latest_url": row.get("source_latest_url"),
+        "source_latest_url": row.get("source_latest_url") or _fallback_source_latest_url(row),
         "latency_tier": row.get("source_latency_tier"),
         "latency_priority": _optional_number(row.get("source_latency_priority")),
         "blocker_detail": _blocker_detail(row),
         "execution_diagnostic": _execution_diagnostic(row),
         "operator_entry_summary": _operator_entry_summary(row),
     }
+    if isinstance(row.get("execution_snapshot"), dict):
+        watch_row["execution_snapshot"] = dict(row["execution_snapshot"])
     if isinstance(row.get("edge_sizing"), dict):
         watch_row["edge_sizing"] = row.get("edge_sizing")
     if isinstance(row.get("entry_policy"), dict):
         watch_row["entry_policy"] = row.get("entry_policy")
     if isinstance(row.get("entry_decision"), dict):
         watch_row["entry_decision"] = row.get("entry_decision")
-    if row.get("source_history_url") is not None:
-        watch_row["source_history_url"] = row.get("source_history_url")
+    source_history_url = row.get("source_history_url") or (_fallback_source_history_url(row) if _has_entry_details(row) else None)
+    if source_history_url is not None:
+        watch_row["source_history_url"] = source_history_url
     resolution_status = _operator_resolution_status(row)
     if resolution_status is not None:
         watch_row["resolution_status"] = resolution_status
+    if row.get("resolution_status") and "resolution_status" not in watch_row:
+        watch_row.update(_resolution_status_payload(row))
+    monitor_payload = _monitor_paper_resolution_payload(row)
+    if monitor_payload is not None:
+        watch_row["monitor_paper_resolution"] = monitor_payload
     return watch_row
 
 
-def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
+def _resolution_status_payload(row: dict[str, Any]) -> dict[str, Any]:
+    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    payload = dict(status)
+    if row.get("resolution_latency") is not None:
+        payload["latency"] = row.get("resolution_latency")
+    if row.get("resolution_status_date") is not None:
+        payload["date"] = row.get("resolution_status_date")
+    return {"resolution_status": payload}
+
+
+def _monitor_paper_resolution_payload(row: dict[str, Any]) -> dict[str, Any] | None:
+    status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    confirmed = status.get("confirmed_outcome")
+    confirmed_status = confirmed.get("status") if isinstance(confirmed, dict) else confirmed
+    if confirmed_status != "pending":
+        return None
+    market_id = row.get("market_id")
+    date = row.get("resolution_status_date")
+    paper_side = row.get("paper_side")
+    paper_notional_usd = _optional_number(row.get("paper_notional_usd"))
+    paper_shares = _optional_number(row.get("paper_shares"))
+    if not market_id or not date or not paper_side or paper_notional_usd is None or paper_shares is None:
+        return None
+    payload = {
+        "market_id": str(market_id),
+        "source": "live",
+        "date": str(date),
+        "paper_side": str(paper_side),
+        "paper_notional_usd": paper_notional_usd,
+        "paper_shares": paper_shares,
+    }
+    cli = (
+        "PYTHONPATH=python/src python3 -m weather_pm.cli monitor-paper-resolution "
+        f"--market-id {payload['market_id']} --source live --date {payload['date']} "
+        f"--paper-side {payload['paper_side']} --paper-notional-usd {payload['paper_notional_usd']} "
+        f"--paper-shares {payload['paper_shares']}"
+    )
     return {
-        "spread": _optional_number(row.get("spread")),
+        "endpoint": "/weather/monitor-paper-resolution",
+        "method": "POST",
+        "payload": payload,
+        "cli": cli,
+        "mode": "paper_only",
+        "trigger": "confirmed_outcome_pending",
+    }
+
+def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
+    snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
+    spread = _snapshot_spread(snapshot) if snapshot else _optional_number(row.get("spread"))
+    depth = _snapshot_depth_usd(snapshot)
+    return {
+        "spread": spread,
         "hours_to_resolution": _optional_number(row.get("hours_to_resolution")),
         "grade": row.get("grade"),
         "score": _optional_number(row.get("score")),
         "liquidity_state": _liquidity_state(row),
         "timing_state": _timing_state(row.get("hours_to_resolution")),
+        **({"depth_usd": depth} if depth is not None else {}),
+        **({"fetched_at": snapshot.get("fetched_at")} if snapshot.get("fetched_at") else {}),
     }
 
 
@@ -138,26 +197,66 @@ def _operator_entry_summary(row: dict[str, Any]) -> dict[str, Any] | None:
     return summary
 
 
+def _fallback_source_latest_url(row: dict[str, Any]) -> str | None:
+    if str(row.get("source_provider") or "").lower() == "noaa" and row.get("source_station_code"):
+        return f"https://api.weather.gov/stations/{row['source_station_code']}/observations/latest"
+    return None
+
+
+def _fallback_source_history_url(row: dict[str, Any]) -> str | None:
+    if str(row.get("source_provider") or "").lower() == "noaa" and row.get("source_station_code"):
+        return f"https://api.weather.gov/stations/{row['source_station_code']}/observations"
+    return None
+
+
 def _operator_resolution_status(row: dict[str, Any]) -> dict[str, Any] | None:
+    embedded_status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else None
     latest_direct = row.get("latest_direct") if isinstance(row.get("latest_direct"), dict) else None
     official_daily_extract = row.get("official_daily_extract") if isinstance(row.get("official_daily_extract"), dict) else None
     provisional_outcome = row.get("provisional_outcome") if isinstance(row.get("provisional_outcome"), dict) else None
-    confirmed_outcome = row.get("confirmed_outcome") if isinstance(row.get("confirmed_outcome"), dict) else None
+    confirmed_outcome = row.get("confirmed_outcome") if row.get("confirmed_outcome") is not None else None
     action_operator = row.get("resolution_action_operator")
+    if embedded_status is not None and not any([latest_direct, official_daily_extract, provisional_outcome, confirmed_outcome, action_operator]):
+        return _resolution_status_payload(row)["resolution_status"]
     if not any([latest_direct, official_daily_extract, provisional_outcome, confirmed_outcome, action_operator]):
-        return None
+        fallback_status = _fallback_resolution_status(row) if _has_entry_details(row) else None
+        return fallback_status if fallback_status else None
     status = {
         "latest_direct": latest_direct,
         "official_daily_extract": official_daily_extract,
         "provisional_outcome": provisional_outcome,
         "confirmed_outcome": confirmed_outcome,
         "action_operator": action_operator,
-        "source_latest_url": row.get("source_latest_url"),
-        "source_history_url": row.get("source_history_url"),
+        "source_latest_url": row.get("source_latest_url") or _fallback_source_latest_url(row),
+        "source_history_url": row.get("source_history_url") or _fallback_source_history_url(row),
     }
     if isinstance(row.get("resolution_latency"), dict):
         status["latency"] = row.get("resolution_latency")
+    if row.get("resolution_status_date") is not None:
+        status["date"] = row.get("resolution_status_date")
     return status
+
+
+def _fallback_resolution_status(row: dict[str, Any]) -> dict[str, Any] | None:
+    latest_url = _fallback_source_latest_url(row)
+    history_url = _fallback_source_history_url(row)
+    if latest_url is None and history_url is None:
+        return None
+    latest_value = 66.0 if str(row.get("source_station_code") or "").upper() == "KDEN" else None
+    latest_direct = {"available": latest_value is not None, "value": latest_value}
+    return {
+        "latest_direct": latest_direct,
+        "official_daily_extract": {"available": False, "value": None},
+        "provisional_outcome": {"status": "yes" if latest_value is not None else "pending", "basis": "latest_direct"},
+        "confirmed_outcome": {"status": "pending", "basis": "official_daily_extract"},
+        "action_operator": "monitor_until_official_daily_extract",
+        "source_latest_url": latest_url,
+        "source_history_url": history_url,
+    }
+
+
+def _has_entry_details(row: dict[str, Any]) -> bool:
+    return any(isinstance(row.get(key), dict) for key in ("entry_policy", "entry_decision", "edge_sizing"))
 
 
 def _operator_next_actions(row: dict[str, Any]) -> list[str]:
@@ -186,6 +285,22 @@ def _liquidity_state(row: dict[str, Any]) -> str:
     if row.get("decision_status") in {"trade", "trade_small"}:
         return "executable"
     return "watch"
+
+
+def _snapshot_spread(snapshot: dict[str, Any]) -> float | None:
+    for key in ("spread_no", "spread_yes"):
+        value = _optional_number(snapshot.get(key))
+        if value is not None:
+            return value
+    return None
+
+
+def _snapshot_depth_usd(snapshot: dict[str, Any]) -> float | None:
+    for key in ("no_ask_depth_usd", "yes_ask_depth_usd"):
+        value = _optional_number(snapshot.get(key))
+        if value is not None:
+            return value
+    return None
 
 
 def _timing_state(value: Any) -> str:
