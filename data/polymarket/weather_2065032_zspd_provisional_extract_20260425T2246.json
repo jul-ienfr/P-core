@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-04-25T22:39:58Z",
+  "market_day": {
+    "temperatureMax_C": 22.2,
+    "temperatureMax_F": 72,
+    "temperatureMin_C": 15.0,
+    "temperatureMin_F": 59,
+    "validTimeLocal": "2026-04-26T07:00:00+0800"
+  },
+  "market_id": "2065032",
+  "operator_status": "PROVISIONAL_ONLY_NOT_FINALIZED",
+  "provisional_assessment": {
+    "basis": "wunderground_embedded_forecast_not_final_history",
+    "max_c_decimal": 22.2,
+    "max_f": 72,
+    "no_21c_indication": true,
+    "rounded_c": 22
+  },
+  "rows": [
+    {
+      "temperatureMax_C": 22.2,
+      "temperatureMax_F": 72,
+      "temperatureMin_C": 15.0,
+      "temperatureMin_F": 59,
+      "validTimeLocal": "2026-04-26T07:00:00+0800"
+    },
+    {
+      "temperatureMax_C": 26.7,
+      "temperatureMax_F": 80,
+      "temperatureMin_C": 17.2,
+      "temperatureMin_F": 63,
+      "validTimeLocal": "2026-04-27T07:00:00+0800"
+    },
+    {
+      "temperatureMax_C": 18.3,
+      "temperatureMax_F": 65,
+      "temperatureMin_C": 12.8,
+      "temperatureMin_F": 55,
+      "validTimeLocal": "2026-04-28T07:00:00+0800"
+    },
+    {
+      "temperatureMax_C": 14.4,
+      "temperatureMax_F": 58,
+      "temperatureMin_C": 11.7,
+      "temperatureMin_F": 53,
+      "validTimeLocal": "2026-04-29T07:00:00+0800"
+    },
+    {
+      "temperatureMax_C": 19.4,
+      "temperatureMax_F": 67,
+      "temperatureMin_C": 11.7,
+      "temperatureMin_F": 53,
+      "validTimeLocal": "2026-04-30T07:00:00+0800"
+    },
+    {
+      "temperatureMax_C": 22.2,
+      "temperatureMax_F": 72,
+      "temperatureMin_C": 15.0,
+      "temperatureMin_F": 59,
+      "validTimeLocal": "2026-05-01T07:00:00+0800"
+    }
+  ],
+  "source": "Wunderground ZSPD",
+  "threshold_c": 21,
+  "url": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD/date/2026-04-26"
+}

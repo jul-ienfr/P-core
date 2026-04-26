@@ -1,0 +1,9 @@
+state,city,question,side,action,filled_usdc,shares,best_bid_now,best_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,paper_realized_pnl_usdc,reason
+active,Seoul,Will the highest temperature in Seoul be 20°C or higher on April 26?,NO,HOLD_CAPPED,17.24,70.485867,0.3,0.31,53.175,3.906,,large/capped position; no further add
+active,Beijing,Will the highest temperature in Beijing be 25°C on April 26?,NO,HOLD_CAPPED,15.0,24.1935,0.61,0.62,2.444,-0.242,,large/capped position; no further add
+active,Munich,Will the highest temperature in Munich be 18°C on April 26?,NO,HOLD_CAPPED,10.0,14.0845,0.68,0.71,2.607,-0.423,,large/capped position; no further add
+active,Shanghai,Will the highest temperature in Shanghai be 23°C on April 26?,NO,HOLD_MONITOR,4.7552,7.43,0.63,0.64,0.602,-0.074,,OK
+active,Munich,Will the highest temperature in Munich be 19°C on April 26?,NO,HOLD_MONITOR,5.0,7.6923,0.65,0.67,2.455,-0.0,,OK
+active,Karachi,Will the highest temperature in Karachi be 36°C or higher on April 27?,NO,HOLD_CAPPED,10.0,18.867925,0.43,0.51,8.843,-1.887,,large/capped position; no further add
+closed,Seoul,Will the highest temperature in Seoul be 19°C on April 27?,NO,EXIT_PAPER,10.0,12.1952,0.8,0.81,-0.476,-0.244,-0.24384,p_side 0.7810 < hard_stop 0.7900
+closed,Beijing,Will the highest temperature in Beijing be 24°C on April 26?,NO,EXIT_PAPER,2.0,2.439,0.8,0.84,-0.095,-0.049,-0.0488,p_side 0.7810 < hard_stop 0.7900

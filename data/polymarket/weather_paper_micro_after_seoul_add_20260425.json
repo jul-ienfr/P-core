@@ -1,0 +1,492 @@
+{
+  "summary": {
+    "generated_at": "2026-04-25T14:25:14.725683Z",
+    "mode": "updated paper ledger after applying CAN_ADD_MICRO_PAPER monitor fills; no real orders",
+    "initial_spend": 39.0,
+    "added_spend": 15.0,
+    "total_spend": 54.0,
+    "position_count": 7,
+    "base_ev_usdc": 28.07,
+    "base_ev_pct": 52.0,
+    "portfolio_worst_stress": {
+      "forecast_bias_c": 2,
+      "sigma_c": 1.0,
+      "ev_usdc": 17.99,
+      "ev_pct_of_spend": 33.3
+    },
+    "portfolio_best_stress": {
+      "forecast_bias_c": -2,
+      "sigma_c": 2.8,
+      "ev_usdc": 32.28,
+      "ev_pct_of_spend": 59.8
+    },
+    "paper_total_filled_usdc": 63.9952,
+    "last_paper_add_timestamp": "2026-04-25T14:30:53.781187Z"
+  },
+  "positions": [
+    {
+      "city": "Seoul",
+      "date": "April 26",
+      "station": "RKSI",
+      "side": "NO",
+      "temp": 20,
+      "unit": "C",
+      "kind": "higher",
+      "question": "Will the highest temperature in Seoul be 20°C or higher on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026",
+      "station_forecast_max_c": 18,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.28,
+          "usdc": 2.24,
+          "shares": 8.0
+        },
+        {
+          "batch": "add_monitor_1",
+          "avg": 0.2402,
+          "usdc": 5.0,
+          "shares": 20.8192
+        }
+      ],
+      "filled_usdc": 17.24,
+      "shares": 70.485867,
+      "entry_avg": 0.2446,
+      "base_p_side": 0.858,
+      "base_ev_usdc": 17.487,
+      "base_ev_pct": 241.5,
+      "stress_good_scenarios": 20,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": 1.652,
+      "stress_worst_edge": 0.0573,
+      "stress_worst_scenario": {
+        "forecast_bias_c": 2,
+        "sigma_c": 1.0,
+        "p_side": 0.3085,
+        "ev_usdc": 1.652,
+        "edge": 0.0573
+      },
+      "paper_adds": [
+        {
+          "timestamp": "2026-04-25T14:30:53.781179Z",
+          "side": "NO",
+          "budget_usdc": 10.0,
+          "limit": 0.25,
+          "paper_fill_price": 0.24,
+          "paper_fill_shares": 41.666667,
+          "source": "hold_add_exit_refresh_20260425",
+          "note": "paper-only simulated limit add; no real order placed"
+        }
+      ]
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "side": "NO",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026",
+      "station_forecast_max_c": 26,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.62,
+          "usdc": 10.0,
+          "shares": 16.129
+        },
+        {
+          "batch": "add_monitor_1",
+          "avg": 0.62,
+          "usdc": 5.0,
+          "shares": 8.0645
+        }
+      ],
+      "filled_usdc": 15.0,
+      "shares": 24.1935,
+      "entry_avg": 0.62,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 3.907,
+      "base_ev_pct": 26.0,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.071,
+      "stress_worst_edge": -0.0029,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.071,
+        "edge": -0.0029
+      }
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "station_forecast_max_c": 20,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.71,
+          "usdc": 10.0,
+          "shares": 14.0845
+        }
+      ],
+      "filled_usdc": 10.0,
+      "shares": 14.0845,
+      "entry_avg": 0.71,
+      "base_p_side": 0.8951,
+      "base_ev_usdc": 2.607,
+      "base_ev_pct": 26.1,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -1.309,
+      "stress_worst_edge": -0.0929,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -2,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -1.309,
+        "edge": -0.0929
+      }
+    },
+    {
+      "city": "Seoul",
+      "date": "April 27",
+      "station": "RKSI",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026",
+      "station_forecast_max_c": 16,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.82,
+          "usdc": 5.0,
+          "shares": 6.0976
+        },
+        {
+          "batch": "add_monitor_1",
+          "avg": 0.82,
+          "usdc": 5.0,
+          "shares": 6.0976
+        }
+      ],
+      "filled_usdc": 10.0,
+      "shares": 12.1952,
+      "entry_avg": 0.82,
+      "base_p_side": 0.9691,
+      "base_ev_usdc": 1.819,
+      "base_ev_pct": 18.2,
+      "stress_good_scenarios": 18,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.753,
+      "stress_worst_edge": -0.0617,
+      "stress_worst_scenario": {
+        "forecast_bias_c": 2,
+        "sigma_c": 1.0,
+        "p_side": 0.7583,
+        "ev_usdc": -0.753,
+        "edge": -0.0617
+      }
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 26",
+      "station": "ZSPD",
+      "side": "NO",
+      "temp": 23,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Shanghai be 23°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026",
+      "station_forecast_max_c": 22,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.64,
+          "usdc": 4.7552,
+          "shares": 7.43
+        }
+      ],
+      "filled_usdc": 4.7552,
+      "shares": 7.43,
+      "entry_avg": 0.64,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 1.051,
+      "base_ev_pct": 22.1,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.17,
+      "stress_worst_edge": -0.0229,
+      "stress_worst_scenario": {
+        "forecast_bias_c": 1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.17,
+        "edge": -0.0229
+      }
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Munich be 19°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "station_forecast_max_c": 20,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.65,
+          "usdc": 5.0,
+          "shares": 7.6923
+        }
+      ],
+      "filled_usdc": 5.0,
+      "shares": 7.6923,
+      "entry_avg": 0.65,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 1.012,
+      "base_ev_pct": 20.2,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.253,
+      "stress_worst_edge": -0.0329,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.253,
+        "edge": -0.0329
+      }
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "side": "NO",
+      "temp": 24,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Beijing be 24°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026",
+      "station_forecast_max_c": 26,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.82,
+          "usdc": 2.0,
+          "shares": 2.439
+        }
+      ],
+      "filled_usdc": 2.0,
+      "shares": 2.439,
+      "entry_avg": 0.82,
+      "base_p_side": 0.8951,
+      "base_ev_usdc": 0.183,
+      "base_ev_pct": 9.2,
+      "stress_good_scenarios": 15,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.495,
+      "stress_worst_edge": -0.2029,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -2,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.495,
+        "edge": -0.2029
+      }
+    }
+  ],
+  "applied_additions": [
+    {
+      "batch": "add_monitor_1",
+      "city": "Seoul",
+      "date": "April 26",
+      "station": "RKSI",
+      "side": "NO",
+      "temp": 20,
+      "unit": "C",
+      "kind": "higher",
+      "question": "Will the highest temperature in Seoul be 20°C or higher on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026",
+      "entry_avg": 0.2402,
+      "filled_usdc": 5.0,
+      "shares": 20.8192,
+      "station_forecast_max_c": 18,
+      "source_status": "CAN_ADD_MICRO_PAPER"
+    },
+    {
+      "batch": "add_monitor_1",
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "side": "NO",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026",
+      "entry_avg": 0.62,
+      "filled_usdc": 5.0,
+      "shares": 8.0645,
+      "station_forecast_max_c": 26,
+      "source_status": "CAN_ADD_MICRO_PAPER"
+    },
+    {
+      "batch": "add_monitor_1",
+      "city": "Seoul",
+      "date": "April 27",
+      "station": "RKSI",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026",
+      "entry_avg": 0.82,
+      "filled_usdc": 5.0,
+      "shares": 6.0976,
+      "station_forecast_max_c": 16,
+      "source_status": "CAN_ADD_MICRO_PAPER"
+    }
+  ],
+  "portfolio_stress_sorted_worst_first": [
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 1.0,
+      "ev_usdc": 17.99,
+      "ev_pct_of_spend": 33.3
+    },
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 1.4,
+      "ev_usdc": 19.06,
+      "ev_pct_of_spend": 35.3
+    },
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 2.0,
+      "ev_usdc": 19.63,
+      "ev_pct_of_spend": 36.3
+    },
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 2.8,
+      "ev_usdc": 20.38,
+      "ev_pct_of_spend": 37.7
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 2.8,
+      "ev_usdc": 23.26,
+      "ev_pct_of_spend": 43.1
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 2.0,
+      "ev_usdc": 23.41,
+      "ev_pct_of_spend": 43.4
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 1.4,
+      "ev_usdc": 25.26,
+      "ev_pct_of_spend": 46.8
+    },
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 1.0,
+      "ev_usdc": 26.02,
+      "ev_pct_of_spend": 48.2
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 2.8,
+      "ev_usdc": 26.3,
+      "ev_pct_of_spend": 48.7
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 2.0,
+      "ev_usdc": 26.66,
+      "ev_pct_of_spend": 49.4
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 1.4,
+      "ev_usdc": 28.07,
+      "ev_pct_of_spend": 52.0
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 1.0,
+      "ev_usdc": 28.35,
+      "ev_pct_of_spend": 52.5
+    },
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 1.4,
+      "ev_usdc": 28.44,
+      "ev_pct_of_spend": 52.7
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 1.0,
+      "ev_usdc": 28.77,
+      "ev_pct_of_spend": 53.3
+    },
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 2.8,
+      "ev_usdc": 29.33,
+      "ev_pct_of_spend": 54.3
+    },
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 2.0,
+      "ev_usdc": 29.39,
+      "ev_pct_of_spend": 54.4
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 1.0,
+      "ev_usdc": 30.36,
+      "ev_pct_of_spend": 56.2
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 1.4,
+      "ev_usdc": 30.87,
+      "ev_pct_of_spend": 57.2
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 2.0,
+      "ev_usdc": 32.27,
+      "ev_pct_of_spend": 59.8
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 2.8,
+      "ev_usdc": 32.28,
+      "ev_pct_of_spend": 59.8
+    }
+  ]
+}

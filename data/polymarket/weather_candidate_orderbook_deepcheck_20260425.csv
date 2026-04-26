@@ -1,0 +1,11 @@
+city,date,accounts,consensus_side,consensus_top_temp,forecast_max_proxy,target_temp,forecast_exact_prob_model,market_yes_mid,model_minus_market_yes,market_id,yes_best_bid,yes_best_ask_gamma,spread,resolution_source
+Shanghai,April 26,10,NO,21°C,23.8,24°C,0.319,0.135,0.184,2065035,0.13,0.14,0.01,https://www.wunderground.com/history/daily/cn/shanghai/ZSPD
+Moscow,April 26,9,NO,12°C,10.0,10°C,0.323,0.355,-0.032,2065208,0.34,0.37,0.03,
+Tel Aviv,April 26,9,NO,22°C,24.5,24°C,0.298,0.0095,0.288,2064999,0.009,0.01,0.001,
+Munich,April 26,11,NO,16°C,18.3,18°C,0.314,0.305,0.009,2064992,0.29,0.32,0.03,https://www.wunderground.com/history/daily/de/munich/EDDM
+Beijing,April 26,8,NO,22°C,24.4,24°C,0.307,0.175,0.132,2065110,0.17,0.18,0.01,https://www.wunderground.com/history/daily/cn/beijing/ZBAA
+London,April 26,11,NO,20°C,18.2,18°C,0.319,0.415,-0.096,2064826,0.4,0.43,0.03,https://www.wunderground.com/history/daily/gb/london/EGLC
+Seoul,April 27,6,NO,15°C,16.5,16°C,0.298,0.125,0.173,2074309,0.11,0.14,0.03,https://www.wunderground.com/history/daily/kr/incheon/RKSI
+Ankara,April 26,9,NO,18°C,20.4,20°C,0.307,0.305,0.002,2064959,0.29,0.32,0.03,https://www.wunderground.com/history/daily/tr/%C3%A7ubuk/LTAC
+Shanghai,April 27,3,NO,24°C,25.8,26°C,0.319,0.305,0.014,2074476,0.28,0.33,0.05,https://www.wunderground.com/history/daily/cn/shanghai/ZSPD
+Seoul,April 26,10,NO,17°C,22.6,23°C,0.307,0.175,0.132,2064873,0.16,0.19,0.03,https://www.wunderground.com/history/daily/kr/incheon/RKSI

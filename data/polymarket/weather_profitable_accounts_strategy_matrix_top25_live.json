@@ -1,0 +1,2556 @@
+{
+  "generated_at": "2026-04-25T13:23:06Z",
+  "source_summary": "/home/jul/prediction_core/data/polymarket/weather_profitable_accounts_classified_top100_live_refresh_summary.json",
+  "selected_count": 25,
+  "accounts": [
+    {
+      "handle": "ColdMath",
+      "wallet": "0x594edb9112f526fa6a80b8f858a6379c8a2c1c11",
+      "rank": 3,
+      "pnl_usd": 121335.48,
+      "roi_pct": 1.373,
+      "profile_url": "https://polymarket.com/profile/0x594edb9112f526fa6a80b8f858a6379c8a2c1c11",
+      "weather_item_count": 383,
+      "active_weather_positions": 146,
+      "recent_weather_activity": 237,
+      "market_type_counts": {
+        "exact_value": 285,
+        "threshold": 52,
+        "exact_range": 46
+      },
+      "top_cities": [
+        {
+          "city": "Paris",
+          "count": 127
+        },
+        {
+          "city": "Helsinki",
+          "count": 77
+        },
+        {
+          "city": "Singapore",
+          "count": 18
+        },
+        {
+          "city": "Miami",
+          "count": 15
+        },
+        {
+          "city": "New York City",
+          "count": 14
+        },
+        {
+          "city": "Wellington",
+          "count": 12
+        },
+        {
+          "city": "Atlanta",
+          "count": 11
+        },
+        {
+          "city": "Chicago",
+          "count": 8
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Paris",
+          "date": "April 25",
+          "count": 126
+        },
+        {
+          "city": "Helsinki",
+          "date": "April 25",
+          "count": 76
+        },
+        {
+          "city": "Singapore",
+          "date": "April 25",
+          "count": 13
+        },
+        {
+          "city": "Miami",
+          "date": "April 27",
+          "count": 9
+        },
+        {
+          "city": "Moscow",
+          "date": "April 26",
+          "count": 8
+        },
+        {
+          "city": "New York City",
+          "date": "April 22",
+          "count": 4
+        },
+        {
+          "city": "Wellington",
+          "date": "be 21",
+          "count": 3
+        },
+        {
+          "city": "London",
+          "date": "be 8",
+          "count": 3
+        },
+        {
+          "city": "New York City",
+          "date": "April 24",
+          "count": 3
+        },
+        {
+          "city": "Ankara",
+          "date": "February 26",
+          "count": 2
+        },
+        {
+          "city": "Wellington",
+          "date": "be 14",
+          "count": 2
+        },
+        {
+          "city": "Buenos Aires",
+          "date": "February 26",
+          "count": 2
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Cape Town be 16\u00b0C on April 20?",
+        "Will the highest temperature in Ankara be 10\u00b0C or higher on March 1?",
+        "Will the highest temperature in Wellington be 21\u00b0C or higher on February 28?",
+        "Will the highest temperature in London be 11\u00b0C on April 14?",
+        "Will the highest temperature in Ankara be 13\u00b0C or higher on March 21?",
+        "Will the highest temperature in Lucknow be 35\u00b0C on March 5?",
+        "Will the highest temperature in Ankara be 7\u00b0C on February 26?",
+        "Will the highest temperature in Ankara be 8\u00b0C or higher on February 26?",
+        "Will the highest temperature in Wellington be 14\u00b0C or below on February 26?",
+        "Will the highest temperature in Beijing be 23\u00b0C on March 24?",
+        "Will the highest temperature in Atlanta be between 60-61\u00b0F on February 17?",
+        "Will the highest temperature in Chicago be between 44-45\u00b0F on February 19?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "gopfan",
+      "wallet": "0x6af75d4e4aaf700450efbac3708cce1665810ff1",
+      "rank": 4,
+      "pnl_usd": 118426.47,
+      "roi_pct": 16.006,
+      "profile_url": "https://polymarket.com/profile/0x6af75d4e4aaf700450efbac3708cce1665810ff1",
+      "weather_item_count": 34,
+      "active_weather_positions": 0,
+      "recent_weather_activity": 34,
+      "market_type_counts": {
+        "weather_other": 6,
+        "temperature_other": 24,
+        "exact_range": 4
+      },
+      "top_cities": [
+        {
+          "city": "unknown",
+          "count": 34
+        }
+      ],
+      "repeated_city_date_events": [],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will there be more than 25 named storms during Atlantic Hurricane Season?",
+        "Will Ukraine hold Kursk through October 31?",
+        "August temperature increase greater than 1.29\u00b0C?",
+        "August temperature increase by between 1.25-1.29\u00b0C?",
+        "August temperature increase by between 1.20-1.24\u00b0C?",
+        "Will Ukraine hold Kursk through Aug 31?",
+        "August temperature increase greater than 1.29\u00b0C?",
+        "August temperature increase by between 1.20-1.24\u00b0C?",
+        "August temperature increase greater than 1.29\u00b0C?",
+        "August temperature increase greater than 1.29\u00b0C?",
+        "August temperature increase greater than 1.29\u00b0C?",
+        "August temperature increase by between 1.20-1.24\u00b0C?"
+      ],
+      "refined_pattern": "weather surface generalist"
+    },
+    {
+      "handle": "Hans323",
+      "wallet": "0x0f37cb80dee49d55b5f6d9e595d52591d6371410",
+      "rank": 6,
+      "pnl_usd": 80872.37,
+      "roi_pct": 1.16,
+      "profile_url": "https://polymarket.com/profile/0x0f37cb80dee49d55b5f6d9e595d52591d6371410",
+      "weather_item_count": 63,
+      "active_weather_positions": 0,
+      "recent_weather_activity": 63,
+      "market_type_counts": {
+        "exact_range": 2,
+        "exact_value": 36,
+        "threshold": 23,
+        "weather_other": 2
+      },
+      "top_cities": [
+        {
+          "city": "Toronto",
+          "count": 21
+        },
+        {
+          "city": "Tokyo",
+          "count": 10
+        },
+        {
+          "city": "Manila",
+          "count": 8
+        },
+        {
+          "city": "Seoul",
+          "count": 5
+        },
+        {
+          "city": "Madrid",
+          "count": 5
+        },
+        {
+          "city": "Guangzhou",
+          "count": 3
+        },
+        {
+          "city": "London",
+          "count": 3
+        },
+        {
+          "city": "New York City",
+          "count": 2
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Toronto",
+          "date": "March 5",
+          "count": 21
+        },
+        {
+          "city": "Tokyo",
+          "date": "April 15",
+          "count": 10
+        },
+        {
+          "city": "Manila",
+          "date": "April 15",
+          "count": 8
+        },
+        {
+          "city": "Seoul",
+          "date": "April 15",
+          "count": 5
+        },
+        {
+          "city": "Madrid",
+          "date": "April 6",
+          "count": 5
+        },
+        {
+          "city": "Guangzhou",
+          "date": "April 15",
+          "count": 3
+        },
+        {
+          "city": "London",
+          "date": "be 17",
+          "count": 3
+        },
+        {
+          "city": "New York City",
+          "date": "April 21",
+          "count": 2
+        },
+        {
+          "city": "Moscow",
+          "date": "April 4",
+          "count": 2
+        },
+        {
+          "city": "Denver",
+          "date": "March 24",
+          "count": 2
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in New York City be between 50-51\u00b0F on April 21?",
+        "Will the highest temperature in New York City be between 50-51\u00b0F on April 21?",
+        "Will the highest temperature in Manila be 33\u00b0C on April 15?",
+        "Will the highest temperature in Guangzhou be 30\u00b0C or below on April 15?",
+        "Will the highest temperature in Manila be 34\u00b0C on April 15?",
+        "Will the highest temperature in Manila be 34\u00b0C on April 15?",
+        "Will the highest temperature in Manila be 34\u00b0C on April 15?",
+        "Will the highest temperature in Manila be 34\u00b0C on April 15?",
+        "Will the highest temperature in Manila be 34\u00b0C on April 15?",
+        "Will the highest temperature in Manila be 33\u00b0C on April 15?",
+        "Will the highest temperature in Manila be 34\u00b0C on April 15?",
+        "Will the highest temperature in Guangzhou be 30\u00b0C or below on April 15?"
+      ],
+      "refined_pattern": "mixed exact-bin + threshold surface"
+    },
+    {
+      "handle": "Handsanitizer23",
+      "wallet": "0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+      "rank": 7,
+      "pnl_usd": 71174.4,
+      "roi_pct": 7.466,
+      "profile_url": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+      "weather_item_count": 203,
+      "active_weather_positions": 15,
+      "recent_weather_activity": 188,
+      "market_type_counts": {
+        "exact_value": 169,
+        "threshold": 16,
+        "exact_range": 18
+      },
+      "top_cities": [
+        {
+          "city": "Guangzhou",
+          "count": 132
+        },
+        {
+          "city": "Atlanta",
+          "count": 12
+        },
+        {
+          "city": "Shenzhen",
+          "count": 6
+        },
+        {
+          "city": "Lucknow",
+          "count": 6
+        },
+        {
+          "city": "Wellington",
+          "count": 5
+        },
+        {
+          "city": "Hong Kong",
+          "count": 5
+        },
+        {
+          "city": "Shanghai",
+          "count": 5
+        },
+        {
+          "city": "Seoul",
+          "count": 4
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Guangzhou",
+          "date": "April 16",
+          "count": 132
+        },
+        {
+          "city": "Hong Kong",
+          "date": "April 5",
+          "count": 5
+        },
+        {
+          "city": "Shenzhen",
+          "date": "March 22",
+          "count": 4
+        },
+        {
+          "city": "Atlanta",
+          "date": "March 20",
+          "count": 4
+        },
+        {
+          "city": "Wellington",
+          "date": "be 21",
+          "count": 3
+        },
+        {
+          "city": "Shanghai",
+          "date": "March 19",
+          "count": 3
+        },
+        {
+          "city": "Lucknow",
+          "date": "March 6",
+          "count": 2
+        },
+        {
+          "city": "Lucknow",
+          "date": "March 9",
+          "count": 2
+        },
+        {
+          "city": "Seoul",
+          "date": "March 8",
+          "count": 2
+        },
+        {
+          "city": "Dallas",
+          "date": "March 4",
+          "count": 2
+        },
+        {
+          "city": "London",
+          "date": "be 16",
+          "count": 2
+        },
+        {
+          "city": "Dallas",
+          "date": "March 19",
+          "count": 2
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Guangzhou be 31\u00b0C on April 16?",
+        "Will the highest temperature in Shenzhen be 28\u00b0C on March 22?",
+        "Will the highest temperature in Lucknow be 35\u00b0C on March 6?",
+        "Will the highest temperature in Lucknow be 36\u00b0C or below on March 9?",
+        "Will the highest temperature in Seoul be 4\u00b0C on March 8?",
+        "Will the highest temperature in Dallas be between 72-73\u00b0F on March 4?",
+        "Will the highest temperature in London be 16\u00b0C on March 3?",
+        "Will the highest temperature in Dallas be between 84-85\u00b0F on March 19?",
+        "Will the highest temperature in London be 18\u00b0C or higher on March 2?",
+        "Will the highest temperature in Toronto be 3\u00b0C on March 12?",
+        "Will the highest temperature in Wellington be 20\u00b0C on February 26?",
+        "Will the highest temperature in Wellington be 21\u00b0C on February 24?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "automatedAItradingbot",
+      "wallet": "0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11",
+      "rank": 8,
+      "pnl_usd": 64617.33,
+      "roi_pct": 2.735,
+      "profile_url": "https://polymarket.com/profile/0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11",
+      "weather_item_count": 171,
+      "active_weather_positions": 18,
+      "recent_weather_activity": 153,
+      "market_type_counts": {
+        "exact_value": 105,
+        "exact_range": 25,
+        "threshold": 29,
+        "weather_other": 5,
+        "temperature_other": 7
+      },
+      "top_cities": [
+        {
+          "city": "Seoul",
+          "count": 73
+        },
+        {
+          "city": "unknown",
+          "count": 12
+        },
+        {
+          "city": "Lagos",
+          "count": 10
+        },
+        {
+          "city": "Shanghai",
+          "count": 9
+        },
+        {
+          "city": "Tokyo",
+          "count": 6
+        },
+        {
+          "city": "Shenzhen",
+          "count": 6
+        },
+        {
+          "city": "Sao Paulo",
+          "count": 5
+        },
+        {
+          "city": "Dallas",
+          "count": 5
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Seoul",
+          "date": "April 24",
+          "count": 46
+        },
+        {
+          "city": "Seoul",
+          "date": "April 23",
+          "count": 13
+        },
+        {
+          "city": "Sao Paulo",
+          "date": "April 19",
+          "count": 5
+        },
+        {
+          "city": "Lagos",
+          "date": "April 19",
+          "count": 5
+        },
+        {
+          "city": "Denver",
+          "date": "April 15",
+          "count": 5
+        },
+        {
+          "city": "unknown",
+          "date": "April 24",
+          "count": 5
+        },
+        {
+          "city": "Seoul",
+          "date": "April 21",
+          "count": 5
+        },
+        {
+          "city": "Shanghai",
+          "date": "April 4",
+          "count": 5
+        },
+        {
+          "city": "Lagos",
+          "date": "April 15",
+          "count": 5
+        },
+        {
+          "city": "Houston",
+          "date": "April 19",
+          "count": 4
+        },
+        {
+          "city": "Buenos Aires",
+          "date": "April 19",
+          "count": 4
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Seoul be 22\u00b0C on April 23?",
+        "Will the highest temperature in Los Angeles be between 70-71\u00b0F on April 19?",
+        "Will the highest temperature in Seoul be 17\u00b0C on April 17?",
+        "Will the highest temperature in Chicago be between 48-49\u00b0F on April 19?",
+        "Will the highest temperature in Sao Paulo be 28\u00b0C on April 19?",
+        "Will the highest temperature in Chicago be between 72-73\u00b0F on April 15?",
+        "Will the highest temperature in Lagos be 32\u00b0C on April 19?",
+        "Will the highest temperature in San Francisco be between 62-63\u00b0F on April 15?",
+        "Will the highest temperature in London be 15\u00b0C on April 19?",
+        "Will the highest temperature in Dallas be between 72-73\u00b0F on April 19?",
+        "Will the highest temperature in Houston be between 70-71\u00b0F on April 19?",
+        "Will the highest temperature in Buenos Aires be 26\u00b0C on April 19?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "BeefSlayer",
+      "wallet": "0x331bf91c132af9d921e1908ca0979363fc47193f",
+      "rank": 9,
+      "pnl_usd": 63460.27,
+      "roi_pct": 4.472,
+      "profile_url": "https://polymarket.com/profile/0x331bf91c132af9d921e1908ca0979363fc47193f",
+      "weather_item_count": 252,
+      "active_weather_positions": 4,
+      "recent_weather_activity": 248,
+      "market_type_counts": {
+        "exact_value": 38,
+        "threshold": 28,
+        "exact_range": 186
+      },
+      "top_cities": [
+        {
+          "city": "New York City",
+          "count": 86
+        },
+        {
+          "city": "Atlanta",
+          "count": 46
+        },
+        {
+          "city": "Seoul",
+          "count": 41
+        },
+        {
+          "city": "Seattle",
+          "count": 31
+        },
+        {
+          "city": "Chicago",
+          "count": 21
+        },
+        {
+          "city": "Houston",
+          "count": 8
+        },
+        {
+          "city": "Los Angeles",
+          "count": 6
+        },
+        {
+          "city": "Austin",
+          "count": 6
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "New York City",
+          "date": "April 18",
+          "count": 48
+        },
+        {
+          "city": "New York City",
+          "date": "April 24",
+          "count": 22
+        },
+        {
+          "city": "Seoul",
+          "date": "April 21",
+          "count": 16
+        },
+        {
+          "city": "Atlanta",
+          "date": "April 22",
+          "count": 15
+        },
+        {
+          "city": "Seattle",
+          "date": "April 23",
+          "count": 12
+        },
+        {
+          "city": "Chicago",
+          "date": "April 18",
+          "count": 12
+        },
+        {
+          "city": "Seattle",
+          "date": "April 24",
+          "count": 11
+        },
+        {
+          "city": "Seoul",
+          "date": "April 18",
+          "count": 9
+        },
+        {
+          "city": "Seoul",
+          "date": "April 23",
+          "count": 8
+        },
+        {
+          "city": "Atlanta",
+          "date": "April 20",
+          "count": 8
+        },
+        {
+          "city": "New York City",
+          "date": "April 23",
+          "count": 6
+        },
+        {
+          "city": "Seattle",
+          "date": "April 21",
+          "count": 6
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Seoul be 20\u00b0C on April 25?",
+        "Will the highest temperature in Atlanta be 71\u00b0F or below on April 25?",
+        "Will the highest temperature in Miami be between 86-87\u00b0F on April 25?",
+        "Will the highest temperature in New York City be between 62-63\u00b0F on April 24?",
+        "Will the highest temperature in Atlanta be 71\u00b0F or below on April 25?",
+        "Will the highest temperature in Miami be between 86-87\u00b0F on April 25?",
+        "Will the highest temperature in Atlanta be 71\u00b0F or below on April 25?",
+        "Will the highest temperature in Atlanta be 71\u00b0F or below on April 25?",
+        "Will the highest temperature in Atlanta be between 86-87\u00b0F on April 22?",
+        "Will the lowest temperature in Seoul be 10\u00b0C on April 23?",
+        "Will the highest temperature in Atlanta be between 82-83\u00b0F on April 22?",
+        "Will the highest temperature in New York City be between 64-65\u00b0F on April 24?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "BigMike11",
+      "wallet": "0xecdbd79566a25693b9971c48d7de84bc05f7da79",
+      "rank": 10,
+      "pnl_usd": 62776.72,
+      "roi_pct": 7.379,
+      "profile_url": "https://polymarket.com/profile/0xecdbd79566a25693b9971c48d7de84bc05f7da79",
+      "weather_item_count": 6,
+      "active_weather_positions": 0,
+      "recent_weather_activity": 6,
+      "market_type_counts": {
+        "weather_other": 6
+      },
+      "top_cities": [
+        {
+          "city": "unknown",
+          "count": 6
+        }
+      ],
+      "repeated_city_date_events": [],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Russia x Ukraine ceasefire in 2025?",
+        "Russia x Ukraine ceasefire in 2025?",
+        "Russia x Ukraine ceasefire in 2025?",
+        "Russia x Ukraine ceasefire in 2025?",
+        "Russia x Ukraine ceasefire by August 31?",
+        "Russia x Ukraine ceasefire by August 31?"
+      ],
+      "refined_pattern": "thin/recent-data-limited weather-heavy"
+    },
+    {
+      "handle": "Kapii",
+      "wallet": "0xb74711992caf6d04fa55eecc46b8efc95311b050",
+      "rank": 11,
+      "pnl_usd": 57190.13,
+      "roi_pct": 3.119,
+      "profile_url": "https://polymarket.com/profile/0xb74711992caf6d04fa55eecc46b8efc95311b050",
+      "weather_item_count": 5,
+      "active_weather_positions": 4,
+      "recent_weather_activity": 1,
+      "market_type_counts": {
+        "exact_range": 3,
+        "temperature_other": 1,
+        "weather_other": 1
+      },
+      "top_cities": [
+        {
+          "city": "unknown",
+          "count": 5
+        }
+      ],
+      "repeated_city_date_events": [],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will global temperature increase by between 0.90\u20130.94\u00baC in July 2025?",
+        "Will global temperature increase by between 0.95\u20130.99\u00baC in July 2025?",
+        "Will global temperature increase by between 1.00\u20131.04\u00baC in July 2025?",
+        "Will global temperature increase by more than 1.19\u00baC in October 2025 (LS)?",
+        "Russia x Ukraine ceasefire in 2025?"
+      ],
+      "refined_pattern": "thin/recent-data-limited weather-heavy"
+    },
+    {
+      "handle": "WeatherTraderBot",
+      "wallet": "0xacc8e9dcabf9d65a5c78e3bec6941ed53a2b7d08",
+      "rank": 12,
+      "pnl_usd": 57179.74,
+      "roi_pct": 3.198,
+      "profile_url": "https://polymarket.com/profile/0xacc8e9dcabf9d65a5c78e3bec6941ed53a2b7d08",
+      "weather_item_count": 73,
+      "active_weather_positions": 2,
+      "recent_weather_activity": 71,
+      "market_type_counts": {
+        "exact_value": 70,
+        "threshold": 1,
+        "exact_range": 2
+      },
+      "top_cities": [
+        {
+          "city": "London",
+          "count": 66
+        },
+        {
+          "city": "Seoul",
+          "count": 5
+        },
+        {
+          "city": "New York City",
+          "count": 2
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "London",
+          "date": "be 17",
+          "count": 52
+        },
+        {
+          "city": "London",
+          "date": "be 16",
+          "count": 3
+        },
+        {
+          "city": "London",
+          "date": "be 9",
+          "count": 3
+        },
+        {
+          "city": "Seoul",
+          "date": "February 1",
+          "count": 3
+        },
+        {
+          "city": "London",
+          "date": "be 6",
+          "count": 2
+        },
+        {
+          "city": "London",
+          "date": "be 10",
+          "count": 2
+        },
+        {
+          "city": "London",
+          "date": "be 8",
+          "count": 2
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 16\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?",
+        "Will the highest temperature in London be 17\u00b0C on March 24?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "HondaCivic",
+      "wallet": "0x15ceffed7bf820cd2d90f90ea24ae9909f5cd5fa",
+      "rank": 13,
+      "pnl_usd": 56197.56,
+      "roi_pct": 0.879,
+      "profile_url": "https://polymarket.com/profile/0x15ceffed7bf820cd2d90f90ea24ae9909f5cd5fa",
+      "weather_item_count": 251,
+      "active_weather_positions": 2,
+      "recent_weather_activity": 249,
+      "market_type_counts": {
+        "exact_value": 87,
+        "exact_range": 156,
+        "threshold": 8
+      },
+      "top_cities": [
+        {
+          "city": "Seattle",
+          "count": 43
+        },
+        {
+          "city": "Ankara",
+          "count": 28
+        },
+        {
+          "city": "Denver",
+          "count": 25
+        },
+        {
+          "city": "Warsaw",
+          "count": 24
+        },
+        {
+          "city": "New York City",
+          "count": 23
+        },
+        {
+          "city": "Miami",
+          "count": 21
+        },
+        {
+          "city": "Chicago",
+          "count": 18
+        },
+        {
+          "city": "Los Angeles",
+          "count": 17
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Seattle",
+          "date": "April 24",
+          "count": 43
+        },
+        {
+          "city": "Ankara",
+          "date": "April 25",
+          "count": 25
+        },
+        {
+          "city": "Denver",
+          "date": "April 24",
+          "count": 25
+        },
+        {
+          "city": "Miami",
+          "date": "April 24",
+          "count": 21
+        },
+        {
+          "city": "Chicago",
+          "date": "April 24",
+          "count": 18
+        },
+        {
+          "city": "Warsaw",
+          "date": "April 25",
+          "count": 15
+        },
+        {
+          "city": "Los Angeles",
+          "date": "April 24",
+          "count": 15
+        },
+        {
+          "city": "New York City",
+          "date": "April 24",
+          "count": 15
+        },
+        {
+          "city": "Atlanta",
+          "date": "April 24",
+          "count": 10
+        },
+        {
+          "city": "Warsaw",
+          "date": "April 24",
+          "count": 9
+        },
+        {
+          "city": "Amsterdam",
+          "date": "April 24",
+          "count": 9
+        },
+        {
+          "city": "New York City",
+          "date": "April 25",
+          "count": 8
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Ankara be 17\u00b0C on April 25?",
+        "Will the highest temperature in Ankara be 16\u00b0C on April 25?",
+        "Will the highest temperature in Warsaw be 16\u00b0C on April 25?",
+        "Will the highest temperature in Ankara be 15\u00b0C on April 25?",
+        "Will the highest temperature in Ankara be 17\u00b0C on April 25?",
+        "Will the highest temperature in Moscow be 8\u00b0C on April 25?",
+        "Will the highest temperature in Amsterdam be 13\u00b0C on April 25?",
+        "Will the highest temperature in Ankara be 16\u00b0C on April 25?",
+        "Will the highest temperature in Ankara be 16\u00b0C on April 25?",
+        "Will the highest temperature in Warsaw be 15\u00b0C on April 25?",
+        "Will the highest temperature in Ankara be 16\u00b0C on April 25?",
+        "Will the highest temperature in Moscow be 8\u00b0C on April 25?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "aenews-915",
+      "wallet": "0xf1bb700a67e3e8a45dc8160a92f4e0405f41bf09",
+      "rank": 14,
+      "pnl_usd": 55093.07,
+      "roi_pct": 9.211,
+      "profile_url": "https://polymarket.com/profile/0xf1bb700a67e3e8a45dc8160a92f4e0405f41bf09",
+      "weather_item_count": 6,
+      "active_weather_positions": 0,
+      "recent_weather_activity": 6,
+      "market_type_counts": {
+        "weather_other": 2,
+        "exact_range": 2,
+        "temperature_other": 2
+      },
+      "top_cities": [
+        {
+          "city": "unknown",
+          "count": 6
+        }
+      ],
+      "repeated_city_date_events": [],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Energy infrastructure ceasefire in Ukraine in March? ",
+        "Energy infrastructure ceasefire in Ukraine in March? ",
+        "Will global temperature increase by between 1.20-1.24\u00baC in January 2025?",
+        "Will global temperature increase by less than 1.20\u00baC in January 2025?",
+        "Will global temperature increase by between 1.20-1.24\u00baC in January 2025?",
+        "Will global temperature increase by less than 1.20\u00baC in January 2025?"
+      ],
+      "refined_pattern": "thin/recent-data-limited weather-heavy"
+    },
+    {
+      "handle": "Poligarch",
+      "wallet": "0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+      "rank": 18,
+      "pnl_usd": 50075.7,
+      "roi_pct": 0.816,
+      "profile_url": "https://polymarket.com/profile/0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+      "weather_item_count": 334,
+      "active_weather_positions": 105,
+      "recent_weather_activity": 229,
+      "market_type_counts": {
+        "exact_value": 235,
+        "threshold": 33,
+        "exact_range": 66
+      },
+      "top_cities": [
+        {
+          "city": "Miami",
+          "count": 35
+        },
+        {
+          "city": "Munich",
+          "count": 30
+        },
+        {
+          "city": "Paris",
+          "count": 27
+        },
+        {
+          "city": "Istanbul",
+          "count": 25
+        },
+        {
+          "city": "London",
+          "count": 23
+        },
+        {
+          "city": "Atlanta",
+          "count": 15
+        },
+        {
+          "city": "Milan",
+          "count": 12
+        },
+        {
+          "city": "Amsterdam",
+          "count": 12
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Miami",
+          "date": "April 25",
+          "count": 32
+        },
+        {
+          "city": "Paris",
+          "date": "April 25",
+          "count": 27
+        },
+        {
+          "city": "Munich",
+          "date": "April 25",
+          "count": 24
+        },
+        {
+          "city": "Istanbul",
+          "date": "April 25",
+          "count": 24
+        },
+        {
+          "city": "Atlanta",
+          "date": "April 25",
+          "count": 15
+        },
+        {
+          "city": "London",
+          "date": "be 21",
+          "count": 12
+        },
+        {
+          "city": "Amsterdam",
+          "date": "April 25",
+          "count": 12
+        },
+        {
+          "city": "Milan",
+          "date": "April 25",
+          "count": 11
+        },
+        {
+          "city": "Lagos",
+          "date": "April 25",
+          "count": 10
+        },
+        {
+          "city": "Moscow",
+          "date": "April 25",
+          "count": 7
+        },
+        {
+          "city": "Seoul",
+          "date": "April 26",
+          "count": 7
+        },
+        {
+          "city": "Chengdu",
+          "date": "April 25",
+          "count": 6
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Chengdu be 31\u00b0C on April 25?",
+        "Will the highest temperature in Chengdu be 31\u00b0C on April 25?",
+        "Will the highest temperature in Chengdu be 30\u00b0C on April 25?",
+        "Will the highest temperature in Chengdu be 32\u00b0C on April 25?",
+        "Will the highest temperature in Chengdu be 32\u00b0C on April 25?",
+        "Will the highest temperature in Chengdu be 30\u00b0C on April 25?",
+        "Will the highest temperature in Hong Kong be 26\u00b0C on April 25?",
+        "Will the highest temperature in Paris be 23\u00b0C on April 25?",
+        "Will the highest temperature in Munich be 20\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 20\u00b0C on April 25?",
+        "Will the highest temperature in Singapore be 34\u00b0C on April 25?",
+        "Will the highest temperature in Tel Aviv be 28\u00b0C on April 25?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "Maskache2",
+      "wallet": "0x1f66796b45581868376365aef54b51eb84184c8d",
+      "rank": 19,
+      "pnl_usd": 49971.27,
+      "roi_pct": 1.081,
+      "profile_url": "https://polymarket.com/profile/0x1f66796b45581868376365aef54b51eb84184c8d",
+      "weather_item_count": 391,
+      "active_weather_positions": 143,
+      "recent_weather_activity": 248,
+      "market_type_counts": {
+        "threshold": 83,
+        "exact_value": 246,
+        "exact_range": 58,
+        "temperature_other": 4
+      },
+      "top_cities": [
+        {
+          "city": "Seoul",
+          "count": 126
+        },
+        {
+          "city": "New York City",
+          "count": 85
+        },
+        {
+          "city": "Paris",
+          "count": 26
+        },
+        {
+          "city": "Wellington",
+          "count": 22
+        },
+        {
+          "city": "Madrid",
+          "count": 21
+        },
+        {
+          "city": "Helsinki",
+          "count": 19
+        },
+        {
+          "city": "Ankara",
+          "count": 16
+        },
+        {
+          "city": "Munich",
+          "count": 15
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Seoul",
+          "date": "April 25",
+          "count": 67
+        },
+        {
+          "city": "New York City",
+          "date": "April 24",
+          "count": 63
+        },
+        {
+          "city": "Madrid",
+          "date": "April 24",
+          "count": 21
+        },
+        {
+          "city": "Helsinki",
+          "date": "April 24",
+          "count": 19
+        },
+        {
+          "city": "Munich",
+          "date": "April 24",
+          "count": 15
+        },
+        {
+          "city": "Ankara",
+          "date": "April 24",
+          "count": 15
+        },
+        {
+          "city": "Wellington",
+          "date": "be 16",
+          "count": 11
+        },
+        {
+          "city": "Seoul",
+          "date": "April 15",
+          "count": 10
+        },
+        {
+          "city": "Paris",
+          "date": "April 16",
+          "count": 10
+        },
+        {
+          "city": "Hong Kong",
+          "date": "April 5",
+          "count": 9
+        },
+        {
+          "city": "Paris",
+          "date": "April 24",
+          "count": 8
+        },
+        {
+          "city": "London",
+          "date": "be 20",
+          "count": 6
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Hong Kong be 29\u00b0C or higher on April 5?",
+        "Will the highest temperature in Moscow be 11\u00b0C on March 30?",
+        "Will the highest temperature in Atlanta be between 62-63\u00b0F on April 6?",
+        "Will the highest temperature in Tokyo be 19\u00b0C on April 11?",
+        "Will the highest temperature in Seoul be 20\u00b0C on April 15?",
+        "Will the highest temperature in Hong Kong be 28\u00b0C on April 5?",
+        "Will the highest temperature in Seoul be 10\u00b0C on April 5?",
+        "Will the highest temperature in Seoul be 16\u00b0C or higher on March 26?",
+        "Will the highest temperature in Seoul be 24\u00b0C or higher on April 12?",
+        "Will the highest temperature in New York City be between 80-81\u00b0F on April 17?",
+        "Will the highest temperature in Paris be 18\u00b0C on April 16?",
+        "Will the highest temperature in Tokyo be 20\u00b0C on April 11?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "russell110320",
+      "wallet": "0x118689b24aead1d6e9507b8068d056b2ec4f051b",
+      "rank": 20,
+      "pnl_usd": 46787.66,
+      "roi_pct": 3.415,
+      "profile_url": "https://polymarket.com/profile/0x118689b24aead1d6e9507b8068d056b2ec4f051b",
+      "weather_item_count": 181,
+      "active_weather_positions": 6,
+      "recent_weather_activity": 175,
+      "market_type_counts": {
+        "exact_range": 145,
+        "temperature_other": 36
+      },
+      "top_cities": [
+        {
+          "city": "unknown",
+          "count": 181
+        }
+      ],
+      "repeated_city_date_events": [],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will global temperature increase by between 1.15\u00baC and 1.19\u00baC in April 2026?",
+        "Will global temperature increase by less than 1.10\u00baC in April 2026?",
+        "Will global temperature increase by between 1.25\u00baC and 1.29\u00baC in April 2026?",
+        "Will global temperature increase by more than 1.29\u00baC in April 2026?",
+        "Will global temperature increase by between 1.20\u00baC and 1.24\u00baC in April 2026?",
+        "Will global temperature increase by between 1.10\u00baC and 1.14\u00baC in April 2026?",
+        "Will global temperature increase by between 1.10\u00baC and 1.14\u00baC in April 2026?",
+        "Will global temperature increase by between 1.15\u00baC and 1.19\u00baC in April 2026?",
+        "Will global temperature increase by between 1.15\u00baC and 1.19\u00baC in April 2026?",
+        "Will global temperature increase by between 1.15\u00baC and 1.19\u00baC in April 2026?",
+        "Will global temperature increase by between 1.15\u00baC and 1.19\u00baC in April 2026?",
+        "Will global temperature increase by between 1.25\u00baC and 1.29\u00baC in April 2026?"
+      ],
+      "refined_pattern": "weather surface generalist"
+    },
+    {
+      "handle": "HenryTheAtmoPhD",
+      "wallet": "0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+      "rank": 21,
+      "pnl_usd": 45558.18,
+      "roi_pct": 1.429,
+      "profile_url": "https://polymarket.com/profile/0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+      "weather_item_count": 250,
+      "active_weather_positions": 29,
+      "recent_weather_activity": 221,
+      "market_type_counts": {
+        "exact_value": 218,
+        "threshold": 29,
+        "weather_other": 1,
+        "temperature_other": 2
+      },
+      "top_cities": [
+        {
+          "city": "Hong Kong",
+          "count": 135
+        },
+        {
+          "city": "Seoul",
+          "count": 58
+        },
+        {
+          "city": "Shenzhen",
+          "count": 11
+        },
+        {
+          "city": "New York City",
+          "count": 9
+        },
+        {
+          "city": "Taipei",
+          "count": 9
+        },
+        {
+          "city": "Paris",
+          "count": 7
+        },
+        {
+          "city": "Tokyo",
+          "count": 4
+        },
+        {
+          "city": "Lagos",
+          "count": 3
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Hong Kong",
+          "date": "April 25",
+          "count": 132
+        },
+        {
+          "city": "Seoul",
+          "date": "April 25",
+          "count": 38
+        },
+        {
+          "city": "Seoul",
+          "date": "April 24",
+          "count": 19
+        },
+        {
+          "city": "Shenzhen",
+          "date": "April 25",
+          "count": 10
+        },
+        {
+          "city": "New York City",
+          "date": "April 24",
+          "count": 9
+        },
+        {
+          "city": "Taipei",
+          "date": "April 25",
+          "count": 9
+        },
+        {
+          "city": "Paris",
+          "date": "April 24",
+          "count": 7
+        },
+        {
+          "city": "Tokyo",
+          "date": "April 25",
+          "count": 4
+        },
+        {
+          "city": "Hong Kong",
+          "date": "April 24",
+          "count": 3
+        },
+        {
+          "city": "Lagos",
+          "date": "April 25",
+          "count": 3
+        },
+        {
+          "city": "Madrid",
+          "date": "April 24",
+          "count": 3
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Hong Kong be 23\u00b0C on April 24?",
+        "Will the highest temperature in Seoul be 19\u00b0C on April 25?",
+        "Will the highest temperature in Hong Kong be 27\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 12\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 18\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 11\u00b0C or below on April 25?",
+        "Will the highest temperature in Seoul be 15\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 13\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 17\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 16\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 14\u00b0C on April 25?",
+        "Will the highest temperature in New York City be 66\u00b0F or higher on April 24?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "JoeTheMeteorologist",
+      "wallet": "0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+      "rank": 22,
+      "pnl_usd": 44961.86,
+      "roi_pct": 2.139,
+      "profile_url": "https://polymarket.com/profile/0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+      "weather_item_count": 240,
+      "active_weather_positions": 30,
+      "recent_weather_activity": 210,
+      "market_type_counts": {
+        "exact_value": 216,
+        "threshold": 23,
+        "temperature_other": 1
+      },
+      "top_cities": [
+        {
+          "city": "Seoul",
+          "count": 94
+        },
+        {
+          "city": "Taipei",
+          "count": 60
+        },
+        {
+          "city": "Hong Kong",
+          "count": 55
+        },
+        {
+          "city": "London",
+          "count": 11
+        },
+        {
+          "city": "Tokyo",
+          "count": 10
+        },
+        {
+          "city": "Shenzhen",
+          "count": 7
+        },
+        {
+          "city": "Lagos",
+          "count": 2
+        },
+        {
+          "city": "unknown",
+          "count": 1
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Seoul",
+          "date": "April 25",
+          "count": 92
+        },
+        {
+          "city": "Taipei",
+          "date": "April 25",
+          "count": 60
+        },
+        {
+          "city": "Hong Kong",
+          "date": "April 25",
+          "count": 49
+        },
+        {
+          "city": "London",
+          "date": "be 17",
+          "count": 11
+        },
+        {
+          "city": "Tokyo",
+          "date": "April 25",
+          "count": 8
+        },
+        {
+          "city": "Shenzhen",
+          "date": "April 24",
+          "count": 7
+        },
+        {
+          "city": "Hong Kong",
+          "date": "April 23",
+          "count": 4
+        },
+        {
+          "city": "Hong Kong",
+          "date": "April 24",
+          "count": 2
+        },
+        {
+          "city": "Lagos",
+          "date": "April 25",
+          "count": 2
+        },
+        {
+          "city": "Tokyo",
+          "date": "April 24",
+          "count": 2
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Seoul be 19\u00b0C on April 25?",
+        "Will the highest temperature in Shenzhen be 19\u00b0C on April 24?",
+        "Will the highest temperature in Hong Kong be 24\u00b0C on April 24?",
+        "Will the highest temperature in Seoul be 12\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 18\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 11\u00b0C or below on April 25?",
+        "Will the highest temperature in Seoul be 15\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 13\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 17\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 16\u00b0C on April 25?",
+        "Will the highest temperature in Seoul be 14\u00b0C on April 25?",
+        "Will the highest temperature in Hong Kong be 23\u00b0C on April 24?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "aboss",
+      "wallet": "0xaaec89fcb2ff14b335ddd738edf355ac07038dc8",
+      "rank": 23,
+      "pnl_usd": 38787.58,
+      "roi_pct": 3.611,
+      "profile_url": "https://polymarket.com/profile/0xaaec89fcb2ff14b335ddd738edf355ac07038dc8",
+      "weather_item_count": 218,
+      "active_weather_positions": 11,
+      "recent_weather_activity": 207,
+      "market_type_counts": {
+        "exact_range": 116,
+        "threshold": 101,
+        "temperature_other": 1
+      },
+      "top_cities": [
+        {
+          "city": "London",
+          "count": 110
+        },
+        {
+          "city": "New York City",
+          "count": 103
+        },
+        {
+          "city": "unknown",
+          "count": 5
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "New York City",
+          "date": "July 22",
+          "count": 19
+        },
+        {
+          "city": "New York City",
+          "date": "July 21",
+          "count": 19
+        },
+        {
+          "city": "London",
+          "date": "be 77",
+          "count": 16
+        },
+        {
+          "city": "New York City",
+          "date": "July 23",
+          "count": 15
+        },
+        {
+          "city": "London",
+          "date": "be 76",
+          "count": 14
+        },
+        {
+          "city": "New York City",
+          "date": "July 20",
+          "count": 13
+        },
+        {
+          "city": "New York City",
+          "date": "July 25",
+          "count": 12
+        },
+        {
+          "city": "London",
+          "date": "July 23",
+          "count": 12
+        },
+        {
+          "city": "London",
+          "date": "July 20",
+          "count": 11
+        },
+        {
+          "city": "London",
+          "date": "be 78",
+          "count": 9
+        },
+        {
+          "city": "London",
+          "date": "July 25",
+          "count": 9
+        },
+        {
+          "city": "New York City",
+          "date": "July 19",
+          "count": 8
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in London be between 64-65\u00b0F on June 5?",
+        "Will the highest temperature in London between 43-44\u00b0F on February 1?",
+        "Will the highest temperature in London be between 44-45\u00b0F on January 30?",
+        "Will the highest temperature in London between 45-46\u00b0F on February 1?",
+        "Will the highest temperature in London be 68\u00b0F or below on July 26?",
+        "Will the December 2024 temperature increase be between 1.30-1.34\u00b0C?",
+        "Will the December 2024 temperature increase be between 1.20-1.24\u00b0C?",
+        "Will the highest temperature in London be 71\u00b0F or higher on May 23?",
+        "Will the highest temperature in New York City be between 99-100\u00b0F on July 25?",
+        "Will the highest temperature in London be between 81-82\u00b0F on September 19?",
+        "Will the highest temperature in London be 83\u00b0F or higher on September 19?",
+        "Will the highest temperature in London be between 81-82\u00b0F on September 19?"
+      ],
+      "refined_pattern": "threshold harvester"
+    },
+    {
+      "handle": "9985",
+      "wallet": "0x63a49a02c71d3a63f391878ec310dc81a524b5dc",
+      "rank": 24,
+      "pnl_usd": 37107.72,
+      "roi_pct": 9.614,
+      "profile_url": "https://polymarket.com/profile/0x63a49a02c71d3a63f391878ec310dc81a524b5dc",
+      "weather_item_count": 7,
+      "active_weather_positions": 1,
+      "recent_weather_activity": 6,
+      "market_type_counts": {
+        "weather_other": 4,
+        "exact_range": 3
+      },
+      "top_cities": [
+        {
+          "city": "unknown",
+          "count": 4
+        },
+        {
+          "city": "London",
+          "count": 3
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "London",
+          "date": "February 16",
+          "count": 3
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Russia x Ukraine ceasefire before July?",
+        "Russia x Ukraine Ceasefire in March?",
+        "Russia x Ukraine ceasefire before July?",
+        "Russia x Ukraine Ceasefire in March?",
+        "Will the highest temperature in London be between 39-40\u00b0F on February 16?",
+        "Will the highest temperature in London be between 39-40\u00b0F on February 16?",
+        "Will the highest temperature in London be between 39-40\u00b0F on February 16?"
+      ],
+      "refined_pattern": "thin/recent-data-limited weather-heavy"
+    },
+    {
+      "handle": "ANudeEgg",
+      "wallet": "0x62d2bcd198bb6eab8b7eeb9d2061815dc02b9eb7",
+      "rank": 25,
+      "pnl_usd": 36270.19,
+      "roi_pct": 12.996,
+      "profile_url": "https://polymarket.com/profile/0x62d2bcd198bb6eab8b7eeb9d2061815dc02b9eb7",
+      "weather_item_count": 29,
+      "active_weather_positions": 0,
+      "recent_weather_activity": 29,
+      "market_type_counts": {
+        "weather_other": 29
+      },
+      "top_cities": [
+        {
+          "city": "unknown",
+          "count": 29
+        }
+      ],
+      "repeated_city_date_events": [],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Trump ends Ukraine war in first 90 days?",
+        "Trump ends Ukraine war in first 90 days?",
+        "Trump ends Ukraine war in first 90 days?",
+        "Trump ends Ukraine war in first 90 days?",
+        "Trump ends Ukraine war in first 90 days?",
+        "Trump ends Ukraine war in first 90 days?",
+        "Trump ends Ukraine war before inauguration?",
+        "Trump ends Ukraine war before inauguration?",
+        "Trump ends Ukraine war before inauguration?",
+        "Trump ends Ukraine war before inauguration?",
+        "Trump ends Ukraine war before inauguration?",
+        "Trump ends Ukraine war before inauguration?"
+      ],
+      "refined_pattern": "weather surface generalist"
+    },
+    {
+      "handle": "Shoemaker34",
+      "wallet": "0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+      "rank": 26,
+      "pnl_usd": 33959.87,
+      "roi_pct": 6.644,
+      "profile_url": "https://polymarket.com/profile/0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+      "weather_item_count": 102,
+      "active_weather_positions": 15,
+      "recent_weather_activity": 87,
+      "market_type_counts": {
+        "exact_value": 80,
+        "threshold": 8,
+        "exact_range": 14
+      },
+      "top_cities": [
+        {
+          "city": "London",
+          "count": 37
+        },
+        {
+          "city": "Seoul",
+          "count": 8
+        },
+        {
+          "city": "New York City",
+          "count": 8
+        },
+        {
+          "city": "Wuhan",
+          "count": 7
+        },
+        {
+          "city": "Dallas",
+          "count": 6
+        },
+        {
+          "city": "Wellington",
+          "count": 5
+        },
+        {
+          "city": "Taipei",
+          "count": 5
+        },
+        {
+          "city": "Ankara",
+          "count": 4
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "London",
+          "date": "be 17",
+          "count": 35
+        },
+        {
+          "city": "Wuhan",
+          "date": "April 7",
+          "count": 7
+        },
+        {
+          "city": "Wellington",
+          "date": "be 18",
+          "count": 3
+        },
+        {
+          "city": "Taipei",
+          "date": "April 3",
+          "count": 3
+        },
+        {
+          "city": "Seoul",
+          "date": "March 8",
+          "count": 2
+        },
+        {
+          "city": "Seoul",
+          "date": "March 6",
+          "count": 2
+        },
+        {
+          "city": "Ankara",
+          "date": "March 7",
+          "count": 2
+        },
+        {
+          "city": "Dallas",
+          "date": "March 4",
+          "count": 2
+        },
+        {
+          "city": "Wellington",
+          "date": "be 21",
+          "count": 2
+        },
+        {
+          "city": "Buenos Aires",
+          "date": "February 19",
+          "count": 2
+        },
+        {
+          "city": "London",
+          "date": "be 18",
+          "count": 2
+        },
+        {
+          "city": "New York City",
+          "date": "February 23",
+          "count": 2
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Seoul be 7\u00b0C on March 8?",
+        "Will the highest temperature in Seoul be 7\u00b0C or higher on March 6?",
+        "Will the highest temperature in Wellington be 18\u00b0C on March 9?",
+        "Will the highest temperature in Ankara be 8\u00b0C on March 7?",
+        "Will the highest temperature in Dallas be between 72-73\u00b0F on March 4?",
+        "Will the highest temperature in London be 17\u00b0C on March 2?",
+        "Will the highest temperature in London be 17\u00b0C on March 3?",
+        "Will the highest temperature in Wellington be 21\u00b0C or higher on February 21?",
+        "Will the highest temperature in Buenos Aires be 34\u00b0C on February 19?",
+        "Will the highest temperature in London be 18\u00b0C on April 24?",
+        "Will the highest temperature in New York City be between 34-35\u00b0F on February 23?",
+        "Will the highest temperature in Wuhan be 30\u00b0C on April 7?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "Railbird",
+      "wallet": "0x906f2454a777600aea6c506247566decef82371a",
+      "rank": 42,
+      "pnl_usd": 23469.62,
+      "roi_pct": 2.943,
+      "profile_url": "https://polymarket.com/profile/0x906f2454a777600aea6c506247566decef82371a",
+      "weather_item_count": 399,
+      "active_weather_positions": 150,
+      "recent_weather_activity": 249,
+      "market_type_counts": {
+        "exact_value": 223,
+        "exact_range": 138,
+        "threshold": 38
+      },
+      "top_cities": [
+        {
+          "city": "London",
+          "count": 74
+        },
+        {
+          "city": "Atlanta",
+          "count": 41
+        },
+        {
+          "city": "Ankara",
+          "count": 29
+        },
+        {
+          "city": "New York City",
+          "count": 25
+        },
+        {
+          "city": "Tokyo",
+          "count": 20
+        },
+        {
+          "city": "Seoul",
+          "count": 18
+        },
+        {
+          "city": "Beijing",
+          "count": 18
+        },
+        {
+          "city": "Chicago",
+          "count": 17
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Atlanta",
+          "date": "April 25",
+          "count": 33
+        },
+        {
+          "city": "London",
+          "date": "be 20",
+          "count": 27
+        },
+        {
+          "city": "London",
+          "date": "be 19",
+          "count": 23
+        },
+        {
+          "city": "Ankara",
+          "date": "April 25",
+          "count": 23
+        },
+        {
+          "city": "Tokyo",
+          "date": "April 26",
+          "count": 16
+        },
+        {
+          "city": "San Francisco",
+          "date": "April 25",
+          "count": 12
+        },
+        {
+          "city": "Denver",
+          "date": "April 25",
+          "count": 12
+        },
+        {
+          "city": "Chicago",
+          "date": "April 25",
+          "count": 11
+        },
+        {
+          "city": "Los Angeles",
+          "date": "April 25",
+          "count": 9
+        },
+        {
+          "city": "Milan",
+          "date": "April 26",
+          "count": 9
+        },
+        {
+          "city": "Seoul",
+          "date": "April 25",
+          "count": 9
+        },
+        {
+          "city": "Beijing",
+          "date": "April 25",
+          "count": 8
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Seoul be 12\u00b0C on April 11?",
+        "Will the highest temperature in London be 20\u00b0C on April 25?",
+        "Will the highest temperature in Wellington be 16\u00b0C on April 19?",
+        "Will the highest temperature in London be 19\u00b0C on April 25?",
+        "Will the highest temperature in Paris be 22\u00b0C on April 18?",
+        "Will the highest temperature in Houston be between 70-71\u00b0F on April 19?",
+        "Will the highest temperature in Shanghai be 21\u00b0C on April 19?",
+        "Will the highest temperature in Beijing be 27\u00b0C on April 18?",
+        "Will the highest temperature in Beijing be 22\u00b0C on April 17?",
+        "Will the highest temperature in Munich be 16\u00b0C or higher on April 15?",
+        "Will the highest temperature in Ankara be 16\u00b0C on April 25?",
+        "Will the highest temperature in Ankara be 17\u00b0C on April 25?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "syacxxa",
+      "wallet": "0x2b2866a724e73bf45af306036f12f20170b4d021",
+      "rank": 56,
+      "pnl_usd": 19511.69,
+      "roi_pct": 4.1,
+      "profile_url": "https://polymarket.com/profile/0x2b2866a724e73bf45af306036f12f20170b4d021",
+      "weather_item_count": 399,
+      "active_weather_positions": 150,
+      "recent_weather_activity": 249,
+      "market_type_counts": {
+        "threshold": 105,
+        "exact_value": 287,
+        "exact_range": 7
+      },
+      "top_cities": [
+        {
+          "city": "London",
+          "count": 209
+        },
+        {
+          "city": "Paris",
+          "count": 73
+        },
+        {
+          "city": "Toronto",
+          "count": 57
+        },
+        {
+          "city": "Buenos Aires",
+          "count": 38
+        },
+        {
+          "city": "New York City",
+          "count": 8
+        },
+        {
+          "city": "Amsterdam",
+          "count": 7
+        },
+        {
+          "city": "Munich",
+          "count": 3
+        },
+        {
+          "city": "Los Angeles",
+          "count": 1
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Toronto",
+          "date": "April 22",
+          "count": 55
+        },
+        {
+          "city": "London",
+          "date": "be 16",
+          "count": 51
+        },
+        {
+          "city": "London",
+          "date": "be 6",
+          "count": 50
+        },
+        {
+          "city": "Paris",
+          "date": "April 22",
+          "count": 38
+        },
+        {
+          "city": "London",
+          "date": "be 20",
+          "count": 27
+        },
+        {
+          "city": "Paris",
+          "date": "April 23",
+          "count": 19
+        },
+        {
+          "city": "London",
+          "date": "be 19",
+          "count": 12
+        },
+        {
+          "city": "London",
+          "date": "be 12",
+          "count": 11
+        },
+        {
+          "city": "London",
+          "date": "be 15",
+          "count": 9
+        },
+        {
+          "city": "London",
+          "date": "be 7",
+          "count": 9
+        },
+        {
+          "city": "London",
+          "date": "be 13",
+          "count": 8
+        },
+        {
+          "city": "London",
+          "date": "be 11",
+          "count": 7
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Buenos Aires be 30\u00b0C or below on January 30?",
+        "Will the highest temperature in London be 14\u00b0C on March 19?",
+        "Will the highest temperature in London be 25\u00b0C or higher on April 9?",
+        "Will the highest temperature in London be 11\u00b0C on April 20?",
+        "Will the highest temperature in London be 24\u00b0C on April 9?",
+        "Will the highest temperature in New York City be 64\u00b0F or higher on March 16?",
+        "Will the highest temperature in London be 16\u00b0C on March 18?",
+        "Will the highest temperature in Paris be 15\u00b0C on March 6?",
+        "Will the highest temperature in Paris be 12\u00b0C on March 27?",
+        "Will the highest temperature in London be 13\u00b0C or higher on December 22?",
+        "Will the highest temperature in New York City be 36\u00b0F or higher on January 19?",
+        "Will the highest temperature in London be 1\u00b0C on January 3?"
+      ],
+      "refined_pattern": "mixed exact-bin + threshold surface"
+    },
+    {
+      "handle": "0xhana",
+      "wallet": "0xa37d1d1a3367c6ebc692e37c29bccb8bb015b2b4",
+      "rank": 73,
+      "pnl_usd": 15798.98,
+      "roi_pct": 4.912,
+      "profile_url": "https://polymarket.com/profile/0xa37d1d1a3367c6ebc692e37c29bccb8bb015b2b4",
+      "weather_item_count": 397,
+      "active_weather_positions": 150,
+      "recent_weather_activity": 247,
+      "market_type_counts": {
+        "exact_range": 397
+      },
+      "top_cities": [
+        {
+          "city": "New York City",
+          "count": 117
+        },
+        {
+          "city": "Seattle",
+          "count": 107
+        },
+        {
+          "city": "Miami",
+          "count": 104
+        },
+        {
+          "city": "Atlanta",
+          "count": 69
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Miami",
+          "date": "March 30",
+          "count": 63
+        },
+        {
+          "city": "Atlanta",
+          "date": "March 30",
+          "count": 46
+        },
+        {
+          "city": "Seattle",
+          "date": "March 29",
+          "count": 46
+        },
+        {
+          "city": "New York City",
+          "date": "March 29",
+          "count": 35
+        },
+        {
+          "city": "Seattle",
+          "date": "March 30",
+          "count": 27
+        },
+        {
+          "city": "New York City",
+          "date": "March 30",
+          "count": 27
+        },
+        {
+          "city": "Miami",
+          "date": "March 29",
+          "count": 4
+        },
+        {
+          "city": "New York City",
+          "date": "February 15",
+          "count": 3
+        },
+        {
+          "city": "New York City",
+          "date": "March 20",
+          "count": 3
+        },
+        {
+          "city": "New York City",
+          "date": "March 19",
+          "count": 3
+        },
+        {
+          "city": "New York City",
+          "date": "February 20",
+          "count": 3
+        },
+        {
+          "city": "New York City",
+          "date": "February 25",
+          "count": 3
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Miami be between 82-83\u00b0F on March 6?",
+        "Will the highest temperature in New York City be between 34-35\u00b0F on February 23?",
+        "Will the highest temperature in New York City be between 40-41\u00b0F on February 15?",
+        "Will the highest temperature in New York City be between 46-47\u00b0F on February 21?",
+        "Will the highest temperature in Miami be between 78-79\u00b0F on February 15?",
+        "Will the highest temperature in New York City be between 38-39\u00b0F on March 1?",
+        "Will the highest temperature in Miami be between 84-85\u00b0F on March 12?",
+        "Will the highest temperature in New York City be between 52-53\u00b0F on March 20?",
+        "Will the highest temperature in New York City be between 40-41\u00b0F on March 19?",
+        "Will the highest temperature in New York City be between 44-45\u00b0F on February 21?",
+        "Will the highest temperature in New York City be between 38-39\u00b0F on February 15?",
+        "Will the highest temperature in New York City be between 48-49\u00b0F on February 17?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "mjf02",
+      "wallet": "0x5ea284bb13db26c76529a944e6bf9497c8c5e97f",
+      "rank": 78,
+      "pnl_usd": 14775.84,
+      "roi_pct": 2.116,
+      "profile_url": "https://polymarket.com/profile/0x5ea284bb13db26c76529a944e6bf9497c8c5e97f",
+      "weather_item_count": 397,
+      "active_weather_positions": 149,
+      "recent_weather_activity": 248,
+      "market_type_counts": {
+        "threshold": 23,
+        "exact_value": 355,
+        "exact_range": 19
+      },
+      "top_cities": [
+        {
+          "city": "Paris",
+          "count": 134
+        },
+        {
+          "city": "Seoul",
+          "count": 70
+        },
+        {
+          "city": "Hong Kong",
+          "count": 58
+        },
+        {
+          "city": "London",
+          "count": 55
+        },
+        {
+          "city": "Madrid",
+          "count": 41
+        },
+        {
+          "city": "New York City",
+          "count": 21
+        },
+        {
+          "city": "Munich",
+          "count": 10
+        },
+        {
+          "city": "Tel Aviv",
+          "count": 3
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Paris",
+          "date": "April 5",
+          "count": 101
+        },
+        {
+          "city": "Seoul",
+          "date": "April 6",
+          "count": 56
+        },
+        {
+          "city": "Hong Kong",
+          "date": "April 5",
+          "count": 54
+        },
+        {
+          "city": "Madrid",
+          "date": "April 5",
+          "count": 22
+        },
+        {
+          "city": "London",
+          "date": "be 17",
+          "count": 10
+        },
+        {
+          "city": "London",
+          "date": "be 15",
+          "count": 8
+        },
+        {
+          "city": "London",
+          "date": "be 14",
+          "count": 8
+        },
+        {
+          "city": "London",
+          "date": "be 16",
+          "count": 6
+        },
+        {
+          "city": "London",
+          "date": "be 13",
+          "count": 6
+        },
+        {
+          "city": "Seoul",
+          "date": "March 27",
+          "count": 5
+        },
+        {
+          "city": "London",
+          "date": "be 12",
+          "count": 5
+        },
+        {
+          "city": "Madrid",
+          "date": "March 30",
+          "count": 5
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Paris be 6\u00b0C or below on March 29?",
+        "Will the highest temperature in Munich be 2\u00b0C or below on March 29?",
+        "Will the highest temperature in London be 6\u00b0C or below on March 29?",
+        "Will the highest temperature in Seoul be 7\u00b0C on March 26?",
+        "Will the highest temperature in London be 16\u00b0C on March 9?",
+        "Will the highest temperature in London be 16\u00b0C on March 18?",
+        "Will the highest temperature in Seoul be 6\u00b0C or below on March 27?",
+        "Will the highest temperature in London be 17\u00b0C on March 9?",
+        "Will the highest temperature in London be 10\u00b0C on March 15?",
+        "Will the highest temperature in Madrid be 26\u00b0C on April 4?",
+        "Will the highest temperature in London be 15\u00b0C or higher on March 11?",
+        "Will the highest temperature in Paris be 13\u00b0C on March 10?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    },
+    {
+      "handle": "0x4CE3f17Be91C3d0D6dbFed7Bd4D326957dec4291-1768045938794",
+      "wallet": "0x4ce3f17be91c3d0d6dbfed7bd4d326957dec4291",
+      "rank": 100,
+      "pnl_usd": 11588.78,
+      "roi_pct": 2.212,
+      "profile_url": "https://polymarket.com/profile/0x4ce3f17be91c3d0d6dbfed7bd4d326957dec4291",
+      "weather_item_count": 394,
+      "active_weather_positions": 144,
+      "recent_weather_activity": 250,
+      "market_type_counts": {
+        "exact_value": 343,
+        "threshold": 51
+      },
+      "top_cities": [
+        {
+          "city": "Taipei",
+          "count": 140
+        },
+        {
+          "city": "Seoul",
+          "count": 38
+        },
+        {
+          "city": "Beijing",
+          "count": 26
+        },
+        {
+          "city": "Cape Town",
+          "count": 20
+        },
+        {
+          "city": "Shenzhen",
+          "count": 19
+        },
+        {
+          "city": "Tokyo",
+          "count": 19
+        },
+        {
+          "city": "Chongqing",
+          "count": 19
+        },
+        {
+          "city": "Wellington",
+          "count": 16
+        }
+      ],
+      "repeated_city_date_events": [
+        {
+          "city": "Taipei",
+          "date": "April 22",
+          "count": 67
+        },
+        {
+          "city": "Taipei",
+          "date": "April 23",
+          "count": 48
+        },
+        {
+          "city": "Cape Town",
+          "date": "April 21",
+          "count": 18
+        },
+        {
+          "city": "Tokyo",
+          "date": "April 22",
+          "count": 10
+        },
+        {
+          "city": "Chongqing",
+          "date": "April 22",
+          "count": 8
+        },
+        {
+          "city": "Madrid",
+          "date": "April 21",
+          "count": 8
+        },
+        {
+          "city": "Istanbul",
+          "date": "April 22",
+          "count": 7
+        },
+        {
+          "city": "Beijing",
+          "date": "April 23",
+          "count": 6
+        },
+        {
+          "city": "Madrid",
+          "date": "April 22",
+          "count": 6
+        },
+        {
+          "city": "Seoul",
+          "date": "April 22",
+          "count": 5
+        },
+        {
+          "city": "Beijing",
+          "date": "April 7",
+          "count": 5
+        },
+        {
+          "city": "Wuhan",
+          "date": "April 23",
+          "count": 5
+        }
+      ],
+      "inferred_pattern": "event-surface/exact-bin grid",
+      "sample_titles": [
+        "Will the highest temperature in Shenzhen be 26\u00b0C on March 26?",
+        "Will the highest temperature in Wellington be 20\u00b0C on March 18?",
+        "Will the highest temperature in Shenzhen be 22\u00b0C on March 28?",
+        "Will the highest temperature in Tel Aviv be 19\u00b0C on March 13?",
+        "Will the highest temperature in Tel Aviv be 21\u00b0C on March 13?",
+        "Will the highest temperature in Wellington be 18\u00b0C on March 23?",
+        "Will the highest temperature in Ankara be 10\u00b0C on March 10?",
+        "Will the highest temperature in Busan be 23\u00b0C on April 12?",
+        "Will the highest temperature in Seoul be 16\u00b0C on April 22?",
+        "Will the highest temperature in Seoul be 15\u00b0C or higher on March 25?",
+        "Will the highest temperature in Tokyo be 22\u00b0C or higher on April 10?",
+        "Will the highest temperature in Taipei be 22\u00b0C on April 8?"
+      ],
+      "refined_pattern": "exact-bin event grid specialist"
+    }
+  ],
+  "global": {
+    "pattern_counts": {
+      "event-surface/exact-bin grid": 25
+    },
+    "top_cities": [
+      {
+        "city": "London",
+        "count": 591
+      },
+      {
+        "city": "Seoul",
+        "count": 540
+      },
+      {
+        "city": "New York City",
+        "count": 503
+      },
+      {
+        "city": "Paris",
+        "count": 394
+      },
+      {
+        "city": "unknown",
+        "count": 283
+      },
+      {
+        "city": "Hong Kong",
+        "count": 253
+      },
+      {
+        "city": "Taipei",
+        "count": 214
+      },
+      {
+        "city": "Atlanta",
+        "count": 194
+      },
+      {
+        "city": "Seattle",
+        "count": 181
+      },
+      {
+        "city": "Miami",
+        "count": 175
+      },
+      {
+        "city": "Guangzhou",
+        "count": 135
+      },
+      {
+        "city": "Helsinki",
+        "count": 96
+      },
+      {
+        "city": "Toronto",
+        "count": 78
+      },
+      {
+        "city": "Ankara",
+        "count": 77
+      },
+      {
+        "city": "Tokyo",
+        "count": 69
+      },
+      {
+        "city": "Madrid",
+        "count": 67
+      },
+      {
+        "city": "Chicago",
+        "count": 64
+      },
+      {
+        "city": "Wellington",
+        "count": 60
+      },
+      {
+        "city": "Munich",
+        "count": 58
+      },
+      {
+        "city": "Shenzhen",
+        "count": 49
+      }
+    ],
+    "market_type_counts": {
+      "exact_value": 2993,
+      "threshold": 651,
+      "exact_range": 1407,
+      "weather_other": 56,
+      "temperature_other": 78
+    },
+    "refined_pattern_counts": {
+      "exact-bin event grid specialist": 15,
+      "weather surface generalist": 3,
+      "mixed exact-bin + threshold surface": 2,
+      "thin/recent-data-limited weather-heavy": 4,
+      "threshold harvester": 1
+    }
+  }
+}

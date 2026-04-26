@@ -1,0 +1,162 @@
+{
+  "books": {
+    "no": {
+      "asks": [
+        {
+          "price": 0.954,
+          "size": 0.47
+        },
+        {
+          "price": 0.965,
+          "size": 10.54
+        },
+        {
+          "price": 0.968,
+          "size": 35.37
+        },
+        {
+          "price": 0.97,
+          "size": 16.0
+        },
+        {
+          "price": 0.972,
+          "size": 10.0
+        }
+      ],
+      "best_ask": 0.954,
+      "best_bid": 0.95,
+      "bids": [
+        {
+          "price": 0.95,
+          "size": 6.3
+        },
+        {
+          "price": 0.948,
+          "size": 15.0
+        },
+        {
+          "price": 0.947,
+          "size": 40.0
+        },
+        {
+          "price": 0.946,
+          "size": 50.0
+        },
+        {
+          "price": 0.941,
+          "size": 10.8
+        }
+      ],
+      "ok": true,
+      "url": "https://clob.polymarket.com/book?token_id=84770944915456838599766873023889328577144305067901486894506732613341464740700"
+    },
+    "yes": {
+      "asks": [
+        {
+          "price": 0.05,
+          "size": 6.3
+        },
+        {
+          "price": 0.052,
+          "size": 15.0
+        },
+        {
+          "price": 0.053,
+          "size": 40.0
+        },
+        {
+          "price": 0.054,
+          "size": 50.0
+        },
+        {
+          "price": 0.059,
+          "size": 10.8
+        }
+      ],
+      "best_ask": 0.05,
+      "best_bid": 0.046,
+      "bids": [
+        {
+          "price": 0.046,
+          "size": 0.47
+        },
+        {
+          "price": 0.035,
+          "size": 10.54
+        },
+        {
+          "price": 0.032,
+          "size": 35.37
+        },
+        {
+          "price": 0.03,
+          "size": 16.0
+        },
+        {
+          "price": 0.028,
+          "size": 10.0
+        }
+      ],
+      "ok": true,
+      "url": "https://clob.polymarket.com/book?token_id=12831021511186173169760771467704558297855560104655134100790042154273917383333"
+    }
+  },
+  "changes_since_previous": [
+    "NO bid 0.953->0.95"
+  ],
+  "generated_at_utc": "2026-04-25T22:48:43Z",
+  "market_id": "2065032",
+  "no_token": "84770944915456838599766873023889328577144305067901486894506732613341464740700",
+  "outcome_prices": [
+    "0.0465",
+    "0.9535"
+  ],
+  "outcomes": [
+    "Yes",
+    "No"
+  ],
+  "paper_gate": {
+    "action": "WAIT_PARTIAL_DAY_STILL_RUNNING",
+    "current_no_ask": 0.954,
+    "current_no_bid": 0.95,
+    "max_paper_budget_usdc": 0.45,
+    "no_real_order_placed": true,
+    "paper_only": true,
+    "strict_no_limit": 0.954,
+    "top_no_ask_size": 0.47
+  },
+  "question": "Will the highest temperature in Shanghai be 21\u00b0C on April 26?",
+  "resolution_source": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD",
+  "station_probe": {
+    "contains_exact_rounded_21c_so_far": false,
+    "country": "CN",
+    "day_complete": false,
+    "hours_remaining_in_market_day": 17.19,
+    "local_now_shanghai": "2026-04-26T06:48:43+08:00",
+    "max_observation": {
+      "local_time": "2026-04-26T00:00:00+08:00",
+      "rounded_c": 13,
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "valid_time_gmt": 1777132800
+    },
+    "min_observation": {
+      "local_time": "2026-04-26T05:30:00+08:00",
+      "rounded_c": 12,
+      "temp_c": 12.2,
+      "temp_f": 54,
+      "valid_time_gmt": 1777152600
+    },
+    "observation_count": 13,
+    "rounded_c_values_seen": [
+      12,
+      13
+    ],
+    "station": "ZSPD",
+    "target_date": "2026-04-26",
+    "weather_api_error": null,
+    "weather_api_ok": true,
+    "weather_api_url_redacted": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426"
+  },
+  "yes_token": "12831021511186173169760771467704558297855560104655134100790042154273917383333"
+}

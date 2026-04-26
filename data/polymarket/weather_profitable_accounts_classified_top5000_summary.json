@@ -1,0 +1,198 @@
+{
+  "source_full_csv": "/home/jul/prediction_core/data/polymarket/weather_profitable_accounts.csv",
+  "existing_path": "/home/jul/prediction_core/data/polymarket/weather_profitable_accounts_classified_top2000.csv",
+  "output_csv": "/home/jul/prediction_core/data/polymarket/weather_profitable_accounts_classified_top5000.csv",
+  "rank_window": "1-5000",
+  "classified_count": 5000,
+  "newly_enriched_count": 3000,
+  "elapsed_seconds": 56.69,
+  "classification_counts": {
+    "not enough public recent data to classify": 742,
+    "profitable in weather but currently/recently generalist": 1300,
+    "weather specialist / weather-heavy": 2024,
+    "weather-heavy mixed": 934
+  },
+  "weather_heavy_or_specialist_count": 2958,
+  "top_newly_classified_weather_heavy": [
+    {
+      "rank": "2502",
+      "handle": "bet1688",
+      "pnl": 333.24400793130485,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 22,
+      "recent_weather": 200,
+      "profile": "https://polymarket.com/profile/0x9928744543539bc63ddbd4695f9829725a73bfa0"
+    },
+    {
+      "rank": "2503",
+      "handle": "Wateruser1",
+      "pnl": 333.16026505522495,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 0,
+      "recent_weather": 192,
+      "profile": "https://polymarket.com/profile/0xb5d786c25ca63ae4e1a816780b90b739ce969600"
+    },
+    {
+      "rank": "2504",
+      "handle": "0x6142aB75e7Fb97b9f614D9e85077f106234A335b-1769996465123",
+      "pnl": 333.0366572537669,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 0,
+      "recent_weather": 49,
+      "profile": "https://polymarket.com/profile/0x6142ab75e7fb97b9f614d9e85077f106234a335b"
+    },
+    {
+      "rank": "2507",
+      "handle": "Dredgerton",
+      "pnl": 332.494970400557,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 11,
+      "recent_weather": 33,
+      "profile": "https://polymarket.com/profile/0x068c22a10775da259fa85824e228aeadbd5f582e"
+    },
+    {
+      "rank": "2508",
+      "handle": "Destinybeats",
+      "pnl": 332.41890052761005,
+      "class": "weather-heavy mixed",
+      "active_weather": 1,
+      "recent_weather": 11,
+      "profile": "https://polymarket.com/profile/0xa2301658bef5d1c550bc4d5a6b4b8bde87a61cdb"
+    },
+    {
+      "rank": "2511",
+      "handle": "0x26Bd38cC22a60d1c3E2131c6B4A8284cE2a42C54-1774494542978",
+      "pnl": 332.10753806414397,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 3,
+      "recent_weather": 172,
+      "profile": "https://polymarket.com/profile/0x26bd38cc22a60d1c3e2131c6b4a8284ce2a42c54"
+    },
+    {
+      "rank": "2512",
+      "handle": "boceta",
+      "pnl": 331.9646317301999,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 27,
+      "recent_weather": 190,
+      "profile": "https://polymarket.com/profile/0x34abd2d09bdd946b486d3ab055330a2111114e36"
+    },
+    {
+      "rank": "2513",
+      "handle": "ReneeHernandez8947",
+      "pnl": 331.948686,
+      "class": "weather-heavy mixed",
+      "active_weather": 0,
+      "recent_weather": 6,
+      "profile": "https://polymarket.com/profile/0xad4657d485d45cae25d4a4112f9af77208fb0918"
+    },
+    {
+      "rank": "2514",
+      "handle": "BobbythePug",
+      "pnl": 331.69171763234755,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 50,
+      "recent_weather": 199,
+      "profile": "https://polymarket.com/profile/0x3f302dbb8e2cef9c25ea1cf8980b97711234f8de"
+    },
+    {
+      "rank": "2517",
+      "handle": "T0KY0H0T",
+      "pnl": 331.54039695603035,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 0,
+      "recent_weather": 200,
+      "profile": "https://polymarket.com/profile/0x620b582d3983696ed823b9d4d1f162ae527610b7"
+    },
+    {
+      "rank": "2518",
+      "handle": "JDGVSNIP",
+      "pnl": 331.4610013664241,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 0,
+      "recent_weather": 190,
+      "profile": "https://polymarket.com/profile/0xe52c4e38294e8514cbf7af49b6f2705c9844016a"
+    },
+    {
+      "rank": "2521",
+      "handle": "0x1230a195c189558426F54de67F495A5258408E43-1773009261788",
+      "pnl": 331.2609118049351,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 39,
+      "recent_weather": 200,
+      "profile": "https://polymarket.com/profile/0x1230a195c189558426f54de67f495a5258408e43"
+    },
+    {
+      "rank": "2522",
+      "handle": "echidna",
+      "pnl": 331.25584899003434,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 22,
+      "recent_weather": 193,
+      "profile": "https://polymarket.com/profile/0x615b9d9d9a6daa5f2663c95ab811f77c3cb72ba8"
+    },
+    {
+      "rank": "2525",
+      "handle": "Melisa028",
+      "pnl": 331.13115046291995,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 0,
+      "recent_weather": 141,
+      "profile": "https://polymarket.com/profile/0x88eec58b3e9b13487605da83970467f87b983e8b"
+    },
+    {
+      "rank": "2526",
+      "handle": "HeidiMedina7097",
+      "pnl": 330.949927,
+      "class": "weather-heavy mixed",
+      "active_weather": 2,
+      "recent_weather": 10,
+      "profile": "https://polymarket.com/profile/0xd719eb46721f2618185c99c19d93ba609c01d8e5"
+    },
+    {
+      "rank": "2532",
+      "handle": "OIP99",
+      "pnl": 330.08773,
+      "class": "weather-heavy mixed",
+      "active_weather": 0,
+      "recent_weather": 17,
+      "profile": "https://polymarket.com/profile/0x238712c6d1e3c60d301d0db84701a624aba86613"
+    },
+    {
+      "rank": "2533",
+      "handle": "gaterial",
+      "pnl": 330.0142160813021,
+      "class": "weather-heavy mixed",
+      "active_weather": 1,
+      "recent_weather": 61,
+      "profile": "https://polymarket.com/profile/0x5e7a62413c418a22b9c23f7a595d04c4168f35ec"
+    },
+    {
+      "rank": "2534",
+      "handle": "0xc2937b9DFE748E50F642D30647D8AFaeA7EFc389-1771173449393",
+      "pnl": 329.97736817704885,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 2,
+      "recent_weather": 200,
+      "profile": "https://polymarket.com/profile/0xc2937b9dfe748e50f642d30647d8afaea7efc389"
+    },
+    {
+      "rank": "2538",
+      "handle": "exothetajunkie",
+      "pnl": 329.4336199341342,
+      "class": "weather-heavy mixed",
+      "active_weather": 5,
+      "recent_weather": 1,
+      "profile": "https://polymarket.com/profile/0x24787691ebc296444add2ee3dea03c9d6f9b2e62"
+    },
+    {
+      "rank": "2539",
+      "handle": "JustCappy",
+      "pnl": 329.30574664998784,
+      "class": "weather specialist / weather-heavy",
+      "active_weather": 1,
+      "recent_weather": 195,
+      "profile": "https://polymarket.com/profile/0x81b27b3548b76cff9f650c98d6e8b5e3a477cf28"
+    }
+  ]
+}

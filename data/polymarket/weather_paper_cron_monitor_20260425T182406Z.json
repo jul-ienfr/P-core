@@ -1,0 +1,1378 @@
+{
+  "summary": {
+    "generated_at": "2026-04-25T18:24:06.551872+00:00",
+    "paper_only": true,
+    "no_real_order_placed": true,
+    "source_ledger": "/home/jul/prediction_core/data/polymarket/weather_paper_micro_after_karachi_add_20260425.json",
+    "active_count": 5,
+    "closed_count_preserved": 3,
+    "active_total_spend_usdc": 44.7552,
+    "active_total_ev_now_usdc": 14.76606,
+    "active_total_mtm_bid_usdc": -4.538215,
+    "active_action_counts": {
+      "HOLD_CAPPED": 5
+    },
+    "alert_count": 4,
+    "verify_count": 0,
+    "rules": "paper only; no real orders; Seoul Apr26 NO20 and Karachi Apr27 NO36 capped no-add; no fresh add unless Julien explicitly asks"
+  },
+  "positions": [
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "side": "NO",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026",
+      "station_forecast_max_c": 26,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.62,
+          "usdc": 10.0,
+          "shares": 16.129
+        },
+        {
+          "batch": "add_monitor_1",
+          "avg": 0.62,
+          "usdc": 5.0,
+          "shares": 8.0645
+        }
+      ],
+      "filled_usdc": 15.0,
+      "shares": 24.1935,
+      "entry_avg": 0.62,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 3.907,
+      "base_ev_pct": 26.0,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.071,
+      "stress_worst_edge": -0.0029,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.071,
+        "edge": -0.0029
+      },
+      "token_id": "11804186718096027197244305944429420505649160948011436447515100751033693919285",
+      "best_bid_now": 0.59,
+      "best_ask_now": 0.6,
+      "bid_levels": 37,
+      "ask_levels": 22,
+      "top_bids": [
+        {
+          "price": 0.59,
+          "size": 21.64
+        },
+        {
+          "price": 0.57,
+          "size": 126.04
+        },
+        {
+          "price": 0.56,
+          "size": 172.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.6,
+          "size": 110.0
+        },
+        {
+          "price": 0.61,
+          "size": 104.0
+        },
+        {
+          "price": 0.62,
+          "size": 162.0
+        }
+      ],
+      "book_timestamp": "1777141444476",
+      "book_fetch_error": null,
+      "forecast_query_used": "Beijing",
+      "forecast_previous_area": "Beijing",
+      "forecast_area": "Beijing",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 17.0,
+      "current_forecast_max_c": 25.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Beijing` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -1.0,
+      "p_side_previous": 0.721,
+      "p_side_now": 0.721,
+      "hard_stop_if_p_below": 0.59,
+      "trim_review_if_p_below": 0.64,
+      "take_profit_review_if_bid_above": 0.74,
+      "paper_ev_now_usdc": 2.443513,
+      "paper_mtm_bid_usdc": -0.725835,
+      "edge_vs_bid_now": 0.131,
+      "edge_vs_ask_now": 0.121,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/cn/beijing/ZBAA",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "station_forecast_max_c": 20,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.71,
+          "usdc": 10.0,
+          "shares": 14.0845
+        }
+      ],
+      "filled_usdc": 10.0,
+      "shares": 14.0845,
+      "entry_avg": 0.71,
+      "base_p_side": 0.8951,
+      "base_ev_usdc": 2.607,
+      "base_ev_pct": 26.1,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -1.309,
+      "stress_worst_edge": -0.0929,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -2,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -1.309,
+        "edge": -0.0929
+      },
+      "token_id": "12122639968770369125729645644048901611737971417299776708496745927294914393945",
+      "best_bid_now": 0.63,
+      "best_ask_now": 0.68,
+      "bid_levels": 44,
+      "ask_levels": 19,
+      "top_bids": [
+        {
+          "price": 0.63,
+          "size": 50.08
+        },
+        {
+          "price": 0.62,
+          "size": 7.36
+        },
+        {
+          "price": 0.6,
+          "size": 5.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.68,
+          "size": 81.0
+        },
+        {
+          "price": 0.69,
+          "size": 132.6
+        },
+        {
+          "price": 0.7,
+          "size": 10.0
+        }
+      ],
+      "book_timestamp": "1777141446826",
+      "book_fetch_error": null,
+      "forecast_query_used": "Munich",
+      "forecast_previous_area": "Munich",
+      "forecast_area": "Munich",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 5.0,
+      "current_forecast_max_c": 17.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Munich` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -3.0,
+      "p_side_previous": 0.7815,
+      "p_side_now": 0.7815,
+      "hard_stop_if_p_below": 0.68,
+      "trim_review_if_p_below": 0.73,
+      "take_profit_review_if_bid_above": 0.8751,
+      "paper_ev_now_usdc": 1.007037,
+      "paper_mtm_bid_usdc": -1.126765,
+      "edge_vs_bid_now": 0.1515,
+      "edge_vs_ask_now": 0.1015,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/de/munich/EDDM",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 26",
+      "station": "ZSPD",
+      "side": "NO",
+      "temp": 23,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Shanghai be 23°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026",
+      "station_forecast_max_c": 22,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.64,
+          "usdc": 4.7552,
+          "shares": 7.43
+        }
+      ],
+      "filled_usdc": 4.7552,
+      "shares": 7.43,
+      "entry_avg": 0.64,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 1.051,
+      "base_ev_pct": 22.1,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.17,
+      "stress_worst_edge": -0.0229,
+      "stress_worst_scenario": {
+        "forecast_bias_c": 1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.17,
+        "edge": -0.0229
+      },
+      "token_id": "48340356564425638651690254632757217368774937619888753654873518473493102243100",
+      "best_bid_now": 0.62,
+      "best_ask_now": 0.63,
+      "bid_levels": 41,
+      "ask_levels": 21,
+      "top_bids": [
+        {
+          "price": 0.62,
+          "size": 21.0
+        },
+        {
+          "price": 0.61,
+          "size": 40.0
+        },
+        {
+          "price": 0.6,
+          "size": 35.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.63,
+          "size": 32.0
+        },
+        {
+          "price": 0.64,
+          "size": 769.86
+        },
+        {
+          "price": 0.65,
+          "size": 20.0
+        }
+      ],
+      "book_timestamp": "1777141447039",
+      "book_fetch_error": null,
+      "forecast_query_used": "Pootung",
+      "forecast_previous_area": "Pootung",
+      "forecast_area": "Shenglizhen",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 13.0,
+      "current_forecast_max_c": 23.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Pootung` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": 1.0,
+      "p_side_previous": 0.721,
+      "p_side_now": 0.721,
+      "hard_stop_if_p_below": 0.61,
+      "trim_review_if_p_below": 0.66,
+      "take_profit_review_if_bid_above": 0.76,
+      "paper_ev_now_usdc": 0.60183,
+      "paper_mtm_bid_usdc": -0.1486,
+      "edge_vs_bid_now": 0.101,
+      "edge_vs_ask_now": 0.091,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Munich be 19°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "station_forecast_max_c": 20,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.65,
+          "usdc": 5.0,
+          "shares": 7.6923
+        }
+      ],
+      "filled_usdc": 5.0,
+      "shares": 7.6923,
+      "entry_avg": 0.65,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 1.012,
+      "base_ev_pct": 20.2,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.253,
+      "stress_worst_edge": -0.0329,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.253,
+        "edge": -0.0329
+      },
+      "token_id": "65150415710178668225912755798958866377138776739873410802848539258219208306639",
+      "best_bid_now": 0.59,
+      "best_ask_now": 0.63,
+      "bid_levels": 43,
+      "ask_levels": 20,
+      "top_bids": [
+        {
+          "price": 0.59,
+          "size": 24.0
+        },
+        {
+          "price": 0.58,
+          "size": 205.16
+        },
+        {
+          "price": 0.55,
+          "size": 54.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.63,
+          "size": 20.0
+        },
+        {
+          "price": 0.64,
+          "size": 89.0
+        },
+        {
+          "price": 0.66,
+          "size": 59.0
+        }
+      ],
+      "book_timestamp": "1777141446408",
+      "book_fetch_error": null,
+      "forecast_query_used": "Munich",
+      "forecast_previous_area": "Munich",
+      "forecast_area": "Munich",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 5.0,
+      "current_forecast_max_c": 17.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Munich` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -3.0,
+      "p_side_previous": 0.8951,
+      "p_side_now": 0.8951,
+      "hard_stop_if_p_below": 0.62,
+      "trim_review_if_p_below": 0.67,
+      "take_profit_review_if_bid_above": 0.9491,
+      "paper_ev_now_usdc": 1.885378,
+      "paper_mtm_bid_usdc": -0.461543,
+      "edge_vs_bid_now": 0.3051,
+      "edge_vs_ask_now": 0.2651,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/de/munich/EDDM",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Karachi",
+      "date": "April 27",
+      "station": "OPKC",
+      "side": "NO",
+      "temp": 36,
+      "unit": "C",
+      "kind": "higher",
+      "question": "Will the highest temperature in Karachi be 36°C or higher on April 27?",
+      "url": "https://polymarket.com/event/highest-temperature-in-karachi-on-april-27-2026",
+      "station_forecast_max_c": 34,
+      "batches": [
+        {
+          "batch": "new_candidate_scan_1",
+          "avg": 0.53,
+          "usdc": 10.0,
+          "shares": 18.867925
+        }
+      ],
+      "filled_usdc": 10.0,
+      "shares": 18.867925,
+      "entry_avg": 0.53,
+      "base_p_side": 0.858,
+      "base_ev_usdc": 6.189,
+      "base_ev_pct": 61.9,
+      "source_scan": "weather_new_candidate_scan_20260425",
+      "paper_adds": [
+        {
+          "timestamp": "2026-04-25T14:34:00.491449Z",
+          "budget_usdc": 10.0,
+          "limit": 0.53,
+          "paper_fill_price": 0.53,
+          "paper_fill_shares": 18.867925,
+          "note": "paper-only simulated limit buy; no real order placed"
+        }
+      ],
+      "token_id": "53206667488683447575478215042042441576856375683039351245406441304104485827413",
+      "resolutionSource": "https://www.wunderground.com/history/daily/pk/karachi/OPKC",
+      "best_bid_now": 0.42,
+      "best_ask_now": 0.72,
+      "bid_levels": 29,
+      "ask_levels": 12,
+      "top_bids": [
+        {
+          "price": 0.42,
+          "size": 9.52
+        },
+        {
+          "price": 0.41,
+          "size": 5.0
+        },
+        {
+          "price": 0.4,
+          "size": 5.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.72,
+          "size": 172.0
+        },
+        {
+          "price": 0.73,
+          "size": 94.37
+        },
+        {
+          "price": 0.8,
+          "size": 3.75
+        }
+      ],
+      "book_timestamp": "1777141446911",
+      "book_fetch_error": null,
+      "forecast_query_used": "Ramswamy Quarters",
+      "forecast_previous_area": "Ramswamy Quarters",
+      "forecast_area": "Juna Market",
+      "forecast_target_date": "2026-04-27",
+      "forecast_selected_date": "2026-04-27",
+      "forecast_min_c": 26.0,
+      "current_forecast_max_c": 32.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Ramswamy Quarters` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -2.0,
+      "p_side_previous": 0.9938,
+      "p_side_now": 0.9979,
+      "hard_stop_if_p_below": 0.5,
+      "trim_review_if_p_below": 0.55,
+      "take_profit_review_if_bid_above": 0.9787,
+      "paper_ev_now_usdc": 8.828302,
+      "paper_mtm_bid_usdc": -2.075472,
+      "edge_vs_bid_now": 0.5779,
+      "edge_vs_ask_now": 0.2779,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/pk/karachi/OPKC",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": false,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "fresh book/forecast; explicit cron cap/no-add; no exit trigger"
+    }
+  ],
+  "active_positions": [
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "side": "NO",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026",
+      "station_forecast_max_c": 26,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.62,
+          "usdc": 10.0,
+          "shares": 16.129
+        },
+        {
+          "batch": "add_monitor_1",
+          "avg": 0.62,
+          "usdc": 5.0,
+          "shares": 8.0645
+        }
+      ],
+      "filled_usdc": 15.0,
+      "shares": 24.1935,
+      "entry_avg": 0.62,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 3.907,
+      "base_ev_pct": 26.0,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.071,
+      "stress_worst_edge": -0.0029,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.071,
+        "edge": -0.0029
+      },
+      "token_id": "11804186718096027197244305944429420505649160948011436447515100751033693919285",
+      "best_bid_now": 0.59,
+      "best_ask_now": 0.6,
+      "bid_levels": 37,
+      "ask_levels": 22,
+      "top_bids": [
+        {
+          "price": 0.59,
+          "size": 21.64
+        },
+        {
+          "price": 0.57,
+          "size": 126.04
+        },
+        {
+          "price": 0.56,
+          "size": 172.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.6,
+          "size": 110.0
+        },
+        {
+          "price": 0.61,
+          "size": 104.0
+        },
+        {
+          "price": 0.62,
+          "size": 162.0
+        }
+      ],
+      "book_timestamp": "1777141444476",
+      "book_fetch_error": null,
+      "forecast_query_used": "Beijing",
+      "forecast_previous_area": "Beijing",
+      "forecast_area": "Beijing",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 17.0,
+      "current_forecast_max_c": 25.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Beijing` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -1.0,
+      "p_side_previous": 0.721,
+      "p_side_now": 0.721,
+      "hard_stop_if_p_below": 0.59,
+      "trim_review_if_p_below": 0.64,
+      "take_profit_review_if_bid_above": 0.74,
+      "paper_ev_now_usdc": 2.443513,
+      "paper_mtm_bid_usdc": -0.725835,
+      "edge_vs_bid_now": 0.131,
+      "edge_vs_ask_now": 0.121,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/cn/beijing/ZBAA",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "station_forecast_max_c": 20,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.71,
+          "usdc": 10.0,
+          "shares": 14.0845
+        }
+      ],
+      "filled_usdc": 10.0,
+      "shares": 14.0845,
+      "entry_avg": 0.71,
+      "base_p_side": 0.8951,
+      "base_ev_usdc": 2.607,
+      "base_ev_pct": 26.1,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -1.309,
+      "stress_worst_edge": -0.0929,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -2,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -1.309,
+        "edge": -0.0929
+      },
+      "token_id": "12122639968770369125729645644048901611737971417299776708496745927294914393945",
+      "best_bid_now": 0.63,
+      "best_ask_now": 0.68,
+      "bid_levels": 44,
+      "ask_levels": 19,
+      "top_bids": [
+        {
+          "price": 0.63,
+          "size": 50.08
+        },
+        {
+          "price": 0.62,
+          "size": 7.36
+        },
+        {
+          "price": 0.6,
+          "size": 5.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.68,
+          "size": 81.0
+        },
+        {
+          "price": 0.69,
+          "size": 132.6
+        },
+        {
+          "price": 0.7,
+          "size": 10.0
+        }
+      ],
+      "book_timestamp": "1777141446826",
+      "book_fetch_error": null,
+      "forecast_query_used": "Munich",
+      "forecast_previous_area": "Munich",
+      "forecast_area": "Munich",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 5.0,
+      "current_forecast_max_c": 17.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Munich` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -3.0,
+      "p_side_previous": 0.7815,
+      "p_side_now": 0.7815,
+      "hard_stop_if_p_below": 0.68,
+      "trim_review_if_p_below": 0.73,
+      "take_profit_review_if_bid_above": 0.8751,
+      "paper_ev_now_usdc": 1.007037,
+      "paper_mtm_bid_usdc": -1.126765,
+      "edge_vs_bid_now": 0.1515,
+      "edge_vs_ask_now": 0.1015,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/de/munich/EDDM",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 26",
+      "station": "ZSPD",
+      "side": "NO",
+      "temp": 23,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Shanghai be 23°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026",
+      "station_forecast_max_c": 22,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.64,
+          "usdc": 4.7552,
+          "shares": 7.43
+        }
+      ],
+      "filled_usdc": 4.7552,
+      "shares": 7.43,
+      "entry_avg": 0.64,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 1.051,
+      "base_ev_pct": 22.1,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.17,
+      "stress_worst_edge": -0.0229,
+      "stress_worst_scenario": {
+        "forecast_bias_c": 1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.17,
+        "edge": -0.0229
+      },
+      "token_id": "48340356564425638651690254632757217368774937619888753654873518473493102243100",
+      "best_bid_now": 0.62,
+      "best_ask_now": 0.63,
+      "bid_levels": 41,
+      "ask_levels": 21,
+      "top_bids": [
+        {
+          "price": 0.62,
+          "size": 21.0
+        },
+        {
+          "price": 0.61,
+          "size": 40.0
+        },
+        {
+          "price": 0.6,
+          "size": 35.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.63,
+          "size": 32.0
+        },
+        {
+          "price": 0.64,
+          "size": 769.86
+        },
+        {
+          "price": 0.65,
+          "size": 20.0
+        }
+      ],
+      "book_timestamp": "1777141447039",
+      "book_fetch_error": null,
+      "forecast_query_used": "Pootung",
+      "forecast_previous_area": "Pootung",
+      "forecast_area": "Shenglizhen",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 13.0,
+      "current_forecast_max_c": 23.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Pootung` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": 1.0,
+      "p_side_previous": 0.721,
+      "p_side_now": 0.721,
+      "hard_stop_if_p_below": 0.61,
+      "trim_review_if_p_below": 0.66,
+      "take_profit_review_if_bid_above": 0.76,
+      "paper_ev_now_usdc": 0.60183,
+      "paper_mtm_bid_usdc": -0.1486,
+      "edge_vs_bid_now": 0.101,
+      "edge_vs_ask_now": 0.091,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Munich be 19°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "station_forecast_max_c": 20,
+      "batches": [
+        {
+          "batch": "initial",
+          "avg": 0.65,
+          "usdc": 5.0,
+          "shares": 7.6923
+        }
+      ],
+      "filled_usdc": 5.0,
+      "shares": 7.6923,
+      "entry_avg": 0.65,
+      "base_p_side": 0.7815,
+      "base_ev_usdc": 1.012,
+      "base_ev_pct": 20.2,
+      "stress_good_scenarios": 19,
+      "stress_count": 20,
+      "stress_worst_ev_usdc": -0.253,
+      "stress_worst_edge": -0.0329,
+      "stress_worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "ev_usdc": -0.253,
+        "edge": -0.0329
+      },
+      "token_id": "65150415710178668225912755798958866377138776739873410802848539258219208306639",
+      "best_bid_now": 0.59,
+      "best_ask_now": 0.63,
+      "bid_levels": 43,
+      "ask_levels": 20,
+      "top_bids": [
+        {
+          "price": 0.59,
+          "size": 24.0
+        },
+        {
+          "price": 0.58,
+          "size": 205.16
+        },
+        {
+          "price": 0.55,
+          "size": 54.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.63,
+          "size": 20.0
+        },
+        {
+          "price": 0.64,
+          "size": 89.0
+        },
+        {
+          "price": 0.66,
+          "size": 59.0
+        }
+      ],
+      "book_timestamp": "1777141446408",
+      "book_fetch_error": null,
+      "forecast_query_used": "Munich",
+      "forecast_previous_area": "Munich",
+      "forecast_area": "Munich",
+      "forecast_target_date": "2026-04-26",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_min_c": 5.0,
+      "current_forecast_max_c": 17.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Munich` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -3.0,
+      "p_side_previous": 0.8951,
+      "p_side_now": 0.8951,
+      "hard_stop_if_p_below": 0.62,
+      "trim_review_if_p_below": 0.67,
+      "take_profit_review_if_bid_above": 0.9491,
+      "paper_ev_now_usdc": 1.885378,
+      "paper_mtm_bid_usdc": -0.461543,
+      "edge_vs_bid_now": 0.3051,
+      "edge_vs_ask_now": 0.2651,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/de/munich/EDDM",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": true,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger"
+    },
+    {
+      "city": "Karachi",
+      "date": "April 27",
+      "station": "OPKC",
+      "side": "NO",
+      "temp": 36,
+      "unit": "C",
+      "kind": "higher",
+      "question": "Will the highest temperature in Karachi be 36°C or higher on April 27?",
+      "url": "https://polymarket.com/event/highest-temperature-in-karachi-on-april-27-2026",
+      "station_forecast_max_c": 34,
+      "batches": [
+        {
+          "batch": "new_candidate_scan_1",
+          "avg": 0.53,
+          "usdc": 10.0,
+          "shares": 18.867925
+        }
+      ],
+      "filled_usdc": 10.0,
+      "shares": 18.867925,
+      "entry_avg": 0.53,
+      "base_p_side": 0.858,
+      "base_ev_usdc": 6.189,
+      "base_ev_pct": 61.9,
+      "source_scan": "weather_new_candidate_scan_20260425",
+      "paper_adds": [
+        {
+          "timestamp": "2026-04-25T14:34:00.491449Z",
+          "budget_usdc": 10.0,
+          "limit": 0.53,
+          "paper_fill_price": 0.53,
+          "paper_fill_shares": 18.867925,
+          "note": "paper-only simulated limit buy; no real order placed"
+        }
+      ],
+      "token_id": "53206667488683447575478215042042441576856375683039351245406441304104485827413",
+      "resolutionSource": "https://www.wunderground.com/history/daily/pk/karachi/OPKC",
+      "best_bid_now": 0.42,
+      "best_ask_now": 0.72,
+      "bid_levels": 29,
+      "ask_levels": 12,
+      "top_bids": [
+        {
+          "price": 0.42,
+          "size": 9.52
+        },
+        {
+          "price": 0.41,
+          "size": 5.0
+        },
+        {
+          "price": 0.4,
+          "size": 5.0
+        }
+      ],
+      "top_asks": [
+        {
+          "price": 0.72,
+          "size": 172.0
+        },
+        {
+          "price": 0.73,
+          "size": 94.37
+        },
+        {
+          "price": 0.8,
+          "size": 3.75
+        }
+      ],
+      "book_timestamp": "1777141446911",
+      "book_fetch_error": null,
+      "forecast_query_used": "Ramswamy Quarters",
+      "forecast_previous_area": "Ramswamy Quarters",
+      "forecast_area": "Juna Market",
+      "forecast_target_date": "2026-04-27",
+      "forecast_selected_date": "2026-04-27",
+      "forecast_min_c": 26.0,
+      "current_forecast_max_c": 32.0,
+      "forecast_narrative": "Sunny",
+      "forecast_source": "wttr.in stable query `Ramswamy Quarters` for market date (proxy forecast, not settlement source)",
+      "forecast_source_stability": "stable_query_reused",
+      "forecast_fetch_error": null,
+      "forecast_move_c": -2.0,
+      "p_side_previous": 0.9938,
+      "p_side_now": 0.9979,
+      "hard_stop_if_p_below": 0.5,
+      "trim_review_if_p_below": 0.55,
+      "take_profit_review_if_bid_above": 0.9787,
+      "paper_ev_now_usdc": 8.828302,
+      "paper_mtm_bid_usdc": -2.075472,
+      "edge_vs_bid_now": 0.5779,
+      "edge_vs_ask_now": 0.2779,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/pk/karachi/OPKC",
+      "official_resolution_source_status": "available",
+      "resolution_source_newly_available": false,
+      "market_fetch_error": null,
+      "refreshed_at": "2026-04-25T18:24:06.551872+00:00",
+      "max_add_usdc": 0,
+      "add_allowed": false,
+      "action": "HOLD_CAPPED",
+      "reason": "fresh book/forecast; explicit cron cap/no-add; no exit trigger"
+    }
+  ],
+  "closed_positions": [
+    {
+      "action": "EXIT_PAPER",
+      "add_allowed": false,
+      "ask_levels": 12,
+      "base_ev_pct": 18.2,
+      "base_ev_usdc": 1.819,
+      "base_p_side": 0.9691,
+      "batches": [
+        {
+          "avg": 0.82,
+          "batch": "initial",
+          "shares": 6.0976,
+          "usdc": 5.0
+        },
+        {
+          "avg": 0.82,
+          "batch": "add_monitor_1",
+          "shares": 6.0976,
+          "usdc": 5.0
+        }
+      ],
+      "best_ask_now": 0.81,
+      "best_bid_now": 0.8,
+      "bid_levels": 54,
+      "book_fetch_error": null,
+      "book_timestamp": "1777130349575",
+      "city": "Seoul",
+      "close_reason": "paper hard-stop triggered; bookkeeping exit only; no real order",
+      "closed_at": "2026-04-25T15:20:27.232780+00:00",
+      "current_forecast_max_c": 18.0,
+      "date": "April 27",
+      "edge_vs_ask_now": -0.029,
+      "edge_vs_bid_now": -0.019,
+      "entry_avg": 0.82,
+      "filled_usdc": 10.0,
+      "forecast_area": "Namni",
+      "forecast_fetch_error": null,
+      "forecast_min_c": 12.0,
+      "forecast_move_c": 2.0,
+      "forecast_narrative": "Partly Cloudy ",
+      "forecast_selected_date": "2026-04-27",
+      "forecast_source": "wttr.in station query for market date (proxy forecast, not settlement source)",
+      "forecast_target_date": "2026-04-27",
+      "hard_stop_if_p_below": 0.79,
+      "kind": "exact",
+      "market_fetch_error": null,
+      "max_add_usdc": 0,
+      "official_resolution_source": null,
+      "official_resolution_source_status": "missing",
+      "p_side_now": 0.781,
+      "paper_ev_now_usdc": -0.476,
+      "paper_exit_price": 0.8,
+      "paper_exit_price_basis": "best_bid_now",
+      "paper_exit_value_usdc": 9.75616,
+      "paper_mtm_bid_usdc": -0.244,
+      "paper_realized_pnl_usdc": -0.24384,
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "reason": "p_side 0.7810 < hard_stop 0.7900",
+      "resolution_source_newly_available": false,
+      "shares": 12.1952,
+      "side": "NO",
+      "station": "RKSI",
+      "station_forecast_max_c": 16,
+      "stress_count": 20,
+      "stress_good_scenarios": 18,
+      "stress_worst_edge": -0.0617,
+      "stress_worst_ev_usdc": -0.753,
+      "stress_worst_scenario": {
+        "edge": -0.0617,
+        "ev_usdc": -0.753,
+        "forecast_bias_c": 2,
+        "p_side": 0.7583,
+        "sigma_c": 1.0
+      },
+      "take_profit_review_if_bid_above": 0.94,
+      "temp": 19,
+      "token_id": "2734890257312417104412736033227441402813067293679395829390482776871857286705",
+      "trim_review_if_p_below": 0.84,
+      "unit": "C",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026"
+    },
+    {
+      "action": "EXIT_PAPER",
+      "add_allowed": false,
+      "ask_levels": 11,
+      "base_ev_pct": 9.2,
+      "base_ev_usdc": 0.183,
+      "base_p_side": 0.8951,
+      "batches": [
+        {
+          "avg": 0.82,
+          "batch": "initial",
+          "shares": 2.439,
+          "usdc": 2.0
+        }
+      ],
+      "best_ask_now": 0.84,
+      "best_bid_now": 0.8,
+      "bid_levels": 52,
+      "book_fetch_error": null,
+      "book_timestamp": "1777130365772",
+      "city": "Beijing",
+      "close_reason": "paper hard-stop triggered; bookkeeping exit only; no real order",
+      "closed_at": "2026-04-25T15:20:27.232785+00:00",
+      "current_forecast_max_c": 25.0,
+      "date": "April 26",
+      "edge_vs_ask_now": -0.059,
+      "edge_vs_bid_now": -0.019,
+      "entry_avg": 0.82,
+      "filled_usdc": 2.0,
+      "forecast_area": "Tianzhu",
+      "forecast_fetch_error": null,
+      "forecast_min_c": 15.0,
+      "forecast_move_c": -1.0,
+      "forecast_narrative": "Overcast ",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_source": "wttr.in station query for market date (proxy forecast, not settlement source)",
+      "forecast_target_date": "2026-04-26",
+      "hard_stop_if_p_below": 0.79,
+      "kind": "exact",
+      "market_fetch_error": null,
+      "max_add_usdc": 0,
+      "official_resolution_source": null,
+      "official_resolution_source_status": "missing",
+      "p_side_now": 0.781,
+      "paper_ev_now_usdc": -0.095,
+      "paper_exit_price": 0.8,
+      "paper_exit_price_basis": "best_bid_now",
+      "paper_exit_value_usdc": 1.9512,
+      "paper_mtm_bid_usdc": -0.049,
+      "paper_realized_pnl_usdc": -0.0488,
+      "question": "Will the highest temperature in Beijing be 24°C on April 26?",
+      "reason": "p_side 0.7810 < hard_stop 0.7900",
+      "resolution_source_newly_available": false,
+      "shares": 2.439,
+      "side": "NO",
+      "station": "ZBAA",
+      "station_forecast_max_c": 26,
+      "stress_count": 20,
+      "stress_good_scenarios": 15,
+      "stress_worst_edge": -0.2029,
+      "stress_worst_ev_usdc": -0.495,
+      "stress_worst_scenario": {
+        "edge": -0.2029,
+        "ev_usdc": -0.495,
+        "forecast_bias_c": -2,
+        "p_side": 0.6171,
+        "sigma_c": 1.0
+      },
+      "take_profit_review_if_bid_above": 0.94,
+      "temp": 24,
+      "token_id": "4864927800095115501030477288289563032876018053782458052106292952392293746694",
+      "trim_review_if_p_below": 0.84,
+      "unit": "C",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026"
+    },
+    {
+      "action": "EXIT_PAPER",
+      "add_allowed": false,
+      "ask_levels": 26,
+      "base_ev_pct": 241.5,
+      "base_ev_usdc": 17.487,
+      "base_p_side": 0.858,
+      "batches": [
+        {
+          "avg": 0.28,
+          "batch": "initial",
+          "shares": 8.0,
+          "usdc": 2.24
+        },
+        {
+          "avg": 0.2402,
+          "batch": "add_monitor_1",
+          "shares": 20.8192,
+          "usdc": 5.0
+        }
+      ],
+      "best_ask_now": 0.31,
+      "best_bid_now": 0.3,
+      "bid_levels": 23,
+      "book_fetch_error": null,
+      "book_timestamp": "1777131051007",
+      "city": "Seoul",
+      "close_reason": "paper hard-stop triggered; bookkeeping exit only; no real order",
+      "closed_at": "2026-04-25T15:31:12.461768+00:00",
+      "current_forecast_max_c": 23.0,
+      "date": "April 26",
+      "edge_vs_ask_now": -0.3038,
+      "edge_vs_bid_now": -0.2938,
+      "entry_avg": 0.2446,
+      "filled_usdc": 17.24,
+      "forecast_area": "Seoul",
+      "forecast_fetch_error": null,
+      "forecast_min_c": 14.0,
+      "forecast_move_c": -2.0,
+      "forecast_narrative": "Clear ",
+      "forecast_selected_date": "2026-04-26",
+      "forecast_source": "wttr.in city query for market date (proxy forecast, not settlement source)",
+      "forecast_target_date": "2026-04-26",
+      "hard_stop_if_p_below": 0.2146,
+      "kind": "higher",
+      "market_fetch_error": null,
+      "max_add_usdc": 0,
+      "no_real_order_placed": true,
+      "official_resolution_source": null,
+      "official_resolution_source_status": "missing",
+      "p_side_now": 0.0062,
+      "p_side_previous": 0.999,
+      "paper_adds": [
+        {
+          "budget_usdc": 10.0,
+          "limit": 0.25,
+          "note": "paper-only simulated limit add; no real order placed",
+          "paper_fill_price": 0.24,
+          "paper_fill_shares": 41.666667,
+          "side": "NO",
+          "source": "hold_add_exit_refresh_20260425",
+          "timestamp": "2026-04-25T14:30:53.781179Z"
+        }
+      ],
+      "paper_ev_now_usdc": -16.802988,
+      "paper_exit_price": 0.3,
+      "paper_exit_price_basis": "best_bid_now",
+      "paper_exit_value_usdc": 21.14576,
+      "paper_mtm_bid_usdc": 3.90576,
+      "paper_realized_pnl_usdc": 3.90576,
+      "question": "Will the highest temperature in Seoul be 20°C or higher on April 26?",
+      "reason": "p_side 0.0062 < hard_stop 0.2146",
+      "refreshed_at": "2026-04-25T15:30:53.196255+00:00",
+      "resolution_source_newly_available": false,
+      "shares": 70.485867,
+      "side": "NO",
+      "station": "RKSI",
+      "station_forecast_max_c": 18,
+      "stress_count": 20,
+      "stress_good_scenarios": 20,
+      "stress_worst_edge": 0.0573,
+      "stress_worst_ev_usdc": 1.652,
+      "stress_worst_scenario": {
+        "edge": 0.0573,
+        "ev_usdc": 1.652,
+        "forecast_bias_c": 2,
+        "p_side": 0.3085,
+        "sigma_c": 1.0
+      },
+      "take_profit_review_if_bid_above": 0.979,
+      "temp": 20,
+      "token_id": "91957229395369621297773625284494208648929631998027248969309772006646049706563",
+      "top_asks": [
+        {
+          "price": 0.31,
+          "size": 9.5
+        },
+        {
+          "price": 0.32,
+          "size": 185.1
+        },
+        {
+          "price": 0.34,
+          "size": 8.0
+        }
+      ],
+      "top_bids": [
+        {
+          "price": 0.3,
+          "size": 13.57
+        },
+        {
+          "price": 0.29,
+          "size": 31.43
+        },
+        {
+          "price": 0.28,
+          "size": 36.43
+        }
+      ],
+      "trim_review_if_p_below": 0.2646,
+      "unit": "C",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026"
+    }
+  ],
+  "alerts": [
+    {
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger",
+      "p_side_now": 0.721,
+      "hard_stop": 0.59,
+      "trim_review": 0.64,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/cn/beijing/ZBAA"
+    },
+    {
+      "question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger",
+      "p_side_now": 0.7815,
+      "hard_stop": 0.68,
+      "trim_review": 0.73,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/de/munich/EDDM"
+    },
+    {
+      "question": "Will the highest temperature in Shanghai be 23°C on April 26?",
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger",
+      "p_side_now": 0.721,
+      "hard_stop": 0.61,
+      "trim_review": 0.66,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD"
+    },
+    {
+      "question": "Will the highest temperature in Munich be 19°C on April 26?",
+      "action": "HOLD_CAPPED",
+      "reason": "official resolution source newly available; no exit trigger",
+      "p_side_now": 0.8951,
+      "hard_stop": 0.62,
+      "trim_review": 0.67,
+      "official_resolution_source": "https://www.wunderground.com/history/daily/de/munich/EDDM"
+    }
+  ],
+  "verify_forecast_source": []
+}

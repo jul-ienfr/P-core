@@ -1,0 +1,5045 @@
+{
+  "artifacts": {
+    "generated_reports": [
+      "strategy_report",
+      "opportunity_report",
+      "event_surface",
+      "shortlist",
+      "operator"
+    ],
+    "output_json": "data/polymarket/weather_heavy_top80_live_strategy_shortlist_20260425.json",
+    "reverse_engineering_json": "docs/polymarket-weather-heavy-top80-title-reverse-engineering.json"
+  },
+  "event_surface": {
+    "event_count": 4,
+    "events": [
+      {
+        "event_key": "Dallas|high|f|April 26",
+        "exact_bin_count": 0,
+        "exact_bin_price_mass": 0,
+        "inconsistencies": [],
+        "market_count": 2,
+        "markets": [
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Dallas be 67\u00b0F or below on April 26?",
+            "range_high": null,
+            "range_low": null,
+            "target": 67.0,
+            "threshold_direction": "below",
+            "yes_price": 0.0
+          },
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Dallas be 86\u00b0F or higher on April 26?",
+            "range_high": null,
+            "range_low": null,
+            "target": 86.0,
+            "threshold_direction": "higher",
+            "yes_price": 0.0
+          }
+        ],
+        "threshold_count": 2
+      },
+      {
+        "event_key": "Dallas|high|f|April 27",
+        "exact_bin_count": 0,
+        "exact_bin_price_mass": 0,
+        "inconsistencies": [],
+        "market_count": 2,
+        "markets": [
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Dallas be 69\u00b0F or below on April 27?",
+            "range_high": null,
+            "range_low": null,
+            "target": 69.0,
+            "threshold_direction": "below",
+            "yes_price": 0.0
+          },
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Dallas be 88\u00b0F or higher on April 27?",
+            "range_high": null,
+            "range_low": null,
+            "target": 88.0,
+            "threshold_direction": "higher",
+            "yes_price": 0.0
+          }
+        ],
+        "threshold_count": 2
+      },
+      {
+        "event_key": "Hong Kong|high|c|April 26",
+        "exact_bin_count": 0,
+        "exact_bin_price_mass": 0,
+        "inconsistencies": [],
+        "market_count": 2,
+        "markets": [
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Hong Kong be 20\u00b0C or below on April 26?",
+            "range_high": null,
+            "range_low": null,
+            "target": 20.0,
+            "threshold_direction": "below",
+            "yes_price": 0.0
+          },
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+            "range_high": null,
+            "range_low": null,
+            "target": 30.0,
+            "threshold_direction": "higher",
+            "yes_price": 0.0
+          }
+        ],
+        "threshold_count": 2
+      },
+      {
+        "event_key": "Hong Kong|high|c|April 27",
+        "exact_bin_count": 0,
+        "exact_bin_price_mass": 0,
+        "inconsistencies": [],
+        "market_count": 2,
+        "markets": [
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Hong Kong be 20\u00b0C or below on April 27?",
+            "range_high": null,
+            "range_low": null,
+            "target": 20.0,
+            "threshold_direction": "below",
+            "yes_price": 0.0
+          },
+          {
+            "id": "",
+            "market_type": "threshold",
+            "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 27?",
+            "range_high": null,
+            "range_low": null,
+            "target": 30.0,
+            "threshold_direction": "higher",
+            "yes_price": 0.0
+          }
+        ],
+        "threshold_count": 2
+      }
+    ]
+  },
+  "operator": {
+    "artifacts": {
+      "source_shortlist_json": null
+    },
+    "operator_focus": [
+      "paper_trade_watch_direct_station: 2",
+      "extreme_price: 1",
+      "high_slippage_risk: 1",
+      "missing_tradeable_quote: 5"
+    ],
+    "run_id": "weather-heavy-top80-live-refresh-20260425",
+    "source": "live",
+    "summary": {
+      "blocked_count": 7,
+      "direct_source_count": 8,
+      "shortlisted": 8,
+      "surface_anomaly_count": 0,
+      "top_actions": [
+        "paper_trade_watch_direct_station",
+        "watch_only"
+      ],
+      "top_blockers": [
+        "extreme_price",
+        "high_slippage_risk",
+        "missing_tradeable_quote"
+      ],
+      "tradeable_count": 2
+    },
+    "watchlist": [
+      {
+        "action": "paper_trade_watch_direct_station",
+        "all_in_cost_bps": 0.0,
+        "anomalies": [],
+        "blocker": "extreme_price",
+        "blocker_detail": {
+          "kind": "market_state",
+          "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+          "polling_focus": "hko_current_weather_api_and_daily_extract",
+          "severity": "caution",
+          "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+        },
+        "city": "Hong Kong",
+        "date": "April 26",
+        "decision_status": "trade_small",
+        "depth_usd": 0.0,
+        "direct_source": "hong_kong_observatory",
+        "edge": 0.15,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "executable_extreme_price",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2065018",
+        "matched_traders": [
+          "Poligarch",
+          "Maskache2",
+          "HenryTheAtmoPhD",
+          "JoeTheMeteorologist",
+          "protrade3"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "paper_micro_order_with_strict_limit_and_fill_tracking"
+        ],
+        "polling_focus": "hko_current_weather_api_and_daily_extract",
+        "rank": 1,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": true,
+            "latency_tier": "direct_latest",
+            "timestamp": "2026-04-25T21:00:00+08:00",
+            "value": 24.0
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "direct_daily_extract",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "observed_value": 24.0,
+            "status": "no",
+            "threshold": 20.0
+          },
+          "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+          "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      {
+        "action": "paper_trade_watch_direct_station",
+        "all_in_cost_bps": 49.91,
+        "anomalies": [],
+        "blocker": null,
+        "blocker_detail": null,
+        "city": "Hong Kong",
+        "date": "April 26",
+        "decision_status": "trade_small",
+        "depth_usd": 37.07,
+        "direct_source": "hong_kong_observatory",
+        "edge": 0.13,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "executable",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2065028",
+        "matched_traders": [
+          "Poligarch",
+          "Maskache2",
+          "HenryTheAtmoPhD",
+          "JoeTheMeteorologist",
+          "protrade3"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "paper_order_with_limit_and_fill_tracking"
+        ],
+        "polling_focus": "hko_current_weather_api_and_daily_extract",
+        "rank": 2,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": true,
+            "latency_tier": "direct_latest",
+            "timestamp": "2026-04-25T21:00:00+08:00",
+            "value": 24.0
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "direct_daily_extract",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "observed_value": 24.0,
+            "status": "no",
+            "threshold": 30.0
+          },
+          "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+          "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      {
+        "action": "watch_only",
+        "all_in_cost_bps": 0.0,
+        "anomalies": [],
+        "blocker": "missing_tradeable_quote",
+        "blocker_detail": {
+          "kind": "quote_missing",
+          "operator_action": "wait_for_executable_depth",
+          "polling_focus": "station_history_page",
+          "severity": "blocking",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "city": "Dallas",
+        "date": "April 27",
+        "decision_status": "skip",
+        "depth_usd": 0.1,
+        "direct_source": "wunderground:KDAL",
+        "edge": 0.15,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "missing_quote",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2074350",
+        "matched_traders": [
+          "Handsanitizer23",
+          "Shoemaker34",
+          "khalidakup",
+          "Junhoo2",
+          "PythiaSnr"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "wait_for_executable_depth"
+        ],
+        "polling_focus": "station_history_page",
+        "rank": 3,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "status": "pending"
+          },
+          "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      {
+        "action": "watch_only",
+        "all_in_cost_bps": 0.0,
+        "anomalies": [],
+        "blocker": "missing_tradeable_quote",
+        "blocker_detail": {
+          "kind": "quote_missing",
+          "operator_action": "wait_for_executable_depth",
+          "polling_focus": "hko_current_weather_api_and_daily_extract",
+          "severity": "blocking",
+          "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+        },
+        "city": "Hong Kong",
+        "date": "April 27",
+        "decision_status": "skip",
+        "depth_usd": 0.05,
+        "direct_source": "hong_kong_observatory",
+        "edge": 0.15,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "missing_quote",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2074460",
+        "matched_traders": [
+          "Poligarch",
+          "Maskache2",
+          "HenryTheAtmoPhD",
+          "JoeTheMeteorologist",
+          "protrade3"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "wait_for_executable_depth"
+        ],
+        "polling_focus": "hko_current_weather_api_and_daily_extract",
+        "rank": 4,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": true,
+            "latency_tier": "direct_latest",
+            "timestamp": "2026-04-25T21:00:00+08:00",
+            "value": 24.0
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "direct_daily_extract",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "observed_value": 24.0,
+            "status": "no",
+            "threshold": 20.0
+          },
+          "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+          "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      {
+        "action": "watch_only",
+        "all_in_cost_bps": 0.0,
+        "anomalies": [],
+        "blocker": "missing_tradeable_quote",
+        "blocker_detail": {
+          "kind": "quote_missing",
+          "operator_action": "wait_for_executable_depth",
+          "polling_focus": "station_history_page",
+          "severity": "blocking",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "city": "Dallas",
+        "date": "April 26",
+        "decision_status": "skip",
+        "depth_usd": 0.0,
+        "direct_source": "wunderground:KDAL",
+        "edge": 0.15,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "missing_quote",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2064908",
+        "matched_traders": [
+          "Handsanitizer23",
+          "Shoemaker34",
+          "khalidakup",
+          "Junhoo2",
+          "PythiaSnr"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "wait_for_executable_depth"
+        ],
+        "polling_focus": "station_history_page",
+        "rank": 5,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "status": "pending"
+          },
+          "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      {
+        "action": "watch_only",
+        "all_in_cost_bps": 0.0,
+        "anomalies": [],
+        "blocker": "missing_tradeable_quote",
+        "blocker_detail": {
+          "kind": "quote_missing",
+          "operator_action": "wait_for_executable_depth",
+          "polling_focus": "hko_current_weather_api_and_daily_extract",
+          "severity": "blocking",
+          "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+        },
+        "city": "Hong Kong",
+        "date": "April 27",
+        "decision_status": "skip",
+        "depth_usd": 11.07,
+        "direct_source": "hong_kong_observatory",
+        "edge": 0.13,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "missing_quote",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2074470",
+        "matched_traders": [
+          "Poligarch",
+          "Maskache2",
+          "HenryTheAtmoPhD",
+          "JoeTheMeteorologist",
+          "protrade3"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "wait_for_executable_depth"
+        ],
+        "polling_focus": "hko_current_weather_api_and_daily_extract",
+        "rank": 6,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": true,
+            "latency_tier": "direct_latest",
+            "timestamp": "2026-04-25T21:00:00+08:00",
+            "value": 24.0
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "direct_daily_extract",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "observed_value": 24.0,
+            "status": "no",
+            "threshold": 30.0
+          },
+          "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+          "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      {
+        "action": "watch_only",
+        "all_in_cost_bps": 0.0,
+        "anomalies": [],
+        "blocker": "missing_tradeable_quote",
+        "blocker_detail": {
+          "kind": "quote_missing",
+          "operator_action": "wait_for_executable_depth",
+          "polling_focus": "station_history_page",
+          "severity": "blocking",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "city": "Dallas",
+        "date": "April 27",
+        "decision_status": "skip",
+        "depth_usd": 967.13,
+        "direct_source": "wunderground:KDAL",
+        "edge": 0.0,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "missing_quote",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2074360",
+        "matched_traders": [
+          "Handsanitizer23",
+          "Shoemaker34",
+          "khalidakup",
+          "Junhoo2",
+          "PythiaSnr"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "wait_for_executable_depth"
+        ],
+        "polling_focus": "station_history_page",
+        "rank": 7,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "status": "pending"
+          },
+          "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      {
+        "action": "watch_only",
+        "all_in_cost_bps": 2125.03,
+        "anomalies": [],
+        "blocker": "high_slippage_risk",
+        "blocker_detail": {
+          "kind": "execution_cost",
+          "operator_action": "wait_for_tighter_spread",
+          "polling_focus": "station_history_page",
+          "severity": "blocking",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "city": "Dallas",
+        "date": "April 26",
+        "decision_status": "skip",
+        "depth_usd": 986.0,
+        "direct_source": "wunderground:KDAL",
+        "edge": -0.54,
+        "execution_diagnostic": {
+          "grade": null,
+          "hours_to_resolution": null,
+          "liquidity_state": "costly_execution",
+          "score": null,
+          "spread": null,
+          "timing_state": "unknown"
+        },
+        "latency_priority": null,
+        "latency_tier": "direct_latest",
+        "market_id": "2064918",
+        "matched_traders": [
+          "Handsanitizer23",
+          "Shoemaker34",
+          "khalidakup",
+          "Junhoo2",
+          "PythiaSnr"
+        ],
+        "next": [
+          "poll_direct_resolution_source",
+          "wait_for_tighter_spread"
+        ],
+        "polling_focus": "station_history_page",
+        "rank": 8,
+        "resolution_status": {
+          "action_operator": "monitor_until_official_daily_extract",
+          "confirmed_outcome": {
+            "basis": "official_daily_extract",
+            "status": "pending"
+          },
+          "latest_direct": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "official_daily_extract": {
+            "available": false,
+            "latency_tier": "unsupported",
+            "timestamp": null,
+            "value": null
+          },
+          "provisional_outcome": {
+            "basis": "latest_direct",
+            "status": "pending"
+          },
+          "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+          "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      }
+    ]
+  },
+  "opportunity_report": {
+    "limit": 25,
+    "opportunities": [
+      {
+        "all_in_cost_bps": 0.0,
+        "decision_status": "trade_small",
+        "grade": "B",
+        "hours_to_resolution": 22.59,
+        "market_id": "2065018",
+        "order_book_depth_usd": 0.0,
+        "probability_edge": 0.15,
+        "question": "Will the highest temperature in Hong Kong be 20\u00b0C or below on April 26?",
+        "rank": 1,
+        "reasons": [
+          "trade_small: decent score but not ideal"
+        ],
+        "score": 69.6,
+        "skip_reason": "extreme_price",
+        "source_direct": true,
+        "source_history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+        "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+        "source_provider": "hong_kong_observatory",
+        "source_route": {
+          "direct": true,
+          "history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "manual_review_needed": false,
+          "polling_focus": "hko_current_weather_api_and_daily_extract",
+          "provider": "hong_kong_observatory",
+          "reason": "Hong Kong Observatory source found in resolution rules; poll HKO current weather API and daily extract directly.",
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "station_code": null,
+          "station_name": "Hong Kong Observatory",
+          "supported": true
+        },
+        "spread": 0.0
+      },
+      {
+        "all_in_cost_bps": 49.91,
+        "decision_status": "trade_small",
+        "grade": "C",
+        "hours_to_resolution": 22.59,
+        "market_id": "2065028",
+        "order_book_depth_usd": 37.07,
+        "probability_edge": 0.13,
+        "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+        "rank": 2,
+        "reasons": [
+          "trade_small: threshold edge is actionable despite middling composite score"
+        ],
+        "score": 60.4,
+        "source_direct": true,
+        "source_history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+        "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+        "source_provider": "hong_kong_observatory",
+        "source_route": {
+          "direct": true,
+          "history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "manual_review_needed": false,
+          "polling_focus": "hko_current_weather_api_and_daily_extract",
+          "provider": "hong_kong_observatory",
+          "reason": "Hong Kong Observatory source found in resolution rules; poll HKO current weather API and daily extract directly.",
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "station_code": null,
+          "station_name": "Hong Kong Observatory",
+          "supported": true
+        },
+        "spread": 0.02
+      },
+      {
+        "all_in_cost_bps": 0.0,
+        "decision_status": "skip",
+        "grade": "C",
+        "hours_to_resolution": 46.59,
+        "market_id": "2074460",
+        "order_book_depth_usd": 0.05,
+        "probability_edge": 0.15,
+        "question": "Will the highest temperature in Hong Kong be 20\u00b0C or below on April 27?",
+        "rank": 3,
+        "reasons": [
+          "skip: missing tradeable quote"
+        ],
+        "score": 63.2,
+        "skip_reason": "missing_tradeable_quote",
+        "source_direct": true,
+        "source_history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+        "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+        "source_provider": "hong_kong_observatory",
+        "source_route": {
+          "direct": true,
+          "history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "manual_review_needed": false,
+          "polling_focus": "hko_current_weather_api_and_daily_extract",
+          "provider": "hong_kong_observatory",
+          "reason": "Hong Kong Observatory source found in resolution rules; poll HKO current weather API and daily extract directly.",
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "station_code": null,
+          "station_name": "Hong Kong Observatory",
+          "supported": true
+        },
+        "spread": 0.0
+      },
+      {
+        "all_in_cost_bps": 0.0,
+        "decision_status": "skip",
+        "grade": "C",
+        "hours_to_resolution": 22.59,
+        "market_id": "2064908",
+        "order_book_depth_usd": 0.0,
+        "probability_edge": 0.15,
+        "question": "Will the highest temperature in Dallas be 67\u00b0F or below on April 26?",
+        "rank": 4,
+        "reasons": [
+          "skip: missing tradeable quote"
+        ],
+        "score": 59.7,
+        "skip_reason": "missing_tradeable_quote",
+        "source_direct": true,
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+        "source_polling_focus": "station_history_page",
+        "source_provider": "wunderground",
+        "source_route": {
+          "direct": true,
+          "history_url": null,
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "manual_review_needed": false,
+          "polling_focus": "station_history_page",
+          "provider": "wunderground",
+          "reason": "Wunderground station page found in resolution rules; poll the station page directly without city geocoding.",
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "station_code": "KDAL",
+          "station_name": "Dallas Love Field",
+          "supported": true
+        },
+        "source_station_code": "KDAL",
+        "spread": 0.0
+      },
+      {
+        "all_in_cost_bps": 0.0,
+        "decision_status": "skip",
+        "grade": "C",
+        "hours_to_resolution": 46.59,
+        "market_id": "2074350",
+        "order_book_depth_usd": 0.1,
+        "probability_edge": 0.15,
+        "question": "Will the highest temperature in Dallas be 69\u00b0F or below on April 27?",
+        "rank": 5,
+        "reasons": [
+          "skip: missing tradeable quote"
+        ],
+        "score": 56.5,
+        "skip_reason": "missing_tradeable_quote",
+        "source_direct": true,
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+        "source_polling_focus": "station_history_page",
+        "source_provider": "wunderground",
+        "source_route": {
+          "direct": true,
+          "history_url": null,
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "manual_review_needed": false,
+          "polling_focus": "station_history_page",
+          "provider": "wunderground",
+          "reason": "Wunderground station page found in resolution rules; poll the station page directly without city geocoding.",
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "station_code": "KDAL",
+          "station_name": "Dallas Love Field",
+          "supported": true
+        },
+        "source_station_code": "KDAL",
+        "spread": 0.0
+      },
+      {
+        "all_in_cost_bps": 0.0,
+        "decision_status": "skip",
+        "grade": "C",
+        "hours_to_resolution": 46.59,
+        "market_id": "2074470",
+        "order_book_depth_usd": 11.07,
+        "probability_edge": 0.13,
+        "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 27?",
+        "rank": 6,
+        "reasons": [
+          "skip: missing tradeable quote"
+        ],
+        "score": 57.0,
+        "skip_reason": "missing_tradeable_quote",
+        "source_direct": true,
+        "source_history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+        "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+        "source_provider": "hong_kong_observatory",
+        "source_route": {
+          "direct": true,
+          "history_url": "https://www.hko.gov.hk/en/wxinfo/dailywx/extract.htm",
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "manual_review_needed": false,
+          "polling_focus": "hko_current_weather_api_and_daily_extract",
+          "provider": "hong_kong_observatory",
+          "reason": "Hong Kong Observatory source found in resolution rules; poll HKO current weather API and daily extract directly.",
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "station_code": null,
+          "station_name": "Hong Kong Observatory",
+          "supported": true
+        },
+        "spread": 0.02
+      },
+      {
+        "all_in_cost_bps": 0.0,
+        "decision_status": "skip",
+        "grade": "D",
+        "hours_to_resolution": 46.59,
+        "market_id": "2074360",
+        "order_book_depth_usd": 967.13,
+        "probability_edge": 0.0,
+        "question": "Will the highest temperature in Dallas be 88\u00b0F or higher on April 27?",
+        "rank": 7,
+        "reasons": [
+          "skip: missing tradeable quote"
+        ],
+        "score": 25.7,
+        "skip_reason": "missing_tradeable_quote",
+        "source_direct": true,
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+        "source_polling_focus": "station_history_page",
+        "source_provider": "wunderground",
+        "source_route": {
+          "direct": true,
+          "history_url": null,
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "manual_review_needed": false,
+          "polling_focus": "station_history_page",
+          "provider": "wunderground",
+          "reason": "Wunderground station page found in resolution rules; poll the station page directly without city geocoding.",
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "station_code": "KDAL",
+          "station_name": "Dallas Love Field",
+          "supported": true
+        },
+        "source_station_code": "KDAL",
+        "spread": 0.88
+      },
+      {
+        "all_in_cost_bps": 2125.03,
+        "decision_status": "skip",
+        "grade": "D",
+        "hours_to_resolution": 22.59,
+        "market_id": "2064918",
+        "order_book_depth_usd": 986.0,
+        "probability_edge": -0.54,
+        "question": "Will the highest temperature in Dallas be 86\u00b0F or higher on April 26?",
+        "rank": 8,
+        "reasons": [
+          "skip: raw edge too small"
+        ],
+        "score": 33.6,
+        "skip_reason": "high_slippage_risk",
+        "source_direct": true,
+        "source_latency_priority": "direct_source_low_latency",
+        "source_latency_tier": "direct_latest",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+        "source_polling_focus": "station_history_page",
+        "source_provider": "wunderground",
+        "source_route": {
+          "direct": true,
+          "history_url": null,
+          "latency_priority": "direct_source_low_latency",
+          "latency_tier": "direct_latest",
+          "latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "manual_review_needed": false,
+          "polling_focus": "station_history_page",
+          "provider": "wunderground",
+          "reason": "Wunderground station page found in resolution rules; poll the station page directly without city geocoding.",
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "station_code": "KDAL",
+          "station_name": "Dallas Love Field",
+          "supported": true
+        },
+        "source_station_code": "KDAL",
+        "spread": 0.85
+      }
+    ],
+    "run_id": "weather-heavy-top80-live-refresh-20260425",
+    "source": "live",
+    "summary": {
+      "fetch_limit": 75,
+      "filtered_out": 7,
+      "filtered_reasons": {
+        "extreme_price": 1,
+        "high_slippage_risk": 1,
+        "missing_tradeable_quote": 5
+      },
+      "pre_filter_reasons": {
+        "market_already_resolving_or_resolved": 5
+      },
+      "pre_filtered": 5,
+      "raw_candidates": 13,
+      "scoreable": 8,
+      "scored": 8,
+      "selected": 8,
+      "skipped": 7,
+      "skipped_reasons": {
+        "extreme_price": 1,
+        "high_slippage_risk": 1,
+        "missing_tradeable_quote": 5
+      },
+      "traded": 1
+    }
+  },
+  "run_id": "weather-heavy-top80-live-refresh-20260425",
+  "shortlist": [
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 0.0,
+      "city": "Hong Kong",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 26",
+      "decision_status": "trade_small",
+      "execution_blocker": "extreme_price",
+      "latest_direct": {
+        "available": true,
+        "latency_tier": "direct_latest",
+        "timestamp": "2026-04-25T21:00:00+08:00",
+        "value": 24.0
+      },
+      "market_id": "2065018",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "direct_daily_extract",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 0.0,
+      "probability_edge": 0.15,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "observed_value": 24.0,
+        "status": "no",
+        "threshold": 20.0
+      },
+      "question": "Will the highest temperature in Hong Kong be 20\u00b0C or below on April 26?",
+      "rank": 1,
+      "reasons": [
+        "tradeable_decision",
+        "profitable_trader_city",
+        "direct_resolution_source",
+        "positive_probability_edge"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+      "source_provider": "hong_kong_observatory",
+      "source_station_code": null,
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "event_surface_grid_specialist",
+        "exact_bin_anomaly_hunter",
+        "threshold_harvester"
+      ]
+    },
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 49.91,
+      "city": "Hong Kong",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 26",
+      "decision_status": "trade_small",
+      "execution_blocker": null,
+      "latest_direct": {
+        "available": true,
+        "latency_tier": "direct_latest",
+        "timestamp": "2026-04-25T21:00:00+08:00",
+        "value": 24.0
+      },
+      "market_id": "2065028",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "paper_order_with_limit_and_fill_tracking"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "direct_daily_extract",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 37.07,
+      "probability_edge": 0.13,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "observed_value": 24.0,
+        "status": "no",
+        "threshold": 30.0
+      },
+      "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+      "rank": 2,
+      "reasons": [
+        "tradeable_decision",
+        "profitable_trader_city",
+        "direct_resolution_source",
+        "positive_probability_edge"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+      "source_provider": "hong_kong_observatory",
+      "source_station_code": null,
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "event_surface_grid_specialist",
+        "exact_bin_anomaly_hunter",
+        "threshold_harvester"
+      ]
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "city": "Dallas",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 27",
+      "decision_status": "skip",
+      "execution_blocker": "missing_tradeable_quote",
+      "latest_direct": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "market_id": "2074350",
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 0.1,
+      "probability_edge": 0.15,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "status": "pending"
+      },
+      "question": "Will the highest temperature in Dallas be 69\u00b0F or below on April 27?",
+      "rank": 3,
+      "reasons": [
+        "profitable_trader_city",
+        "direct_resolution_source",
+        "positive_probability_edge"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "source_polling_focus": "station_history_page",
+      "source_provider": "wunderground",
+      "source_station_code": "KDAL",
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "exact_bin_anomaly_hunter",
+        "event_surface_grid_specialist",
+        "threshold_harvester"
+      ]
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "city": "Hong Kong",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 27",
+      "decision_status": "skip",
+      "execution_blocker": "missing_tradeable_quote",
+      "latest_direct": {
+        "available": true,
+        "latency_tier": "direct_latest",
+        "timestamp": "2026-04-25T21:00:00+08:00",
+        "value": 24.0
+      },
+      "market_id": "2074460",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "direct_daily_extract",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 0.05,
+      "probability_edge": 0.15,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "observed_value": 24.0,
+        "status": "no",
+        "threshold": 20.0
+      },
+      "question": "Will the highest temperature in Hong Kong be 20\u00b0C or below on April 27?",
+      "rank": 4,
+      "reasons": [
+        "profitable_trader_city",
+        "direct_resolution_source",
+        "positive_probability_edge"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+      "source_provider": "hong_kong_observatory",
+      "source_station_code": null,
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "event_surface_grid_specialist",
+        "exact_bin_anomaly_hunter",
+        "threshold_harvester"
+      ]
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "city": "Dallas",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 26",
+      "decision_status": "skip",
+      "execution_blocker": "missing_tradeable_quote",
+      "latest_direct": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "market_id": "2064908",
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 0.0,
+      "probability_edge": 0.15,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "status": "pending"
+      },
+      "question": "Will the highest temperature in Dallas be 67\u00b0F or below on April 26?",
+      "rank": 5,
+      "reasons": [
+        "profitable_trader_city",
+        "direct_resolution_source",
+        "positive_probability_edge"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "source_polling_focus": "station_history_page",
+      "source_provider": "wunderground",
+      "source_station_code": "KDAL",
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "exact_bin_anomaly_hunter",
+        "event_surface_grid_specialist",
+        "threshold_harvester"
+      ]
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "city": "Hong Kong",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 27",
+      "decision_status": "skip",
+      "execution_blocker": "missing_tradeable_quote",
+      "latest_direct": {
+        "available": true,
+        "latency_tier": "direct_latest",
+        "timestamp": "2026-04-25T21:00:00+08:00",
+        "value": 24.0
+      },
+      "market_id": "2074470",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "direct_daily_extract",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 11.07,
+      "probability_edge": 0.13,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "observed_value": 24.0,
+        "status": "no",
+        "threshold": 30.0
+      },
+      "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 27?",
+      "rank": 6,
+      "reasons": [
+        "profitable_trader_city",
+        "direct_resolution_source",
+        "positive_probability_edge"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "source_polling_focus": "hko_current_weather_api_and_daily_extract",
+      "source_provider": "hong_kong_observatory",
+      "source_station_code": null,
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "event_surface_grid_specialist",
+        "exact_bin_anomaly_hunter",
+        "threshold_harvester"
+      ]
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "city": "Dallas",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 27",
+      "decision_status": "skip",
+      "execution_blocker": "missing_tradeable_quote",
+      "latest_direct": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "market_id": "2074360",
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 967.13,
+      "probability_edge": 0.0,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "status": "pending"
+      },
+      "question": "Will the highest temperature in Dallas be 88\u00b0F or higher on April 27?",
+      "rank": 7,
+      "reasons": [
+        "profitable_trader_city",
+        "direct_resolution_source"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "source_polling_focus": "station_history_page",
+      "source_provider": "wunderground",
+      "source_station_code": "KDAL",
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "exact_bin_anomaly_hunter",
+        "event_surface_grid_specialist",
+        "threshold_harvester"
+      ]
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 2125.03,
+      "city": "Dallas",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "date": "April 26",
+      "decision_status": "skip",
+      "execution_blocker": "high_slippage_risk",
+      "latest_direct": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "market_id": "2064918",
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "wait_for_tighter_spread"
+      ],
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "unsupported",
+        "timestamp": null,
+        "value": null
+      },
+      "order_book_depth_usd": 986.0,
+      "probability_edge": -0.54,
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "status": "pending"
+      },
+      "question": "Will the highest temperature in Dallas be 86\u00b0F or higher on April 26?",
+      "rank": 8,
+      "reasons": [
+        "profitable_trader_city",
+        "direct_resolution_source"
+      ],
+      "resolution_action_operator": "monitor_until_official_daily_extract",
+      "source_direct": true,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+      "source_latency_priority": "direct_source_low_latency",
+      "source_latency_tier": "direct_latest",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "source_polling_focus": "station_history_page",
+      "source_provider": "wunderground",
+      "source_station_code": "KDAL",
+      "surface_inconsistency_count": 0,
+      "surface_inconsistency_types": [],
+      "trader_archetype_match": [
+        "exact_bin_anomaly_hunter",
+        "event_surface_grid_specialist",
+        "threshold_harvester"
+      ]
+    }
+  ],
+  "source": "live",
+  "strategy_report": {
+    "account_count": 80,
+    "accounts": [
+      {
+        "handle": "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+        "market_type_counts": {
+          "exact_value": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Shanghai",
+            "count": 2,
+            "date": "April 26"
+          },
+          {
+            "city": "Beijing",
+            "count": 2,
+            "date": "April 26"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Shanghai",
+            "count": 3
+          },
+          {
+            "city": "Beijing",
+            "count": 2
+          },
+          {
+            "city": "Moscow",
+            "count": 1
+          },
+          {
+            "city": "Istanbul",
+            "count": 1
+          },
+          {
+            "city": "Singapore",
+            "count": 1
+          }
+        ],
+        "wallet": "0xec86a2d3f69015b1a9382e4dfa8695e1b48760e4",
+        "weather_pnl_usd": 10474.8,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Amano-Hina",
+        "market_type_counts": {
+          "exact_range": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies"
+        ],
+        "top_cities": [
+          {
+            "city": "New York City",
+            "count": 4
+          },
+          {
+            "city": "San Francisco",
+            "count": 2
+          },
+          {
+            "city": "Miami",
+            "count": 1
+          },
+          {
+            "city": "Austin",
+            "count": 1
+          }
+        ],
+        "wallet": "0x8aa29c27241b6909a7c4d6cb4f400267aa215a0b",
+        "weather_pnl_usd": 8831.67,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "StayFreshCheeseBags",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 4,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Tokyo",
+            "count": 1
+          },
+          {
+            "city": "Lagos",
+            "count": 1
+          },
+          {
+            "city": "Houston",
+            "count": 1
+          },
+          {
+            "city": "Tel Aviv",
+            "count": 1
+          },
+          {
+            "city": "New York City",
+            "count": 1
+          },
+          {
+            "city": "Sao Paulo",
+            "count": 1
+          },
+          {
+            "city": "Toronto",
+            "count": 1
+          },
+          {
+            "city": "Denver",
+            "count": 1
+          }
+        ],
+        "wallet": "0xc34f6b088bb9172625ee1ea2ee8da9ac4f037d2e",
+        "weather_pnl_usd": 7272.38,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Jiuzhou",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 6
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies"
+        ],
+        "top_cities": [
+          {
+            "city": "Manila",
+            "count": 1
+          },
+          {
+            "city": "San Francisco",
+            "count": 1
+          },
+          {
+            "city": "Panama City",
+            "count": 1
+          },
+          {
+            "city": "Warsaw",
+            "count": 1
+          },
+          {
+            "city": "Munich",
+            "count": 1
+          },
+          {
+            "city": "Atlanta",
+            "count": 1
+          },
+          {
+            "city": "Madrid",
+            "count": 1
+          },
+          {
+            "city": "Tokyo",
+            "count": 1
+          }
+        ],
+        "wallet": "0x5499a872abba0f503ea8da708eaab775dffecf6d",
+        "weather_pnl_usd": 2332.69,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "hotcold",
+        "market_type_counts": {
+          "exact_value": 5,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Guangzhou",
+            "count": 3,
+            "date": "April 25"
+          },
+          {
+            "city": "Chengdu",
+            "count": 2,
+            "date": "April 25"
+          },
+          {
+            "city": "Wellington",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Guangzhou",
+            "count": 3
+          },
+          {
+            "city": "Chengdu",
+            "count": 2
+          },
+          {
+            "city": "Wellington",
+            "count": 2
+          },
+          {
+            "city": "Warsaw",
+            "count": 1
+          }
+        ],
+        "wallet": "0xc1200dd35a85da9b9ba552582d6103dd3d39a7e3",
+        "weather_pnl_usd": 2323.26,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "PaulaLolik",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 7
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies"
+        ],
+        "top_cities": [
+          {
+            "city": "Taipei",
+            "count": 1
+          },
+          {
+            "city": "Warsaw",
+            "count": 1
+          },
+          {
+            "city": "Chengdu",
+            "count": 1
+          },
+          {
+            "city": "Karachi",
+            "count": 1
+          },
+          {
+            "city": "Munich",
+            "count": 1
+          },
+          {
+            "city": "Jeddah",
+            "count": 1
+          },
+          {
+            "city": "Helsinki",
+            "count": 1
+          },
+          {
+            "city": "Denver",
+            "count": 1
+          }
+        ],
+        "wallet": "0x3a2c067d262e5b2b2100251359e4c7b877283d80",
+        "weather_pnl_usd": 2153.2,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Wistesty",
+        "market_type_counts": {
+          "exact_range": 3,
+          "exact_value": 3,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "New York City",
+            "count": 3
+          },
+          {
+            "city": "Los Angeles",
+            "count": 1
+          },
+          {
+            "city": "Taipei",
+            "count": 1
+          },
+          {
+            "city": "Shenzhen",
+            "count": 1
+          },
+          {
+            "city": "Toronto",
+            "count": 1
+          },
+          {
+            "city": "Sao Paulo",
+            "count": 1
+          }
+        ],
+        "wallet": "0xd3938e1d885f7849215c49d87465709d63400744",
+        "weather_pnl_usd": 2095.46,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "ruth777",
+        "market_type_counts": {
+          "exact_range": 3,
+          "exact_value": 5
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 2,
+            "date": "April 27"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 2
+          },
+          {
+            "city": "Helsinki",
+            "count": 1
+          },
+          {
+            "city": "Miami",
+            "count": 1
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          },
+          {
+            "city": "Atlanta",
+            "count": 1
+          },
+          {
+            "city": "Kuala Lumpur",
+            "count": 1
+          },
+          {
+            "city": "Seattle",
+            "count": 1
+          }
+        ],
+        "wallet": "0xb9033854e54310cca8a22368d16ed53cdfbea41b",
+        "weather_pnl_usd": 2034.45,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "sdgoppa",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Paris",
+            "count": 3,
+            "date": "April 6"
+          },
+          {
+            "city": "Seoul",
+            "count": 3,
+            "date": "March 28"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Paris",
+            "count": 5
+          },
+          {
+            "city": "Seoul",
+            "count": 3
+          }
+        ],
+        "wallet": "0x8eea2d8458fcad16bf50dec2b7de76e989d6e285",
+        "weather_pnl_usd": 2010.52,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0x2048",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 5,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Busan",
+            "count": 2,
+            "date": "April 26"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Busan",
+            "count": 2
+          },
+          {
+            "city": "Kuala Lumpur",
+            "count": 1
+          },
+          {
+            "city": "Taipei",
+            "count": 1
+          },
+          {
+            "city": "Tel Aviv",
+            "count": 1
+          },
+          {
+            "city": "Ankara",
+            "count": 1
+          },
+          {
+            "city": "Atlanta",
+            "count": 1
+          },
+          {
+            "city": "Moscow",
+            "count": 1
+          }
+        ],
+        "wallet": "0xecc8b1562f4a521d0856e3f89c5bfa8bba969335",
+        "weather_pnl_usd": 1993.01,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "airlorgedr",
+        "market_type_counts": {
+          "exact_value": 5,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 2
+          },
+          {
+            "city": "Mexico City",
+            "count": 1
+          },
+          {
+            "city": "Miami",
+            "count": 1
+          },
+          {
+            "city": "Lagos",
+            "count": 1
+          },
+          {
+            "city": "Tokyo",
+            "count": 1
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          },
+          {
+            "city": "Singapore",
+            "count": 1
+          }
+        ],
+        "wallet": "0xbc8405b2c4149332c835ebb7e29e68e53eaba0d2",
+        "weather_pnl_usd": 1933.26,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "patrickbro-wn",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 6,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Istanbul",
+            "count": 3,
+            "date": "April 25"
+          },
+          {
+            "city": "Taipei",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Istanbul",
+            "count": 3
+          },
+          {
+            "city": "Taipei",
+            "count": 2
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          },
+          {
+            "city": "Beijing",
+            "count": 1
+          },
+          {
+            "city": "Miami",
+            "count": 1
+          }
+        ],
+        "wallet": "0x01f2a8baabe17c2541d1e3091220991f257ac3de",
+        "weather_pnl_usd": 1846.39,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "tinylonglong",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 5,
+            "date": "April 25"
+          },
+          {
+            "city": "Hong Kong",
+            "count": 3,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0x04dcf8d1328b2bf5fa6e7aa8a200df95751cd572",
+        "weather_pnl_usd": 1755.92,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "jeffkatsu",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 8,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0x570c03b5f037294ca24b743d90df8c1a993f91c5",
+        "weather_pnl_usd": 1631.41,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Unpluggedstoic",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Shanghai",
+            "count": 2,
+            "date": "April 6"
+          },
+          {
+            "city": "Shanghai",
+            "count": 2,
+            "date": "April 5"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Shanghai",
+            "count": 6
+          },
+          {
+            "city": "Paris",
+            "count": 1
+          },
+          {
+            "city": "Toronto",
+            "count": 1
+          }
+        ],
+        "wallet": "0xef988ffb5f3ffcf0da700614a2666c6de6a27926",
+        "weather_pnl_usd": 1614.11,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0x66a17b44f6187745c4f273622a702e2f1b423de8",
+        "market_type_counts": {
+          "exact_range": 5,
+          "exact_value": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies"
+        ],
+        "top_cities": [
+          {
+            "city": "Houston",
+            "count": 2
+          },
+          {
+            "city": "San Francisco",
+            "count": 2
+          },
+          {
+            "city": "Beijing",
+            "count": 1
+          },
+          {
+            "city": "Shenzhen",
+            "count": 1
+          },
+          {
+            "city": "Los Angeles",
+            "count": 1
+          },
+          {
+            "city": "Wuhan",
+            "count": 1
+          }
+        ],
+        "wallet": "0x66a17b44f6187745c4f273622a702e2f1b423de8",
+        "weather_pnl_usd": 1610.72,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Kaiji-",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 3,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "New York City",
+            "count": 2
+          },
+          {
+            "city": "Moscow",
+            "count": 1
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          },
+          {
+            "city": "Singapore",
+            "count": 1
+          },
+          {
+            "city": "Helsinki",
+            "count": 1
+          },
+          {
+            "city": "Miami",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          }
+        ],
+        "wallet": "0xe5bd42e02dc8c05b31514c1596eaf82d3e52339a",
+        "weather_pnl_usd": 1558.95,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "tkr2",
+        "market_type_counts": {
+          "exact_value": 3,
+          "threshold": 5
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "threshold_harvester",
+        "repeated_city_date_events": [
+          {
+            "city": "Munich",
+            "count": 2,
+            "date": "April 19"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 3
+          },
+          {
+            "city": "Munich",
+            "count": 2
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          },
+          {
+            "city": "Tokyo",
+            "count": 1
+          },
+          {
+            "city": "Wellington",
+            "count": 1
+          }
+        ],
+        "wallet": "0x01a68281185e728ba0fef6245008bf8af68a59b0",
+        "weather_pnl_usd": 1427.98,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "omegaming",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 8,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0x958a17190a434da9fd4f1d20e0c51fbaf64b9f65",
+        "weather_pnl_usd": 1414.34,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "NewBuildingX",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 5,
+            "date": "April 25"
+          },
+          {
+            "city": "Hong Kong",
+            "count": 3,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0xcb32934773126ed9267babaee1e68f0c375779aa",
+        "weather_pnl_usd": 1372.75,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "fridius2",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Munich",
+            "count": 2,
+            "date": "April 19"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Munich",
+            "count": 3
+          },
+          {
+            "city": "London",
+            "count": 2
+          },
+          {
+            "city": "Madrid",
+            "count": 2
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          }
+        ],
+        "wallet": "0x81035115a389a085e36255e5cb9b9ab8ee3723a1",
+        "weather_pnl_usd": 1293.45,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0x6EBCA419255Cd1a37d9505181C0cAd69562a4A5C-1774515771455",
+        "market_type_counts": {
+          "exact_range": 3,
+          "exact_value": 1,
+          "threshold": 4
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 2,
+            "date": "April 25"
+          },
+          {
+            "city": "Denver",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Denver",
+            "count": 3
+          },
+          {
+            "city": "Atlanta",
+            "count": 2
+          },
+          {
+            "city": "London",
+            "count": 2
+          },
+          {
+            "city": "Paris",
+            "count": 1
+          }
+        ],
+        "wallet": "0x6ebca419255cd1a37d9505181c0cad69562a4a5c",
+        "weather_pnl_usd": 1172.78,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "PythiaSnr",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 4,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 3
+          },
+          {
+            "city": "Atlanta",
+            "count": 2
+          },
+          {
+            "city": "Ankara",
+            "count": 1
+          },
+          {
+            "city": "Chicago",
+            "count": 1
+          },
+          {
+            "city": "Dallas",
+            "count": 1
+          }
+        ],
+        "wallet": "0xef98c81d560325c8a57b9f63adc8ba5cda78b586",
+        "weather_pnl_usd": 1084.02,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "testacccc",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Seoul",
+            "count": 3,
+            "date": "April 5"
+          },
+          {
+            "city": "Tokyo",
+            "count": 3,
+            "date": "April 6"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 4
+          },
+          {
+            "city": "Tokyo",
+            "count": 3
+          },
+          {
+            "city": "Toronto",
+            "count": 1
+          }
+        ],
+        "wallet": "0x78d8df801c35a594eadfbbb7e9c5a84a923a4a88",
+        "weather_pnl_usd": 1073.92,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "skewerpacil",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 5,
+            "date": "April 25"
+          },
+          {
+            "city": "Hong Kong",
+            "count": 3,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0x900939fada83b830ae89e39c031e11e44bd91621",
+        "weather_pnl_usd": 1004.17,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "skyapple",
+        "market_type_counts": {
+          "exact_value": 4,
+          "threshold": 4
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "threshold_harvester",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 1
+          },
+          {
+            "city": "Singapore",
+            "count": 1
+          },
+          {
+            "city": "Dallas",
+            "count": 1
+          },
+          {
+            "city": "Beijing",
+            "count": 1
+          },
+          {
+            "city": "Seattle",
+            "count": 1
+          },
+          {
+            "city": "Denver",
+            "count": 1
+          },
+          {
+            "city": "Istanbul",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          }
+        ],
+        "wallet": "0x58de2a7224b2ed15a6e1b64e07f92b91850a83af",
+        "weather_pnl_usd": 984.6,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0x997FC832295AB4030FB9b3398a230B1A0601000a-1762077299420",
+        "market_type_counts": {
+          "exact_range": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Atlanta",
+            "count": 2,
+            "date": "March 17"
+          },
+          {
+            "city": "Dallas",
+            "count": 2,
+            "date": "March 17"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Dallas",
+            "count": 3
+          },
+          {
+            "city": "Atlanta",
+            "count": 2
+          },
+          {
+            "city": "Toronto",
+            "count": 1
+          },
+          {
+            "city": "Chicago",
+            "count": 1
+          },
+          {
+            "city": "Seattle",
+            "count": 1
+          }
+        ],
+        "wallet": "0x997fc832295ab4030fb9b3398a230b1a0601000a",
+        "weather_pnl_usd": 963.61,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "dennycloud",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 5,
+            "date": "April 25"
+          },
+          {
+            "city": "Hong Kong",
+            "count": 3,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0xc90b20dd4ccd4d1f6c0a2182b8b1cf9526707190",
+        "weather_pnl_usd": 891.14,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "totoroooo",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 6
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Paris",
+            "count": 2,
+            "date": "March 13"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Paris",
+            "count": 2
+          },
+          {
+            "city": "Sao Paulo",
+            "count": 1
+          },
+          {
+            "city": "Chicago",
+            "count": 1
+          },
+          {
+            "city": "Lucknow",
+            "count": 1
+          },
+          {
+            "city": "Miami",
+            "count": 1
+          },
+          {
+            "city": "Toronto",
+            "count": 1
+          },
+          {
+            "city": "Buenos Aires",
+            "count": 1
+          }
+        ],
+        "wallet": "0x5ddb835bfb16e741ef7b0411c88ef3eef08d3fa9",
+        "weather_pnl_usd": 835.03,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "dosencpui",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 8,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0x170b53a2b92fdb48c05393562f59d6d973064737",
+        "weather_pnl_usd": 828.82,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Alrescha-114",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Ankara",
+            "count": 3
+          },
+          {
+            "city": "Seoul",
+            "count": 2
+          },
+          {
+            "city": "Chengdu",
+            "count": 1
+          },
+          {
+            "city": "Buenos Aires",
+            "count": 1
+          },
+          {
+            "city": "Paris",
+            "count": 1
+          }
+        ],
+        "wallet": "0xdd657949299d01d718028b25a8dfc353927ac0b1",
+        "weather_pnl_usd": 819.44,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0x607c221d1fca1747501fe0b605991ed540fd8e7e",
+        "market_type_counts": {
+          "exact_value": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Chengdu",
+            "count": 2,
+            "date": "April 12"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Chengdu",
+            "count": 5
+          },
+          {
+            "city": "Moscow",
+            "count": 1
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          },
+          {
+            "city": "Kuala Lumpur",
+            "count": 1
+          }
+        ],
+        "wallet": "0x607c221d1fca1747501fe0b605991ed540fd8e7e",
+        "weather_pnl_usd": 781.93,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "ma.ok",
+        "market_type_counts": {
+          "exact_range": 3,
+          "exact_value": 5
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Seoul",
+            "count": 2,
+            "date": "April 26"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 2
+          },
+          {
+            "city": "Dallas",
+            "count": 1
+          },
+          {
+            "city": "Singapore",
+            "count": 1
+          },
+          {
+            "city": "Austin",
+            "count": 1
+          },
+          {
+            "city": "Guangzhou",
+            "count": 1
+          },
+          {
+            "city": "Warsaw",
+            "count": 1
+          },
+          {
+            "city": "Chicago",
+            "count": 1
+          }
+        ],
+        "wallet": "0xdbf23702ffc51de37df1c284387f41dd64dee987",
+        "weather_pnl_usd": 774.29,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "seqre",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 5,
+            "date": "April 25"
+          },
+          {
+            "city": "Hong Kong",
+            "count": 3,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0xc0d896336db3b2e08876a5dcd63b25a811e15430",
+        "weather_pnl_usd": 742.25,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Mr.Z.",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 6,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Shanghai",
+            "count": 3,
+            "date": "April 26"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Shanghai",
+            "count": 3
+          },
+          {
+            "city": "Taipei",
+            "count": 1
+          },
+          {
+            "city": "Ankara",
+            "count": 1
+          },
+          {
+            "city": "Seattle",
+            "count": 1
+          },
+          {
+            "city": "Paris",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          }
+        ],
+        "wallet": "0x31646b754f77b973910e7376b7015cb81fe83c65",
+        "weather_pnl_usd": 738.56,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "AdamKahnwald",
+        "market_type_counts": {
+          "exact_range": 4,
+          "exact_value": 1,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Houston",
+            "count": 6,
+            "date": "April 19"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Houston",
+            "count": 6
+          },
+          {
+            "city": "Panama City",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          }
+        ],
+        "wallet": "0xaaf9024dc9da6cd4cc297d4bfa7a7d943f2e5211",
+        "weather_pnl_usd": 735.23,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "kimochi.88",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 6
+          },
+          {
+            "city": "Taipei",
+            "count": 1
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          }
+        ],
+        "wallet": "0x9fbaf23f5720be5bc346546bf87aaff5e0a73adc",
+        "weather_pnl_usd": 715.0,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "seedlings",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Munich",
+            "count": 4,
+            "date": "April 10"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Munich",
+            "count": 4
+          },
+          {
+            "city": "Chengdu",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          },
+          {
+            "city": "Buenos Aires",
+            "count": 1
+          },
+          {
+            "city": "Wuhan",
+            "count": 1
+          }
+        ],
+        "wallet": "0x35e6f6d3b7d55d89615e511954c3ff4316e87a4d",
+        "weather_pnl_usd": 687.67,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0x46c708D6231608C10E052d48B769Cf1d577c71a0-1774485190361",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Chengdu",
+            "count": 3
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          },
+          {
+            "city": "Toronto",
+            "count": 1
+          },
+          {
+            "city": "Munich",
+            "count": 1
+          },
+          {
+            "city": "Chongqing",
+            "count": 1
+          }
+        ],
+        "wallet": "0x46c708d6231608c10e052d48b769cf1d577c71a0",
+        "weather_pnl_usd": 676.62,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "RatingIU",
+        "market_type_counts": {
+          "exact_value": 6,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 5,
+            "date": "April 25"
+          },
+          {
+            "city": "Hong Kong",
+            "count": 3,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 8
+          }
+        ],
+        "wallet": "0xd009eeeeac8c81dc2d5e254e0e25a1a14e5791af",
+        "weather_pnl_usd": 665.03,
+        "weather_signal_count": 300,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Railbird",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 7
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 2
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          },
+          {
+            "city": "Wellington",
+            "count": 1
+          },
+          {
+            "city": "Paris",
+            "count": 1
+          },
+          {
+            "city": "Houston",
+            "count": 1
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          },
+          {
+            "city": "Beijing",
+            "count": 1
+          }
+        ],
+        "wallet": "0x906f2454a777600aea6c506247566decef82371a",
+        "weather_pnl_usd": 23358.41,
+        "weather_signal_count": 299,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "dpnd",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 6
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Mexico City",
+            "count": 5,
+            "date": "April 27"
+          }
+        ],
+        "sample_size": 7,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Mexico City",
+            "count": 5
+          },
+          {
+            "city": "Houston",
+            "count": 1
+          },
+          {
+            "city": "Wuhan",
+            "count": 1
+          }
+        ],
+        "wallet": "0x5f211a24da4c005d9438a1ea269673b85ed0b376",
+        "weather_pnl_usd": 24134.16,
+        "weather_signal_count": 298,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Maskache2",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 5,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 2,
+            "date": "April 5"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 3
+          },
+          {
+            "city": "Hong Kong",
+            "count": 2
+          },
+          {
+            "city": "Moscow",
+            "count": 1
+          },
+          {
+            "city": "Atlanta",
+            "count": 1
+          },
+          {
+            "city": "Tokyo",
+            "count": 1
+          }
+        ],
+        "wallet": "0x1f66796b45581868376365aef54b51eb84184c8d",
+        "weather_pnl_usd": 49973.43,
+        "weather_signal_count": 294,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "ColdMath",
+        "market_type_counts": {
+          "exact_value": 4,
+          "threshold": 4
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Ankara",
+            "count": 2,
+            "date": "February 26"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Ankara",
+            "count": 4
+          },
+          {
+            "city": "Cape Town",
+            "count": 1
+          },
+          {
+            "city": "Wellington",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          },
+          {
+            "city": "Lucknow",
+            "count": 1
+          }
+        ],
+        "wallet": "0x594edb9112f526fa6a80b8f858a6379c8a2c1c11",
+        "weather_pnl_usd": 121302.21,
+        "weather_signal_count": 289,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Poligarch",
+        "market_type_counts": {
+          "exact_value": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Chengdu",
+            "count": 6,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Chengdu",
+            "count": 6
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          }
+        ],
+        "wallet": "0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+        "weather_pnl_usd": 50120.07,
+        "weather_signal_count": 240,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0x77266604E63f5cAF08D19CaEBae0C563ce64aEE",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 6
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Seoul",
+            "count": 4,
+            "date": "April 19"
+          },
+          {
+            "city": "New York City",
+            "count": 2,
+            "date": "April 18"
+          },
+          {
+            "city": "Seoul",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 6
+          },
+          {
+            "city": "New York City",
+            "count": 2
+          }
+        ],
+        "wallet": "0x77266604e63f5caf08d19caebae0c563ce064aee",
+        "weather_pnl_usd": 24256.28,
+        "weather_signal_count": 228,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "neobrother",
+        "market_type_counts": {
+          "exact_range": 3,
+          "exact_value": 5
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Moscow",
+            "count": 3,
+            "date": "April 25"
+          },
+          {
+            "city": "Miami",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Moscow",
+            "count": 4
+          },
+          {
+            "city": "Miami",
+            "count": 2
+          },
+          {
+            "city": "Atlanta",
+            "count": 1
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          }
+        ],
+        "wallet": "0x6297b93ea37ff92a57fd636410f3b71ebf74517e",
+        "weather_pnl_usd": 30552.89,
+        "weather_signal_count": 215,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "HenryTheAtmoPhD",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Seoul",
+            "count": 6,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 6
+          },
+          {
+            "city": "Hong Kong",
+            "count": 2
+          }
+        ],
+        "wallet": "0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+        "weather_pnl_usd": 45563.27,
+        "weather_signal_count": 214,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "protrade3",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Hong Kong",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Hong Kong",
+            "count": 2
+          },
+          {
+            "city": "Madrid",
+            "count": 1
+          },
+          {
+            "city": "Singapore",
+            "count": 1
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          },
+          {
+            "city": "Wellington",
+            "count": 1
+          },
+          {
+            "city": "Busan",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          }
+        ],
+        "wallet": "0x1c0f3e4c90a48e4dd93d0abcdf719a5a5f1599d0",
+        "weather_pnl_usd": 32652.55,
+        "weather_signal_count": 214,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "0xf2e346ab",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 5,
+            "date": "February 22"
+          },
+          {
+            "city": "Hong Kong",
+            "count": 2,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 6
+          },
+          {
+            "city": "Hong Kong",
+            "count": 2
+          }
+        ],
+        "wallet": "0x8278252ebbf354eca8ce316e680a0eaf02859464",
+        "weather_pnl_usd": 26372.78,
+        "weather_signal_count": 209,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Hoaqin",
+        "market_type_counts": {
+          "exact_value": 4,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 2,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 7,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Lagos",
+            "count": 3
+          },
+          {
+            "city": "London",
+            "count": 3
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          }
+        ],
+        "wallet": "0xf1faf3f6ad1e0264d6cbecc1a416e7c536be047d",
+        "weather_pnl_usd": 23283.68,
+        "weather_signal_count": 207,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "BeefSlayer",
+        "market_type_counts": {
+          "exact_range": 4,
+          "exact_value": 1,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Atlanta",
+            "count": 3,
+            "date": "April 25"
+          },
+          {
+            "city": "Miami",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Atlanta",
+            "count": 4
+          },
+          {
+            "city": "Miami",
+            "count": 2
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          },
+          {
+            "city": "New York City",
+            "count": 1
+          }
+        ],
+        "wallet": "0x331bf91c132af9d921e1908ca0979363fc47193f",
+        "weather_pnl_usd": 63444.05,
+        "weather_signal_count": 202,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "HondaCivic",
+        "market_type_counts": {
+          "exact_value": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Ankara",
+            "count": 5,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Ankara",
+            "count": 5
+          },
+          {
+            "city": "Warsaw",
+            "count": 1
+          },
+          {
+            "city": "Moscow",
+            "count": 1
+          },
+          {
+            "city": "Amsterdam",
+            "count": 1
+          }
+        ],
+        "wallet": "0x15ceffed7bf820cd2d90f90ea24ae9909f5cd5fa",
+        "weather_pnl_usd": 55905.36,
+        "weather_signal_count": 202,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "JoeTheMeteorologist",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Seoul",
+            "count": 6,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 6
+          },
+          {
+            "city": "Shenzhen",
+            "count": 1
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          }
+        ],
+        "wallet": "0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+        "weather_pnl_usd": 44964.15,
+        "weather_signal_count": 196,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "NoonienSoong",
+        "market_type_counts": {
+          "exact_range": 7,
+          "exact_value": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Miami",
+            "count": 3,
+            "date": "April 24"
+          },
+          {
+            "city": "San Francisco",
+            "count": 2,
+            "date": "April 24"
+          },
+          {
+            "city": "New York City",
+            "count": 2,
+            "date": "April 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Miami",
+            "count": 3
+          },
+          {
+            "city": "San Francisco",
+            "count": 2
+          },
+          {
+            "city": "New York City",
+            "count": 2
+          },
+          {
+            "city": "Shenzhen",
+            "count": 1
+          }
+        ],
+        "wallet": "0x38cc1d1f95d12039324809d8bb6ca6da6cbef88e",
+        "weather_pnl_usd": 30261.13,
+        "weather_signal_count": 191,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "meropi",
+        "market_type_counts": {
+          "exact_value": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Tokyo",
+            "count": 3,
+            "date": "April 25"
+          },
+          {
+            "city": "London",
+            "count": 3,
+            "date": "April 25"
+          },
+          {
+            "city": "Madrid",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Tokyo",
+            "count": 3
+          },
+          {
+            "city": "London",
+            "count": 3
+          },
+          {
+            "city": "Madrid",
+            "count": 2
+          }
+        ],
+        "wallet": "0x9977760c6bd6f824cac834d1a36ee99478d63020",
+        "weather_pnl_usd": 21615.81,
+        "weather_signal_count": 184,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Protrade2",
+        "market_type_counts": {
+          "exact_value": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Shenzhen",
+            "count": 2,
+            "date": "April 25"
+          }
+        ],
+        "sample_size": 3,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Shenzhen",
+            "count": 2
+          },
+          {
+            "city": "Paris",
+            "count": 1
+          }
+        ],
+        "wallet": "0x4ffba5035905ddfd5e80db2fcbf83a7b4c62119d",
+        "weather_pnl_usd": 30660.45,
+        "weather_signal_count": 178,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "aboss",
+        "market_type_counts": {
+          "exact_range": 2,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "threshold_harvester",
+        "repeated_city_date_events": [],
+        "sample_size": 4,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 4
+          }
+        ],
+        "wallet": "0xaaec89fcb2ff14b335ddd738edf355ac07038dc8",
+        "weather_pnl_usd": 38787.58,
+        "weather_signal_count": 177,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "khalidakup",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 4,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 2,
+            "date": "April 6"
+          },
+          {
+            "city": "Dallas",
+            "count": 2,
+            "date": "April 4"
+          },
+          {
+            "city": "Taipei",
+            "count": 2,
+            "date": "April 3"
+          }
+        ],
+        "sample_size": 7,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 2
+          },
+          {
+            "city": "Dallas",
+            "count": 2
+          },
+          {
+            "city": "Taipei",
+            "count": 2
+          },
+          {
+            "city": "Moscow",
+            "count": 1
+          }
+        ],
+        "wallet": "0x97eb7ddf9139a3db0be99e81217e20546e219fbe",
+        "weather_pnl_usd": 29585.79,
+        "weather_signal_count": 170,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "jfm-20",
+        "market_type_counts": {
+          "exact_range": 3,
+          "exact_value": 4,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "New York City",
+            "count": 2,
+            "date": "March 6"
+          },
+          {
+            "city": "Paris",
+            "count": 2,
+            "date": "March 6"
+          },
+          {
+            "city": "New York City",
+            "count": 2,
+            "date": "March 1"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "New York City",
+            "count": 4
+          },
+          {
+            "city": "London",
+            "count": 2
+          },
+          {
+            "city": "Paris",
+            "count": 2
+          }
+        ],
+        "wallet": "0xcd9d30094d5c30be701c6ce633013c0a5e8206b0",
+        "weather_pnl_usd": 24938.42,
+        "weather_signal_count": 167,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Handsanitizer23",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 5,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Lucknow",
+            "count": 2
+          },
+          {
+            "city": "Dallas",
+            "count": 2
+          },
+          {
+            "city": "Guangzhou",
+            "count": 1
+          },
+          {
+            "city": "Shenzhen",
+            "count": 1
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          },
+          {
+            "city": "London",
+            "count": 1
+          }
+        ],
+        "wallet": "0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+        "weather_pnl_usd": 71174.4,
+        "weather_signal_count": 166,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Junhoo2",
+        "market_type_counts": {
+          "exact_range": 3,
+          "exact_value": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 6,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies"
+        ],
+        "top_cities": [
+          {
+            "city": "Atlanta",
+            "count": 2
+          },
+          {
+            "city": "Shanghai",
+            "count": 2
+          },
+          {
+            "city": "Dallas",
+            "count": 1
+          },
+          {
+            "city": "Hong Kong",
+            "count": 1
+          }
+        ],
+        "wallet": "0x34eccd57d85a42273ea46d8699a2666ac600b7cf",
+        "weather_pnl_usd": 21991.53,
+        "weather_signal_count": 149,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "automatedAItradingbot",
+        "market_type_counts": {
+          "exact_range": 4,
+          "exact_value": 4
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 8,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 2
+          },
+          {
+            "city": "Chicago",
+            "count": 2
+          },
+          {
+            "city": "Los Angeles",
+            "count": 1
+          },
+          {
+            "city": "Sao Paulo",
+            "count": 1
+          },
+          {
+            "city": "Lagos",
+            "count": 1
+          },
+          {
+            "city": "San Francisco",
+            "count": 1
+          }
+        ],
+        "wallet": "0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11",
+        "weather_pnl_usd": 64617.53,
+        "weather_signal_count": 148,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "russell110320",
+        "market_type_counts": {},
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "weather_signal_generalist",
+        "repeated_city_date_events": [],
+        "sample_size": 0,
+        "strategy_rules": [
+          "use account as weak signal source only until more trade history is available"
+        ],
+        "top_cities": [],
+        "wallet": "0x118689b24aead1d6e9507b8068d056b2ec4f051b",
+        "weather_pnl_usd": 47324.31,
+        "weather_signal_count": 148,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "HondaCivic2",
+        "market_type_counts": {
+          "exact_value": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Ankara",
+            "count": 8,
+            "date": "February 6"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Ankara",
+            "count": 8
+          }
+        ],
+        "wallet": "0x08cf0b0fec3d42d9920bb0dfbc49fde635088cbc",
+        "weather_pnl_usd": 24433.79,
+        "weather_signal_count": 147,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Cucurella",
+        "market_type_counts": {
+          "exact_range": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 2,
+            "date": "November 14"
+          },
+          {
+            "city": "New York City",
+            "count": 2,
+            "date": "September 22"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "New York City",
+            "count": 6
+          },
+          {
+            "city": "London",
+            "count": 2
+          }
+        ],
+        "wallet": "0xde324a83c0fc3051a67dd60be948f7e73210700c",
+        "weather_pnl_usd": 21890.77,
+        "weather_signal_count": 122,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Shoemaker34",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 5,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 7,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 2
+          },
+          {
+            "city": "London",
+            "count": 2
+          },
+          {
+            "city": "Wellington",
+            "count": 1
+          },
+          {
+            "city": "Ankara",
+            "count": 1
+          },
+          {
+            "city": "Dallas",
+            "count": 1
+          }
+        ],
+        "wallet": "0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+        "weather_pnl_usd": 33959.87,
+        "weather_signal_count": 118,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "David32534",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 3,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 5,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Tokyo",
+            "count": 2
+          },
+          {
+            "city": "Seattle",
+            "count": 1
+          },
+          {
+            "city": "Wuhan",
+            "count": 1
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          }
+        ],
+        "wallet": "0x6e9108c47fe74fb241be7760d889315c3c39134e",
+        "weather_pnl_usd": 22948.21,
+        "weather_signal_count": 113,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "jangsunjuu",
+        "market_type_counts": {
+          "exact_range": 1,
+          "exact_value": 3,
+          "threshold": 2
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 6,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting"
+        ],
+        "top_cities": [
+          {
+            "city": "Munich",
+            "count": 1
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          },
+          {
+            "city": "New York City",
+            "count": 1
+          },
+          {
+            "city": "Paris",
+            "count": 1
+          },
+          {
+            "city": "Wuhan",
+            "count": 1
+          },
+          {
+            "city": "Guangzhou",
+            "count": 1
+          }
+        ],
+        "wallet": "0x42fd57f1545f699ed52bb8ae4b4ecb5da63496c0",
+        "weather_pnl_usd": 27983.63,
+        "weather_signal_count": 107,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "387411007415611814092217897387",
+        "market_type_counts": {
+          "exact_value": 5
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "exact_bin_anomaly_hunter",
+        "repeated_city_date_events": [],
+        "sample_size": 5,
+        "strategy_rules": [
+          "prioritize exact-bin and adjacent threshold inconsistencies"
+        ],
+        "top_cities": [
+          {
+            "city": "Warsaw",
+            "count": 1
+          },
+          {
+            "city": "Madrid",
+            "count": 1
+          },
+          {
+            "city": "Beijing",
+            "count": 1
+          },
+          {
+            "city": "Shenzhen",
+            "count": 1
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          }
+        ],
+        "wallet": "0xa49b6ea0a604c581f2a9569db42c192b1c487054",
+        "weather_pnl_usd": 24274.69,
+        "weather_signal_count": 95,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "WeatherTraderBot",
+        "market_type_counts": {
+          "exact_value": 8
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "London",
+            "count": 8,
+            "date": "March 24"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "London",
+            "count": 8
+          }
+        ],
+        "wallet": "0xacc8e9dcabf9d65a5c78e3bec6941ed53a2b7d08",
+        "weather_pnl_usd": 57179.74,
+        "weather_signal_count": 73,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "1-800-LIQUIDITY",
+        "market_type_counts": {
+          "exact_value": 7,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Seoul",
+            "count": 8,
+            "date": "April 10"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Seoul",
+            "count": 8
+          }
+        ],
+        "wallet": "0x584eee598b341109592b985c1a253ab044fa090f",
+        "weather_pnl_usd": 33506.37,
+        "weather_signal_count": 69,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Lavincey",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 3,
+          "threshold": 3
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "New York City",
+            "count": 2,
+            "date": "April 17"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "New York City",
+            "count": 3
+          },
+          {
+            "city": "London",
+            "count": 1
+          },
+          {
+            "city": "Shanghai",
+            "count": 1
+          },
+          {
+            "city": "Seoul",
+            "count": 1
+          },
+          {
+            "city": "Tokyo",
+            "count": 1
+          },
+          {
+            "city": "Beijing",
+            "count": 1
+          }
+        ],
+        "wallet": "0x1cdd071bb612de6d66d0c882b676c663697de595",
+        "weather_pnl_usd": 24633.24,
+        "weather_signal_count": 58,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Hans323",
+        "market_type_counts": {
+          "exact_range": 2,
+          "exact_value": 5,
+          "threshold": 1
+        },
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "event_surface_grid_specialist",
+        "repeated_city_date_events": [
+          {
+            "city": "Manila",
+            "count": 5,
+            "date": "April 15"
+          },
+          {
+            "city": "New York City",
+            "count": 2,
+            "date": "April 21"
+          }
+        ],
+        "sample_size": 8,
+        "strategy_rules": [
+          "build full city/date event surfaces before scoring isolated markets",
+          "prioritize exact-bin and adjacent threshold inconsistencies",
+          "track near-resolution threshold contracts for cheap certainty harvesting",
+          "cluster orders by city/date rather than treating markets independently"
+        ],
+        "top_cities": [
+          {
+            "city": "Manila",
+            "count": 5
+          },
+          {
+            "city": "New York City",
+            "count": 2
+          },
+          {
+            "city": "Guangzhou",
+            "count": 1
+          }
+        ],
+        "wallet": "0x0f37cb80dee49d55b5f6d9e595d52591d6371410",
+        "weather_pnl_usd": 80872.37,
+        "weather_signal_count": 55,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Nowhere-Man",
+        "market_type_counts": {},
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "weather_signal_generalist",
+        "repeated_city_date_events": [],
+        "sample_size": 0,
+        "strategy_rules": [
+          "use account as weak signal source only until more trade history is available"
+        ],
+        "top_cities": [],
+        "wallet": "0x45580feac3b916a88b7513929e26f86b3adea2b3",
+        "weather_pnl_usd": 30410.34,
+        "weather_signal_count": 50,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "gopfan",
+        "market_type_counts": {},
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "weather_signal_generalist",
+        "repeated_city_date_events": [],
+        "sample_size": 0,
+        "strategy_rules": [
+          "use account as weak signal source only until more trade history is available"
+        ],
+        "top_cities": [],
+        "wallet": "0x6af75d4e4aaf700450efbac3708cce1665810ff1",
+        "weather_pnl_usd": 118426.47,
+        "weather_signal_count": 31,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "ANudeEgg",
+        "market_type_counts": {},
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "weather_signal_generalist",
+        "repeated_city_date_events": [],
+        "sample_size": 0,
+        "strategy_rules": [
+          "use account as weak signal source only until more trade history is available"
+        ],
+        "top_cities": [],
+        "wallet": "0x62d2bcd198bb6eab8b7eeb9d2061815dc02b9eb7",
+        "weather_pnl_usd": 36270.19,
+        "weather_signal_count": 29,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "BigMike11",
+        "market_type_counts": {},
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "weather_signal_generalist",
+        "repeated_city_date_events": [],
+        "sample_size": 0,
+        "strategy_rules": [
+          "use account as weak signal source only until more trade history is available"
+        ],
+        "top_cities": [],
+        "wallet": "0xecdbd79566a25693b9971c48d7de84bc05f7da79",
+        "weather_pnl_usd": 62776.72,
+        "weather_signal_count": 6,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "aenews-915",
+        "market_type_counts": {},
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "weather_signal_generalist",
+        "repeated_city_date_events": [],
+        "sample_size": 0,
+        "strategy_rules": [
+          "use account as weak signal source only until more trade history is available"
+        ],
+        "top_cities": [],
+        "wallet": "0xf1bb700a67e3e8a45dc8160a92f4e0405f41bf09",
+        "weather_pnl_usd": 55093.07,
+        "weather_signal_count": 6,
+        "weather_volume_usd": 0.0
+      },
+      {
+        "handle": "Kapii",
+        "market_type_counts": {},
+        "pnl_over_volume_pct": 0.0,
+        "primary_archetype": "weather_signal_generalist",
+        "repeated_city_date_events": [],
+        "sample_size": 0,
+        "strategy_rules": [
+          "use account as weak signal source only until more trade history is available"
+        ],
+        "top_cities": [],
+        "wallet": "0xb74711992caf6d04fa55eecc46b8efc95311b050",
+        "weather_pnl_usd": 57190.13,
+        "weather_signal_count": 5,
+        "weather_volume_usd": 0.0
+      }
+    ],
+    "summary": {
+      "account_count": 80,
+      "archetype_counts": {
+        "event_surface_grid_specialist": 52,
+        "exact_bin_anomaly_hunter": 18,
+        "threshold_harvester": 3,
+        "weather_signal_generalist": 7
+      },
+      "implementation_priorities": [
+        "event_surface_builder",
+        "near_resolution_threshold_watcher",
+        "trader_activity_history_import",
+        "strategy_backtest_replay",
+        "paper_then_live_execution_loop"
+      ],
+      "top_cities": [
+        "Hong Kong",
+        "London",
+        "Seoul",
+        "New York City",
+        "Ankara",
+        "Shanghai",
+        "Chengdu",
+        "Atlanta",
+        "Paris",
+        "Tokyo"
+      ]
+    }
+  },
+  "summary": {
+    "action_counts": {
+      "paper_trade_watch_direct_station": 2,
+      "watch_only": 6
+    },
+    "execution_blocker_counts": {
+      "extreme_price": 1,
+      "high_slippage_risk": 1,
+      "missing_tradeable_quote": 5
+    },
+    "input_opportunities": 8,
+    "shortlisted": 8,
+    "strategy_accounts": 80,
+    "surface_events": 4
+  }
+}

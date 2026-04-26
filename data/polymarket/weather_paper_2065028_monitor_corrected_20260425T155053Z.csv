@@ -1,0 +1,2 @@
+generated_at,market_id,side,shares,entry_avg,spend,best_bid,best_ask,action,official_status,official_value,official_raw_data_len,latest_value,latest_timestamp,latest_hkt_date,latest_interpretation,provisional_status,confirmed_status,mtm_bid_pnl_usdc
+2026-04-25T15:50:53.839331+00:00,2065028,NO,5.117707,0.977,5.0,0.936,0.969,HOLD_MONITOR_TARGET_DATE_THEN_OFFICIAL,not_available_yet,,0,24.0,2026-04-25T23:02:00+08:00,2026-04-25,context_only_previous_day_current_reading_not_resolution_evidence,not_started_or_not_observed_yet,pending,-0.20982624799999972

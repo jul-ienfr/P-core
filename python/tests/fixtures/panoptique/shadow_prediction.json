@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "prediction_id": "sp-1",
+  "market_id": "pm-1",
+  "agent_id": "round_number_price_bot",
+  "observed_at": "2026-04-26T12:00:00+00:00",
+  "horizon_seconds": 900,
+  "predicted_crowd_direction": "up",
+  "confidence": 0.72,
+  "rationale": "paper-only crowd-flow forecast; no real order placed",
+  "features": {"mid": 0.5}
+}

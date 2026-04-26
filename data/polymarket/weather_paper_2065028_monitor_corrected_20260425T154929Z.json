@@ -1,0 +1,180 @@
+{
+  "books": {
+    "NO": {
+      "best_ask": 0.969,
+      "best_bid": 0.936,
+      "token_id": "52817872578288816749191973321023191193600420939968601808746765086788856187251",
+      "top_asks": [
+        {
+          "price": 0.969,
+          "size": 88.01
+        },
+        {
+          "price": 0.97,
+          "size": 160.0
+        },
+        {
+          "price": 0.974,
+          "size": 125.0
+        },
+        {
+          "price": 0.975,
+          "size": 200.0
+        },
+        {
+          "price": 0.977,
+          "size": 179.36
+        }
+      ],
+      "top_bids": [
+        {
+          "price": 0.936,
+          "size": 40.0
+        },
+        {
+          "price": 0.935,
+          "size": 27.0
+        },
+        {
+          "price": 0.919,
+          "size": 29.99
+        },
+        {
+          "price": 0.914,
+          "size": 5.0
+        },
+        {
+          "price": 0.912,
+          "size": 5.0
+        }
+      ]
+    },
+    "YES": {
+      "best_ask": 0.064,
+      "best_bid": 0.031,
+      "token_id": "6131281487843155887731200380910001326393601812623280243081546732770219880606",
+      "top_asks": [
+        {
+          "price": 0.064,
+          "size": 40.0
+        },
+        {
+          "price": 0.065,
+          "size": 27.0
+        },
+        {
+          "price": 0.081,
+          "size": 29.99
+        },
+        {
+          "price": 0.086,
+          "size": 5.0
+        },
+        {
+          "price": 0.088,
+          "size": 5.0
+        }
+      ],
+      "top_bids": [
+        {
+          "price": 0.031,
+          "size": 88.01
+        },
+        {
+          "price": 0.03,
+          "size": 160.0
+        },
+        {
+          "price": 0.026,
+          "size": 125.0
+        },
+        {
+          "price": 0.025,
+          "size": 200.0
+        },
+        {
+          "price": 0.023,
+          "size": 179.36
+        }
+      ]
+    }
+  },
+  "correction": {
+    "corrected_at": "2026-04-25T15:49:29.985050+00:00",
+    "reason": "previous monitors treated latest/direct Apr 25 HKO temperature as provisional Apr 26 outcome; this is wrong because target local date has not started/completed in the source data",
+    "rule": "do not label previous-day HKO current readings as provisional outcome for a future market date; official CLMMAXT data=[] means no daily extract yet, not NO confirmation"
+  },
+  "existing_position": {
+    "entry_avg": 0.977,
+    "filled_usdc": 5.0,
+    "found": true,
+    "shares": 5.117707,
+    "side": "NO",
+    "source_ledger": "/home/jul/prediction_core/data/polymarket/weather_paper_micro_updated_ledger_with_2065028_20260425T150303Z.json"
+  },
+  "generated_at": "2026-04-25T15:49:29.985050+00:00",
+  "market_id": "2065028",
+  "market_url": "https://polymarket.com/event/highest-temperature-in-hong-kong-on-april-26-2026-30corhigher",
+  "monitor": {
+    "action": "HOLD_MONITOR_TARGET_DATE_THEN_OFFICIAL",
+    "best_ask": 0.969,
+    "best_bid": 0.936,
+    "expected_pnl_usdc": -0.06141274500000016,
+    "expected_settlement_value_usdc": 4.938587255,
+    "model_probability": 0.965,
+    "mtm_bid_pnl_usdc": -0.20982624799999972,
+    "mtm_bid_usdc": 4.790173752,
+    "next_actions": [
+      "wait for Apr 26 local observations before any provisional label",
+      "then monitor HKO CLMMAXT official daily extract",
+      "no add / no real order"
+    ],
+    "side": "NO"
+  },
+  "no_real_order_placed": true,
+  "paper_only": true,
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "resolution_status": {
+    "confirmed_outcome": {
+      "basis": "official_daily_extract",
+      "status": "pending"
+    },
+    "date": "2026-04-26",
+    "latest_direct": {
+      "available": true,
+      "fallback_station_used": false,
+      "interpretation": "context_only_previous_day_current_reading_not_resolution_evidence",
+      "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "station_found": "Hong Kong Observatory",
+      "timestamp": "2026-04-25T23:02:00+08:00",
+      "value": 24.0
+    },
+    "official_daily_extract": {
+      "available": false,
+      "raw_data_len": 0,
+      "raw_fields": [
+        "\u5e74/Year",
+        "\u6708/Month",
+        "\u65e5/Day",
+        "\u6578\u503c/Value",
+        "\u6578\u64da\u5b8c\u6574\u6027/data Completeness"
+      ],
+      "reason": "HKO CLMMAXT response data is empty for requested month/date; target date 2026-04-26 is not finalized in this endpoint yet",
+      "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "status": "not_available_yet",
+      "timestamp": null,
+      "value": null
+    },
+    "provider": "hong_kong_observatory",
+    "provisional_outcome": {
+      "basis": "none",
+      "correction": "do not use 2026-04-25 current temperature as provisional Apr 26 daily maximum",
+      "observed_value": null,
+      "status": "not_started_or_not_observed_yet",
+      "threshold": 30.0
+    },
+    "station": "HKO",
+    "threshold_c": 30.0
+  },
+  "source_monitor": "/home/jul/prediction_core/data/polymarket/weather_paper_2065028_monitor_20260425T154806Z.json"
+}

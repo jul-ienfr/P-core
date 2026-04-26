@@ -1,0 +1,268 @@
+{
+  "city": "Hong Kong",
+  "created_at_local": "2026-04-25T15:49:31+02:00",
+  "decision_status": "paper_order_eligible",
+  "market_id": "2065028",
+  "market_snapshot": {
+    "book_gamma_bestAsk": 0.029,
+    "book_gamma_bestBid": 0.025,
+    "book_liquidity": "828.38917",
+    "book_spread": 0.004,
+    "gamma_no": 0.973,
+    "gamma_yes": 0.027,
+    "no_ask": 0.975,
+    "no_book": {
+      "ask_levels": [
+        [
+          0.975,
+          10.0
+        ],
+        [
+          0.977,
+          288.47
+        ],
+        [
+          0.978,
+          38.32
+        ],
+        [
+          0.98,
+          222.2
+        ],
+        [
+          0.985,
+          81.85
+        ],
+        [
+          0.99,
+          758.0
+        ],
+        [
+          0.992,
+          115.0
+        ],
+        [
+          0.995,
+          39.0
+        ]
+      ],
+      "best_ask": 0.975,
+      "best_bid": 0.973,
+      "bid_levels": [
+        [
+          0.973,
+          19.29
+        ],
+        [
+          0.972,
+          40.0
+        ],
+        [
+          0.97,
+          5.0
+        ],
+        [
+          0.963,
+          20.0
+        ],
+        [
+          0.96,
+          35.0
+        ],
+        [
+          0.95,
+          95.1
+        ],
+        [
+          0.948,
+          10.0
+        ],
+        [
+          0.94,
+          35.0
+        ]
+      ],
+      "fill50_avg": 0.976609,
+      "fill50_shares": 51.1975,
+      "fill50_spend": 50.0,
+      "fills": [
+        [
+          0.975,
+          10.0,
+          9.75
+        ],
+        [
+          0.977,
+          41.1975,
+          40.25
+        ]
+      ]
+    },
+    "no_fill50_avg": 0.976609,
+    "yes_ask": 0.027,
+    "yes_book": {
+      "ask_levels": [
+        [
+          0.027,
+          19.29
+        ],
+        [
+          0.028,
+          40.0
+        ],
+        [
+          0.03,
+          5.0
+        ],
+        [
+          0.037,
+          20.0
+        ],
+        [
+          0.04,
+          35.0
+        ],
+        [
+          0.05,
+          95.1
+        ],
+        [
+          0.052,
+          10.0
+        ],
+        [
+          0.06,
+          35.0
+        ]
+      ],
+      "best_ask": 0.027,
+      "best_bid": 0.025,
+      "bid_levels": [
+        [
+          0.025,
+          10.0
+        ],
+        [
+          0.023,
+          288.47
+        ],
+        [
+          0.022,
+          38.32
+        ],
+        [
+          0.02,
+          222.2
+        ],
+        [
+          0.015,
+          81.85
+        ],
+        [
+          0.01,
+          758.0
+        ],
+        [
+          0.008,
+          115.0
+        ],
+        [
+          0.005,
+          39.0
+        ]
+      ],
+      "fill50_avg": 0.085322,
+      "fill50_shares": 586.0143,
+      "fill50_spend": 50.0,
+      "fills": [
+        [
+          0.027,
+          19.29,
+          0.5208
+        ],
+        [
+          0.028,
+          40.0,
+          1.12
+        ],
+        [
+          0.03,
+          5.0,
+          0.15
+        ],
+        [
+          0.037,
+          20.0,
+          0.74
+        ],
+        [
+          0.04,
+          35.0,
+          1.4
+        ],
+        [
+          0.05,
+          95.1,
+          4.755
+        ]
+      ]
+    },
+    "yes_fill50_avg": 0.085322
+  },
+  "mode": "paper_only_no_real_order",
+  "next_actions": [
+    "poll_hko_current_weather_api",
+    "poll_hko_official_daily_extract",
+    "refresh_orderbook_before_followup"
+  ],
+  "paper_order": {
+    "entry_rule": "NO only if ask <=0.978 for paper; skip if >0.98; target hold to resolution only paper/micro.",
+    "estimated_shares": 5.1282,
+    "fill_simulation": "eligible_at_observed_ask",
+    "limit_price": 0.978,
+    "observed_no_ask": 0.975,
+    "paper_notional_usd": 5.0,
+    "side": "NO"
+  },
+  "preferred_side": "NO",
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "rating": "A",
+  "risk_controls": [
+    "paper_only",
+    "do_not_place_real_order",
+    "do_not_use_normal_size_until_official_daily_extract",
+    "skip_if_no_ask_above_0.978_or_missing",
+    "recheck_orderbook_before_any_future_paper_fill"
+  ],
+  "run_id": "paper-2065028-20260425-1549",
+  "weather_snapshot": {
+    "action_operator": "monitor_until_official_daily_extract",
+    "confirmed_outcome": {
+      "basis": "official_daily_extract",
+      "status": "pending"
+    },
+    "latest_direct": {
+      "available": true,
+      "latency_tier": "direct_latest",
+      "timestamp": "2026-04-25T21:00:00+08:00",
+      "value": 24.0
+    },
+    "official_daily_extract": {
+      "available": false,
+      "latency_tier": "direct_daily_extract",
+      "timestamp": null,
+      "value": null
+    },
+    "provider": "hong_kong_observatory",
+    "provisional_outcome": {
+      "basis": "latest_direct",
+      "observed_value": 24.0,
+      "status": "no",
+      "threshold": 30.0
+    },
+    "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+    "source_lag_seconds": 2965,
+    "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+    "station_name": "Hong Kong Observatory"
+  }
+}

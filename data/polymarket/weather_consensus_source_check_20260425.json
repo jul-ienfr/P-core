@@ -1,0 +1,1475 @@
+{
+  "source": "open-meteo forecast proxy, not official resolution source",
+  "rows": [
+    {
+      "city": "London",
+      "date": "April 25",
+      "account_count": 21,
+      "signal_count": 169,
+      "active_value": 3318.59,
+      "score": 2241.84,
+      "forecast_max": 20.0,
+      "dominant_temp": "19°C",
+      "dominant_count": 42,
+      "closest_temp": "20°C",
+      "closest_count": 38,
+      "abs_error_closest": 0.0,
+      "top_handles": [
+        [
+          "Railbird",
+          34
+        ],
+        [
+          "poligami",
+          29
+        ],
+        [
+          "hotcold",
+          19
+        ],
+        [
+          "StayFreshCheeseBags",
+          14
+        ],
+        [
+          "Mr.Z.",
+          13
+        ],
+        [
+          "newbees",
+          11
+        ],
+        [
+          "oleksiyz",
+          7
+        ],
+        [
+          "heimaokuaipao",
+          6
+        ]
+      ],
+      "top_temps": [
+        [
+          "19°C",
+          42
+        ],
+        [
+          "20°C",
+          38
+        ],
+        [
+          "21°C",
+          18
+        ],
+        [
+          "18°C",
+          15
+        ],
+        [
+          "22°C",
+          10
+        ],
+        [
+          "5°C",
+          8
+        ],
+        [
+          "1°C",
+          7
+        ],
+        [
+          "2°C",
+          5
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "London",
+      "date": "April 24",
+      "account_count": 19,
+      "signal_count": 78,
+      "active_value": 581.77,
+      "score": 1963.56,
+      "forecast_max": 18.9,
+      "dominant_temp": "17°C",
+      "dominant_count": 25,
+      "closest_temp": "19°C",
+      "closest_count": 11,
+      "abs_error_closest": 0.1,
+      "top_handles": [
+        [
+          "poligami",
+          19
+        ],
+        [
+          "Jiuzhou",
+          8
+        ],
+        [
+          "oleksiyz",
+          6
+        ],
+        [
+          "ColdMath",
+          5
+        ],
+        [
+          "Maskache2",
+          4
+        ],
+        [
+          "dpnd",
+          4
+        ],
+        [
+          "huskyvs",
+          4
+        ],
+        [
+          "Walter-Weather",
+          4
+        ]
+      ],
+      "top_temps": [
+        [
+          "17°C",
+          25
+        ],
+        [
+          "18°C",
+          12
+        ],
+        [
+          "19°C",
+          11
+        ],
+        [
+          "16°C",
+          11
+        ],
+        [
+          "20°C",
+          7
+        ],
+        [
+          "3°C",
+          4
+        ],
+        [
+          "14°C",
+          3
+        ],
+        [
+          "7°C",
+          2
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 25",
+      "account_count": 18,
+      "signal_count": 112,
+      "active_value": 3044.03,
+      "score": 1895.69,
+      "forecast_max": 23.7,
+      "dominant_temp": "20°C",
+      "dominant_count": 43,
+      "closest_temp": "21°C",
+      "closest_count": 38,
+      "abs_error_closest": 2.7,
+      "top_handles": [
+        [
+          "hotcold",
+          31
+        ],
+        [
+          "Maskache2",
+          14
+        ],
+        [
+          "FohnHairdryer",
+          14
+        ],
+        [
+          "kamikazetrading",
+          11
+        ],
+        [
+          "huskyvs",
+          9
+        ],
+        [
+          "0x77266604E63f5cAF08D19CaEBae0C563ce64aEE",
+          4
+        ],
+        [
+          "cyberkurajber",
+          4
+        ],
+        [
+          "BeefSlayer",
+          4
+        ]
+      ],
+      "top_temps": [
+        [
+          "20°C",
+          43
+        ],
+        [
+          "21°C",
+          38
+        ],
+        [
+          "19°C",
+          9
+        ],
+        [
+          "8°C",
+          9
+        ],
+        [
+          "18°C",
+          4
+        ],
+        [
+          "17°C",
+          2
+        ],
+        [
+          "11°C",
+          2
+        ],
+        [
+          "9°C",
+          2
+        ]
+      ],
+      "verdict": "consensus_far_check_source"
+    },
+    {
+      "city": "Chengdu",
+      "date": "April 25",
+      "account_count": 16,
+      "signal_count": 72,
+      "active_value": 2321.11,
+      "score": 1662.24,
+      "forecast_max": 32.2,
+      "dominant_temp": "31°C",
+      "dominant_count": 24,
+      "closest_temp": "32°C",
+      "closest_count": 19,
+      "abs_error_closest": 0.2,
+      "top_handles": [
+        [
+          "hotcold",
+          24
+        ],
+        [
+          "Lex-tang",
+          9
+        ],
+        [
+          "newbees",
+          9
+        ],
+        [
+          "Railbird",
+          5
+        ],
+        [
+          "Jiuzhou",
+          4
+        ],
+        [
+          "StayFreshCheeseBags",
+          3
+        ],
+        [
+          "Poligarch",
+          3
+        ],
+        [
+          "dpnd",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "31°C",
+          24
+        ],
+        [
+          "32°C",
+          19
+        ],
+        [
+          "33°C",
+          11
+        ],
+        [
+          "30°C",
+          7
+        ],
+        [
+          "29°C",
+          6
+        ],
+        [
+          "34°C",
+          4
+        ],
+        [
+          "27°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Singapore",
+      "date": "April 25",
+      "account_count": 16,
+      "signal_count": 48,
+      "active_value": 477.92,
+      "score": 1639.36,
+      "forecast_max": 32.9,
+      "dominant_temp": "34°C",
+      "dominant_count": 14,
+      "closest_temp": "33°C",
+      "closest_count": 6,
+      "abs_error_closest": 0.1,
+      "top_handles": [
+        [
+          "Railbird",
+          14
+        ],
+        [
+          "newbees",
+          9
+        ],
+        [
+          "Jiuzhou",
+          4
+        ],
+        [
+          "tianqizhishen",
+          3
+        ],
+        [
+          "ColdMath",
+          2
+        ],
+        [
+          "dpnd",
+          2
+        ],
+        [
+          "StayFreshCheeseBags",
+          2
+        ],
+        [
+          "738925",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "34°C",
+          14
+        ],
+        [
+          "35°C",
+          13
+        ],
+        [
+          "33°C",
+          6
+        ],
+        [
+          "32°C",
+          6
+        ],
+        [
+          "31°C",
+          4
+        ],
+        [
+          "36°C",
+          4
+        ],
+        [
+          "30°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Moscow",
+      "date": "April 25",
+      "account_count": 15,
+      "signal_count": 96,
+      "active_value": 1569.87,
+      "score": 1579.94,
+      "forecast_max": 9.8,
+      "dominant_temp": "11°C",
+      "dominant_count": 21,
+      "closest_temp": "10°C",
+      "closest_count": 18,
+      "abs_error_closest": 0.2,
+      "top_handles": [
+        [
+          "oleksiyz",
+          16
+        ],
+        [
+          "newbees",
+          16
+        ],
+        [
+          "heimaokuaipao",
+          15
+        ],
+        [
+          "Poligarch",
+          11
+        ],
+        [
+          "StayFreshCheeseBags",
+          10
+        ],
+        [
+          "cyberkurajber",
+          5
+        ],
+        [
+          "hotcold",
+          5
+        ],
+        [
+          "Jiuzhou",
+          4
+        ]
+      ],
+      "top_temps": [
+        [
+          "11°C",
+          21
+        ],
+        [
+          "8°C",
+          20
+        ],
+        [
+          "10°C",
+          18
+        ],
+        [
+          "9°C",
+          18
+        ],
+        [
+          "12°C",
+          7
+        ],
+        [
+          "13°C",
+          5
+        ],
+        [
+          "7°C",
+          4
+        ],
+        [
+          "6°C",
+          3
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Helsinki",
+      "date": "April 25",
+      "account_count": 15,
+      "signal_count": 85,
+      "active_value": 2347.13,
+      "score": 1572.69,
+      "forecast_max": 10.3,
+      "dominant_temp": "9°C",
+      "dominant_count": 35,
+      "closest_temp": "10°C",
+      "closest_count": 19,
+      "abs_error_closest": 0.3,
+      "top_handles": [
+        [
+          "ColdMath",
+          19
+        ],
+        [
+          "oleksiyz",
+          18
+        ],
+        [
+          "heimaokuaipao",
+          11
+        ],
+        [
+          "hotcold",
+          9
+        ],
+        [
+          "StayFreshCheeseBags",
+          4
+        ],
+        [
+          "Jiuzhou",
+          4
+        ],
+        [
+          "0x2048",
+          4
+        ],
+        [
+          "tianqizhishen",
+          4
+        ]
+      ],
+      "top_temps": [
+        [
+          "9°C",
+          35
+        ],
+        [
+          "10°C",
+          19
+        ],
+        [
+          "8°C",
+          8
+        ],
+        [
+          "7°C",
+          7
+        ],
+        [
+          "11°C",
+          5
+        ],
+        [
+          "12°C",
+          4
+        ],
+        [
+          "5°C",
+          3
+        ],
+        [
+          "6°C",
+          3
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Paris",
+      "date": "April 25",
+      "account_count": 15,
+      "signal_count": 75,
+      "active_value": 2663.63,
+      "score": 1565.33,
+      "forecast_max": 23.7,
+      "dominant_temp": "23°C",
+      "dominant_count": 22,
+      "closest_temp": "24°C",
+      "closest_count": 14,
+      "abs_error_closest": 0.3,
+      "top_handles": [
+        [
+          "StayFreshCheeseBags",
+          18
+        ],
+        [
+          "Poligarch",
+          14
+        ],
+        [
+          "hotcold",
+          10
+        ],
+        [
+          "Walter-Weather",
+          6
+        ],
+        [
+          "Jiuzhou",
+          5
+        ],
+        [
+          "cyberkurajber",
+          5
+        ],
+        [
+          "neophyt",
+          4
+        ],
+        [
+          "ColdMath",
+          3
+        ]
+      ],
+      "top_temps": [
+        [
+          "23°C",
+          22
+        ],
+        [
+          "22°C",
+          15
+        ],
+        [
+          "24°C",
+          14
+        ],
+        [
+          "25°C",
+          7
+        ],
+        [
+          "21°C",
+          5
+        ],
+        [
+          "5°C",
+          4
+        ],
+        [
+          "20°C",
+          3
+        ],
+        [
+          "4°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "London",
+      "date": "April 23",
+      "account_count": 15,
+      "signal_count": 56,
+      "active_value": 159.78,
+      "score": 1545.12,
+      "forecast_max": 18.5,
+      "dominant_temp": "16°C",
+      "dominant_count": 17,
+      "closest_temp": "18°C",
+      "closest_count": 11,
+      "abs_error_closest": 0.5,
+      "top_handles": [
+        [
+          "poligami",
+          18
+        ],
+        [
+          "syacxxa",
+          12
+        ],
+        [
+          "0x2048",
+          5
+        ],
+        [
+          "Walter-Weather",
+          4
+        ],
+        [
+          "neophyt",
+          4
+        ],
+        [
+          "dpnd",
+          2
+        ],
+        [
+          "Jiuzhou",
+          2
+        ],
+        [
+          "Mr.Z.",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "16°C",
+          17
+        ],
+        [
+          "18°C",
+          11
+        ],
+        [
+          "19°C",
+          6
+        ],
+        [
+          "15°C",
+          5
+        ],
+        [
+          "6°C",
+          4
+        ],
+        [
+          "17°C",
+          4
+        ],
+        [
+          "7°C",
+          3
+        ],
+        [
+          "9°C",
+          2
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Tokyo",
+      "date": "April 25",
+      "account_count": 15,
+      "signal_count": 41,
+      "active_value": 423.15,
+      "score": 1533.65,
+      "forecast_max": 17.8,
+      "dominant_temp": "18°C",
+      "dominant_count": 11,
+      "closest_temp": "18°C",
+      "closest_count": 11,
+      "abs_error_closest": 0.2,
+      "top_handles": [
+        [
+          "huskyvs",
+          5
+        ],
+        [
+          "Jiuzhou",
+          5
+        ],
+        [
+          "ColdMath",
+          4
+        ],
+        [
+          "neophyt",
+          4
+        ],
+        [
+          "StayFreshCheeseBags",
+          4
+        ],
+        [
+          "heimaokuaipao",
+          3
+        ],
+        [
+          "cyberkurajber",
+          3
+        ],
+        [
+          "Railbird",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "18°C",
+          11
+        ],
+        [
+          "17°C",
+          9
+        ],
+        [
+          "19°C",
+          5
+        ],
+        [
+          "20°C",
+          5
+        ],
+        [
+          "8°C",
+          3
+        ],
+        [
+          "12°C",
+          3
+        ],
+        [
+          "16°C",
+          2
+        ],
+        [
+          "21°C",
+          2
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Ankara",
+      "date": "April 25",
+      "account_count": 14,
+      "signal_count": 102,
+      "active_value": 1999.4,
+      "score": 1485.6,
+      "forecast_max": 17.9,
+      "dominant_temp": "17°C",
+      "dominant_count": 30,
+      "closest_temp": "18°C",
+      "closest_count": 22,
+      "abs_error_closest": 0.1,
+      "top_handles": [
+        [
+          "Railbird",
+          26
+        ],
+        [
+          "newbees",
+          17
+        ],
+        [
+          "heimaokuaipao",
+          14
+        ],
+        [
+          "StayFreshCheeseBags",
+          9
+        ],
+        [
+          "Mr.Z.",
+          9
+        ],
+        [
+          "Lex-tang",
+          5
+        ],
+        [
+          "Jiuzhou",
+          5
+        ],
+        [
+          "Poligarch",
+          5
+        ]
+      ],
+      "top_temps": [
+        [
+          "17°C",
+          30
+        ],
+        [
+          "18°C",
+          22
+        ],
+        [
+          "16°C",
+          18
+        ],
+        [
+          "19°C",
+          16
+        ],
+        [
+          "15°C",
+          8
+        ],
+        [
+          "20°C",
+          8
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Hong Kong",
+      "date": "April 25",
+      "account_count": 13,
+      "signal_count": 51,
+      "active_value": 1249.68,
+      "score": 1343.3,
+      "forecast_max": 25.7,
+      "dominant_temp": "26°C",
+      "dominant_count": 14,
+      "closest_temp": "26°C",
+      "closest_count": 14,
+      "abs_error_closest": 0.3,
+      "top_handles": [
+        [
+          "hotcold",
+          15
+        ],
+        [
+          "heimaokuaipao",
+          8
+        ],
+        [
+          "cyberkurajber",
+          6
+        ],
+        [
+          "Lex-tang",
+          4
+        ],
+        [
+          "Jiuzhou",
+          4
+        ],
+        [
+          "huskyvs",
+          3
+        ],
+        [
+          "Poligarch",
+          3
+        ],
+        [
+          "punch-the-macaque",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "26°C",
+          14
+        ],
+        [
+          "27°C",
+          14
+        ],
+        [
+          "25°C",
+          6
+        ],
+        [
+          "28°C",
+          6
+        ],
+        [
+          "24°C",
+          3
+        ],
+        [
+          "29°C",
+          2
+        ],
+        [
+          "22°C",
+          2
+        ],
+        [
+          "21°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "London",
+      "date": "April 22",
+      "account_count": 13,
+      "signal_count": 44,
+      "active_value": 212.3,
+      "score": 1335.62,
+      "forecast_max": 16.3,
+      "dominant_temp": "16°C",
+      "dominant_count": 15,
+      "closest_temp": "16°C",
+      "closest_count": 15,
+      "abs_error_closest": 0.3,
+      "top_handles": [
+        [
+          "Lex-tang",
+          9
+        ],
+        [
+          "syacxxa",
+          7
+        ],
+        [
+          "Walter-Weather",
+          7
+        ],
+        [
+          "poligami",
+          6
+        ],
+        [
+          "sdgoppa",
+          5
+        ],
+        [
+          "heimaokuaipao",
+          2
+        ],
+        [
+          "0x2048",
+          2
+        ],
+        [
+          "dpnd",
+          1
+        ]
+      ],
+      "top_temps": [
+        [
+          "16°C",
+          15
+        ],
+        [
+          "15°C",
+          12
+        ],
+        [
+          "14°C",
+          6
+        ],
+        [
+          "6°C",
+          3
+        ],
+        [
+          "7°C",
+          3
+        ],
+        [
+          "17°C",
+          2
+        ],
+        [
+          "3°C",
+          1
+        ],
+        [
+          "4°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Paris",
+      "date": "April 24",
+      "account_count": 11,
+      "signal_count": 70,
+      "active_value": 160.97,
+      "score": 1156.32,
+      "forecast_max": 23.2,
+      "dominant_temp": "22°C",
+      "dominant_count": 16,
+      "closest_temp": "23°C",
+      "closest_count": 11,
+      "abs_error_closest": 0.2,
+      "top_handles": [
+        [
+          "newbees",
+          34
+        ],
+        [
+          "Jiuzhou",
+          8
+        ],
+        [
+          "ColdMath",
+          7
+        ],
+        [
+          "Mr.Z.",
+          5
+        ],
+        [
+          "Maskache2",
+          4
+        ],
+        [
+          "neophyt",
+          4
+        ],
+        [
+          "Lex-tang",
+          3
+        ],
+        [
+          "cyberkurajber",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "22°C",
+          16
+        ],
+        [
+          "21°C",
+          15
+        ],
+        [
+          "23°C",
+          11
+        ],
+        [
+          "24°C",
+          8
+        ],
+        [
+          "25°C",
+          8
+        ],
+        [
+          "7°C",
+          6
+        ],
+        [
+          "10°C",
+          2
+        ],
+        [
+          "6°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 26",
+      "account_count": 11,
+      "signal_count": 40,
+      "active_value": 1942.15,
+      "score": 1135.88,
+      "forecast_max": 22.6,
+      "dominant_temp": "17°C",
+      "dominant_count": 11,
+      "closest_temp": "20°C",
+      "closest_count": 9,
+      "abs_error_closest": 2.6,
+      "top_handles": [
+        [
+          "dpnd",
+          7
+        ],
+        [
+          "FohnHairdryer",
+          7
+        ],
+        [
+          "Poligarch",
+          6
+        ],
+        [
+          "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+          5
+        ],
+        [
+          "ColdMath",
+          4
+        ],
+        [
+          "Mr.Z.",
+          3
+        ],
+        [
+          "kamikazetrading",
+          2
+        ],
+        [
+          "neophyt",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "17°C",
+          11
+        ],
+        [
+          "20°C",
+          9
+        ],
+        [
+          "16°C",
+          4
+        ],
+        [
+          "19°C",
+          4
+        ],
+        [
+          "14°C",
+          2
+        ],
+        [
+          "18°C",
+          2
+        ],
+        [
+          "9°C",
+          2
+        ],
+        [
+          "10°C",
+          2
+        ]
+      ],
+      "verdict": "consensus_far_check_source"
+    },
+    {
+      "city": "London",
+      "date": "April 26",
+      "account_count": 11,
+      "signal_count": 35,
+      "active_value": 1036.6,
+      "score": 1130.07,
+      "forecast_max": 18.2,
+      "dominant_temp": "18°C",
+      "dominant_count": 8,
+      "closest_temp": "18°C",
+      "closest_count": 8,
+      "abs_error_closest": 0.2,
+      "top_handles": [
+        [
+          "0x2048",
+          6
+        ],
+        [
+          "Mr.Z.",
+          6
+        ],
+        [
+          "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+          5
+        ],
+        [
+          "neophyt",
+          4
+        ],
+        [
+          "Railbird",
+          3
+        ],
+        [
+          "dpnd",
+          3
+        ],
+        [
+          "Lex-tang",
+          3
+        ],
+        [
+          "heimaokuaipao",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "18°C",
+          8
+        ],
+        [
+          "17°C",
+          6
+        ],
+        [
+          "20°C",
+          5
+        ],
+        [
+          "16°C",
+          3
+        ],
+        [
+          "19°C",
+          3
+        ],
+        [
+          "13°C",
+          3
+        ],
+        [
+          "14°C",
+          1
+        ],
+        [
+          "3°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Paris",
+      "date": "April 22",
+      "account_count": 11,
+      "signal_count": 14,
+      "active_value": 119.79,
+      "score": 1111.44,
+      "forecast_max": 20.0,
+      "dominant_temp": "20°C",
+      "dominant_count": 3,
+      "closest_temp": "20°C",
+      "closest_count": 3,
+      "abs_error_closest": 0.0,
+      "top_handles": [
+        [
+          "syacxxa",
+          2
+        ],
+        [
+          "dpnd",
+          2
+        ],
+        [
+          "sdgoppa",
+          2
+        ],
+        [
+          "Walter-Weather",
+          1
+        ],
+        [
+          "Jiuzhou",
+          1
+        ],
+        [
+          "cyberkurajber",
+          1
+        ],
+        [
+          "punch-the-macaque",
+          1
+        ],
+        [
+          "0x2048",
+          1
+        ]
+      ],
+      "top_temps": [
+        [
+          "20°C",
+          3
+        ],
+        [
+          "18°C",
+          3
+        ],
+        [
+          "19°C",
+          3
+        ],
+        [
+          "21°C",
+          2
+        ],
+        [
+          "17°C",
+          2
+        ],
+        [
+          "16°C",
+          1
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 23",
+      "account_count": 10,
+      "signal_count": 68,
+      "active_value": 139.02,
+      "score": 1054.68,
+      "forecast_max": 20.5,
+      "dominant_temp": "23°C",
+      "dominant_count": 25,
+      "closest_temp": "21°C",
+      "closest_count": 5,
+      "abs_error_closest": 0.5,
+      "top_handles": [
+        [
+          "FohnHairdryer",
+          23
+        ],
+        [
+          "Maskache2",
+          22
+        ],
+        [
+          "kamikazetrading",
+          7
+        ],
+        [
+          "BeefSlayer",
+          4
+        ],
+        [
+          "huskyvs",
+          3
+        ],
+        [
+          "Mr.Z.",
+          3
+        ],
+        [
+          "0x4CE3f17Be91C3d0D6dbFed7Bd4D326957dec4291-1768045938794",
+          2
+        ],
+        [
+          "neophyt",
+          2
+        ]
+      ],
+      "top_temps": [
+        [
+          "23°C",
+          25
+        ],
+        [
+          "22°C",
+          15
+        ],
+        [
+          "21°C",
+          5
+        ],
+        [
+          "10°C",
+          5
+        ],
+        [
+          "20°C",
+          5
+        ],
+        [
+          "19°C",
+          3
+        ],
+        [
+          "18°C",
+          3
+        ],
+        [
+          "9°C",
+          2
+        ]
+      ],
+      "verdict": "consensus_near_forecast"
+    }
+  ]
+}

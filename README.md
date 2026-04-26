@@ -16,3 +16,7 @@ Cœur cible de la stack prediction.
 2. produire des artefacts stables (Postgres + JSON)
 3. faire consommer ces artefacts par `subprojects/prediction`
 4. déclasser progressivement les bridges live redondants
+
+## Panoptique migration
+
+The Panoptique migration is tracked in `docs/plans/2026-04-26-panoptique-migration-plan.md`, with strategy doctrine in `docs/strategy/PANOPTIQUE_STRATEGY.md`. It is paper-only/read-only unless a separate future approval explicitly changes that boundary.

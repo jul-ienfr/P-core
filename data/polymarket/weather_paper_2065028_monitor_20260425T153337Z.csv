@@ -1,0 +1,2 @@
+generated_at,market_id,side,shares,entry_avg,spend,best_bid,best_ask,model_probability,expected_pnl_usdc,mtm_bid_pnl_usdc,action,official_available,official_value,latest_value,latest_timestamp,station_found,fallback_station_used
+2026-04-25T15:33:37.278667+00:00,2065028,NO,5.117707,0.977,5.0,0.945,0.977,0.965,-0.06141274500000016,-0.16376688500000025,HOLD_MONITOR_OFFICIAL,False,,24.0,2026-04-25T23:02:00+08:00,Hong Kong Observatory,False

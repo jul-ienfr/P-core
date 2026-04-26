@@ -35,6 +35,7 @@ from weather_pm.strategy_extractor import extract_weather_strategy_rules
 from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 from weather_pm.traders import WeatherTrader, build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
 from weather_pm.wallet_intel import fetch_trader_strategy_profile
+from weather_pm.wallet_sizing_priors import build_wallet_sizing_priors
 from weather_pm.winning_patterns import compact_winning_patterns_operator_report, write_winning_patterns_operator_report
 
 
@@ -139,6 +140,10 @@ def build_parser() -> argparse.ArgumentParser:
     profitable_operator_summary.add_argument("--operator-report-json", required=True, help="Operator shortlist report JSON")
     profitable_operator_summary.add_argument("--output-json", required=True, help="Output compact operator summary JSON")
     profitable_operator_summary.add_argument("--priority-limit", required=False, type=int, default=10, help="Maximum priority accounts to include")
+
+    wallet_sizing_priors = subparsers.add_parser("wallet-sizing-priors", help="Build wallet style sizing priors from profitable account behavior JSON")
+    wallet_sizing_priors.add_argument("--input", required=True, help="Input profitable account behavior JSON")
+    wallet_sizing_priors.add_argument("--output", required=True, help="Output wallet sizing priors JSON")
 
     winning_patterns_report = subparsers.add_parser("winning-patterns-report", help="Extract operator rules from profitable weather account strategy artifacts")
     winning_patterns_report.add_argument("--classified-summary-json", required=True, help="Classified profitable accounts summary JSON")
@@ -371,6 +376,11 @@ def main() -> int:
         )
         return 0
 
+    if args.command == "wallet-sizing-priors":
+        report = wallet_sizing_priors_report(args.input, args.output)
+        print(json.dumps(report))
+        return 0
+
     if args.command == "winning-patterns-report":
         report = write_winning_patterns_operator_report(
             classified_summary_json=args.classified_summary_json,
@@ -453,6 +463,19 @@ def main() -> int:
         return 0
 
     return 0
+
+
+def wallet_sizing_priors_report(input_json: str | Path, output_json: str | Path) -> dict[str, Any]:
+    input_path = Path(input_json)
+    payload = json.loads(input_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("wallet-sizing-priors input JSON must be an object")
+    report = build_wallet_sizing_priors(payload)
+    report["source"] = str(input_path)
+    output_path = Path(output_json)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    return report
 
 
 def miro_seed_export(

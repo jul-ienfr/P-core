@@ -1,0 +1,229 @@
+{
+  "books": {
+    "NO": {
+      "best_ask": 0.977,
+      "best_bid": 0.976,
+      "gamma_price": 0.9765,
+      "token_id": "52817872578288816749191973321023191193600420939968601808746765086788856187251",
+      "top_asks": [
+        {
+          "price": 0.977,
+          "size": 81.41
+        },
+        {
+          "price": 0.978,
+          "size": 38.32
+        },
+        {
+          "price": 0.98,
+          "size": 222.2
+        },
+        {
+          "price": 0.984,
+          "size": 20.0
+        },
+        {
+          "price": 0.99,
+          "size": 653.0
+        }
+      ],
+      "top_bids": [
+        {
+          "price": 0.976,
+          "size": 55.0
+        },
+        {
+          "price": 0.975,
+          "size": 6.07
+        },
+        {
+          "price": 0.97,
+          "size": 1.76
+        },
+        {
+          "price": 0.96,
+          "size": 35.0
+        },
+        {
+          "price": 0.954,
+          "size": 200.0
+        }
+      ]
+    },
+    "YES": {
+      "best_ask": 0.024,
+      "best_bid": 0.023,
+      "gamma_price": 0.0235,
+      "token_id": "6131281487843155887731200380910001326393601812623280243081546732770219880606",
+      "top_asks": [
+        {
+          "price": 0.024,
+          "size": 55.0
+        },
+        {
+          "price": 0.025,
+          "size": 6.07
+        },
+        {
+          "price": 0.03,
+          "size": 1.76
+        },
+        {
+          "price": 0.04,
+          "size": 35.0
+        },
+        {
+          "price": 0.046,
+          "size": 200.0
+        }
+      ],
+      "top_bids": [
+        {
+          "price": 0.023,
+          "size": 81.41
+        },
+        {
+          "price": 0.022,
+          "size": 38.32
+        },
+        {
+          "price": 0.02,
+          "size": 222.2
+        },
+        {
+          "price": 0.016,
+          "size": 20.0
+        },
+        {
+          "price": 0.01,
+          "size": 653.0
+        }
+      ]
+    }
+  },
+  "existing_position": {
+    "entry_avg": 0.977,
+    "filled_usdc": 5.0,
+    "found": true,
+    "shares": 5.117707,
+    "side": "NO",
+    "source_ledger": "/home/jul/prediction_core/data/polymarket/weather_paper_micro_updated_ledger_with_2065028_20260425T150303Z.json"
+  },
+  "generated_at": "2026-04-25T15:18:27.223934+00:00",
+  "market_id": "2065028",
+  "market_url": "https://polymarket.com/event/highest-temperature-in-hong-kong-on-april-26-2026-30corhigher",
+  "monitor": {
+    "action": "HOLD_MONITOR_OFFICIAL",
+    "best_ask": 0.977,
+    "best_bid": 0.976,
+    "ev_usdc": -0.06141274500000016,
+    "model_probability": 0.965,
+    "mtm_bid_usdc": 4.9948820320000005,
+    "next_actions": [
+      "monitor HKO official daily extract for 2026-04-26",
+      "no extra add by default",
+      "if official confirms NO, bookkeep paper close/settlement"
+    ],
+    "side": "NO"
+  },
+  "no_real_order_placed": true,
+  "paper_only": true,
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "resolution_status": {
+    "action_operator": "monitor_until_official_daily_extract",
+    "confirmed_outcome": {
+      "basis": "official_daily_extract",
+      "status": "pending"
+    },
+    "date": "2026-04-26",
+    "latency": {
+      "latest": {
+        "direct": true,
+        "latest_timestamp": "2026-04-25T23:00:00+08:00",
+        "latest_value": 24.0,
+        "point_count": 1,
+        "polling_focus": "hko_current_weather_api",
+        "provider": "hong_kong_observatory",
+        "source_lag_seconds": 1106,
+        "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+        "station_code": null,
+        "tier": "direct_latest",
+        "unit": "c"
+      },
+      "official": {
+        "direct": true,
+        "expected_lag_seconds": 86400,
+        "latest_timestamp": null,
+        "latest_value": null,
+        "point_count": 0,
+        "polling_focus": "hko_official_daily_extract",
+        "provider": "hong_kong_observatory",
+        "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "station_code": null,
+        "tier": "direct_daily_extract",
+        "unit": null
+      }
+    },
+    "latest_direct": {
+      "available": true,
+      "latency_tier": "direct_latest",
+      "timestamp": "2026-04-25T23:00:00+08:00",
+      "value": 24.0
+    },
+    "market": {
+      "city": "Hong Kong",
+      "date_local": "April 26",
+      "is_exact_bin": false,
+      "is_threshold": true,
+      "measurement_kind": "high",
+      "range_high": null,
+      "range_low": null,
+      "target_value": 30.0,
+      "threshold_direction": "higher",
+      "unit": "c"
+    },
+    "market_id": "2065028",
+    "official_daily_extract": {
+      "available": false,
+      "latency_tier": "direct_daily_extract",
+      "timestamp": null,
+      "value": null
+    },
+    "provisional_outcome": {
+      "basis": "latest_direct",
+      "observed_value": 24.0,
+      "status": "no",
+      "threshold": 30.0
+    },
+    "resolution": {
+      "manual_review_needed": false,
+      "provider": "hong_kong_observatory",
+      "revision_risk": "low",
+      "rules_clear": true,
+      "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+      "station_code": null,
+      "station_name": "Hong Kong Observatory",
+      "station_type": "station",
+      "wording_clear": true
+    },
+    "source": "live",
+    "source_route": {
+      "direct": true,
+      "expected_lag_seconds": 600,
+      "freshness_sla_seconds": 1200,
+      "history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "latency_priority": "direct_source_low_latency",
+      "latency_tier": "direct_latest",
+      "latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "manual_review_needed": false,
+      "official_lag_seconds": 86400,
+      "polling_focus": "hko_current_weather_api_and_daily_extract",
+      "provider": "hong_kong_observatory",
+      "reason": "Hong Kong Observatory source found in resolution rules; poll HKO current weather API and daily extract directly.",
+      "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+      "station_code": null,
+      "station_name": "Hong Kong Observatory",
+      "supported": true
+    }
+  }
+}

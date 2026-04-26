@@ -1,0 +1,162 @@
+{
+  "endpoint_results": [
+    {
+      "error": null,
+      "json_keys": [
+        "metadata",
+        "observations"
+      ],
+      "ok": true,
+      "status": 200,
+      "text_prefix": "{\"metadata\":{\"language\":\"en-US\",\"transaction_id\":\"1777155377592:641632917\",\"version\":\"1\",\"location_id\":\"ZSPD:9:CN\",\"units\":\"e\",\"expire_time_gmt\":1777158977,\"status_code\":200},\"observations\":[{\"key\":\"ZSPD\",\"class\":\"observation\",\"expire_time_gmt\":1777140000,\"obs_id\":\"ZSPD\",\"obs_name\":\"Shanghai/Pudong\",\"valid_time_gmt\":1777132800,\"day_ind\":\"N\",\"temp\":55,\"wx_icon\":33,\"icon_extd\":3300,\"wx_phrase\":\"Fair\",\"pressure_tend\":null,\"pressure_desc\":null,\"dewPt\":54,\"heat_index\":55,\"rh\":94,\"pressure\":29.99,\"vis",
+      "url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426"
+    },
+    {
+      "error": "HTTPError: HTTP Error 400: Bad Request",
+      "json_keys": null,
+      "ok": false,
+      "status": null,
+      "text_prefix": null,
+      "url": "https://api.weather.com/v1/location/ZSPD/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426"
+    },
+    {
+      "error": "HTTPError: HTTP Error 400: Bad Request",
+      "json_keys": null,
+      "ok": false,
+      "status": null,
+      "text_prefix": null,
+      "url": "https://api.weather.com/v1/location/31.15,121.803/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426"
+    },
+    {
+      "error": null,
+      "json_keys": [
+        "cloudCeiling",
+        "cloudCover",
+        "cloudCoverPhrase",
+        "dayOfWeek",
+        "dayOrNight",
+        "expirationTimeUtc",
+        "iconCode",
+        "iconCodeExtend",
+        "obsQualifierCode",
+        "obsQualifierSeverity",
+        "precip1Hour",
+        "precip6Hour",
+        "precip24Hour",
+        "pressureAltimeter",
+        "pressureChange",
+        "pressureMeanSeaLevel",
+        "pressureTendencyCode",
+        "pressureTendencyTrend",
+        "relativeHumidity",
+        "snow1Hour",
+        "snow6Hour",
+        "snow24Hour",
+        "sunriseTimeLocal",
+        "sunriseTimeUtc",
+        "sunsetTimeLocal",
+        "sunsetTimeUtc",
+        "temperature",
+        "temperatureChange24Hour",
+        "temperatureDewPoint",
+        "temperatureFeelsLike",
+        "temperatureHeatIndex",
+        "temperatureMax24Hour",
+        "temperatureMaxSince7Am",
+        "temperatureMin24Hour",
+        "temperatureWetBulbGlobe",
+        "temperatureWindChill",
+        "uvDescription",
+        "uvIndex",
+        "validTimeLocal",
+        "validTimeUtc",
+        "visibility",
+        "windDirection",
+        "windDirectionCardinal",
+        "windGust",
+        "windSpeed",
+        "wxPhraseLong",
+        "wxPhraseMedium",
+        "wxPhraseShort"
+      ],
+      "ok": true,
+      "status": 200,
+      "text_prefix": "{\"cloudCeiling\":null,\"cloudCover\":30,\"cloudCoverPhrase\":\"Partly Cloudy\",\"dayOfWeek\":\"Sunday\",\"dayOrNight\":\"D\",\"expirationTimeUtc\":1777157138,\"iconCode\":34,\"iconCodeExtend\":3400,\"obsQualifierCode\":null,\"obsQualifierSeverity\":null,\"precip1Hour\":0.0,\"precip6Hour\":0.0,\"precip24Hour\":0.0,\"pressureAltimeter\":29.98,\"pressureChange\":0.02,\"pressureMeanSeaLevel\":1015.1,\"pressureTendencyCode\":1,\"pressureTendencyTrend\":\"Rising\",\"relativeHumidity\":92,\"snow1Hour\":0.0,\"snow6Hour\":0.0,\"snow24Hour\":0.0,\"sunriseT",
+      "url": "https://api.weather.com/v3/wx/observations/current?apiKey=<weather_com_api_key>&geocode=31.15%2C121.803&units=e&language=en-US&format=json"
+    }
+  ],
+  "generated_at": "2026-04-25T22:41:19Z",
+  "market_id": "2065032",
+  "max_observation": {
+    "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+    "temp_c": 12.8,
+    "temp_f": 55,
+    "time": 1777132800
+  },
+  "observations_count": 13,
+  "observations_sample": [
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777132800
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777134600
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777136400
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777138200
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777140000
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777141800
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777143600
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777145400
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777147200
+    },
+    {
+      "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+      "temp_c": 12.8,
+      "temp_f": 55,
+      "time": 1777149000
+    }
+  ],
+  "operator_status": "historical_observations_available",
+  "station": "ZSPD",
+  "target_date": "2026-04-26"
+}

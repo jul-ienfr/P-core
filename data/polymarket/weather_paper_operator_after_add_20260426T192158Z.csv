@@ -1,0 +1,6 @@
+city,date,station,side,market,spend_usdc,entry_avg,p_side_now,paper_ev_now_usdc,operator_action,hard_stop_if_p_below,trim_review_if_p_below,take_profit_review_if_bid_above,add_allowed,max_add_usdc
+Beijing,April 26,ZBAA,NO,exact 25°C,15.00,0.6200,0.7815,3.91,TAKE_PROFIT_REVIEW,0.5900,0.6400,0.7615,false,0.00
+Munich,April 26,EDDM,NO,exact 18°C,10.00,0.7100,0.8951,2.61,TAKE_PROFIT_REVIEW,0.6800,0.7300,0.8751,false,0.00
+Shanghai,April 26,ZSPD,NO,exact 23°C,9.76,0.0078,0.7210,896.85,HOLD_CAPPED,0.0000,0.0278,0.7010,false,0.00
+Munich,April 26,EDDM,NO,exact 19°C,10.00,0.4198,0.9691,13.09,HOLD_CAPPED,0.3898,0.4398,0.9491,false,0.00
+Karachi,April 27,OPKC,NO,higher 36°C,10.00,0.5300,0.9990,8.85,HOLD_CAPPED,0.5000,0.5500,0.9790,false,0.00

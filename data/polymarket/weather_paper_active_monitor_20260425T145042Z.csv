@@ -1,0 +1,8 @@
+city,date,station,side,temp,kind,filled_usdc,shares,entry_avg,current_forecast_max_c,forecast_move_c,best_bid_now,best_ask_now,p_side_now,edge_vs_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,previous_action,action,reason
+Seoul,April 26,RKSI,NO,20,higher,17.24,70.485867,0.2446,16.0,0.0,0.26,0.29,0.9979,0.7079,53.095,1.086,HOLD_CAPPED,HOLD_CAPPED,large position; no further add
+Beijing,April 26,ZBAA,NO,25,exact,15.0,24.1935,0.62,25.0,0.0,0.61,0.62,0.721,0.101,2.443,-0.242,HOLD_CAPPED,HOLD_CAPPED,large position; no further add
+Munich,April 26,EDDM,NO,18,exact,10.0,14.0845,0.71,16.0,0.0,0.68,0.69,0.8951,0.2051,2.607,-0.423,HOLD_CAPPED,HOLD_CAPPED,large position; no further add
+Seoul,April 27,RKSI,NO,19,exact,10.0,12.1952,0.82,17.0,0.0,0.8,0.82,0.8951,0.0751,0.916,-0.244,HOLD_CAPPED,HOLD_CAPPED,large position; no further add
+Shanghai,April 26,ZSPD,NO,23,exact,4.7552,7.43,0.64,23.0,0.0,0.64,0.67,0.721,0.051,0.602,0.0,HOLD_MONITOR,HOLD_MONITOR,OK
+Munich,April 26,EDDM,NO,19,exact,5.0,7.6923,0.65,16.0,0.0,0.65,0.68,0.9691,0.2891,2.455,-0.0,HOLD_MONITOR,HOLD_MONITOR,OK
+Karachi,April 27,OPKC,NO,36,higher,10.0,18.867925,0.53,33.0,0.0,0.41,0.52,0.9839,0.4639,8.565,-2.264,HOLD_CAPPED,HOLD_CAPPED,large position; no further add

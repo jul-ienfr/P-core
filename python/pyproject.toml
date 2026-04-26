@@ -16,7 +16,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["prediction_core*", "weather_pm*"]
+include = ["prediction_core*", "weather_pm*", "panoptique*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

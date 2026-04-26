@@ -1,0 +1,105 @@
+{
+  "station": "KDAL Dallas Love Field",
+  "latest": {
+    "timestamp": "2026-04-25T13:20:00+00:00",
+    "temp_f": 73.4,
+    "rawMessage": ""
+  },
+  "obs_max": {
+    "2026-04-25": [
+      "2026-04-25T08:20:00-05:00",
+      73.4
+    ],
+    "2026-04-24": [
+      "2026-04-24T23:35:00-05:00",
+      75.2
+    ]
+  },
+  "forecast_hourly_max": {
+    "2026-04-25": [
+      "2026-04-25T16:00:00-05:00",
+      90,
+      "Partly Sunny"
+    ],
+    "2026-04-26": [
+      "2026-04-26T16:00:00-05:00",
+      92,
+      "Mostly Sunny"
+    ],
+    "2026-04-27": [
+      "2026-04-27T16:00:00-05:00",
+      94,
+      "Sunny"
+    ],
+    "2026-04-28": [
+      "2026-04-28T15:00:00-05:00",
+      88,
+      "Chance Showers And Thunderstorms"
+    ],
+    "2026-04-29": [
+      "2026-04-29T15:00:00-05:00",
+      82,
+      "Partly Sunny"
+    ],
+    "2026-04-30": [
+      "2026-04-30T15:00:00-05:00",
+      77,
+      "Chance Showers And Thunderstorms"
+    ],
+    "2026-05-01": [
+      "2026-05-01T00:00:00-05:00",
+      67,
+      "Chance Showers And Thunderstorms"
+    ]
+  },
+  "daily_periods": [
+    {
+      "name": "Today",
+      "start": "2026-04-25T06:00:00-05:00",
+      "end": "2026-04-25T18:00:00-05:00",
+      "temp": 91,
+      "short": "Patchy Fog then Mostly Cloudy"
+    },
+    {
+      "name": "Tonight",
+      "start": "2026-04-25T18:00:00-05:00",
+      "end": "2026-04-26T06:00:00-05:00",
+      "temp": 70,
+      "short": "Slight Chance Showers And Thunderstorms"
+    },
+    {
+      "name": "Sunday",
+      "start": "2026-04-26T06:00:00-05:00",
+      "end": "2026-04-26T18:00:00-05:00",
+      "temp": 93,
+      "short": "Mostly Sunny"
+    },
+    {
+      "name": "Sunday Night",
+      "start": "2026-04-26T18:00:00-05:00",
+      "end": "2026-04-27T06:00:00-05:00",
+      "temp": 73,
+      "short": "Mostly Clear"
+    },
+    {
+      "name": "Monday",
+      "start": "2026-04-27T06:00:00-05:00",
+      "end": "2026-04-27T18:00:00-05:00",
+      "temp": 95,
+      "short": "Mostly Sunny"
+    },
+    {
+      "name": "Monday Night",
+      "start": "2026-04-27T18:00:00-05:00",
+      "end": "2026-04-28T06:00:00-05:00",
+      "temp": 70,
+      "short": "Mostly Clear"
+    }
+  ],
+  "point_grid": {
+    "gridId": "FWD",
+    "gridX": 87,
+    "gridY": 107,
+    "forecastHourly": "https://api.weather.gov/gridpoints/FWD/87,107/forecast/hourly"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "observation_id": "cf-1",
+  "prediction_id": "sp-1",
+  "market_id": "pm-1",
+  "observed_at": "2026-04-26T12:15:00+00:00",
+  "window_seconds": 900,
+  "price_delta": 0.02,
+  "volume_delta": 45.0,
+  "direction_hit": true,
+  "liquidity_caveat": null,
+  "metrics": {"after_mid": 0.52}
+}

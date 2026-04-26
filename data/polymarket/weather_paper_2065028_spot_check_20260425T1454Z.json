@@ -1,0 +1,190 @@
+{
+  "gamma_prices": {
+    "No": 0.9745,
+    "Yes": 0.0255
+  },
+  "generated_at": "2026-04-25T14:59:00Z",
+  "hko": {
+    "current_temp_c": 23.0,
+    "current_update_time": "2026-04-25T22:02:00+08:00",
+    "daily_extract_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+    "official_daily_available": false,
+    "official_daily_value_c": null,
+    "provisional_outcome": "no",
+    "threshold_c": 30.0
+  },
+  "market_id": "2065028",
+  "mode": "spot check 2065028 paper-only; no real orders",
+  "orderbook": {
+    "no": {
+      "ask_levels": [
+        [
+          0.977,
+          171.41
+        ],
+        [
+          0.978,
+          38.32
+        ],
+        [
+          0.98,
+          222.2
+        ],
+        [
+          0.984,
+          20.0
+        ],
+        [
+          0.985,
+          81.85
+        ],
+        [
+          0.99,
+          753.0
+        ],
+        [
+          0.992,
+          115.0
+        ],
+        [
+          0.994,
+          91.98
+        ]
+      ],
+      "best_ask": 0.977,
+      "best_bid": 0.975,
+      "bid_levels": [
+        [
+          0.975,
+          15.0
+        ],
+        [
+          0.974,
+          6.07
+        ],
+        [
+          0.97,
+          1.76
+        ],
+        [
+          0.962,
+          10.0
+        ],
+        [
+          0.961,
+          40.0
+        ],
+        [
+          0.96,
+          35.0
+        ],
+        [
+          0.953,
+          10.0
+        ],
+        [
+          0.951,
+          60.1
+        ]
+      ],
+      "timestamp": "1777129136335"
+    },
+    "yes": {
+      "ask_levels": [
+        [
+          0.025,
+          15.0
+        ],
+        [
+          0.026,
+          6.07
+        ],
+        [
+          0.03,
+          1.76
+        ],
+        [
+          0.038,
+          10.0
+        ],
+        [
+          0.039,
+          40.0
+        ],
+        [
+          0.04,
+          35.0
+        ],
+        [
+          0.047,
+          10.0
+        ],
+        [
+          0.049,
+          60.1
+        ]
+      ],
+      "best_ask": 0.025,
+      "best_bid": 0.023,
+      "bid_levels": [
+        [
+          0.023,
+          171.41
+        ],
+        [
+          0.022,
+          38.32
+        ],
+        [
+          0.02,
+          222.2
+        ],
+        [
+          0.016,
+          20.0
+        ],
+        [
+          0.015,
+          81.85
+        ],
+        [
+          0.01,
+          753.0
+        ],
+        [
+          0.008,
+          115.0
+        ],
+        [
+          0.006,
+          91.98
+        ]
+      ],
+      "timestamp": "1777129136335"
+    }
+  },
+  "outcomes": [
+    "Yes",
+    "No"
+  ],
+  "paper_rule": {
+    "action": "paper_entry_still_eligible_strict_limit",
+    "eligible": true,
+    "limit_ask": 0.978,
+    "no_ask": 0.977,
+    "no_bid": 0.975,
+    "preferred_side": "NO",
+    "yes_ask": 0.025,
+    "yes_bid": 0.023
+  },
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "safety": {
+    "normal_sizing_allowed": false,
+    "paper_only": true,
+    "real_order_placed": false
+  },
+  "tokens": {
+    "no": "52817872578288816749191973321023191193600420939968601808746765086788856187251",
+    "yes": "6131281487843155887731200380910001326393601812623280243081546732770219880606"
+  }
+}

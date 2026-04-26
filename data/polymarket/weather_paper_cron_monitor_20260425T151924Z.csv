@@ -1,0 +1,9 @@
+city,date,station,side,temp,kind,filled_usdc,shares,entry_avg,current_forecast_max_c,p_side_now,best_bid_now,best_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,action,reason,hard_stop_if_p_below,official_resolution_source_status
+Seoul,April 26,RKSI,NO,20,higher,17.24,70.485867,0.2446,16.0,0.999,0.3,0.31,53.175,3.906,HOLD_CAPPED,large/capped position; no further add,0.2146,missing
+Beijing,April 26,ZBAA,NO,25,exact,15.0,24.1935,0.62,25.0,0.721,0.61,0.62,2.444,-0.242,HOLD_CAPPED,large/capped position; no further add,0.59,missing
+Munich,April 26,EDDM,NO,18,exact,10.0,14.0845,0.71,16.0,0.8951,0.68,0.71,2.607,-0.423,HOLD_CAPPED,large/capped position; no further add,0.68,missing
+Seoul,April 27,RKSI,NO,19,exact,10.0,12.1952,0.82,18.0,0.781,0.8,0.81,-0.476,-0.244,EXIT_PAPER,p_side 0.7810 < hard_stop 0.7900,0.79,missing
+Shanghai,April 26,ZSPD,NO,23,exact,4.7552,7.43,0.64,23.0,0.721,0.63,0.64,0.602,-0.074,HOLD_MONITOR,OK,0.61,missing
+Munich,April 26,EDDM,NO,19,exact,5.0,7.6923,0.65,16.0,0.9691,0.65,0.67,2.455,-0.0,HOLD_MONITOR,OK,0.62,missing
+Beijing,April 26,ZBAA,NO,24,exact,2.0,2.439,0.82,25.0,0.781,0.8,0.84,-0.095,-0.049,EXIT_PAPER,p_side 0.7810 < hard_stop 0.7900,0.79,missing
+Karachi,April 27,OPKC,NO,36,higher,10.0,18.867925,0.53,33.0,0.9987,0.43,0.51,8.843,-1.887,HOLD_CAPPED,large/capped position; no further add,0.5,missing

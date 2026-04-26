@@ -1,0 +1,7 @@
+city,question,side,action,filled_usdc,shares,p_side_previous,p_side_now,current_forecast_max_c,forecast_area,hard_stop_if_p_below,best_bid_now,best_ask_now,edge_vs_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,reason
+Seoul,Will the highest temperature in Seoul be 20°C or higher on April 26?,NO,EXIT_PAPER,17.24,70.485867,0.999,0.0062,23.0,Seoul,0.2146,0.3,0.31,-0.3038,-16.802988,3.90576,p_side 0.0062 < hard_stop 0.2146
+Beijing,Will the highest temperature in Beijing be 25°C on April 26?,NO,HOLD_CAPPED,15.0,24.1935,0.721,0.7815,24.0,Beijing,0.59,0.61,0.62,0.1615,3.90722,-0.241965,fresh forecast/book; capped/no add; no exit trigger
+Munich,Will the highest temperature in Munich be 18°C on April 26?,NO,HOLD_CAPPED,10.0,14.0845,0.8951,0.8951,16.0,Munich,0.68,0.68,0.7,0.1951,2.607036,-0.42254,fresh forecast/book; capped/no add; no exit trigger
+Shanghai,Will the highest temperature in Shanghai be 23°C on April 26?,NO,HOLD_CAPPED,4.7552,7.43,0.721,0.721,23.0,Pootung,0.61,0.63,0.64,0.081,0.60183,-0.0743,fresh forecast/book; capped/no add; no exit trigger
+Munich,Will the highest temperature in Munich be 19°C on April 26?,NO,HOLD_CAPPED,5.0,7.6923,0.9691,0.9691,16.0,Munich,0.62,0.65,0.66,0.3091,2.454608,-5e-06,fresh forecast/book; capped/no add; no exit trigger
+Karachi,Will the highest temperature in Karachi be 36°C or higher on April 27?,NO,HOLD_CAPPED,10.0,18.867925,0.9987,0.9938,32.0,Ramswamy Quarters,0.5,0.44,0.51,0.4838,8.750944,-1.698113,fresh forecast/book; capped/no add; no exit trigger

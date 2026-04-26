@@ -1,0 +1,1852 @@
+{
+  "markets": [
+    {
+      "market_id": "2065018",
+      "question": "Will the highest temperature in Hong Kong be 20°C or below on April 26?",
+      "blocker": "extreme_price",
+      "action": "paper_trade_watch_direct_station",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2065018",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "Poligarch",
+          "relevant_recent_trade_count": 43,
+          "recent_trade_usdc_top15": 65.69,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.22,
+              "usdc": 1.27,
+              "title": "Will the highest temperature in Seoul be 20°C or higher on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.74,
+              "usdc": 4.77,
+              "title": "Will the highest temperature in Seoul be 20°C or higher on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.63,
+              "usdc": 11.26,
+              "title": "Will the highest temperature in Munich be 19°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.71,
+              "usdc": 6.55,
+              "title": "Will the highest temperature in Madrid be 25°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.84,
+              "usdc": 4.17,
+              "title": "Will the highest temperature in Chongqing be 25°C on April 26?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 221.97,
+              "pnl": 33.5,
+              "outcome": "Yes",
+              "price": 0.9955,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "value": 114.86,
+              "pnl": 4.23,
+              "outcome": "No",
+              "price": 0.945,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 26?"
+            },
+            {
+              "value": 77.13,
+              "pnl": 8.84,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 64.04,
+              "pnl": 29.02,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 25?"
+            },
+            {
+              "value": 58.22,
+              "pnl": -0.2,
+              "outcome": "No",
+              "price": 0.725,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2065018",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "HenryTheAtmoPhD",
+          "relevant_recent_trade_count": 18,
+          "recent_trade_usdc_top15": 1476.4,
+          "recent_trades": [
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.03301696928559308,
+              "usdc": 9.73,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.92,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.017,
+              "usdc": 8.08,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.01,
+              "usdc": 7.42,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.045,
+              "usdc": 13.95,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 3.64,
+              "pnl": -26.09,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.09,
+              "pnl": -9.41,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.25,
+              "pnl": -1.75,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 24?"
+            },
+            {
+              "value": 0.2,
+              "pnl": -14.78,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            }
+          ]
+        },
+        {
+          "market_id": "2065018",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "JoeTheMeteorologist",
+          "relevant_recent_trade_count": 26,
+          "recent_trade_usdc_top15": 25.88,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.055,
+              "usdc": 12.59,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.87,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 1.47,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.013484536082474227,
+              "usdc": 0.75,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.031,
+              "usdc": 0.22,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 4.92,
+              "pnl": -22.96,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.11,
+              "pnl": -27.5,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            },
+            {
+              "value": 0.53,
+              "pnl": -14.0,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.08,
+              "pnl": -0.5,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            }
+          ]
+        },
+        {
+          "market_id": "2065018",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "protrade3",
+          "relevant_recent_trade_count": 21,
+          "recent_trade_usdc_top15": 289.66,
+          "recent_trades": [
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.002,
+              "usdc": 0.18,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.038679678475163654,
+              "usdc": 32.14,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.06733269008104979,
+              "usdc": 1.74,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.08066228693181818,
+              "usdc": 13.63,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.1,
+              "usdc": 11.63,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 20.0,
+              "pnl": -102.02,
+              "outcome": "Yes",
+              "price": 0.001,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "value": 1.12,
+              "pnl": -45.08,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "market_id": "2065028",
+      "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 26?",
+      "blocker": null,
+      "action": "paper_trade_watch_direct_station",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2065028",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "Poligarch",
+          "relevant_recent_trade_count": 43,
+          "recent_trade_usdc_top15": 65.69,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.22,
+              "usdc": 1.27,
+              "title": "Will the highest temperature in Seoul be 20°C or higher on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.74,
+              "usdc": 4.77,
+              "title": "Will the highest temperature in Seoul be 20°C or higher on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.63,
+              "usdc": 11.26,
+              "title": "Will the highest temperature in Munich be 19°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.71,
+              "usdc": 6.55,
+              "title": "Will the highest temperature in Madrid be 25°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.84,
+              "usdc": 4.17,
+              "title": "Will the highest temperature in Chongqing be 25°C on April 26?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 221.97,
+              "pnl": 33.5,
+              "outcome": "Yes",
+              "price": 0.9955,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "value": 114.86,
+              "pnl": 4.23,
+              "outcome": "No",
+              "price": 0.945,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 26?"
+            },
+            {
+              "value": 77.13,
+              "pnl": 8.84,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 64.04,
+              "pnl": 29.02,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 25?"
+            },
+            {
+              "value": 58.22,
+              "pnl": -0.2,
+              "outcome": "No",
+              "price": 0.725,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2065028",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "HenryTheAtmoPhD",
+          "relevant_recent_trade_count": 18,
+          "recent_trade_usdc_top15": 1476.4,
+          "recent_trades": [
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.03301696928559308,
+              "usdc": 9.73,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.92,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.017,
+              "usdc": 8.08,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.01,
+              "usdc": 7.42,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.045,
+              "usdc": 13.95,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 3.64,
+              "pnl": -26.09,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.09,
+              "pnl": -9.41,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.25,
+              "pnl": -1.75,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 24?"
+            },
+            {
+              "value": 0.2,
+              "pnl": -14.78,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            }
+          ]
+        },
+        {
+          "market_id": "2065028",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "JoeTheMeteorologist",
+          "relevant_recent_trade_count": 26,
+          "recent_trade_usdc_top15": 25.88,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.055,
+              "usdc": 12.59,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.87,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 1.47,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.013484536082474227,
+              "usdc": 0.75,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.031,
+              "usdc": 0.22,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 4.92,
+              "pnl": -22.96,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.11,
+              "pnl": -27.5,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            },
+            {
+              "value": 0.53,
+              "pnl": -14.0,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.08,
+              "pnl": -0.5,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            }
+          ]
+        },
+        {
+          "market_id": "2065028",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 26?",
+          "city": "Hong Kong",
+          "date": "April 26",
+          "handle": "protrade3",
+          "relevant_recent_trade_count": 21,
+          "recent_trade_usdc_top15": 289.66,
+          "recent_trades": [
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.002,
+              "usdc": 0.18,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.038679678475163654,
+              "usdc": 32.14,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.06733269008104979,
+              "usdc": 1.74,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.08066228693181818,
+              "usdc": 13.63,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.1,
+              "usdc": 11.63,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 20.0,
+              "pnl": -102.02,
+              "outcome": "Yes",
+              "price": 0.001,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "value": 1.12,
+              "pnl": -45.08,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "market_id": "2074350",
+      "question": "Will the highest temperature in Dallas be 69°F or below on April 27?",
+      "blocker": "missing_tradeable_quote",
+      "action": "watch_only",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2074350",
+          "question": "Will the highest temperature in Dallas be 69°F or below on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "ColdMath",
+          "relevant_recent_trade_count": 39,
+          "recent_trade_usdc_top15": 1066.45,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.9887489482969195,
+              "usdc": 291.28,
+              "title": "Will the highest temperature in Mexico City be 23°C or higher on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.04,
+              "usdc": 3.27,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.7623001205303335,
+              "usdc": 74.99,
+              "title": "Will the highest temperature in Atlanta be between 80-81°F on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.9807597535934292,
+              "usdc": 66.8,
+              "title": "Will the lowest temperature in Miami be between 78-79°F on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.8154441913439635,
+              "usdc": 35.47,
+              "title": "Will the lowest temperature in Miami be between 68-69°F on April 27?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 51.81,
+              "pnl": 1.36,
+              "outcome": "No",
+              "price": 0.145,
+              "title": "Will the highest temperature in Dallas be 86°F or higher on April 26?"
+            },
+            {
+              "value": 12.93,
+              "pnl": -1.59,
+              "outcome": "Yes",
+              "price": 0.095,
+              "title": "Will the highest temperature in Dallas be between 84-85°F on April 26?"
+            },
+            {
+              "value": 12.45,
+              "pnl": 9.19,
+              "outcome": "No",
+              "price": 0.1525,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "value": 5.01,
+              "pnl": -8.07,
+              "outcome": "Yes",
+              "price": 0.014,
+              "title": "Will the highest temperature in Dallas be between 82-83°F on April 26?"
+            },
+            {
+              "value": 3.29,
+              "pnl": -2.71,
+              "outcome": "Yes",
+              "price": 0.0105,
+              "title": "Will the highest temperature in Dallas be between 80-81°F on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074350",
+          "question": "Will the highest temperature in Dallas be 69°F or below on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "Handsanitizer23",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 224.4,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.011,
+              "usdc": 224.4,
+              "title": "Will the highest temperature in Dallas be between 72-73°F on March 4?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2074350",
+          "question": "Will the highest temperature in Dallas be 69°F or below on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "Junhoo2",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 651.0,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.07,
+              "usdc": 651.0,
+              "title": "Will the highest temperature in Dallas be between 68-69°F on February 14?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2074350",
+          "question": "Will the highest temperature in Dallas be 69°F or below on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "khalidakup",
+          "relevant_recent_trade_count": 2,
+          "recent_trade_usdc_top15": 2829.96,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.99,
+              "usdc": 2817.5,
+              "title": "Will the highest temperature in Dallas be between 74-75°F on April 4?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.67,
+              "usdc": 12.46,
+              "title": "Will the highest temperature in Dallas be between 56-57°F on March 28?"
+            }
+          ],
+          "active_city_positions": []
+        }
+      ]
+    },
+    {
+      "market_id": "2074460",
+      "question": "Will the highest temperature in Hong Kong be 20°C or below on April 27?",
+      "blocker": "missing_tradeable_quote",
+      "action": "watch_only",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2074460",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "Poligarch",
+          "relevant_recent_trade_count": 5,
+          "recent_trade_usdc_top15": 26.26,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.42,
+              "usdc": 7.77,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.72,
+              "usdc": 3.6,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.22,
+              "usdc": 4.83,
+              "title": "Will the highest temperature in Hong Kong be 29°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.76,
+              "usdc": 9.01,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.22,
+              "usdc": 1.06,
+              "title": "Will the highest temperature in Hong Kong be 29°C on April 26?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 221.97,
+              "pnl": 33.5,
+              "outcome": "Yes",
+              "price": 0.9955,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "value": 114.86,
+              "pnl": 4.23,
+              "outcome": "No",
+              "price": 0.945,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 26?"
+            },
+            {
+              "value": 77.13,
+              "pnl": 8.84,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 64.04,
+              "pnl": 29.02,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 25?"
+            },
+            {
+              "value": 58.22,
+              "pnl": -0.2,
+              "outcome": "No",
+              "price": 0.725,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074460",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "HenryTheAtmoPhD",
+          "relevant_recent_trade_count": 18,
+          "recent_trade_usdc_top15": 1476.4,
+          "recent_trades": [
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.03301696928559308,
+              "usdc": 9.73,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.92,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.017,
+              "usdc": 8.08,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.01,
+              "usdc": 7.42,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.045,
+              "usdc": 13.95,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 3.64,
+              "pnl": -26.09,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.09,
+              "pnl": -9.41,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.25,
+              "pnl": -1.75,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 24?"
+            },
+            {
+              "value": 0.2,
+              "pnl": -14.78,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074460",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "JoeTheMeteorologist",
+          "relevant_recent_trade_count": 26,
+          "recent_trade_usdc_top15": 25.88,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.055,
+              "usdc": 12.59,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.87,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 1.47,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.013484536082474227,
+              "usdc": 0.75,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.031,
+              "usdc": 0.22,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 4.92,
+              "pnl": -22.96,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.11,
+              "pnl": -27.5,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            },
+            {
+              "value": 0.53,
+              "pnl": -14.0,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.08,
+              "pnl": -0.5,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074460",
+          "question": "Will the highest temperature in Hong Kong be 20°C or below on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "protrade3",
+          "relevant_recent_trade_count": 21,
+          "recent_trade_usdc_top15": 318.49,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.64,
+              "usdc": 31.42,
+              "title": "Will the lowest temperature in Paris be 5°C on April 27?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.002,
+              "usdc": 0.18,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.038679678475163654,
+              "usdc": 32.14,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.06733269008104979,
+              "usdc": 1.74,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.08066228693181818,
+              "usdc": 13.63,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 20.0,
+              "pnl": -102.02,
+              "outcome": "Yes",
+              "price": 0.001,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "value": 1.12,
+              "pnl": -45.08,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "market_id": "2064908",
+      "question": "Will the highest temperature in Dallas be 67°F or below on April 26?",
+      "blocker": "missing_tradeable_quote",
+      "action": "watch_only",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2064908",
+          "question": "Will the highest temperature in Dallas be 67°F or below on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "ColdMath",
+          "relevant_recent_trade_count": 42,
+          "recent_trade_usdc_top15": 7913.27,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.04,
+              "usdc": 3.27,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.003153435796879956,
+              "usdc": 1.04,
+              "title": "Will the highest temperature in Moscow be 12°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.9696278678623763,
+              "usdc": 4023.62,
+              "title": "Will the highest temperature in Moscow be 12°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.9814917433132466,
+              "usdc": 2318.83,
+              "title": "Will the highest temperature in Moscow be 13°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.006592519176075153,
+              "usdc": 2.91,
+              "title": "Will the highest temperature in Wellington be 12°C on April 26?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 51.81,
+              "pnl": 1.36,
+              "outcome": "No",
+              "price": 0.145,
+              "title": "Will the highest temperature in Dallas be 86°F or higher on April 26?"
+            },
+            {
+              "value": 12.93,
+              "pnl": -1.59,
+              "outcome": "Yes",
+              "price": 0.095,
+              "title": "Will the highest temperature in Dallas be between 84-85°F on April 26?"
+            },
+            {
+              "value": 12.45,
+              "pnl": 9.19,
+              "outcome": "No",
+              "price": 0.1525,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "value": 5.01,
+              "pnl": -8.07,
+              "outcome": "Yes",
+              "price": 0.014,
+              "title": "Will the highest temperature in Dallas be between 82-83°F on April 26?"
+            },
+            {
+              "value": 3.29,
+              "pnl": -2.71,
+              "outcome": "Yes",
+              "price": 0.0105,
+              "title": "Will the highest temperature in Dallas be between 80-81°F on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2064908",
+          "question": "Will the highest temperature in Dallas be 67°F or below on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "Handsanitizer23",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 224.4,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.011,
+              "usdc": 224.4,
+              "title": "Will the highest temperature in Dallas be between 72-73°F on March 4?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2064908",
+          "question": "Will the highest temperature in Dallas be 67°F or below on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "Junhoo2",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 651.0,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.07,
+              "usdc": 651.0,
+              "title": "Will the highest temperature in Dallas be between 68-69°F on February 14?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2064908",
+          "question": "Will the highest temperature in Dallas be 67°F or below on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "khalidakup",
+          "relevant_recent_trade_count": 2,
+          "recent_trade_usdc_top15": 2829.96,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.99,
+              "usdc": 2817.5,
+              "title": "Will the highest temperature in Dallas be between 74-75°F on April 4?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.67,
+              "usdc": 12.46,
+              "title": "Will the highest temperature in Dallas be between 56-57°F on March 28?"
+            }
+          ],
+          "active_city_positions": []
+        }
+      ]
+    },
+    {
+      "market_id": "2074470",
+      "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 27?",
+      "blocker": "missing_tradeable_quote",
+      "action": "watch_only",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2074470",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "Poligarch",
+          "relevant_recent_trade_count": 5,
+          "recent_trade_usdc_top15": 26.26,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.42,
+              "usdc": 7.77,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.72,
+              "usdc": 3.6,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.22,
+              "usdc": 4.83,
+              "title": "Will the highest temperature in Hong Kong be 29°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.76,
+              "usdc": 9.01,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.22,
+              "usdc": 1.06,
+              "title": "Will the highest temperature in Hong Kong be 29°C on April 26?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 221.97,
+              "pnl": 33.5,
+              "outcome": "Yes",
+              "price": 0.9955,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "value": 114.86,
+              "pnl": 4.23,
+              "outcome": "No",
+              "price": 0.945,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 26?"
+            },
+            {
+              "value": 77.13,
+              "pnl": 8.84,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 64.04,
+              "pnl": 29.02,
+              "outcome": "No",
+              "price": 0.9985,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 25?"
+            },
+            {
+              "value": 58.22,
+              "pnl": -0.2,
+              "outcome": "No",
+              "price": 0.725,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074470",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "HenryTheAtmoPhD",
+          "relevant_recent_trade_count": 18,
+          "recent_trade_usdc_top15": 1476.4,
+          "recent_trades": [
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.03301696928559308,
+              "usdc": 9.73,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.92,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.017,
+              "usdc": 8.08,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.01,
+              "usdc": 7.42,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.045,
+              "usdc": 13.95,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 3.64,
+              "pnl": -26.09,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.09,
+              "pnl": -9.41,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.25,
+              "pnl": -1.75,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 25°C on April 24?"
+            },
+            {
+              "value": 0.2,
+              "pnl": -14.78,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074470",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "JoeTheMeteorologist",
+          "relevant_recent_trade_count": 26,
+          "recent_trade_usdc_top15": 25.88,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.055,
+              "usdc": 12.59,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 0.87,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.001,
+              "usdc": 1.47,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.013484536082474227,
+              "usdc": 0.75,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.031,
+              "usdc": 0.22,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 4.92,
+              "pnl": -22.96,
+              "outcome": "No",
+              "price": 0.004,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 24?"
+            },
+            {
+              "value": 1.11,
+              "pnl": -27.5,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 24?"
+            },
+            {
+              "value": 0.53,
+              "pnl": -14.0,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "value": 0.08,
+              "pnl": -0.5,
+              "outcome": "Yes",
+              "price": 0.0015,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074470",
+          "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 27?",
+          "city": "Hong Kong",
+          "date": "April 27",
+          "handle": "protrade3",
+          "relevant_recent_trade_count": 21,
+          "recent_trade_usdc_top15": 318.49,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.64,
+              "usdc": 31.42,
+              "title": "Will the lowest temperature in Paris be 5°C on April 27?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.002,
+              "usdc": 0.18,
+              "title": "Will the highest temperature in Hong Kong be 28°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.038679678475163654,
+              "usdc": 32.14,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.06733269008104979,
+              "usdc": 1.74,
+              "title": "Will the highest temperature in Hong Kong be 27°C on April 25?"
+            },
+            {
+              "side": "SELL",
+              "outcome": "No",
+              "price": 0.08066228693181818,
+              "usdc": 13.63,
+              "title": "Will the highest temperature in Hong Kong be 26°C on April 25?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 20.0,
+              "pnl": -102.02,
+              "outcome": "Yes",
+              "price": 0.001,
+              "title": "Will the highest temperature in Hong Kong be 24°C on April 25?"
+            },
+            {
+              "value": 1.12,
+              "pnl": -45.08,
+              "outcome": "Yes",
+              "price": 0.0005,
+              "title": "Will the highest temperature in Hong Kong be 23°C on April 25?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "market_id": "2074360",
+      "question": "Will the highest temperature in Dallas be 88°F or higher on April 27?",
+      "blocker": "missing_tradeable_quote",
+      "action": "watch_only",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2074360",
+          "question": "Will the highest temperature in Dallas be 88°F or higher on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "ColdMath",
+          "relevant_recent_trade_count": 39,
+          "recent_trade_usdc_top15": 1066.45,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.9887489482969195,
+              "usdc": 291.28,
+              "title": "Will the highest temperature in Mexico City be 23°C or higher on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.04,
+              "usdc": 3.27,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.7623001205303335,
+              "usdc": 74.99,
+              "title": "Will the highest temperature in Atlanta be between 80-81°F on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.9807597535934292,
+              "usdc": 66.8,
+              "title": "Will the lowest temperature in Miami be between 78-79°F on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.8154441913439635,
+              "usdc": 35.47,
+              "title": "Will the lowest temperature in Miami be between 68-69°F on April 27?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 51.81,
+              "pnl": 1.36,
+              "outcome": "No",
+              "price": 0.145,
+              "title": "Will the highest temperature in Dallas be 86°F or higher on April 26?"
+            },
+            {
+              "value": 12.93,
+              "pnl": -1.59,
+              "outcome": "Yes",
+              "price": 0.095,
+              "title": "Will the highest temperature in Dallas be between 84-85°F on April 26?"
+            },
+            {
+              "value": 12.45,
+              "pnl": 9.19,
+              "outcome": "No",
+              "price": 0.1525,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "value": 5.01,
+              "pnl": -8.07,
+              "outcome": "Yes",
+              "price": 0.014,
+              "title": "Will the highest temperature in Dallas be between 82-83°F on April 26?"
+            },
+            {
+              "value": 3.29,
+              "pnl": -2.71,
+              "outcome": "Yes",
+              "price": 0.0105,
+              "title": "Will the highest temperature in Dallas be between 80-81°F on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2074360",
+          "question": "Will the highest temperature in Dallas be 88°F or higher on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "Handsanitizer23",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 224.4,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.011,
+              "usdc": 224.4,
+              "title": "Will the highest temperature in Dallas be between 72-73°F on March 4?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2074360",
+          "question": "Will the highest temperature in Dallas be 88°F or higher on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "Junhoo2",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 651.0,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.07,
+              "usdc": 651.0,
+              "title": "Will the highest temperature in Dallas be between 68-69°F on February 14?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2074360",
+          "question": "Will the highest temperature in Dallas be 88°F or higher on April 27?",
+          "city": "Dallas",
+          "date": "April 27",
+          "handle": "khalidakup",
+          "relevant_recent_trade_count": 2,
+          "recent_trade_usdc_top15": 2829.96,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.99,
+              "usdc": 2817.5,
+              "title": "Will the highest temperature in Dallas be between 74-75°F on April 4?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.67,
+              "usdc": 12.46,
+              "title": "Will the highest temperature in Dallas be between 56-57°F on March 28?"
+            }
+          ],
+          "active_city_positions": []
+        }
+      ]
+    },
+    {
+      "market_id": "2064918",
+      "question": "Will the highest temperature in Dallas be 86°F or higher on April 26?",
+      "blocker": "high_slippage_risk",
+      "action": "watch_only",
+      "accounts_with_city_signal": 4,
+      "accounts": [
+        {
+          "market_id": "2064918",
+          "question": "Will the highest temperature in Dallas be 86°F or higher on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "ColdMath",
+          "relevant_recent_trade_count": 42,
+          "recent_trade_usdc_top15": 7913.27,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.04,
+              "usdc": 3.27,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.003153435796879956,
+              "usdc": 1.04,
+              "title": "Will the highest temperature in Moscow be 12°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.9696278678623763,
+              "usdc": 4023.62,
+              "title": "Will the highest temperature in Moscow be 12°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.9814917433132466,
+              "usdc": 2318.83,
+              "title": "Will the highest temperature in Moscow be 13°C on April 26?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.006592519176075153,
+              "usdc": 2.91,
+              "title": "Will the highest temperature in Wellington be 12°C on April 26?"
+            }
+          ],
+          "active_city_positions": [
+            {
+              "value": 51.81,
+              "pnl": 1.36,
+              "outcome": "No",
+              "price": 0.145,
+              "title": "Will the highest temperature in Dallas be 86°F or higher on April 26?"
+            },
+            {
+              "value": 12.93,
+              "pnl": -1.59,
+              "outcome": "Yes",
+              "price": 0.095,
+              "title": "Will the highest temperature in Dallas be between 84-85°F on April 26?"
+            },
+            {
+              "value": 12.45,
+              "pnl": 9.19,
+              "outcome": "No",
+              "price": 0.1525,
+              "title": "Will the highest temperature in Dallas be 88°F or higher on April 27?"
+            },
+            {
+              "value": 5.01,
+              "pnl": -8.07,
+              "outcome": "Yes",
+              "price": 0.014,
+              "title": "Will the highest temperature in Dallas be between 82-83°F on April 26?"
+            },
+            {
+              "value": 3.29,
+              "pnl": -2.71,
+              "outcome": "Yes",
+              "price": 0.0105,
+              "title": "Will the highest temperature in Dallas be between 80-81°F on April 26?"
+            }
+          ]
+        },
+        {
+          "market_id": "2064918",
+          "question": "Will the highest temperature in Dallas be 86°F or higher on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "Handsanitizer23",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 224.4,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.011,
+              "usdc": 224.4,
+              "title": "Will the highest temperature in Dallas be between 72-73°F on March 4?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2064918",
+          "question": "Will the highest temperature in Dallas be 86°F or higher on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "Junhoo2",
+          "relevant_recent_trade_count": 1,
+          "recent_trade_usdc_top15": 651.0,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.07,
+              "usdc": 651.0,
+              "title": "Will the highest temperature in Dallas be between 68-69°F on February 14?"
+            }
+          ],
+          "active_city_positions": []
+        },
+        {
+          "market_id": "2064918",
+          "question": "Will the highest temperature in Dallas be 86°F or higher on April 26?",
+          "city": "Dallas",
+          "date": "April 26",
+          "handle": "khalidakup",
+          "relevant_recent_trade_count": 2,
+          "recent_trade_usdc_top15": 2829.96,
+          "recent_trades": [
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.99,
+              "usdc": 2817.5,
+              "title": "Will the highest temperature in Dallas be between 74-75°F on April 4?"
+            },
+            {
+              "side": "BUY",
+              "outcome": "Yes",
+              "price": 0.67,
+              "usdc": 12.46,
+              "title": "Will the highest temperature in Dallas be between 56-57°F on March 28?"
+            }
+          ],
+          "active_city_positions": []
+        }
+      ]
+    }
+  ]
+}

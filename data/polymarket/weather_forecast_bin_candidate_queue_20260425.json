@@ -1,0 +1,525 @@
+{
+  "source": "Forecast-point vs Polymarket event surface. Proxy only; official station confirmation required.",
+  "rows": [
+    {
+      "city": "Shanghai",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 10,
+      "consensus_side": "NO",
+      "consensus_top_temp": "21°C",
+      "forecast_max_proxy": 23.8,
+      "forecast_round_temp": "24°C",
+      "candidate_question": "Will the highest temperature in Shanghai be 24°C on April 26?",
+      "candidate_yes_price": 0.15,
+      "candidate_no_price": 0.85,
+      "candidate_liquidity": "2492.2526",
+      "candidate_volume": "3215.807270000001",
+      "market_top_yes_bins": [
+        [
+          23.0,
+          0.345,
+          "Will the highest temperature in Shanghai be 23°C on April 26?"
+        ],
+        [
+          22.0,
+          0.33,
+          "Will the highest temperature in Shanghai be 22°C on April 26?"
+        ],
+        [
+          24.0,
+          0.15,
+          "Will the highest temperature in Shanghai be 24°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          24.0,
+          0.15,
+          "Will the highest temperature in Shanghai be 24°C on April 26?"
+        ],
+        [
+          23.0,
+          0.345,
+          "Will the highest temperature in Shanghai be 23°C on April 26?"
+        ],
+        [
+          25.0,
+          0.1175,
+          "Will the highest temperature in Shanghai be 25°C on April 26?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD",
+      "recommendation": "watch_or_paper_yes_if_official_station_confirms",
+      "score": 204.1
+    },
+    {
+      "city": "Moscow",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 9,
+      "consensus_side": "NO",
+      "consensus_top_temp": "12°C",
+      "forecast_max_proxy": 10.0,
+      "forecast_round_temp": "10°C",
+      "candidate_question": "Will the highest temperature in Moscow be 10°C on April 26?",
+      "candidate_yes_price": 0.355,
+      "candidate_no_price": 0.645,
+      "candidate_liquidity": "1334.108",
+      "candidate_volume": "552.213464",
+      "market_top_yes_bins": [
+        [
+          10.0,
+          0.355,
+          "Will the highest temperature in Moscow be 10°C on April 26?"
+        ],
+        [
+          9.0,
+          0.335,
+          "Will the highest temperature in Moscow be 9°C on April 26?"
+        ],
+        [
+          8.0,
+          0.185,
+          "Will the highest temperature in Moscow be 8°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          10.0,
+          0.355,
+          "Will the highest temperature in Moscow be 10°C on April 26?"
+        ],
+        [
+          9.0,
+          0.335,
+          "Will the highest temperature in Moscow be 9°C on April 26?"
+        ],
+        [
+          11.0,
+          0.095,
+          "Will the highest temperature in Moscow be 11°C on April 26?"
+        ]
+      ],
+      "resolution_source": null,
+      "recommendation": "possible_main_forecast_bin_but_price_mid",
+      "score": 172.8
+    },
+    {
+      "city": "Tel Aviv",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 9,
+      "consensus_side": "NO",
+      "consensus_top_temp": "22°C",
+      "forecast_max_proxy": 24.5,
+      "forecast_round_temp": "24°C",
+      "candidate_question": "Will the highest temperature in Tel Aviv be 24°C on April 26?",
+      "candidate_yes_price": 0.0095,
+      "candidate_no_price": 0.9905,
+      "candidate_liquidity": "3094.58555",
+      "candidate_volume": "1035.1906319999998",
+      "market_top_yes_bins": [
+        [
+          27.0,
+          0.325,
+          "Will the highest temperature in Tel Aviv be 27°C on April 26?"
+        ],
+        [
+          26.0,
+          0.295,
+          "Will the highest temperature in Tel Aviv be 26°C on April 26?"
+        ],
+        [
+          28.0,
+          0.26,
+          "Will the highest temperature in Tel Aviv be 28°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          24.0,
+          0.0095,
+          "Will the highest temperature in Tel Aviv be 24°C on April 26?"
+        ],
+        [
+          23.0,
+          0.0085,
+          "Will the highest temperature in Tel Aviv be 23°C on April 26?"
+        ],
+        [
+          25.0,
+          0.055,
+          "Will the highest temperature in Tel Aviv be 25°C on April 26?"
+        ]
+      ],
+      "resolution_source": null,
+      "recommendation": "too_longshot_or_source_mismatch",
+      "score": 172.5
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 11,
+      "consensus_side": "NO",
+      "consensus_top_temp": "16°C",
+      "forecast_max_proxy": 18.3,
+      "forecast_round_temp": "18°C",
+      "candidate_question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "candidate_yes_price": 0.305,
+      "candidate_no_price": 0.695,
+      "candidate_liquidity": "1359.3351",
+      "candidate_volume": "630.019996",
+      "market_top_yes_bins": [
+        [
+          19.0,
+          0.365,
+          "Will the highest temperature in Munich be 19°C on April 26?"
+        ],
+        [
+          18.0,
+          0.305,
+          "Will the highest temperature in Munich be 18°C on April 26?"
+        ],
+        [
+          20.0,
+          0.193,
+          "Will the highest temperature in Munich be 20°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          18.0,
+          0.305,
+          "Will the highest temperature in Munich be 18°C on April 26?"
+        ],
+        [
+          17.0,
+          0.0415,
+          "Will the highest temperature in Munich be 17°C on April 26?"
+        ],
+        [
+          19.0,
+          0.365,
+          "Will the highest temperature in Munich be 19°C on April 26?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/de/munich/EDDM",
+      "recommendation": "watch_or_paper_yes_if_official_station_confirms",
+      "score": 158.2
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 8,
+      "consensus_side": "NO",
+      "consensus_top_temp": "22°C",
+      "forecast_max_proxy": 24.4,
+      "forecast_round_temp": "24°C",
+      "candidate_question": "Will the highest temperature in Beijing be 24°C on April 26?",
+      "candidate_yes_price": 0.175,
+      "candidate_no_price": 0.825,
+      "candidate_liquidity": "1742.5394",
+      "candidate_volume": "2293.0962169999993",
+      "market_top_yes_bins": [
+        [
+          25.0,
+          0.395,
+          "Will the highest temperature in Beijing be 25°C on April 26?"
+        ],
+        [
+          26.0,
+          0.255,
+          "Will the highest temperature in Beijing be 26°C on April 26?"
+        ],
+        [
+          24.0,
+          0.175,
+          "Will the highest temperature in Beijing be 24°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          24.0,
+          0.175,
+          "Will the highest temperature in Beijing be 24°C on April 26?"
+        ],
+        [
+          23.0,
+          0.0235,
+          "Will the highest temperature in Beijing be 23°C on April 26?"
+        ],
+        [
+          25.0,
+          0.395,
+          "Will the highest temperature in Beijing be 25°C on April 26?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/cn/beijing/ZBAA",
+      "recommendation": "watch_or_paper_yes_if_official_station_confirms",
+      "score": 155.2
+    },
+    {
+      "city": "London",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 11,
+      "consensus_side": "NO",
+      "consensus_top_temp": "20°C",
+      "forecast_max_proxy": 18.2,
+      "forecast_round_temp": "18°C",
+      "candidate_question": "Will the highest temperature in London be 18°C on April 26?",
+      "candidate_yes_price": 0.42,
+      "candidate_no_price": 0.58,
+      "candidate_liquidity": "2232.7305",
+      "candidate_volume": "3234.936664",
+      "market_top_yes_bins": [
+        [
+          18.0,
+          0.42,
+          "Will the highest temperature in London be 18°C on April 26?"
+        ],
+        [
+          17.0,
+          0.275,
+          "Will the highest temperature in London be 17°C on April 26?"
+        ],
+        [
+          19.0,
+          0.2,
+          "Will the highest temperature in London be 19°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          18.0,
+          0.42,
+          "Will the highest temperature in London be 18°C on April 26?"
+        ],
+        [
+          17.0,
+          0.275,
+          "Will the highest temperature in London be 17°C on April 26?"
+        ],
+        [
+          19.0,
+          0.2,
+          "Will the highest temperature in London be 19°C on April 26?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/gb/london/EGLC",
+      "recommendation": "possible_main_forecast_bin_but_price_mid",
+      "score": 149.8
+    },
+    {
+      "city": "Seoul",
+      "date": "April 27",
+      "unit": "C",
+      "accounts": 6,
+      "consensus_side": "NO",
+      "consensus_top_temp": "15°C",
+      "forecast_max_proxy": 16.5,
+      "forecast_round_temp": "16°C",
+      "candidate_question": "Will the highest temperature in Seoul be 16°C on April 27?",
+      "candidate_yes_price": 0.12,
+      "candidate_no_price": 0.88,
+      "candidate_liquidity": "2927.3867",
+      "candidate_volume": "1584.9765269999998",
+      "market_top_yes_bins": [
+        [
+          18.0,
+          0.23,
+          "Will the highest temperature in Seoul be 18°C on April 27?"
+        ],
+        [
+          17.0,
+          0.195,
+          "Will the highest temperature in Seoul be 17°C on April 27?"
+        ],
+        [
+          19.0,
+          0.19,
+          "Will the highest temperature in Seoul be 19°C on April 27?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          16.0,
+          0.12,
+          "Will the highest temperature in Seoul be 16°C on April 27?"
+        ],
+        [
+          15.0,
+          0.0245,
+          "Will the highest temperature in Seoul be 15°C on April 27?"
+        ],
+        [
+          17.0,
+          0.195,
+          "Will the highest temperature in Seoul be 17°C on April 27?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/kr/incheon/RKSI",
+      "recommendation": "watch_or_paper_yes_if_official_station_confirms",
+      "score": 136.3
+    },
+    {
+      "city": "Ankara",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 9,
+      "consensus_side": "NO",
+      "consensus_top_temp": "18°C",
+      "forecast_max_proxy": 20.4,
+      "forecast_round_temp": "20°C",
+      "candidate_question": "Will the highest temperature in Ankara be 20°C on April 26?",
+      "candidate_yes_price": 0.305,
+      "candidate_no_price": 0.695,
+      "candidate_liquidity": "1802.7456",
+      "candidate_volume": "1450.6890660000001",
+      "market_top_yes_bins": [
+        [
+          21.0,
+          0.323,
+          "Will the highest temperature in Ankara be 21°C on April 26?"
+        ],
+        [
+          20.0,
+          0.305,
+          "Will the highest temperature in Ankara be 20°C on April 26?"
+        ],
+        [
+          19.0,
+          0.125,
+          "Will the highest temperature in Ankara be 19°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          20.0,
+          0.305,
+          "Will the highest temperature in Ankara be 20°C on April 26?"
+        ],
+        [
+          19.0,
+          0.125,
+          "Will the highest temperature in Ankara be 19°C on April 26?"
+        ],
+        [
+          21.0,
+          0.323,
+          "Will the highest temperature in Ankara be 21°C on April 26?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/tr/%C3%A7ubuk/LTAC",
+      "recommendation": "watch_or_paper_yes_if_official_station_confirms",
+      "score": 131.9
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 27",
+      "unit": "C",
+      "accounts": 3,
+      "consensus_side": "NO",
+      "consensus_top_temp": "24°C",
+      "forecast_max_proxy": 25.8,
+      "forecast_round_temp": "26°C",
+      "candidate_question": "Will the highest temperature in Shanghai be 26°C on April 27?",
+      "candidate_yes_price": 0.27,
+      "candidate_no_price": 0.73,
+      "candidate_liquidity": "1469.0716",
+      "candidate_volume": "475.24236000000013",
+      "market_top_yes_bins": [
+        [
+          27.0,
+          0.335,
+          "Will the highest temperature in Shanghai be 27°C on April 27?"
+        ],
+        [
+          26.0,
+          0.27,
+          "Will the highest temperature in Shanghai be 26°C on April 27?"
+        ],
+        [
+          28.0,
+          0.1,
+          "Will the highest temperature in Shanghai be 28°C on April 27?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          26.0,
+          0.27,
+          "Will the highest temperature in Shanghai be 26°C on April 27?"
+        ],
+        [
+          25.0,
+          0.08,
+          "Will the highest temperature in Shanghai be 25°C on April 27?"
+        ],
+        [
+          27.0,
+          0.335,
+          "Will the highest temperature in Shanghai be 27°C on April 27?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD",
+      "recommendation": "watch_or_paper_yes_if_official_station_confirms",
+      "score": 92.1
+    },
+    {
+      "city": "Seoul",
+      "date": "April 26",
+      "unit": "C",
+      "accounts": 10,
+      "consensus_side": "NO",
+      "consensus_top_temp": "17°C",
+      "forecast_max_proxy": 22.6,
+      "forecast_round_temp": "23°C",
+      "candidate_question": "Will the highest temperature in Seoul be 19°C on April 26?",
+      "candidate_yes_price": 0.18,
+      "candidate_no_price": 0.82,
+      "candidate_liquidity": "2201.4396",
+      "candidate_volume": "5782.727509999997",
+      "market_top_yes_bins": [
+        [
+          19.0,
+          0.18,
+          "Will the highest temperature in Seoul be 19°C on April 26?"
+        ],
+        [
+          18.0,
+          0.0545,
+          "Will the highest temperature in Seoul be 18°C on April 26?"
+        ],
+        [
+          17.0,
+          0.0085,
+          "Will the highest temperature in Seoul be 17°C on April 26?"
+        ]
+      ],
+      "nearest_bins": [
+        [
+          19.0,
+          0.18,
+          "Will the highest temperature in Seoul be 19°C on April 26?"
+        ],
+        [
+          18.0,
+          0.0545,
+          "Will the highest temperature in Seoul be 18°C on April 26?"
+        ],
+        [
+          17.0,
+          0.0085,
+          "Will the highest temperature in Seoul be 17°C on April 26?"
+        ]
+      ],
+      "resolution_source": "https://www.wunderground.com/history/daily/kr/incheon/RKSI",
+      "recommendation": "watch_or_paper_yes_if_official_station_confirms",
+      "score": 88.3
+    }
+  ]
+}

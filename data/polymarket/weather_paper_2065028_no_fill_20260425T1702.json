@@ -1,0 +1,47 @@
+{
+  "avg_fill": 0.977,
+  "book_best_ask": 0.977,
+  "book_best_bid": 0.976,
+  "budget_usdc": 5.0,
+  "city": "Hong Kong",
+  "date": "April 26",
+  "filled": true,
+  "filled_usdc": 5.0,
+  "gamma_no": 0.9765,
+  "gamma_yes": 0.0235,
+  "generated_at": "2026-04-25T15:10:32.893933+00:00",
+  "hko_latest_direct": {
+    "timestamp": "2026-04-25T22:00:00+08:00",
+    "value_c": 24.0
+  },
+  "levels_used": [
+    {
+      "cost_usdc": 5.0,
+      "price": 0.977,
+      "shares": 5.117707
+    }
+  ],
+  "limit_price": 0.978,
+  "market_id": "2065028",
+  "matched_profitable_accounts": [
+    "Poligarch",
+    "Maskache2",
+    "HenryTheAtmoPhD",
+    "JoeTheMeteorologist",
+    "protrade3"
+  ],
+  "mode": "strict-limit paper fill simulation for Hong Kong 2065028 NO; no wallet/no real execution",
+  "no_real_order_placed": true,
+  "official_daily_extract": {
+    "available": false,
+    "status": "pending"
+  },
+  "operator_rule": "hold to official daily extract; no add unless Julien explicitly asks; no real order",
+  "paper_only": true,
+  "provisional_outcome": "NO",
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "shares": 5.117707,
+  "side": "NO",
+  "token_id": "52817872578288816749191973321023191193600420939968601808746765086788856187251",
+  "unfilled_usdc": 0
+}

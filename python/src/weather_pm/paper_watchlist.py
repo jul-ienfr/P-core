@@ -5,21 +5,33 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from weather_pm.dynamic_position_sizing import SizingInput, SizingPolicy, calculate_dynamic_position_size
+
 
 def build_paper_watchlist_report(payload: dict[str, Any]) -> dict[str, Any]:
     positions = payload.get("positions") if isinstance(payload, dict) else None
     if not isinstance(positions, list):
         raise ValueError("paper monitor JSON must contain a positions list")
+    normalized_positions = [
+        _normalize_paper_monitor_position(position)
+        for position in positions
+        if isinstance(position, dict)
+    ]
+    exposure_index = _build_paper_watchlist_exposure_index(normalized_positions)
     watchlist = []
-    for position in positions:
-        if not isinstance(position, dict):
-            continue
+    for position in normalized_positions:
         p_side = position.get("p_side_now", position.get("base_p_side"))
         if p_side is None:
             raise ValueError("paper position must contain p_side_now or base_p_side")
+        enriched_position = dict(position)
+        market_key = _paper_market_key(enriched_position)
+        surface_key = _paper_surface_key(enriched_position)
+        enriched_position.setdefault("current_market_exposure_usdc", exposure_index["by_market"].get(market_key, 0.0))
+        enriched_position.setdefault("current_surface_exposure_usdc", exposure_index["by_surface"].get(surface_key, 0.0))
+        enriched_position.setdefault("current_total_weather_exposure_usdc", exposure_index["total_weather"])
         watchlist.append(
             build_paper_watch_row(
-                _normalize_paper_monitor_position(position),
+                enriched_position,
                 p_side=float(p_side),
                 best_bid=position.get("best_bid_now", position.get("live_best_bid_now", position.get("best_bid"))),
                 best_ask=position.get("best_ask_now", position.get("live_best_ask_now", position.get("best_ask"))),
@@ -294,17 +306,32 @@ def build_paper_watch_row(
         action = "TRIM_REVIEW"
         reason = f"p_side {p_side:.4f} near entry {entry_avg:.4f}"
 
-    concentration_capped = filled_usdc >= 10.0
-    if action == "HOLD_MONITOR" and concentration_capped:
-        action = "HOLD_CAPPED"
-        reason = "large position; no further add"
+    just_paper_added = bool(position.get("paper_add_executed_at"))
+    dynamic_sizing = _calculate_paper_dynamic_sizing(
+        position,
+        p_side=p_side,
+        best_bid=best_bid,
+        best_ask=best_ask,
+        filled_usdc=filled_usdc,
+    )
+    dynamic_action = str(dynamic_sizing.get("action") or "")
+    dynamic_recommended_size = float(dynamic_sizing.get("recommended_size_usdc") or 0.0)
 
-    add_allowed = (
+    if action == "HOLD_MONITOR" and dynamic_action == "HOLD_CAPPED":
+        action = "HOLD_CAPPED"
+        reason = "dynamic sizing cap reached; no further add"
+    elif action == "HOLD_MONITOR" and just_paper_added:
+        action = "HOLD_CAPPED"
+        reason = "paper add already executed this cycle; no repeated add"
+
+    legacy_add_signal = (
         action == "HOLD_MONITOR"
-        and not concentration_capped
+        and not just_paper_added
         and best_ask is not None
         and p_side - best_ask > 0.18
     )
+    add_allowed = legacy_add_signal and dynamic_action in {"PROBE", "OPEN", "ADD"} and dynamic_recommended_size > 0.0
+    max_add_usdc = round(min(5.0, dynamic_recommended_size), 4) if add_allowed else 0
 
     return {
         "city": position.get("city"),
@@ -329,6 +356,87 @@ def build_paper_watch_row(
         "trim_review_if_p_below": trim_review,
         "take_profit_review_if_bid_above": take_profit,
         "add_allowed": add_allowed,
-        "max_add_usdc": 5 if add_allowed else 0,
+        "max_add_usdc": max_add_usdc,
         "add_limit": round(min(best_ask, p_side - 0.15), 4) if add_allowed and best_ask is not None else None,
+        "dynamic_sizing": dynamic_sizing,
     }
+
+
+def _calculate_paper_dynamic_sizing(
+    position: dict[str, Any],
+    *,
+    p_side: float,
+    best_bid: float | None,
+    best_ask: float | None,
+    filled_usdc: float,
+) -> dict[str, Any]:
+    policy = SizingPolicy.paper_weather_grid_default()
+    market_price = float(best_ask if best_ask is not None else position.get("entry_avg", p_side))
+    net_edge = float(position.get("net_edge", p_side - market_price))
+    spread = _paper_float(position.get("spread"), default=None)
+    if spread is None:
+        spread = max(float(best_ask) - float(best_bid), 0.0) if best_bid is not None and best_ask is not None else 0.0
+    depth_usd = _paper_float(position.get("depth_usd", position.get("book_depth_usd")), default=100.0)
+    confidence = _paper_float(position.get("confidence", position.get("model_confidence")), default=0.8)
+
+    decision = calculate_dynamic_position_size(
+        SizingInput(
+            market_id=_paper_market_key(position),
+            surface_key=_paper_surface_key(position),
+            model_probability=p_side,
+            market_price=market_price,
+            net_edge=net_edge,
+            confidence=confidence,
+            spread=spread,
+            depth_usd=depth_usd,
+            hours_to_resolution=_paper_float(position.get("hours_to_resolution"), default=None),
+            wallet_style=position.get("wallet_style") or position.get("wallet_style_reference"),
+            current_market_exposure_usdc=_paper_float(position.get("current_market_exposure_usdc"), default=filled_usdc),
+            current_surface_exposure_usdc=_paper_float(position.get("current_surface_exposure_usdc"), default=filled_usdc),
+            current_total_weather_exposure_usdc=_paper_float(position.get("current_total_weather_exposure_usdc"), default=filled_usdc),
+        ),
+        policy=policy,
+    )
+    return decision.to_dict()
+
+
+def _build_paper_watchlist_exposure_index(positions: list[dict[str, Any]]) -> dict[str, Any]:
+    by_market: dict[str, float] = {}
+    by_surface: dict[str, float] = {}
+    total = 0.0
+    for position in positions:
+        amount = _paper_float(position.get("filled_usdc", position.get("spend_usdc")), default=0.0)
+        if amount <= 0.0:
+            continue
+        market_key = _paper_market_key(position)
+        surface_key = _paper_surface_key(position)
+        by_market[market_key] = round(by_market.get(market_key, 0.0) + amount, 4)
+        by_surface[surface_key] = round(by_surface.get(surface_key, 0.0) + amount, 4)
+        total += amount
+    return {"by_market": by_market, "by_surface": by_surface, "total_weather": round(total, 4)}
+
+
+def _paper_market_key(position: dict[str, Any]) -> str:
+    explicit = position.get("market_id") or position.get("condition_id") or position.get("token_id")
+    if explicit is not None:
+        return str(explicit)
+    return "|".join(
+        _format_cell(position.get(key))
+        for key in ("city", "date", "kind", "temp", "unit", "side")
+    )
+
+
+def _paper_surface_key(position: dict[str, Any]) -> str:
+    explicit = position.get("surface_key") or position.get("city_date_surface")
+    if explicit is not None:
+        return str(explicit)
+    return "|".join(_format_cell(position.get(key)) for key in ("city", "date", "kind"))
+
+
+def _paper_float(value: Any, *, default: float | None) -> float | None:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default

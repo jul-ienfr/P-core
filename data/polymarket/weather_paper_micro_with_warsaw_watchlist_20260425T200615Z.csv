@@ -1,0 +1,7 @@
+city,date,station,side,market,spend_usdc,entry_avg,p_side_now,paper_ev_now_usdc,operator_action,hard_stop_if_p_below,trim_review_if_p_below,take_profit_review_if_bid_above,add_allowed,max_add_usdc
+Seoul,April 26,RKSI,NO,None None°None,15.00,0.2782,0.9483,36.13,HOLD_CAPPED,0.2482,0.2982,0.9283,false,0.00
+London,April 26,EGLC,NO,None None°None,5.31,0.5300,0.7701,2.41,HOLD_MONITOR,0.5000,0.5500,0.7501,true,5.00
+Tokyo,April 26,RJTT,NO,None None°None,10.00,0.5600,0.7416,3.24,HOLD_CAPPED,0.5300,0.5800,0.7216,false,0.00
+Wellington,April 26,NZWN,NO,None None°None,10.00,0.5600,0.7243,2.93,HOLD_CAPPED,0.5300,0.5800,0.7043,false,0.00
+Singapore,April 26,WSSS,NO,None None°None,10.00,0.6200,0.8189,3.21,HOLD_CAPPED,0.5900,0.6400,0.7989,false,0.00
+Warsaw,April 26,,NO,exact None°None,5.00,0.5500,0.7339,1.67,HOLD_MONITOR,0.5200,0.5700,0.7139,true,5.00

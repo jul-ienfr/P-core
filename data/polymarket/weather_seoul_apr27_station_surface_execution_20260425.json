@@ -1,0 +1,2354 @@
+{
+  "generated_at": "2026-04-25T14:11:42.419067Z",
+  "event_url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026",
+  "event_status": 200,
+  "resolution_source_candidates": [
+    {
+      "resolutionSource": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Incheon Intl Airport Station in degrees Celsius on 27 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Incheon Intl Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/kr/incheon/RKSI.\n\nTo toggle between Fahr"
+    },
+    {
+      "umaResolutionStatuses": "[]"
+    },
+    {
+      "resolution_source": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "resolutionSource": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Incheon Intl Airport Station in degrees Celsius on 27 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Incheon Intl Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/kr/incheon/RKSI.\n\nTo toggle between Fahr"
+    },
+    {
+      "umaResolutionStatuses": "[]"
+    },
+    {
+      "resolution_source": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "resolutionSource": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Incheon Intl Airport Station in degrees Celsius on 27 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Incheon Intl Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/kr/incheon/RKSI.\n\nTo toggle between Fahr"
+    },
+    {
+      "umaResolutionStatuses": "[]"
+    },
+    {
+      "resolution_source": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "resolutionSource": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Incheon Intl Airport Station in degrees Celsius on 27 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Incheon Intl Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/kr/incheon/RKSI.\n\nTo toggle between Fahr"
+    },
+    {
+      "umaResolutionStatuses": "[]"
+    },
+    {
+      "resolution_source": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "resolutionSource": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    },
+    {
+      "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Incheon Intl Airport Station in degrees Celsius on 27 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Incheon Intl Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/kr/incheon/RKSI.\n\nTo toggle between Fahr"
+    },
+    {
+      "umaResolutionStatuses": "[]"
+    },
+    {
+      "resolution_source": "https://www.wunderground.com/history/daily/kr/incheon/RKSI"
+    }
+  ],
+  "station_check": {
+    "station": "RKSI",
+    "api_key_found_in_event_html": false,
+    "wu_urls": [
+      "https://www.wunderground.com/history/daily/kr/incheon/RKSI.\n\nTo",
+      "https://www.wunderground.com/history/daily/kr/incheon/RKSI",
+      "https://www.wunderground.com/history/daily/kr/incheon/RKSI.",
+      "https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA.",
+      "https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA"
+    ],
+    "wu_status": 200,
+    "wu_final_url": "https://www.wunderground.com/history/daily/kr/incheon/RKSI.%0A%0ATo",
+    "api_key_found_in_wu": true,
+    "location": {
+      "location": {
+        "latitude": 37.4943,
+        "longitude": 126.4905,
+        "city": "Incheon",
+        "locale": {
+          "locale1": null,
+          "locale2": "Incheon",
+          "locale3": "Jung District",
+          "locale4": "Unseo-dong"
+        },
+        "neighborhood": "Unseo-dong",
+        "adminDistrict": null,
+        "adminDistrictCode": null,
+        "postalCode": "22382",
+        "postalKey": "22382:KR",
+        "country": "South Korea",
+        "countryCode": "KR",
+        "ianaTimeZone": "Asia/Seoul",
+        "displayName": "Unseo-dong",
+        "dstEnd": null,
+        "dstStart": null,
+        "dmaCd": null,
+        "placeId": "190f5ab641634e2d5cacc517440fb289ce846dee402540d92cd7462400c0bcba",
+        "featureId": "neighborhood.37497980",
+        "disputedArea": false,
+        "disputedCountries": null,
+        "disputedCountryCodes": null,
+        "disputedCustomers": null,
+        "disputedShowCountry": [
+          false
+        ],
+        "canonicalCityId": "e6dcb12d43e5758f0b015bde984c2054",
+        "countyId": null,
+        "locId": "KSIG0296:1:KS",
+        "locationCategory": null,
+        "pollenId": null,
+        "pwsId": "IINCHE10",
+        "regionalSatellite": "wstpac",
+        "tideId": null,
+        "type": "neighborhood",
+        "zoneId": "L1110000",
+        "airportName": "Incheon Intl Airport",
+        "displayContext": "Jung District, Incheon, South Korea",
+        "icaoCode": "RKSI",
+        "iataCode": null
+      }
+    },
+    "forecast_5day": {
+      "calendarDayTemperatureMax": [
+        21,
+        18,
+        16,
+        15,
+        17,
+        16
+      ],
+      "calendarDayTemperatureMin": [
+        9,
+        10,
+        11,
+        10,
+        10,
+        9
+      ],
+      "dayOfWeek": [
+        "Saturday",
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday"
+      ],
+      "expirationTimeUtc": [
+        1777126459,
+        1777126459,
+        1777126459,
+        1777126459,
+        1777126459,
+        1777126459
+      ],
+      "moonPhase": [
+        "Waxing Gibbous",
+        "Waxing Gibbous",
+        "Waxing Gibbous",
+        "Waxing Gibbous",
+        "Waxing Gibbous",
+        "Waxing Gibbous"
+      ],
+      "moonPhaseCode": [
+        "WXG",
+        "WXG",
+        "WXG",
+        "WXG",
+        "WXG",
+        "WXG"
+      ],
+      "moonPhaseDay": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "moonriseTimeLocal": [
+        "2026-04-25T12:53:01+0900",
+        "2026-04-26T14:00:16+0900",
+        "2026-04-27T15:04:30+0900",
+        "2026-04-28T16:06:56+0900",
+        "2026-04-29T17:08:01+0900",
+        "2026-04-30T18:09:31+0900"
+      ],
+      "moonriseTimeUtc": [
+        1777089181,
+        1777179616,
+        1777269870,
+        1777360016,
+        1777450081,
+        1777540171
+      ],
+      "moonsetTimeLocal": [
+        "2026-04-25T02:26:19+0900",
+        "2026-04-26T02:56:21+0900",
+        "2026-04-27T03:22:02+0900",
+        "2026-04-28T03:45:46+0900",
+        "2026-04-29T04:08:46+0900",
+        "2026-04-30T04:32:08+0900"
+      ],
+      "moonsetTimeUtc": [
+        1777051579,
+        1777139781,
+        1777227722,
+        1777315546,
+        1777403326,
+        1777491128
+      ],
+      "narrative": [
+        "Clear. Low 10C.",
+        "Mainly sunny. Highs 17 to 19C and lows 10 to 12C.",
+        "Mostly cloudy. Highs 15 to 17C and lows 9 to 11C.",
+        "Clouds giving way to sun . Highs 14 to 16C and lows 9 to 11C.",
+        "Times of sun and clouds. Highs 16 to 18C and lows 8 to 10C.",
+        "More sun than clouds. Highs 15 to 17C and lows 9 to 11C."
+      ],
+      "qpf": [
+        0.0,
+        0.0,
+        5.67,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qpfIce": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qpfRain": [
+        0.0,
+        0.0,
+        5.67,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qpfSnow": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "sunriseTimeLocal": [
+        "2026-04-25T05:46:31+0900",
+        "2026-04-26T05:45:16+0900",
+        "2026-04-27T05:44:01+0900",
+        "2026-04-28T05:42:47+0900",
+        "2026-04-29T05:41:35+0900",
+        "2026-04-30T05:40:23+0900"
+      ],
+      "sunriseTimeUtc": [
+        1777063591,
+        1777149916,
+        1777236241,
+        1777322567,
+        1777408895,
+        1777495223
+      ],
+      "sunsetTimeLocal": [
+        "2026-04-25T19:17:54+0900",
+        "2026-04-26T19:18:48+0900",
+        "2026-04-27T19:19:42+0900",
+        "2026-04-28T19:20:37+0900",
+        "2026-04-29T19:21:31+0900",
+        "2026-04-30T19:22:26+0900"
+      ],
+      "sunsetTimeUtc": [
+        1777112274,
+        1777198728,
+        1777285182,
+        1777371637,
+        1777458091,
+        1777544546
+      ],
+      "temperatureMax": [
+        null,
+        18,
+        16,
+        15,
+        17,
+        16
+      ],
+      "temperatureMin": [
+        10,
+        11,
+        10,
+        10,
+        9,
+        10
+      ],
+      "validTimeLocal": [
+        "2026-04-25T07:00:00+0900",
+        "2026-04-26T07:00:00+0900",
+        "2026-04-27T07:00:00+0900",
+        "2026-04-28T07:00:00+0900",
+        "2026-04-29T07:00:00+0900",
+        "2026-04-30T07:00:00+0900"
+      ],
+      "validTimeUtc": [
+        1777068000,
+        1777154400,
+        1777240800,
+        1777327200,
+        1777413600,
+        1777500000
+      ],
+      "daypart": [
+        {
+          "cloudCover": [
+            null,
+            0,
+            13,
+            62,
+            78,
+            96,
+            65,
+            64,
+            44,
+            26,
+            19,
+            13
+          ],
+          "dayOrNight": [
+            null,
+            "N",
+            "D",
+            "N",
+            "D",
+            "N",
+            "D",
+            "N",
+            "D",
+            "N",
+            "D",
+            "N"
+          ],
+          "daypartName": [
+            null,
+            "Tonight",
+            "Tomorrow",
+            "Tomorrow night",
+            "Monday",
+            "Monday night",
+            "Tuesday",
+            "Tuesday night",
+            "Wednesday",
+            "Wednesday night",
+            "Thursday",
+            "Thursday night"
+          ],
+          "iconCode": [
+            null,
+            31,
+            32,
+            27,
+            26,
+            12,
+            30,
+            29,
+            30,
+            29,
+            34,
+            31
+          ],
+          "iconCodeExtend": [
+            null,
+            3100,
+            3200,
+            2700,
+            2600,
+            6300,
+            9003,
+            2900,
+            3000,
+            2900,
+            3400,
+            3100
+          ],
+          "narrative": [
+            null,
+            "Clear skies. Low around 10C. Winds light and variable.",
+            "Mainly sunny. High 18C. Winds WNW at 10 to 15 km/h.",
+            "Partly cloudy skies in the evening, then becoming cloudy overnight. Cooler. Low 11C. Winds W at 10 to 15 km/h.",
+            "Cloudy. Cooler. High 16C. Winds SW at 10 to 15 km/h.",
+            "Cloudy. Periods of rain early. Much cooler. Low near 10C. Winds SW at 10 to 15 km/h. Chance of rain 70%. Rainfall near 6mm.",
+            "Cloudy early with partial sunshine expected late. Much cooler. High around 15C. Winds W at 25 to 40 km/h.",
+            "A few clouds. Much cooler. Low near 10C. Winds NW at 15 to 30 km/h.",
+            "Partly cloudy. High 17C. Winds WNW at 15 to 30 km/h.",
+            "Partly cloudy skies. Low 9C. Winds WNW at 15 to 25 km/h.",
+            "Mostly sunny skies. High 16C. Winds WSW at 15 to 25 km/h.",
+            "Clear skies. Low near 10C. Winds W at 15 to 25 km/h."
+          ],
+          "precipChance": [
+            null,
+            4,
+            4,
+            9,
+            24,
+            74,
+            7,
+            3,
+            3,
+            5,
+            4,
+            6
+          ],
+          "precipType": [
+            null,
+            "rain",
+            "rain",
+            "rain",
+            "rain",
+            "rain",
+            "rain",
+            "rain",
+            "rain",
+            "rain",
+            "rain",
+            "rain"
+          ],
+          "qpf": [
+            null,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            5.37,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "qpfIce": [
+            null,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "qpfRain": [
+            null,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            5.37,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "qpfSnow": [
+            null,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "qualifierCode": [
+            null,
+            null,
+            null,
+            "Q745",
+            "Q745",
+            "Q760",
+            "Q760",
+            "Q760",
+            null,
+            null,
+            null,
+            null
+          ],
+          "qualifierPhrase": [
+            null,
+            null,
+            null,
+            "Cooler.",
+            "Cooler.",
+            "Much cooler.",
+            "Much cooler.",
+            "Much cooler.",
+            null,
+            null,
+            null,
+            null
+          ],
+          "relativeHumidity": [
+            null,
+            79,
+            56,
+            77,
+            65,
+            85,
+            70,
+            73,
+            58,
+            77,
+            61,
+            79
+          ],
+          "snowRange": [
+            null,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "temperature": [
+            null,
+            10,
+            18,
+            11,
+            16,
+            10,
+            15,
+            10,
+            17,
+            9,
+            16,
+            10
+          ],
+          "temperatureHeatIndex": [
+            null,
+            12,
+            18,
+            14,
+            16,
+            14,
+            15,
+            13,
+            17,
+            14,
+            16,
+            14
+          ],
+          "temperatureWindChill": [
+            null,
+            10,
+            11,
+            11,
+            12,
+            9,
+            9,
+            9,
+            10,
+            9,
+            11,
+            10
+          ],
+          "thunderCategory": [
+            null,
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder",
+            "No thunder"
+          ],
+          "thunderIndex": [
+            null,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "uvDescription": [
+            null,
+            "Low",
+            "Very High",
+            "Low",
+            "High",
+            "Low",
+            "Very High",
+            "Low",
+            "Very High",
+            "Low",
+            "Very High",
+            "Low"
+          ],
+          "uvIndex": [
+            null,
+            0,
+            8,
+            0,
+            6,
+            0,
+            8,
+            0,
+            8,
+            0,
+            8,
+            0
+          ],
+          "windDirection": [
+            null,
+            245,
+            286,
+            276,
+            216,
+            230,
+            278,
+            316,
+            289,
+            287,
+            241,
+            268
+          ],
+          "windDirectionCardinal": [
+            null,
+            "WSW",
+            "WNW",
+            "W",
+            "SW",
+            "SW",
+            "W",
+            "NW",
+            "WNW",
+            "WNW",
+            "WSW",
+            "W"
+          ],
+          "windPhrase": [
+            null,
+            "Winds light and variable.",
+            "Winds WNW at 10 to 15 km/h.",
+            "Winds W at 10 to 15 km/h.",
+            "Winds SW at 10 to 15 km/h.",
+            "Winds SW at 10 to 15 km/h.",
+            "Winds W at 25 to 40 km/h.",
+            "Winds NW at 15 to 30 km/h.",
+            "Winds WNW at 15 to 30 km/h.",
+            "Winds WNW at 15 to 25 km/h.",
+            "Winds WSW at 15 to 25 km/h.",
+            "Winds W at 15 to 25 km/h."
+          ],
+          "windSpeed": [
+            null,
+            6,
+            17,
+            14,
+            15,
+            17,
+            28,
+            23,
+            24,
+            20,
+            21,
+            17
+          ],
+          "wxPhraseLong": [
+            null,
+            "Clear",
+            "Sunny",
+            "Mostly Cloudy",
+            "Cloudy",
+            "Rain Early",
+            "AM Clouds/PM Sun",
+            "Partly Cloudy",
+            "Partly Cloudy",
+            "Partly Cloudy",
+            "Mostly Sunny",
+            "Clear"
+          ],
+          "wxPhraseShort": [
+            null,
+            "Clear",
+            "Sunny",
+            "M Cloudy",
+            "Cloudy",
+            "Rain Early",
+            "AM Clouds",
+            "P Cloudy",
+            "P Cloudy",
+            "P Cloudy",
+            "M Sunny",
+            "Clear"
+          ]
+        }
+      ]
+    }
+  },
+  "forecast_max_c": 16,
+  "forecast_date": "2026-04-27T07:00:00+0900",
+  "forecast_narrative": "Mostly cloudy. Highs 15 to 17C and lows 9 to 11C.",
+  "surface": [
+    {
+      "id": "2074306",
+      "question": "Will the highest temperature in Seoul be 13°C or below on April 27?",
+      "temp_c": 13,
+      "kind": "below",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.011,
+        0.989
+      ],
+      "bestBid": 0.01,
+      "bestAsk": 0.012,
+      "spread": 0.002,
+      "volume": "814.5975530000003",
+      "liquidity": "4820.58033",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "21164005298661810694018540792275365069181778495722917936879275666342468562339",
+        "88930620349649646167434062978806756467747223046285963256569429439447840862189"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.012,
+      "yes_best_bid_book": 0.01,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 239.3412,
+        "avg_price": 0.0209,
+        "levels_used": 9,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 539.3412,
+        "avg_price": 0.0371,
+        "levels_used": 9,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 974.9898,
+        "avg_price": 0.0513,
+        "levels_used": 15,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.99,
+      "no_best_bid_book": 0.988,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.0422,
+        "avg_price": 0.9916,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 20.1175,
+        "avg_price": 0.9942,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 50.2683,
+        "avg_price": 0.9947,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.0371,
+      "proxy_yes_edge_topask": 0.0251,
+      "proxy_no_edge_topask": -0.0271
+    },
+    {
+      "id": "2074307",
+      "question": "Will the highest temperature in Seoul be 14°C on April 27?",
+      "temp_c": 14,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.0135,
+        0.9865
+      ],
+      "bestBid": 0.011,
+      "bestAsk": 0.016,
+      "spread": 0.005,
+      "volume": "1375.7220319999997",
+      "liquidity": "3556.51889",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "62297472820121776571809229472342471832912224039231066535273477316013833819769",
+        "93482234212923405764146586839470446236940682701821353605496856708168323041639"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.016,
+      "yes_best_bid_book": 0.011,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 261.1744,
+        "avg_price": 0.0191,
+        "levels_used": 7,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 646.0551,
+        "avg_price": 0.031,
+        "levels_used": 14,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 938.4555,
+        "avg_price": 0.0533,
+        "levels_used": 20,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.989,
+      "no_best_bid_book": 0.984,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.0556,
+        "avg_price": 0.989,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 20.2224,
+        "avg_price": 0.989,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 50.5561,
+        "avg_price": 0.989,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.1049,
+      "proxy_yes_edge_topask": 0.0889,
+      "proxy_no_edge_topask": -0.0939
+    },
+    {
+      "id": "2074308",
+      "question": "Will the highest temperature in Seoul be 15°C on April 27?",
+      "temp_c": 15,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.025,
+        0.975
+      ],
+      "bestBid": 0.023,
+      "bestAsk": 0.027,
+      "spread": 0.004,
+      "volume": "2278.404905999999",
+      "liquidity": "2318.95766",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "77193369447072417248211597892446587902618027790112243776154066071567108741195",
+        "34855612201893624314281467601890904379189536034835320494709223135308977380178"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.029,
+      "yes_best_bid_book": 0.021,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 167.6667,
+        "avg_price": 0.0298,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 389.4298,
+        "avg_price": 0.0514,
+        "levels_used": 5,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 617.0821,
+        "avg_price": 0.081,
+        "levels_used": 9,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.979,
+      "no_best_bid_book": 0.971,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.1073,
+        "avg_price": 0.979,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 20.429,
+        "avg_price": 0.979,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 51.0725,
+        "avg_price": 0.979,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.2185,
+      "proxy_yes_edge_topask": 0.1895,
+      "proxy_no_edge_topask": -0.1975
+    },
+    {
+      "id": "2074309",
+      "question": "Will the highest temperature in Seoul be 16°C on April 27?",
+      "temp_c": 16,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.125,
+        0.875
+      ],
+      "bestBid": 0.11,
+      "bestAsk": 0.14,
+      "spread": 0.03,
+      "volume": "1584.9765269999998",
+      "liquidity": "2921.578",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "43949357786255439915821960148009281732068485537512261934960469052508361169500",
+        "28258396778082295191449132576138964207329888077879286755513503613749283149965"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.14,
+      "yes_best_bid_book": 0.1,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 35.7143,
+        "avg_price": 0.14,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 117.6842,
+        "avg_price": 0.1699,
+        "levels_used": 3,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 254.5638,
+        "avg_price": 0.1964,
+        "levels_used": 6,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.9,
+      "no_best_bid_book": 0.86,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.5556,
+        "avg_price": 0.9,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 22.2222,
+        "avg_price": 0.9,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 55.5556,
+        "avg_price": 0.9,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.279,
+      "proxy_yes_edge_topask": 0.139,
+      "proxy_no_edge_topask": -0.179
+    },
+    {
+      "id": "2074310",
+      "question": "Will the highest temperature in Seoul be 17°C on April 27?",
+      "temp_c": 17,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.195,
+        0.805
+      ],
+      "bestBid": 0.19,
+      "bestAsk": 0.2,
+      "spread": 0.01,
+      "volume": "804.490772",
+      "liquidity": "3030.6059",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "16936988094334096335870860919069088341838692909134225170539600566036010179756",
+        "90387767407418880592684073683895691671311424730613421543557500447713427108561"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.2,
+      "yes_best_bid_book": 0.19,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 25.0,
+        "avg_price": 0.2,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 91.5683,
+        "avg_price": 0.2184,
+        "levels_used": 4,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 216.5683,
+        "avg_price": 0.2309,
+        "levels_used": 4,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.81,
+      "no_best_bid_book": 0.8,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 6.1728,
+        "avg_price": 0.81,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 24.6914,
+        "avg_price": 0.81,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 61.7284,
+        "avg_price": 0.81,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.2185,
+      "proxy_yes_edge_topask": 0.0185,
+      "proxy_no_edge_topask": -0.0285
+    },
+    {
+      "id": "2074311",
+      "question": "Will the highest temperature in Seoul be 18°C on April 27?",
+      "temp_c": 18,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.23,
+        0.77
+      ],
+      "bestBid": 0.22,
+      "bestAsk": 0.24,
+      "spread": 0.02,
+      "volume": "290.84284800000006",
+      "liquidity": "1614.4009",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "6860196074866255221502020213116066848463843187374581797475852505384447025834",
+        "7226883105139505581321841580217635363813982120050432852931070399794422087858"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.24,
+      "yes_best_bid_book": 0.22,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 20.8333,
+        "avg_price": 0.24,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 83.3333,
+        "avg_price": 0.24,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 208.3333,
+        "avg_price": 0.24,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.78,
+      "no_best_bid_book": 0.76,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 6.4103,
+        "avg_price": 0.78,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 25.641,
+        "avg_price": 0.78,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 63.8854,
+        "avg_price": 0.7827,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.1049,
+      "proxy_yes_edge_topask": -0.1351,
+      "proxy_no_edge_topask": 0.1151
+    },
+    {
+      "id": "2074312",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "temp_c": 19,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.19,
+        0.81
+      ],
+      "bestBid": 0.18,
+      "bestAsk": 0.2,
+      "spread": 0.02,
+      "volume": "267.634633",
+      "liquidity": "1394.9635",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "82047516531583978773555942352326457658622543542540242569471306793225797196897",
+        "2734890257312417104412736033227441402813067293679395829390482776871857286705"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.2,
+      "yes_best_bid_book": 0.18,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 22.8436,
+        "avg_price": 0.2189,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 81.5593,
+        "avg_price": 0.2452,
+        "levels_used": 5,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 178.1175,
+        "avg_price": 0.2807,
+        "levels_used": 8,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.82,
+      "no_best_bid_book": 0.8,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 6.0976,
+        "avg_price": 0.82,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 24.3902,
+        "avg_price": 0.82,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 60.9756,
+        "avg_price": 0.82,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.0309,
+      "proxy_yes_edge_topask": -0.1691,
+      "proxy_no_edge_topask": 0.1491
+    },
+    {
+      "id": "2074313",
+      "question": "Will the highest temperature in Seoul be 20°C on April 27?",
+      "temp_c": 20,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.13,
+        0.87
+      ],
+      "bestBid": 0.1,
+      "bestAsk": 0.16,
+      "spread": 0.06,
+      "volume": "264.48219199999994",
+      "liquidity": "1382.4844",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "25469532309327742022656243847198850421620910531483090722160551856756312067545",
+        "113016061922883679007194046124801264285829686129657212300674481860324260183899"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.16,
+      "yes_best_bid_book": 0.1,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 31.25,
+        "avg_price": 0.16,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 113.6496,
+        "avg_price": 0.176,
+        "levels_used": 4,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 239.4192,
+        "avg_price": 0.2088,
+        "levels_used": 6,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.9,
+      "no_best_bid_book": 0.84,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.5556,
+        "avg_price": 0.9,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 22.2222,
+        "avg_price": 0.9,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 55.3763,
+        "avg_price": 0.9029,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.0056,
+      "proxy_yes_edge_topask": -0.1544,
+      "proxy_no_edge_topask": 0.0944
+    },
+    {
+      "id": "2074314",
+      "question": "Will the highest temperature in Seoul be 21°C on April 27?",
+      "temp_c": 21,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.0345,
+        0.9655
+      ],
+      "bestBid": 0.029,
+      "bestAsk": 0.04,
+      "spread": 0.011,
+      "volume": "1081.2388230000001",
+      "liquidity": "2235.27918",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "55834380783430427692404386325858434850756969497449831042210730986384355765446",
+        "112763506036808529497449667723268260750685739557241664427294559127953598862979"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.04,
+      "yes_best_bid_book": 0.03,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 117.4651,
+        "avg_price": 0.0426,
+        "levels_used": 3,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 389.7146,
+        "avg_price": 0.0513,
+        "levels_used": 9,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 585.791,
+        "avg_price": 0.0854,
+        "levels_used": 17,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.97,
+      "no_best_bid_book": 0.96,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.1546,
+        "avg_price": 0.97,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 20.6065,
+        "avg_price": 0.9706,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 51.5025,
+        "avg_price": 0.9708,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.0006,
+      "proxy_yes_edge_topask": -0.0394,
+      "proxy_no_edge_topask": 0.0294
+    },
+    {
+      "id": "2074315",
+      "question": "Will the highest temperature in Seoul be 22°C on April 27?",
+      "temp_c": 22,
+      "kind": "exact",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.033,
+        0.967
+      ],
+      "bestBid": 0.021,
+      "bestAsk": 0.045,
+      "spread": 0.024,
+      "volume": "1165.242645",
+      "liquidity": "3946.26529",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "52183181866207965131473591320701932806622270910175627533727121018564005109228",
+        "110193541893257999192331126430067036077828622061069867614490439213403233469679"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.029,
+      "yes_best_bid_book": 0.02,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 160.9462,
+        "avg_price": 0.0311,
+        "levels_used": 4,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 424.3373,
+        "avg_price": 0.0471,
+        "levels_used": 7,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 723.2545,
+        "avg_price": 0.0691,
+        "levels_used": 10,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.98,
+      "no_best_bid_book": 0.971,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.102,
+        "avg_price": 0.98,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 20.4082,
+        "avg_price": 0.98,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 51.0152,
+        "avg_price": 0.9801,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.0,
+      "proxy_yes_edge_topask": -0.029,
+      "proxy_no_edge_topask": 0.02
+    },
+    {
+      "id": "2074316",
+      "question": "Will the highest temperature in Seoul be 23°C or higher on April 27?",
+      "temp_c": 23,
+      "kind": "higher",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "outcomePrices": [
+        0.0165,
+        0.9835
+      ],
+      "bestBid": 0.01,
+      "bestAsk": 0.023,
+      "spread": 0.013,
+      "volume": "991.4947400000008",
+      "liquidity": "5171.33163",
+      "active": true,
+      "closed": false,
+      "acceptingOrders": true,
+      "clobTokenIds": [
+        "81559958240682828915153397071458711068521720497659479741947229098109259166589",
+        "110191899994083997638048110510643634574560780075115152117527959800988466352224"
+      ],
+      "yes_book_error": null,
+      "yes_best_ask_book": 0.02,
+      "yes_best_bid_book": 0.01,
+      "yes_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 219.9677,
+        "avg_price": 0.0227,
+        "levels_used": 2,
+        "fully_filled": true
+      },
+      "yes_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 712.012,
+        "avg_price": 0.0281,
+        "levels_used": 5,
+        "fully_filled": true
+      },
+      "yes_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 1233.9857,
+        "avg_price": 0.0405,
+        "levels_used": 8,
+        "fully_filled": true
+      },
+      "no_book_error": null,
+      "no_best_ask_book": 0.99,
+      "no_best_bid_book": 0.98,
+      "no_fill_5": {
+        "spend_requested": 5,
+        "spend_filled": 5.0,
+        "shares": 5.0505,
+        "avg_price": 0.99,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_20": {
+        "spend_requested": 20,
+        "spend_filled": 20.0,
+        "shares": 20.202,
+        "avg_price": 0.99,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "no_fill_50": {
+        "spend_requested": 50,
+        "spend_filled": 50.0,
+        "shares": 50.5051,
+        "avg_price": 0.99,
+        "levels_used": 1,
+        "fully_filled": true
+      },
+      "proxy_yes_prob_station_normal_sigma1p4": 0.0,
+      "proxy_yes_edge_topask": -0.02,
+      "proxy_no_edge_topask": 0.01
+    }
+  ],
+  "account_consensus_by_temp": {
+    "18C_exact": {
+      "yes_value": 17.4165,
+      "no_value": 0,
+      "yes_accounts": [
+        "dpnd"
+      ],
+      "no_accounts": [],
+      "examples": [
+        {
+          "handle": "dpnd",
+          "side": "Yes",
+          "value": 17.4165,
+          "price": 0.22,
+          "title": "Will the highest temperature in Seoul be 18°C on April 27?"
+        }
+      ]
+    },
+    "15C_exact": {
+      "yes_value": 4.3329,
+      "no_value": 932.8725,
+      "yes_accounts": [
+        "Wistesty"
+      ],
+      "no_accounts": [
+        "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+        "ruth777"
+      ],
+      "examples": [
+        {
+          "handle": "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+          "side": "No",
+          "value": 930.6465,
+          "price": 0.9548,
+          "title": "Will the highest temperature in Seoul be 15°C on April 27?"
+        },
+        {
+          "handle": "ruth777",
+          "side": "No",
+          "value": 2.226,
+          "price": 0.9549,
+          "title": "Will the highest temperature in Seoul be 15°C on April 27?"
+        },
+        {
+          "handle": "Wistesty",
+          "side": "Yes",
+          "value": 4.3329,
+          "price": 0.03,
+          "title": "Will the highest temperature in Seoul be 15°C on April 27?"
+        }
+      ]
+    },
+    "14C_exact": {
+      "yes_value": 0,
+      "no_value": 388.3456,
+      "yes_accounts": [],
+      "no_accounts": [
+        "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210"
+      ],
+      "examples": [
+        {
+          "handle": "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+          "side": "No",
+          "value": 388.3456,
+          "price": 0.9795,
+          "title": "Will the highest temperature in Seoul be 14°C on April 27?"
+        }
+      ]
+    },
+    "13C_below": {
+      "yes_value": 0,
+      "no_value": 201.64839999999998,
+      "yes_accounts": [],
+      "no_accounts": [
+        "0x2048",
+        "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210"
+      ],
+      "examples": [
+        {
+          "handle": "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+          "side": "No",
+          "value": 171.9784,
+          "price": 0.9891,
+          "title": "Will the highest temperature in Seoul be 13°C or below on April 27?"
+        },
+        {
+          "handle": "0x2048",
+          "side": "No",
+          "value": 29.67,
+          "price": 0.991,
+          "title": "Will the highest temperature in Seoul be 13°C or below on April 27?"
+        }
+      ]
+    },
+    "17C_exact": {
+      "yes_value": 9.5543,
+      "no_value": 7.3181,
+      "yes_accounts": [
+        "FohnHairdryer",
+        "ruth777"
+      ],
+      "no_accounts": [
+        "ruth777"
+      ],
+      "examples": [
+        {
+          "handle": "FohnHairdryer",
+          "side": "Yes",
+          "value": 7.7993,
+          "price": 0.18,
+          "title": "Will the highest temperature in Seoul be 17°C on April 27?"
+        },
+        {
+          "handle": "ruth777",
+          "side": "No",
+          "value": 7.3181,
+          "price": 0.7959,
+          "title": "Will the highest temperature in Seoul be 17°C on April 27?"
+        },
+        {
+          "handle": "ruth777",
+          "side": "Yes",
+          "value": 1.755,
+          "price": 0.19,
+          "title": "Will the highest temperature in Seoul be 17°C on April 27?"
+        }
+      ]
+    },
+    "19C_exact": {
+      "yes_value": 2.4358,
+      "no_value": 0,
+      "yes_accounts": [
+        "FohnHairdryer",
+        "Mr.Z."
+      ],
+      "no_accounts": [],
+      "examples": [
+        {
+          "handle": "FohnHairdryer",
+          "side": "Yes",
+          "value": 1.4839,
+          "price": 0.17,
+          "title": "Will the highest temperature in Seoul be 19°C on April 27?"
+        },
+        {
+          "handle": "Mr.Z.",
+          "side": "Yes",
+          "value": 0.9519,
+          "price": 0.04,
+          "title": "Will the highest temperature in Seoul be 19°C on April 27?"
+        }
+      ]
+    },
+    "22C_exact": {
+      "yes_value": 0,
+      "no_value": 56.814299999999996,
+      "yes_accounts": [],
+      "no_accounts": [
+        "Mr.Z.",
+        "ruth777",
+        "tianqizhishen"
+      ],
+      "examples": [
+        {
+          "handle": "tianqizhishen",
+          "side": "No",
+          "value": 38.68,
+          "price": 0.9407,
+          "title": "Will the highest temperature in Seoul be 22°C on April 27?"
+        },
+        {
+          "handle": "Mr.Z.",
+          "side": "No",
+          "value": 10.3983,
+          "price": 0.861,
+          "title": "Will the highest temperature in Seoul be 22°C on April 27?"
+        },
+        {
+          "handle": "ruth777",
+          "side": "No",
+          "value": 7.736,
+          "price": 0.93,
+          "title": "Will the highest temperature in Seoul be 22°C on April 27?"
+        }
+      ]
+    },
+    "21C_exact": {
+      "yes_value": 0,
+      "no_value": 28.944,
+      "yes_accounts": [],
+      "no_accounts": [
+        "tianqizhishen"
+      ],
+      "examples": [
+        {
+          "handle": "tianqizhishen",
+          "side": "No",
+          "value": 28.944,
+          "price": 0.9606,
+          "title": "Will the highest temperature in Seoul be 21°C on April 27?"
+        }
+      ]
+    },
+    "20C_exact": {
+      "yes_value": 2.4861,
+      "no_value": 20.616,
+      "yes_accounts": [
+        "ruth777"
+      ],
+      "no_accounts": [
+        "ruth777",
+        "tianqizhishen"
+      ],
+      "examples": [
+        {
+          "handle": "tianqizhishen",
+          "side": "No",
+          "value": 13.656,
+          "price": 0.8463,
+          "title": "Will the highest temperature in Seoul be 20°C on April 27?"
+        },
+        {
+          "handle": "ruth777",
+          "side": "No",
+          "value": 6.96,
+          "price": 0.91,
+          "title": "Will the highest temperature in Seoul be 20°C on April 27?"
+        },
+        {
+          "handle": "ruth777",
+          "side": "Yes",
+          "value": 2.4861,
+          "price": 0.1024,
+          "title": "Will the highest temperature in Seoul be 20°C on April 27?"
+        }
+      ]
+    },
+    "23C_higher": {
+      "yes_value": 0,
+      "no_value": 132.6023,
+      "yes_accounts": [],
+      "no_accounts": [
+        "Mr.Z.",
+        "airlorgedr",
+        "tianqizhishen"
+      ],
+      "examples": [
+        {
+          "handle": "tianqizhishen",
+          "side": "No",
+          "value": 9.85,
+          "price": 0.981,
+          "title": "Will the highest temperature in Seoul be 23°C or higher on April 27?"
+        },
+        {
+          "handle": "Mr.Z.",
+          "side": "No",
+          "value": 5.3682,
+          "price": 0.91,
+          "title": "Will the highest temperature in Seoul be 23°C or higher on April 27?"
+        },
+        {
+          "handle": "airlorgedr",
+          "side": "No",
+          "value": 117.3841,
+          "price": 0.9717,
+          "title": "Will the highest temperature in Seoul be 23°C or higher on April 27?"
+        }
+      ]
+    },
+    "16C_exact": {
+      "yes_value": 1.25,
+      "no_value": 0,
+      "yes_accounts": [
+        "ruth777"
+      ],
+      "no_accounts": [],
+      "examples": [
+        {
+          "handle": "ruth777",
+          "side": "Yes",
+          "value": 1.25,
+          "price": 0.1384,
+          "title": "Will the highest temperature in Seoul be 16°C on April 27?"
+        }
+      ]
+    }
+  },
+  "execution_queue": [
+    {
+      "side": "YES",
+      "temp_c": 15,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 15°C on April 27?",
+      "station_proxy_prob": 0.2185,
+      "best_ask": 0.029,
+      "fill20_avg": 0.0514,
+      "edge_topask": 0.1895,
+      "matched_account_count": 1,
+      "matched_account_value": 4.33,
+      "matched_accounts": [
+        "Wistesty"
+      ],
+      "recommendation": "paper_micro_strict_limit",
+      "blockers": []
+    },
+    {
+      "side": "YES",
+      "temp_c": 16,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 16°C on April 27?",
+      "station_proxy_prob": 0.279,
+      "best_ask": 0.14,
+      "fill20_avg": 0.1699,
+      "edge_topask": 0.139,
+      "matched_account_count": 1,
+      "matched_account_value": 1.25,
+      "matched_accounts": [
+        "ruth777"
+      ],
+      "recommendation": "paper_micro_strict_limit",
+      "blockers": []
+    },
+    {
+      "side": "NO",
+      "temp_c": 20,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 20°C on April 27?",
+      "station_proxy_prob": 0.9944,
+      "best_ask": 0.9,
+      "fill20_avg": 0.9,
+      "edge_topask": 0.0944,
+      "matched_account_count": 2,
+      "matched_account_value": 20.62,
+      "matched_accounts": [
+        "ruth777",
+        "tianqizhishen"
+      ],
+      "recommendation": "paper_micro_strict_limit",
+      "blockers": []
+    },
+    {
+      "side": "NO",
+      "temp_c": 19,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "station_proxy_prob": 0.9691,
+      "best_ask": 0.82,
+      "fill20_avg": 0.82,
+      "edge_topask": 0.1491,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_source_and_book",
+      "blockers": []
+    },
+    {
+      "side": "NO",
+      "temp_c": 18,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 18°C on April 27?",
+      "station_proxy_prob": 0.8951,
+      "best_ask": 0.78,
+      "fill20_avg": 0.78,
+      "edge_topask": 0.1151,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_source_and_book",
+      "blockers": []
+    },
+    {
+      "side": "YES",
+      "temp_c": 14,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 14°C on April 27?",
+      "station_proxy_prob": 0.1049,
+      "best_ask": 0.016,
+      "fill20_avg": 0.031,
+      "edge_topask": 0.0889,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_source_and_book",
+      "blockers": []
+    },
+    {
+      "side": "NO",
+      "temp_c": 21,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 21°C on April 27?",
+      "station_proxy_prob": 0.9994,
+      "best_ask": 0.97,
+      "fill20_avg": 0.9706,
+      "edge_topask": 0.0294,
+      "matched_account_count": 1,
+      "matched_account_value": 28.94,
+      "matched_accounts": [
+        "tianqizhishen"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 13,
+      "kind": "below",
+      "question": "Will the highest temperature in Seoul be 13°C or below on April 27?",
+      "station_proxy_prob": 0.0371,
+      "best_ask": 0.012,
+      "fill20_avg": 0.0371,
+      "edge_topask": 0.0251,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "NO",
+      "temp_c": 22,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 22°C on April 27?",
+      "station_proxy_prob": 1.0,
+      "best_ask": 0.98,
+      "fill20_avg": 0.98,
+      "edge_topask": 0.02,
+      "matched_account_count": 3,
+      "matched_account_value": 56.81,
+      "matched_accounts": [
+        "Mr.Z.",
+        "ruth777",
+        "tianqizhishen"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 17,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 17°C on April 27?",
+      "station_proxy_prob": 0.2185,
+      "best_ask": 0.2,
+      "fill20_avg": 0.2184,
+      "edge_topask": 0.0185,
+      "matched_account_count": 2,
+      "matched_account_value": 9.55,
+      "matched_accounts": [
+        "FohnHairdryer",
+        "ruth777"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "NO",
+      "temp_c": 23,
+      "kind": "higher",
+      "question": "Will the highest temperature in Seoul be 23°C or higher on April 27?",
+      "station_proxy_prob": 1.0,
+      "best_ask": 0.99,
+      "fill20_avg": 0.99,
+      "edge_topask": 0.01,
+      "matched_account_count": 3,
+      "matched_account_value": 132.6,
+      "matched_accounts": [
+        "Mr.Z.",
+        "airlorgedr",
+        "tianqizhishen"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 23,
+      "kind": "higher",
+      "question": "Will the highest temperature in Seoul be 23°C or higher on April 27?",
+      "station_proxy_prob": 0.0,
+      "best_ask": 0.02,
+      "fill20_avg": 0.0281,
+      "edge_topask": -0.02,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "NO",
+      "temp_c": 13,
+      "kind": "below",
+      "question": "Will the highest temperature in Seoul be 13°C or below on April 27?",
+      "station_proxy_prob": 0.9629,
+      "best_ask": 0.99,
+      "fill20_avg": 0.9942,
+      "edge_topask": -0.0271,
+      "matched_account_count": 2,
+      "matched_account_value": 201.65,
+      "matched_accounts": [
+        "0x2048",
+        "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "NO",
+      "temp_c": 17,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 17°C on April 27?",
+      "station_proxy_prob": 0.7815,
+      "best_ask": 0.81,
+      "fill20_avg": 0.81,
+      "edge_topask": -0.0285,
+      "matched_account_count": 1,
+      "matched_account_value": 7.32,
+      "matched_accounts": [
+        "ruth777"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 22,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 22°C on April 27?",
+      "station_proxy_prob": 0.0,
+      "best_ask": 0.029,
+      "fill20_avg": 0.0471,
+      "edge_topask": -0.029,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 21,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 21°C on April 27?",
+      "station_proxy_prob": 0.0006,
+      "best_ask": 0.04,
+      "fill20_avg": 0.0513,
+      "edge_topask": -0.0394,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "NO",
+      "temp_c": 14,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 14°C on April 27?",
+      "station_proxy_prob": 0.8951,
+      "best_ask": 0.989,
+      "fill20_avg": 0.989,
+      "edge_topask": -0.0939,
+      "matched_account_count": 1,
+      "matched_account_value": 388.35,
+      "matched_accounts": [
+        "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 18,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 18°C on April 27?",
+      "station_proxy_prob": 0.1049,
+      "best_ask": 0.24,
+      "fill20_avg": 0.24,
+      "edge_topask": -0.1351,
+      "matched_account_count": 1,
+      "matched_account_value": 17.42,
+      "matched_accounts": [
+        "dpnd"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 20,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 20°C on April 27?",
+      "station_proxy_prob": 0.0056,
+      "best_ask": 0.16,
+      "fill20_avg": 0.176,
+      "edge_topask": -0.1544,
+      "matched_account_count": 1,
+      "matched_account_value": 2.49,
+      "matched_accounts": [
+        "ruth777"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "YES",
+      "temp_c": 19,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "station_proxy_prob": 0.0309,
+      "best_ask": 0.2,
+      "fill20_avg": 0.2452,
+      "edge_topask": -0.1691,
+      "matched_account_count": 2,
+      "matched_account_value": 2.44,
+      "matched_accounts": [
+        "FohnHairdryer",
+        "Mr.Z."
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "NO",
+      "temp_c": 16,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 16°C on April 27?",
+      "station_proxy_prob": 0.721,
+      "best_ask": 0.9,
+      "fill20_avg": 0.9,
+      "edge_topask": -0.179,
+      "matched_account_count": 0,
+      "matched_account_value": 0,
+      "matched_accounts": [],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    },
+    {
+      "side": "NO",
+      "temp_c": 15,
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 15°C on April 27?",
+      "station_proxy_prob": 0.7815,
+      "best_ask": 0.979,
+      "fill20_avg": 0.979,
+      "edge_topask": -0.1975,
+      "matched_account_count": 2,
+      "matched_account_value": 932.87,
+      "matched_accounts": [
+        "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+        "ruth777"
+      ],
+      "recommendation": "watch_only",
+      "blockers": [
+        "thin_or_negative_model_edge",
+        "slippage_consumes_edge_20usd"
+      ]
+    }
+  ]
+}

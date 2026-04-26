@@ -1,0 +1,11 @@
+market_id,question,kind,temp_c,prob_station_model,yes_mid,yes_best_ask_gamma,edge_vs_yes_top_ask,spread,liquidity,volume
+2074308,Will the highest temperature in Seoul be 15°C on April 27?,exact,15,0.2328,0.025,0.027,0.2038,0.004,2318.95766,2278.404905999999
+2074309,Will the highest temperature in Seoul be 16°C on April 27?,exact,16,0.3231,0.125,0.14,0.1831,0.03,2921.578,1584.9765269999998
+2074307,Will the highest temperature in Seoul be 14°C on April 27?,exact,14,0.087,0.0135,0.016,0.071,0.005,3556.51889,1375.7220319999997
+2074310,Will the highest temperature in Seoul be 17°C on April 27?,exact,17,0.2328,0.195,0.2,0.0328,0.01,3030.6059,804.490772
+2074306,Will the highest temperature in Seoul be 13°C or below on April 27?,threshold_low,13,0.0186,0.011,0.012,0.0066,0.002,4820.58033,814.5975530000003
+2074314,Will the highest temperature in Seoul be 21°C on April 27?,exact,21,0.0001,0.0345,0.04,-0.0399,0.011,2235.27918,1081.2388230000001
+2074315,Will the highest temperature in Seoul be 22°C on April 27?,exact,22,0.0,0.033,0.045,-0.045,0.024,3946.26529,1165.242645
+2074311,Will the highest temperature in Seoul be 18°C on April 27?,exact,18,0.087,0.23,0.24,-0.153,0.02,1614.4009,290.84284800000006
+2074313,Will the highest temperature in Seoul be 20°C on April 27?,exact,20,0.0017,0.13,0.16,-0.1583,0.06,1382.4844,264.48219199999994
+2074312,Will the highest temperature in Seoul be 19°C on April 27?,exact,19,0.0168,0.19,0.2,-0.1832,0.02,1394.9635,267.634633

@@ -1,0 +1,6 @@
+action,city,date,side,temp,entry_avg,filled_usdc,shares,p_side_now,p_side_previous,hard_stop_if_p_below,best_bid_now,best_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,current_forecast_max_c,forecast_query_used,official_resolution_source_status,resolution_source_newly_available,reason
+HOLD_CAPPED,Beijing,April 26,NO,25,0.62,15.0,24.1935,0.721,0.721,0.59,0.59,0.6,2.443513,-0.725835,25.0,Beijing,available,True,official resolution source newly available; no exit trigger
+HOLD_CAPPED,Munich,April 26,NO,18,0.71,10.0,14.0845,0.7815,0.7815,0.68,0.63,0.68,1.007037,-1.126765,17.0,Munich,available,True,official resolution source newly available; no exit trigger
+HOLD_CAPPED,Shanghai,April 26,NO,23,0.64,4.7552,7.43,0.721,0.721,0.61,0.62,0.63,0.60183,-0.1486,23.0,Pootung,available,True,official resolution source newly available; no exit trigger
+HOLD_CAPPED,Munich,April 26,NO,19,0.65,5.0,7.6923,0.8951,0.8951,0.62,0.59,0.63,1.885378,-0.461543,17.0,Munich,available,True,official resolution source newly available; no exit trigger
+HOLD_CAPPED,Karachi,April 27,NO,36,0.53,10.0,18.867925,0.9979,0.9938,0.5,0.42,0.72,8.828302,-2.075472,32.0,Ramswamy Quarters,available,False,fresh book/forecast; explicit cron cap/no-add; no exit trigger

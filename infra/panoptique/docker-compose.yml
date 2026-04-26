@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: panoptique-postgres
+    environment:
+      POSTGRES_DB: ${PANOPTIQUE_POSTGRES_DB:-panoptique}
+      POSTGRES_USER: ${PANOPTIQUE_POSTGRES_USER:-panoptique}
+      POSTGRES_PASSWORD: ${PANOPTIQUE_POSTGRES_PASSWORD:-panoptique}
+    ports:
+      - "127.0.0.1:${PANOPTIQUE_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - panoptique_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: panoptique-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:${PANOPTIQUE_REDIS_PORT:-6379}:6379"
+    volumes:
+      - panoptique_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  panoptique_postgres_data:
+  panoptique_redis_data:

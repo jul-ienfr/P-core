@@ -1,0 +1,190 @@
+{
+  "raw_keys": [
+    "hko_current",
+    "hko_9day",
+    "hko_local",
+    "hko_daily_extract_apr"
+  ],
+  "summary": {
+    "current": {
+      "updateTime": "2026-04-25T21:02:00+08:00",
+      "hko_temp_candidates": [
+        {
+          "place": "Hong Kong Observatory",
+          "value": 24,
+          "unit": "C"
+        }
+      ],
+      "all_temps_sample": [
+        {
+          "place": "King's Park",
+          "value": 23,
+          "unit": "C"
+        },
+        {
+          "place": "Hong Kong Observatory",
+          "value": 24,
+          "unit": "C"
+        },
+        {
+          "place": "Wong Chuk Hang",
+          "value": 24,
+          "unit": "C"
+        },
+        {
+          "place": "Ta Kwu Ling",
+          "value": 23,
+          "unit": "C"
+        },
+        {
+          "place": "Lau Fau Shan",
+          "value": 22,
+          "unit": "C"
+        },
+        {
+          "place": "Tai Po",
+          "value": 24,
+          "unit": "C"
+        },
+        {
+          "place": "Sha Tin",
+          "value": 23,
+          "unit": "C"
+        },
+        {
+          "place": "Tuen Mun",
+          "value": 23,
+          "unit": "C"
+        }
+      ]
+    },
+    "forecast_days": [
+      {
+        "forecastDate": "20260426",
+        "week": "Sunday",
+        "forecastMaxtemp": {
+          "value": 28,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 22,
+          "unit": "C"
+        },
+        "forecastWeather": "Sunny periods.",
+        "forecastWind": "East to northeast force 3 to 4."
+      },
+      {
+        "forecastDate": "20260427",
+        "week": "Monday",
+        "forecastMaxtemp": {
+          "value": 28,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 24,
+          "unit": "C"
+        },
+        "forecastWeather": "Sunny periods. A few showers later.",
+        "forecastWind": "East to southeast force 3 to 4."
+      },
+      {
+        "forecastDate": "20260428",
+        "week": "Tuesday",
+        "forecastMaxtemp": {
+          "value": 28,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 24,
+          "unit": "C"
+        },
+        "forecastWeather": "Mainly cloudy with occasional showers and a few squally thunderstorms.",
+        "forecastWind": "South to southeast force 3 to 4, occasionally force 5 on high ground."
+      },
+      {
+        "forecastDate": "20260429",
+        "week": "Wednesday",
+        "forecastMaxtemp": {
+          "value": 27,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 22,
+          "unit": "C"
+        },
+        "forecastWeather": "Cloudy with occasional showers and a few squally thunderstorms.",
+        "forecastWind": "South to southwest force 3 to 4, becoming northeast force 4."
+      },
+      {
+        "forecastDate": "20260430",
+        "week": "Thursday",
+        "forecastMaxtemp": {
+          "value": 25,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 21,
+          "unit": "C"
+        },
+        "forecastWeather": "Mainly cloudy. Slightly cooler with one or two showers in the morning.",
+        "forecastWind": "East to northeast force 4 to 5."
+      },
+      {
+        "forecastDate": "20260501",
+        "week": "Friday",
+        "forecastMaxtemp": {
+          "value": 26,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 22,
+          "unit": "C"
+        },
+        "forecastWeather": "Mainly cloudy. Bright periods during the day. One or two light rain patches.",
+        "forecastWind": "East force 4 to 5, occasionally force 6 offshore."
+      },
+      {
+        "forecastDate": "20260502",
+        "week": "Saturday",
+        "forecastMaxtemp": {
+          "value": 27,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 24,
+          "unit": "C"
+        },
+        "forecastWeather": "Mainly cloudy with one or two showers. Bright periods during the day. Visibility relatively low in some areas later.",
+        "forecastWind": "East to southeast force 4."
+      },
+      {
+        "forecastDate": "20260503",
+        "week": "Sunday",
+        "forecastMaxtemp": {
+          "value": 29,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 25,
+          "unit": "C"
+        },
+        "forecastWeather": "Mainly cloudy with a few showers and isolated thunderstorms.",
+        "forecastWind": "South force 3."
+      },
+      {
+        "forecastDate": "20260504",
+        "week": "Monday",
+        "forecastMaxtemp": {
+          "value": 28,
+          "unit": "C"
+        },
+        "forecastMintemp": {
+          "value": 24,
+          "unit": "C"
+        },
+        "forecastWeather": "Mainly cloudy with a few showers and thunderstorms.",
+        "forecastWind": "South force 3."
+      }
+    ]
+  }
+}

@@ -1,0 +1,229 @@
+{
+  "budget_usdc": 5.0,
+  "eligible_at_refresh": true,
+  "fill_simulation": {
+    "avg_price": 0.977,
+    "filled_shares": 5.117707,
+    "filled_spend_usdc": 5.0,
+    "fills": [
+      {
+        "price": 0.977,
+        "shares": 5.117707,
+        "spend": 5.0
+      }
+    ],
+    "fully_filled": true,
+    "requested_budget_usdc": 5.0
+  },
+  "generated_at": "2026-04-25T15:03:03Z",
+  "hko": {
+    "action_operator": "monitor_until_official_daily_extract",
+    "current_place": "Hong Kong Observatory",
+    "current_temp_c": 24.0,
+    "current_update_time": "2026-04-25T22:02:00+08:00",
+    "official_daily_available": false,
+    "official_daily_value_c": null,
+    "provisional_outcome": "no"
+  },
+  "ledger_update": {
+    "position_added": true,
+    "source_ledger": "/home/jul/prediction_core/data/polymarket/weather_paper_micro_updated_ledger_20260425.json",
+    "updated_ledger": "/home/jul/prediction_core/data/polymarket/weather_paper_micro_updated_ledger_with_2065028_20260425T150303Z.json"
+  },
+  "limit_price": 0.978,
+  "market_id": "2065028",
+  "mode": "paper-only strict-limit simulated execution; no real order",
+  "orderbook": {
+    "no": {
+      "ask_levels": [
+        [
+          0.977,
+          81.41
+        ],
+        [
+          0.978,
+          38.32
+        ],
+        [
+          0.98,
+          222.2
+        ],
+        [
+          0.984,
+          20.0
+        ],
+        [
+          0.985,
+          81.85
+        ],
+        [
+          0.99,
+          753.0
+        ],
+        [
+          0.992,
+          115.0
+        ],
+        [
+          0.995,
+          39.0
+        ],
+        [
+          0.996,
+          61.17
+        ],
+        [
+          0.997,
+          2391.67
+        ]
+      ],
+      "best_ask": 0.977,
+      "best_bid": 0.976,
+      "bid_levels": [
+        [
+          0.976,
+          21.07
+        ],
+        [
+          0.97,
+          1.76
+        ],
+        [
+          0.965,
+          40.0
+        ],
+        [
+          0.963,
+          10.0
+        ],
+        [
+          0.961,
+          10.0
+        ],
+        [
+          0.96,
+          35.0
+        ],
+        [
+          0.95,
+          74.63
+        ],
+        [
+          0.948,
+          60.1
+        ],
+        [
+          0.947,
+          10.0
+        ],
+        [
+          0.946,
+          10.0
+        ]
+      ],
+      "timestamp": "1777129380370"
+    },
+    "yes": {
+      "ask_levels": [
+        [
+          0.024,
+          21.07
+        ],
+        [
+          0.03,
+          1.76
+        ],
+        [
+          0.035,
+          40.0
+        ],
+        [
+          0.037,
+          10.0
+        ],
+        [
+          0.039,
+          10.0
+        ],
+        [
+          0.04,
+          35.0
+        ],
+        [
+          0.05,
+          74.63
+        ],
+        [
+          0.052,
+          60.1
+        ],
+        [
+          0.053,
+          10.0
+        ],
+        [
+          0.054,
+          10.0
+        ]
+      ],
+      "best_ask": 0.024,
+      "best_bid": 0.023,
+      "bid_levels": [
+        [
+          0.023,
+          81.41
+        ],
+        [
+          0.022,
+          38.32
+        ],
+        [
+          0.02,
+          222.2
+        ],
+        [
+          0.016,
+          20.0
+        ],
+        [
+          0.015,
+          81.85
+        ],
+        [
+          0.01,
+          753.0
+        ],
+        [
+          0.008,
+          115.0
+        ],
+        [
+          0.005,
+          39.0
+        ],
+        [
+          0.004,
+          61.17
+        ],
+        [
+          0.003,
+          2391.67
+        ]
+      ],
+      "timestamp": "1777129380370"
+    }
+  },
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "risk_controls": [
+    "paper_only",
+    "real_order_placed_false",
+    "refuse_fill_above_0.978",
+    "no_normal_size",
+    "official_resolution_pending"
+  ],
+  "side": "NO",
+  "tokens": {
+    "no": "52817872578288816749191973321023191193600420939968601808746765086788856187251",
+    "yes": "6131281487843155887731200380910001326393601812623280243081546732770219880606"
+  }
+}

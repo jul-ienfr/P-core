@@ -1,0 +1,97 @@
+{
+  "action_operator": "monitor_until_official_daily_extract",
+  "confirmed_outcome": {
+    "basis": "official_daily_extract",
+    "status": "pending"
+  },
+  "date": "2026-04-26",
+  "latency": {
+    "latest": {
+      "direct": true,
+      "latest_timestamp": "2026-04-25T22:00:00+08:00",
+      "latest_value": 24.0,
+      "point_count": 1,
+      "polling_focus": "hko_current_weather_api",
+      "provider": "hong_kong_observatory",
+      "source_lag_seconds": 3549,
+      "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "station_code": null,
+      "tier": "direct_latest",
+      "unit": "c"
+    },
+    "official": {
+      "direct": true,
+      "expected_lag_seconds": 86400,
+      "latest_timestamp": null,
+      "latest_value": null,
+      "point_count": 0,
+      "polling_focus": "hko_official_daily_extract",
+      "provider": "hong_kong_observatory",
+      "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "station_code": null,
+      "tier": "direct_daily_extract",
+      "unit": null
+    }
+  },
+  "latest_direct": {
+    "available": true,
+    "latency_tier": "direct_latest",
+    "timestamp": "2026-04-25T22:00:00+08:00",
+    "value": 24.0
+  },
+  "market": {
+    "city": "Hong Kong",
+    "date_local": "April 26",
+    "is_exact_bin": false,
+    "is_threshold": true,
+    "measurement_kind": "high",
+    "range_high": null,
+    "range_low": null,
+    "target_value": 30.0,
+    "threshold_direction": "higher",
+    "unit": "c"
+  },
+  "market_id": "2065028",
+  "official_daily_extract": {
+    "available": false,
+    "latency_tier": "direct_daily_extract",
+    "timestamp": null,
+    "value": null
+  },
+  "provisional_outcome": {
+    "basis": "latest_direct",
+    "observed_value": 24.0,
+    "status": "no",
+    "threshold": 30.0
+  },
+  "resolution": {
+    "manual_review_needed": false,
+    "provider": "hong_kong_observatory",
+    "revision_risk": "low",
+    "rules_clear": true,
+    "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+    "station_code": null,
+    "station_name": "Hong Kong Observatory",
+    "station_type": "station",
+    "wording_clear": true
+  },
+  "source": "live",
+  "source_route": {
+    "direct": true,
+    "expected_lag_seconds": 600,
+    "freshness_sla_seconds": 1200,
+    "history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+    "latency_priority": "direct_source_low_latency",
+    "latency_tier": "direct_latest",
+    "latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+    "manual_review_needed": false,
+    "official_lag_seconds": 86400,
+    "polling_focus": "hko_current_weather_api_and_daily_extract",
+    "provider": "hong_kong_observatory",
+    "reason": "Hong Kong Observatory source found in resolution rules; poll HKO current weather API and daily extract directly.",
+    "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+    "station_code": null,
+    "station_name": "Hong Kong Observatory",
+    "supported": true
+  }
+}

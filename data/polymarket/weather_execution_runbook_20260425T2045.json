@@ -1,0 +1,349 @@
+{
+  "books": [],
+  "gamma_question": null,
+  "hko_latest": {
+    "temperature": {
+      "data": [
+        {
+          "place": "King's Park",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Hong Kong Observatory",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Wong Chuk Hang",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Ta Kwu Ling",
+          "unit": "C",
+          "value": 21
+        },
+        {
+          "place": "Lau Fau Shan",
+          "unit": "C",
+          "value": 21
+        },
+        {
+          "place": "Tai Po",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Sha Tin",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Tuen Mun",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Tseung Kwan O",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Sai Kung",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Cheung Chau",
+          "unit": "C",
+          "value": 22
+        },
+        {
+          "place": "Chek Lap Kok",
+          "unit": "C",
+          "value": 24
+        },
+        {
+          "place": "Tsing Yi",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Shek Kong",
+          "unit": "C",
+          "value": 21
+        },
+        {
+          "place": "Tsuen Wan Ho Koon",
+          "unit": "C",
+          "value": 20
+        },
+        {
+          "place": "Tsuen Wan Shing Mun Valley",
+          "unit": "C",
+          "value": 22
+        },
+        {
+          "place": "Hong Kong Park",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Shau Kei Wan",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Kowloon City",
+          "unit": "C",
+          "value": 22
+        },
+        {
+          "place": "Happy Valley",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Wong Tai Sin",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Stanley",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Kwun Tong",
+          "unit": "C",
+          "value": 22
+        },
+        {
+          "place": "Sham Shui Po",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Kai Tak Runway Park",
+          "unit": "C",
+          "value": 23
+        },
+        {
+          "place": "Yuen Long Park",
+          "unit": "C",
+          "value": 21
+        },
+        {
+          "place": "Tai Mei Tuk",
+          "unit": "C",
+          "value": 22
+        }
+      ],
+      "recordTime": "2026-04-26T02:00:00+08:00"
+    },
+    "updateTime": "2026-04-26T02:02:00+08:00"
+  },
+  "operator_row": {
+    "action": "paper_trade_watch_direct_station",
+    "all_in_cost_bps": 50.09,
+    "anomalies": [],
+    "blocker": null,
+    "blocker_detail": null,
+    "city": "Hong Kong",
+    "date": "April 26",
+    "decision_status": "trade_small",
+    "depth_usd": 66.6,
+    "direct_source": "hong_kong_observatory",
+    "edge": 0.13,
+    "execution_diagnostic": {
+      "grade": null,
+      "hours_to_resolution": 17.27,
+      "liquidity_state": "executable",
+      "score": null,
+      "spread": 0.03,
+      "timing_state": "next_day"
+    },
+    "latency_priority": null,
+    "latency_tier": "direct_latest",
+    "market_id": "2065028",
+    "matched_traders": [
+      "Poligarch",
+      "Maskache2",
+      "HenryTheAtmoPhD",
+      "JoeTheMeteorologist",
+      "protrade3"
+    ],
+    "next": [
+      "poll_direct_resolution_source",
+      "paper_order_with_limit_and_fill_tracking"
+    ],
+    "polling_focus": "hko_current_weather_api_and_daily_extract",
+    "rank": 2,
+    "resolution_status": {
+      "action_operator": "monitor_until_official_daily_extract",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "latency": {
+        "latest": {
+          "direct": true,
+          "latest_timestamp": "2026-04-26T02:00:00+08:00",
+          "latest_value": 23.0,
+          "point_count": 1,
+          "polling_focus": "hko_current_weather_api",
+          "provider": "hong_kong_observatory",
+          "source_lag_seconds": 2607,
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "station_code": null,
+          "tier": "direct_latest",
+          "unit": "c"
+        },
+        "official": {
+          "direct": true,
+          "expected_lag_seconds": 86400,
+          "latest_timestamp": null,
+          "latest_value": null,
+          "point_count": 0,
+          "polling_focus": "hko_official_daily_extract",
+          "provider": "hong_kong_observatory",
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+          "station_code": null,
+          "tier": "direct_daily_extract",
+          "unit": null
+        }
+      },
+      "latest_direct": {
+        "available": true,
+        "latency_tier": "direct_latest",
+        "timestamp": "2026-04-26T02:00:00+08:00",
+        "value": 23.0
+      },
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "direct_daily_extract",
+        "timestamp": null,
+        "value": null
+      },
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "observed_value": 23.0,
+        "status": "no",
+        "threshold": 30.0
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+    "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+  },
+  "paper_match": [],
+  "primary": {
+    "action": "paper_trade_watch_direct_station",
+    "blocker": null,
+    "city": "Hong Kong",
+    "date": "April 26",
+    "latency_tier": "direct_latest",
+    "market_id": "2065028",
+    "matched_profitable_weather_count": 5,
+    "next": [
+      "poll_direct_resolution_source",
+      "paper_order_with_limit_and_fill_tracking"
+    ],
+    "operator_verdict": {
+      "confidence": "profitable_account_match",
+      "reason": "profitable_weather_accounts_match_live_watchlist",
+      "recommended_size": "paper_until_execution_validated",
+      "status": "watch_or_paper"
+    },
+    "polling_focus": "hko_current_weather_api_and_daily_extract",
+    "resolution_status": {
+      "action_operator": "monitor_until_official_daily_extract",
+      "confirmed_outcome": {
+        "basis": "official_daily_extract",
+        "status": "pending"
+      },
+      "latency": {
+        "latest": {
+          "direct": true,
+          "latest_timestamp": "2026-04-26T02:00:00+08:00",
+          "latest_value": 23.0,
+          "point_count": 1,
+          "polling_focus": "hko_current_weather_api",
+          "provider": "hong_kong_observatory",
+          "source_lag_seconds": 2607,
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "station_code": null,
+          "tier": "direct_latest",
+          "unit": "c"
+        },
+        "official": {
+          "direct": true,
+          "expected_lag_seconds": 86400,
+          "latest_timestamp": null,
+          "latest_value": null,
+          "point_count": 0,
+          "polling_focus": "hko_official_daily_extract",
+          "provider": "hong_kong_observatory",
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+          "station_code": null,
+          "tier": "direct_daily_extract",
+          "unit": null
+        }
+      },
+      "latest_direct": {
+        "available": true,
+        "latency_tier": "direct_latest",
+        "timestamp": "2026-04-26T02:00:00+08:00",
+        "value": 23.0
+      },
+      "official_daily_extract": {
+        "available": false,
+        "latency_tier": "direct_daily_extract",
+        "timestamp": null,
+        "value": null
+      },
+      "provisional_outcome": {
+        "basis": "latest_direct",
+        "observed_value": 23.0,
+        "status": "no",
+        "threshold": 30.0
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    "signal_only_count": 0,
+    "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+    "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+    "top_matched_accounts": [
+      {
+        "handle": "Poligarch",
+        "pnl_over_volume_pct": 0.819,
+        "weather_pnl_usd": 50120.07
+      },
+      {
+        "handle": "Maskache2",
+        "pnl_over_volume_pct": 1.082,
+        "weather_pnl_usd": 49973.43
+      },
+      {
+        "handle": "HenryTheAtmoPhD",
+        "pnl_over_volume_pct": 1.429,
+        "weather_pnl_usd": 45563.27
+      },
+      {
+        "handle": "JoeTheMeteorologist",
+        "pnl_over_volume_pct": 2.139,
+        "weather_pnl_usd": 44964.15
+      },
+      {
+        "handle": "protrade3",
+        "pnl_over_volume_pct": 2.324,
+        "weather_pnl_usd": 32652.55
+      }
+    ],
+    "weather_heavy_count": 5
+  },
+  "runbook_md": "data/polymarket/weather_execution_runbook_20260425T2045.md"
+}

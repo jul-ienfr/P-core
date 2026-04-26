@@ -1,0 +1,1448 @@
+[
+  {
+    "market_id": "2065018",
+    "question": "Will the highest temperature in Hong Kong be 20°C or below on April 26?",
+    "city": "Hong Kong",
+    "date": "April 26",
+    "blocker_old": "extreme_price",
+    "provisional": {
+      "basis": "latest_direct",
+      "observed_value": 24.0,
+      "status": "no",
+      "threshold": 20.0
+    },
+    "gamma_yes": 0.0005,
+    "gamma_no": 0.9995,
+    "yes_book": {
+      "best_bid": null,
+      "best_ask": 0.001,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.009584,
+      "fill50_shares": 5216.9224,
+      "ask_levels": [
+        [
+          0.001,
+          1333.89
+        ],
+        [
+          0.002,
+          432.0
+        ],
+        [
+          0.007,
+          10.0
+        ],
+        [
+          0.009,
+          1060.85
+        ],
+        [
+          0.01,
+          850.5
+        ],
+        [
+          0.015,
+          550.76
+        ],
+        [
+          0.02,
+          611.0
+        ],
+        [
+          0.025,
+          551.28
+        ]
+      ],
+      "bid_levels": [],
+      "fills": [
+        [
+          0.001,
+          1333.89,
+          1.3339
+        ],
+        [
+          0.002,
+          432.0,
+          0.864
+        ],
+        [
+          0.007,
+          10.0,
+          0.07
+        ],
+        [
+          0.009,
+          1060.85,
+          9.5476
+        ],
+        [
+          0.01,
+          850.5,
+          8.505
+        ],
+        [
+          0.015,
+          550.76,
+          8.2614
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.999,
+      "best_ask": null,
+      "fill50_spend": 0,
+      "fill50_avg": null,
+      "fill50_shares": 0,
+      "ask_levels": [],
+      "bid_levels": [
+        [
+          0.999,
+          1333.89
+        ],
+        [
+          0.998,
+          432.0
+        ],
+        [
+          0.993,
+          10.0
+        ],
+        [
+          0.991,
+          1060.85
+        ],
+        [
+          0.99,
+          850.5
+        ],
+        [
+          0.985,
+          550.76
+        ],
+        [
+          0.98,
+          611.0
+        ],
+        [
+          0.975,
+          551.28
+        ]
+      ],
+      "fills": []
+    },
+    "preferred_side": "No",
+    "side_reason": [
+      "provisional_direct_points_NO"
+    ],
+    "preferred_side_exec_ok": false,
+    "preferred_best_ask": null,
+    "preferred_fill50_avg": null,
+    "preferred_fill50_spend": 0
+  },
+  {
+    "market_id": "2065028",
+    "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 26?",
+    "city": "Hong Kong",
+    "date": "April 26",
+    "blocker_old": null,
+    "provisional": {
+      "basis": "latest_direct",
+      "observed_value": 24.0,
+      "status": "no",
+      "threshold": 30.0
+    },
+    "gamma_yes": 0.027,
+    "gamma_no": 0.973,
+    "yes_book": {
+      "best_bid": 0.025,
+      "best_ask": 0.027,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.085322,
+      "fill50_shares": 586.0143,
+      "ask_levels": [
+        [
+          0.027,
+          19.29
+        ],
+        [
+          0.028,
+          40.0
+        ],
+        [
+          0.03,
+          5.0
+        ],
+        [
+          0.037,
+          20.0
+        ],
+        [
+          0.04,
+          35.0
+        ],
+        [
+          0.05,
+          95.1
+        ],
+        [
+          0.052,
+          10.0
+        ],
+        [
+          0.06,
+          35.0
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.025,
+          10.0
+        ],
+        [
+          0.023,
+          288.47
+        ],
+        [
+          0.022,
+          38.32
+        ],
+        [
+          0.02,
+          222.2
+        ],
+        [
+          0.015,
+          81.85
+        ],
+        [
+          0.01,
+          758.0
+        ],
+        [
+          0.008,
+          115.0
+        ],
+        [
+          0.005,
+          39.0
+        ]
+      ],
+      "fills": [
+        [
+          0.027,
+          19.29,
+          0.5208
+        ],
+        [
+          0.028,
+          40.0,
+          1.12
+        ],
+        [
+          0.03,
+          5.0,
+          0.15
+        ],
+        [
+          0.037,
+          20.0,
+          0.74
+        ],
+        [
+          0.04,
+          35.0,
+          1.4
+        ],
+        [
+          0.05,
+          95.1,
+          4.755
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.973,
+      "best_ask": 0.975,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.976609,
+      "fill50_shares": 51.1975,
+      "ask_levels": [
+        [
+          0.975,
+          10.0
+        ],
+        [
+          0.977,
+          288.47
+        ],
+        [
+          0.978,
+          38.32
+        ],
+        [
+          0.98,
+          222.2
+        ],
+        [
+          0.985,
+          81.85
+        ],
+        [
+          0.99,
+          758.0
+        ],
+        [
+          0.992,
+          115.0
+        ],
+        [
+          0.995,
+          39.0
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.973,
+          19.29
+        ],
+        [
+          0.972,
+          40.0
+        ],
+        [
+          0.97,
+          5.0
+        ],
+        [
+          0.963,
+          20.0
+        ],
+        [
+          0.96,
+          35.0
+        ],
+        [
+          0.95,
+          95.1
+        ],
+        [
+          0.948,
+          10.0
+        ],
+        [
+          0.94,
+          35.0
+        ]
+      ],
+      "fills": [
+        [
+          0.975,
+          10.0,
+          9.75
+        ],
+        [
+          0.977,
+          41.1975,
+          40.25
+        ]
+      ]
+    },
+    "preferred_side": "No",
+    "side_reason": [
+      "provisional_direct_points_NO"
+    ],
+    "preferred_side_exec_ok": true,
+    "preferred_best_ask": 0.975,
+    "preferred_fill50_avg": 0.976609,
+    "preferred_fill50_spend": 50.0
+  },
+  {
+    "market_id": "2074350",
+    "question": "Will the highest temperature in Dallas be 69°F or below on April 27?",
+    "city": "Dallas",
+    "date": "April 27",
+    "blocker_old": "missing_tradeable_quote",
+    "provisional": {
+      "basis": "latest_direct",
+      "status": "pending"
+    },
+    "gamma_yes": 0.003,
+    "gamma_no": 0.997,
+    "yes_book": {
+      "best_bid": 0.001,
+      "best_ask": 0.005,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.015503,
+      "fill50_shares": 3225.2683,
+      "ask_levels": [
+        [
+          0.005,
+          11.13
+        ],
+        [
+          0.006,
+          108.16
+        ],
+        [
+          0.007,
+          450.0
+        ],
+        [
+          0.01,
+          540.25
+        ],
+        [
+          0.011,
+          176.4
+        ],
+        [
+          0.012,
+          10.0
+        ],
+        [
+          0.015,
+          525.38
+        ],
+        [
+          0.02,
+          872.0
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.001,
+          99.99
+        ]
+      ],
+      "fills": [
+        [
+          0.005,
+          11.13,
+          0.0557
+        ],
+        [
+          0.006,
+          108.16,
+          0.649
+        ],
+        [
+          0.007,
+          450.0,
+          3.15
+        ],
+        [
+          0.01,
+          540.25,
+          5.4025
+        ],
+        [
+          0.011,
+          176.4,
+          1.9404
+        ],
+        [
+          0.012,
+          10.0,
+          0.12
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.995,
+      "best_ask": 0.999,
+      "fill50_spend": 50,
+      "fill50_avg": 0.999,
+      "fill50_shares": 50.0501,
+      "ask_levels": [
+        [
+          0.999,
+          99.99
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.995,
+          11.13
+        ],
+        [
+          0.994,
+          108.16
+        ],
+        [
+          0.993,
+          450.0
+        ],
+        [
+          0.99,
+          540.25
+        ],
+        [
+          0.989,
+          176.4
+        ],
+        [
+          0.988,
+          10.0
+        ],
+        [
+          0.985,
+          525.38
+        ],
+        [
+          0.98,
+          872.0
+        ]
+      ],
+      "fills": [
+        [
+          0.999,
+          50.0501,
+          50
+        ]
+      ]
+    },
+    "preferred_side": null,
+    "side_reason": [],
+    "preferred_side_exec_ok": false,
+    "preferred_best_ask": null,
+    "preferred_fill50_avg": null,
+    "preferred_fill50_spend": null
+  },
+  {
+    "market_id": "2074460",
+    "question": "Will the highest temperature in Hong Kong be 20°C or below on April 27?",
+    "city": "Hong Kong",
+    "date": "April 27",
+    "blocker_old": "missing_tradeable_quote",
+    "provisional": {
+      "basis": "latest_direct",
+      "observed_value": 24.0,
+      "status": "no",
+      "threshold": 20.0
+    },
+    "gamma_yes": 0.0015,
+    "gamma_no": 0.9985,
+    "yes_book": {
+      "best_bid": 0.001,
+      "best_ask": 0.002,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.009898,
+      "fill50_shares": 5051.7004,
+      "ask_levels": [
+        [
+          0.002,
+          2010.08
+        ],
+        [
+          0.003,
+          30.0
+        ],
+        [
+          0.004,
+          90.0
+        ],
+        [
+          0.005,
+          50.0
+        ],
+        [
+          0.006,
+          200.0
+        ],
+        [
+          0.007,
+          20.0
+        ],
+        [
+          0.009,
+          10.0
+        ],
+        [
+          0.01,
+          865.5
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.001,
+          53.01
+        ]
+      ],
+      "fills": [
+        [
+          0.002,
+          2010.08,
+          4.0202
+        ],
+        [
+          0.003,
+          30.0,
+          0.09
+        ],
+        [
+          0.004,
+          90.0,
+          0.36
+        ],
+        [
+          0.005,
+          50.0,
+          0.25
+        ],
+        [
+          0.006,
+          200.0,
+          1.2
+        ],
+        [
+          0.007,
+          20.0,
+          0.14
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.998,
+      "best_ask": 0.999,
+      "fill50_spend": 50,
+      "fill50_avg": 0.999,
+      "fill50_shares": 50.0501,
+      "ask_levels": [
+        [
+          0.999,
+          53.01
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.998,
+          2010.08
+        ],
+        [
+          0.997,
+          30.0
+        ],
+        [
+          0.996,
+          90.0
+        ],
+        [
+          0.995,
+          50.0
+        ],
+        [
+          0.994,
+          200.0
+        ],
+        [
+          0.993,
+          20.0
+        ],
+        [
+          0.991,
+          10.0
+        ],
+        [
+          0.99,
+          865.5
+        ]
+      ],
+      "fills": [
+        [
+          0.999,
+          50.0501,
+          50
+        ]
+      ]
+    },
+    "preferred_side": "No",
+    "side_reason": [
+      "provisional_direct_points_NO"
+    ],
+    "preferred_side_exec_ok": false,
+    "preferred_best_ask": 0.999,
+    "preferred_fill50_avg": 0.999,
+    "preferred_fill50_spend": 50
+  },
+  {
+    "market_id": "2064908",
+    "question": "Will the highest temperature in Dallas be 67°F or below on April 26?",
+    "city": "Dallas",
+    "date": "April 26",
+    "blocker_old": "missing_tradeable_quote",
+    "provisional": {
+      "basis": "latest_direct",
+      "status": "pending"
+    },
+    "gamma_yes": 0.001,
+    "gamma_no": 0.999,
+    "yes_book": {
+      "best_bid": null,
+      "best_ask": 0.002,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.013626,
+      "fill50_shares": 3669.3988,
+      "ask_levels": [
+        [
+          0.002,
+          108.99
+        ],
+        [
+          0.006,
+          265.45
+        ],
+        [
+          0.007,
+          450.0
+        ],
+        [
+          0.01,
+          949.39
+        ],
+        [
+          0.012,
+          10.0
+        ],
+        [
+          0.015,
+          525.38
+        ],
+        [
+          0.02,
+          1292.0
+        ],
+        [
+          0.025,
+          525.64
+        ]
+      ],
+      "bid_levels": [],
+      "fills": [
+        [
+          0.002,
+          108.99,
+          0.218
+        ],
+        [
+          0.006,
+          265.45,
+          1.5927
+        ],
+        [
+          0.007,
+          450.0,
+          3.15
+        ],
+        [
+          0.01,
+          949.39,
+          9.4939
+        ],
+        [
+          0.012,
+          10.0,
+          0.12
+        ],
+        [
+          0.015,
+          525.38,
+          7.8807
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.998,
+      "best_ask": null,
+      "fill50_spend": 0,
+      "fill50_avg": null,
+      "fill50_shares": 0,
+      "ask_levels": [],
+      "bid_levels": [
+        [
+          0.998,
+          108.99
+        ],
+        [
+          0.994,
+          265.45
+        ],
+        [
+          0.993,
+          450.0
+        ],
+        [
+          0.99,
+          949.39
+        ],
+        [
+          0.988,
+          10.0
+        ],
+        [
+          0.985,
+          525.38
+        ],
+        [
+          0.98,
+          1292.0
+        ],
+        [
+          0.975,
+          525.64
+        ]
+      ],
+      "fills": []
+    },
+    "preferred_side": null,
+    "side_reason": [],
+    "preferred_side_exec_ok": false,
+    "preferred_best_ask": null,
+    "preferred_fill50_avg": null,
+    "preferred_fill50_spend": null
+  },
+  {
+    "market_id": "2074470",
+    "question": "Will the highest temperature in Hong Kong be 30°C or higher on April 27?",
+    "city": "Hong Kong",
+    "date": "April 27",
+    "blocker_old": "missing_tradeable_quote",
+    "provisional": {
+      "basis": "latest_direct",
+      "observed_value": 24.0,
+      "status": "no",
+      "threshold": 30.0
+    },
+    "gamma_yes": 0.024,
+    "gamma_no": 0.976,
+    "yes_book": {
+      "best_bid": 0.023,
+      "best_ask": 0.025,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.046288,
+      "fill50_shares": 1080.2,
+      "ask_levels": [
+        [
+          0.025,
+          610.0
+        ],
+        [
+          0.027,
+          10.0
+        ],
+        [
+          0.029,
+          10.0
+        ],
+        [
+          0.031,
+          10.0
+        ],
+        [
+          0.033,
+          40.0
+        ],
+        [
+          0.039,
+          15.0
+        ],
+        [
+          0.04,
+          50.0
+        ],
+        [
+          0.041,
+          15.0
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.023,
+          341.0
+        ],
+        [
+          0.022,
+          100.0
+        ],
+        [
+          0.02,
+          0.32
+        ],
+        [
+          0.012,
+          5.54
+        ],
+        [
+          0.011,
+          36.0
+        ],
+        [
+          0.01,
+          514.0
+        ],
+        [
+          0.008,
+          15.0
+        ],
+        [
+          0.006,
+          11.41
+        ]
+      ],
+      "fills": [
+        [
+          0.025,
+          610.0,
+          15.25
+        ],
+        [
+          0.027,
+          10.0,
+          0.27
+        ],
+        [
+          0.029,
+          10.0,
+          0.29
+        ],
+        [
+          0.031,
+          10.0,
+          0.31
+        ],
+        [
+          0.033,
+          40.0,
+          1.32
+        ],
+        [
+          0.039,
+          15.0,
+          0.585
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.975,
+      "best_ask": 0.977,
+      "fill50_spend": 50,
+      "fill50_avg": 0.977,
+      "fill50_shares": 51.1771,
+      "ask_levels": [
+        [
+          0.977,
+          341.0
+        ],
+        [
+          0.978,
+          100.0
+        ],
+        [
+          0.98,
+          0.32
+        ],
+        [
+          0.988,
+          5.54
+        ],
+        [
+          0.989,
+          36.0
+        ],
+        [
+          0.99,
+          514.0
+        ],
+        [
+          0.992,
+          15.0
+        ],
+        [
+          0.994,
+          11.41
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.975,
+          610.0
+        ],
+        [
+          0.973,
+          10.0
+        ],
+        [
+          0.971,
+          10.0
+        ],
+        [
+          0.969,
+          10.0
+        ],
+        [
+          0.967,
+          40.0
+        ],
+        [
+          0.961,
+          15.0
+        ],
+        [
+          0.96,
+          50.0
+        ],
+        [
+          0.959,
+          15.0
+        ]
+      ],
+      "fills": [
+        [
+          0.977,
+          51.1771,
+          50
+        ]
+      ]
+    },
+    "preferred_side": "No",
+    "side_reason": [
+      "provisional_direct_points_NO"
+    ],
+    "preferred_side_exec_ok": true,
+    "preferred_best_ask": 0.977,
+    "preferred_fill50_avg": 0.977,
+    "preferred_fill50_spend": 50
+  },
+  {
+    "market_id": "2074360",
+    "question": "Will the highest temperature in Dallas be 88°F or higher on April 27?",
+    "city": "Dallas",
+    "date": "April 27",
+    "blocker_old": "missing_tradeable_quote",
+    "provisional": {
+      "basis": "latest_direct",
+      "status": "pending"
+    },
+    "gamma_yes": 0.8475,
+    "gamma_no": 0.1525,
+    "yes_book": {
+      "best_bid": 0.815,
+      "best_ask": 0.88,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.894147,
+      "fill50_shares": 55.9192,
+      "ask_levels": [
+        [
+          0.88,
+          8.0
+        ],
+        [
+          0.89,
+          14.0
+        ],
+        [
+          0.899,
+          27.3
+        ],
+        [
+          0.9,
+          25.0
+        ],
+        [
+          0.939,
+          15.11
+        ],
+        [
+          0.94,
+          16.67
+        ],
+        [
+          0.944,
+          30.0
+        ],
+        [
+          0.945,
+          85.0
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.815,
+          26.0
+        ],
+        [
+          0.814,
+          23.32
+        ],
+        [
+          0.67,
+          25.0
+        ],
+        [
+          0.624,
+          3.02
+        ],
+        [
+          0.583,
+          100.0
+        ],
+        [
+          0.582,
+          5.0
+        ],
+        [
+          0.58,
+          20.0
+        ],
+        [
+          0.55,
+          20.0
+        ]
+      ],
+      "fills": [
+        [
+          0.88,
+          8.0,
+          7.04
+        ],
+        [
+          0.89,
+          14.0,
+          12.46
+        ],
+        [
+          0.899,
+          27.3,
+          24.5427
+        ],
+        [
+          0.9,
+          6.6192,
+          5.9573
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.12,
+      "best_ask": 0.185,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.327224,
+      "fill50_shares": 152.8003,
+      "ask_levels": [
+        [
+          0.185,
+          26.0
+        ],
+        [
+          0.186,
+          23.32
+        ],
+        [
+          0.33,
+          25.0
+        ],
+        [
+          0.376,
+          3.02
+        ],
+        [
+          0.417,
+          100.0
+        ],
+        [
+          0.418,
+          5.0
+        ],
+        [
+          0.42,
+          20.0
+        ],
+        [
+          0.45,
+          20.0
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.12,
+          8.0
+        ],
+        [
+          0.11,
+          14.0
+        ],
+        [
+          0.101,
+          27.3
+        ],
+        [
+          0.1,
+          25.0
+        ],
+        [
+          0.061,
+          15.11
+        ],
+        [
+          0.06,
+          16.67
+        ],
+        [
+          0.056,
+          30.0
+        ],
+        [
+          0.055,
+          85.0
+        ]
+      ],
+      "fills": [
+        [
+          0.185,
+          26.0,
+          4.81
+        ],
+        [
+          0.186,
+          23.32,
+          4.3375
+        ],
+        [
+          0.33,
+          25.0,
+          8.25
+        ],
+        [
+          0.376,
+          3.02,
+          1.1355
+        ],
+        [
+          0.417,
+          75.4603,
+          31.467
+        ]
+      ]
+    },
+    "preferred_side": null,
+    "side_reason": [],
+    "preferred_side_exec_ok": false,
+    "preferred_best_ask": null,
+    "preferred_fill50_avg": null,
+    "preferred_fill50_spend": null
+  },
+  {
+    "market_id": "2064918",
+    "question": "Will the highest temperature in Dallas be 86°F or higher on April 26?",
+    "city": "Dallas",
+    "date": "April 26",
+    "blocker_old": "high_slippage_risk",
+    "provisional": {
+      "basis": "latest_direct",
+      "status": "pending"
+    },
+    "gamma_yes": 0.855,
+    "gamma_no": 0.145,
+    "yes_book": {
+      "best_bid": 0.85,
+      "best_ask": 0.87,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.87496,
+      "fill50_shares": 57.1455,
+      "ask_levels": [
+        [
+          0.87,
+          28.8
+        ],
+        [
+          0.88,
+          39.99
+        ],
+        [
+          0.9,
+          104.57
+        ],
+        [
+          0.91,
+          112.74
+        ],
+        [
+          0.92,
+          43.11
+        ],
+        [
+          0.94,
+          52.67
+        ],
+        [
+          0.95,
+          209.0
+        ],
+        [
+          0.96,
+          84.82
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.85,
+          20.0
+        ],
+        [
+          0.84,
+          47.84
+        ],
+        [
+          0.83,
+          45.0
+        ],
+        [
+          0.81,
+          5.0
+        ],
+        [
+          0.8,
+          49.44
+        ],
+        [
+          0.79,
+          3.81
+        ],
+        [
+          0.77,
+          11.89
+        ],
+        [
+          0.76,
+          30.0
+        ]
+      ],
+      "fills": [
+        [
+          0.87,
+          28.8,
+          25.056
+        ],
+        [
+          0.88,
+          28.3455,
+          24.944
+        ]
+      ]
+    },
+    "no_book": {
+      "best_bid": 0.13,
+      "best_ask": 0.15,
+      "fill50_spend": 50.0,
+      "fill50_avg": 0.197261,
+      "fill50_shares": 253.4712,
+      "ask_levels": [
+        [
+          0.15,
+          20.0
+        ],
+        [
+          0.16,
+          47.84
+        ],
+        [
+          0.17,
+          45.0
+        ],
+        [
+          0.19,
+          5.0
+        ],
+        [
+          0.2,
+          49.44
+        ],
+        [
+          0.21,
+          3.81
+        ],
+        [
+          0.23,
+          11.89
+        ],
+        [
+          0.24,
+          30.0
+        ]
+      ],
+      "bid_levels": [
+        [
+          0.13,
+          28.8
+        ],
+        [
+          0.12,
+          39.99
+        ],
+        [
+          0.1,
+          104.57
+        ],
+        [
+          0.09,
+          112.74
+        ],
+        [
+          0.08,
+          43.11
+        ],
+        [
+          0.06,
+          52.67
+        ],
+        [
+          0.05,
+          209.0
+        ],
+        [
+          0.04,
+          84.82
+        ]
+      ],
+      "fills": [
+        [
+          0.15,
+          20.0,
+          3.0
+        ],
+        [
+          0.16,
+          47.84,
+          7.6544
+        ],
+        [
+          0.17,
+          45.0,
+          7.65
+        ],
+        [
+          0.19,
+          5.0,
+          0.95
+        ],
+        [
+          0.2,
+          49.44,
+          9.888
+        ],
+        [
+          0.21,
+          3.81,
+          0.8001
+        ]
+      ]
+    },
+    "preferred_side": "No",
+    "side_reason": [
+      "yes_edge_negative_or_slippage"
+    ],
+    "preferred_side_exec_ok": true,
+    "preferred_best_ask": 0.15,
+    "preferred_fill50_avg": 0.197261,
+    "preferred_fill50_spend": 50.0
+  }
+]

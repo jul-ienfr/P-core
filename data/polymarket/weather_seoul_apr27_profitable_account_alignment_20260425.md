@@ -1,0 +1,102 @@
+# Seoul Apr 27 profitable-account alignment
+
+Scanned 60 priority weather-profitable accounts.
+
+## Exact Seoul Apr 27 matches
+- **dpnd** rank 41 pnl $24,134: 6 matches
+  - positions Yes 0.22 — Will the highest temperature in Seoul be 18°C on April 27?
+  - activity BUY 0.19 — Will the highest temperature in Seoul be 17°C on April 27?
+  - activity BUY 0.11 — Will the highest temperature in Seoul be 16°C on April 27?
+  - activity BUY 0.022000002347209384 — Will the highest temperature in Seoul be 15°C on April 27?
+  - activity BUY 0.011 — Will the highest temperature in Seoul be 14°C on April 27?
+- **0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210** rank 111 pnl $10,475: 15 matches
+  - positions No 0.9548 — Will the highest temperature in Seoul be 15°C on April 27?
+  - positions No 0.9795 — Will the highest temperature in Seoul be 14°C on April 27?
+  - positions No 0.9891 — Will the highest temperature in Seoul be 13°C or below on April 27?
+  - activity BUY 0.9787702029873612 — Will the highest temperature in Seoul be 15°C on April 27?
+  - activity BUY 0.99 — Will the highest temperature in Seoul be 13°C or below on April 27?
+- **FohnHairdryer** rank 136 pnl $8,419: 7 matches
+  - positions Yes 0.18 — Will the highest temperature in Seoul be 17°C on April 27?
+  - positions Yes 0.17 — Will the highest temperature in Seoul be 19°C on April 27?
+  - activity BUY 0.18 — Will the highest temperature in Seoul be 17°C on April 27?
+  - activity BUY 0.18000001191283851 — Will the highest temperature in Seoul be 17°C on April 27?
+  - activity BUY 0.18 — Will the highest temperature in Seoul be 17°C on April 27?
+- **0x2048** rank 605 pnl $1,993: 2 matches
+  - positions No 0.991 — Will the highest temperature in Seoul be 13°C or below on April 27?
+  - activity BUY 0.991 — Will the highest temperature in Seoul be 13°C or below on April 27?
+- **tianqizhishen** rank 666 pnl $1,805: 16 matches
+  - positions No 0.9407 — Will the highest temperature in Seoul be 22°C on April 27?
+  - positions No 0.9606 — Will the highest temperature in Seoul be 21°C on April 27?
+  - positions No 0.8463 — Will the highest temperature in Seoul be 20°C on April 27?
+  - positions No 0.981 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+  - activity BUY 0.84 — Will the highest temperature in Seoul be 20°C on April 27?
+- **Mr.Z.** rank 1335 pnl $739: 7 matches
+  - positions No 0.861 — Will the highest temperature in Seoul be 22°C on April 27?
+  - positions No 0.91 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+  - positions Yes 0.04 — Will the highest temperature in Seoul be 19°C on April 27?
+  - activity BUY 0.91 — Will the highest temperature in Seoul be 22°C on April 27?
+  - activity BUY 0.91 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+- **ruth777** rank 594 pnl $2,034: 25 matches
+  - positions No 0.93 — Will the highest temperature in Seoul be 22°C on April 27?
+  - positions No 0.7959 — Will the highest temperature in Seoul be 17°C on April 27?
+  - positions No 0.91 — Will the highest temperature in Seoul be 20°C on April 27?
+  - positions Yes 0.1024 — Will the highest temperature in Seoul be 20°C on April 27?
+  - positions No 0.9549 — Will the highest temperature in Seoul be 15°C on April 27?
+- **Wistesty** rank 582 pnl $2,095: 5 matches
+  - positions Yes 0.03 — Will the highest temperature in Seoul be 15°C on April 27?
+  - activity BUY 0.03 — Will the highest temperature in Seoul be 15°C on April 27?
+  - activity BUY 0.03 — Will the highest temperature in Seoul be 15°C on April 27?
+  - activity BUY 0.03 — Will the highest temperature in Seoul be 15°C on April 27?
+  - activity BUY 0.03 — Will the highest temperature in Seoul be 15°C on April 27?
+- **airlorgedr** rank 622 pnl $1,933: 11 matches
+  - positions No 0.9717 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+  - activity BUY 0.98 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+  - activity BUY 0.98 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+  - activity BUY 0.976 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+  - activity BUY 0.98 — Will the highest temperature in Seoul be 23°C or higher on April 27?
+
+## Recent Seoul-any-date specialists
+- **xX25Xx** rank 59 pnl $18,841: 27 recent Seoul temp rows
+  -  0 — Will the highest temperature in Seoul be 15°C on March 27?
+  -  0 — Will the highest temperature in Seoul be 7°C on March 27?
+- **Maskache2** rank 19 pnl $49,973: 62 recent Seoul temp rows
+  - SELL 0.98 — Will the highest temperature in Seoul be 20°C on April 25?
+  - SELL 0.98 — Will the highest temperature in Seoul be 20°C on April 25?
+- **Railbird** rank 42 pnl $23,358: 9 recent Seoul temp rows
+  -  0 — Will the highest temperature in Seoul be 17°C on April 25?
+  -  0 — Will the highest temperature in Seoul be 18°C on April 25?
+- **mjf02** rank 78 pnl $14,776: 57 recent Seoul temp rows
+  - BUY 0.08 — Will the highest temperature in Seoul be 11°C on April 6?
+  - BUY 0.08 — Will the highest temperature in Seoul be 11°C on April 6?
+- **dpnd** rank 41 pnl $24,134: 5 recent Seoul temp rows
+  - BUY 0.19 — Will the highest temperature in Seoul be 17°C on April 27?
+  - BUY 0.11 — Will the highest temperature in Seoul be 16°C on April 27?
+- **kamikazetrading** rank 109 pnl $10,870: 49 recent Seoul temp rows
+  - BUY 0.17 — Will the highest temperature in Seoul be 19°C on April 26?
+  - SELL 0.4538714285714286 — Will the highest temperature in Seoul be 21°C or higher on April 25?
+- **0x4CE3f17Be91C3d0D6dbFed7Bd4D326957dec4291-1768045938794** rank 100 pnl $11,589: 9 recent Seoul temp rows
+  -  0 — Will the highest temperature in Seoul be 21°C or higher on April 24?
+  - BUY 0.85 — Will the highest temperature in Seoul be 21°C or higher on April 25?
+- **huskyvs** rank 125 pnl $9,289: 29 recent Seoul temp rows
+  - SELL 0.95 — Will the highest temperature in Seoul be 21°C or higher on April 25?
+  - SELL 0.95 — Will the highest temperature in Seoul be 21°C or higher on April 25?
+- **0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210** rank 111 pnl $10,475: 5 recent Seoul temp rows
+  - BUY 0.9787702029873612 — Will the highest temperature in Seoul be 15°C on April 27?
+  - BUY 0.99 — Will the highest temperature in Seoul be 13°C or below on April 27?
+- **FohnHairdryer** rank 136 pnl $8,419: 124 recent Seoul temp rows
+  - BUY 0.012 — Will the highest temperature in Seoul be 17°C on April 26?
+  - BUY 0.18 — Will the highest temperature in Seoul be 17°C on April 27?
+- **Lex-tang** rank 116 pnl $9,832: 3 recent Seoul temp rows
+  - BUY 0.166 — Will the highest temperature in Seoul be 21°C or higher on April 25?
+  - BUY 0.24 — Will the highest temperature in Seoul be 20°C on April 25?
+- **neophyt** rank 127 pnl $9,044: 10 recent Seoul temp rows
+  - BUY 0.62 — Will the highest temperature in Seoul be 20°C or higher on April 26?
+  -  0 — Will the highest temperature in Seoul be 21°C or higher on April 24?
+- **marchyel** rank 171 pnl $6,710: 2 recent Seoul temp rows
+  - BUY 0.28 — Will the highest temperature in Seoul be 9°C on December 29?
+  - BUY 0.3441193308882727 — Will the highest temperature in Seoul be 0°C on December 25?
+- **0x77266604E63f5cAF08D19CaEBae0C563ce64aEE** rank 40 pnl $24,256: 200 recent Seoul temp rows
+  - BUY 0.022 — Will the highest temperature in Seoul be 19°C on April 25?
+  - BUY 0.02200000000551981 — Will the highest temperature in Seoul be 19°C on April 25?
+- **738925** rank 110 pnl $10,623: 1 recent Seoul temp rows
+  - BUY 0.001 — Will the highest temperature in Seoul be 20°C on April 25?

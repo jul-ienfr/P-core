@@ -1,0 +1,481 @@
+{
+  "archetype_counts": {
+    "event_surface_grid_specialist": 52,
+    "exact_bin_anomaly_hunter": 18,
+    "threshold_harvester": 3,
+    "weather_signal_generalist": 7
+  },
+  "artifacts": {
+    "classified_summary_json": "data/polymarket/weather_profitable_accounts_classified_top100_live_refresh_summary.json",
+    "continued_summary_json": "data/polymarket/weather_profitable_accounts_continued_summary_20260425.json",
+    "future_consensus_json": "data/polymarket/weather_future_consensus_source_check_20260425.json",
+    "orderbook_bridge_json": "data/polymarket/weather_future_consensus_orderbook_check_20260425.json",
+    "output_json": "data/polymarket/weather_winning_patterns_operator_report_20260425.json",
+    "output_md": "data/polymarket/weather_winning_patterns_operator_report_20260425.md",
+    "strategy_patterns_json": "data/polymarket/weather_profitable_strategy_patterns_top80.json",
+    "strategy_report_json": "data/polymarket/weather_heavy_top80_strategy_report.json"
+  },
+  "consensus_surfaces": [
+    {
+      "accounts": 9,
+      "action_score": 570.0,
+      "city": "Moscow",
+      "date": "April 26",
+      "forecast_max_c": 10.0,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.994,
+      "signals": 32,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "12\u00b0C"
+    },
+    {
+      "accounts": 10,
+      "action_score": 529.5,
+      "city": "Shanghai",
+      "date": "April 26",
+      "forecast_max_c": 23.8,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.963,
+      "signals": 30,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "21\u00b0C"
+    },
+    {
+      "accounts": 8,
+      "action_score": 404.2,
+      "city": "Beijing",
+      "date": "April 26",
+      "forecast_max_c": 24.4,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.977,
+      "signals": 23,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "22\u00b0C"
+    },
+    {
+      "accounts": 10,
+      "action_score": 348.5,
+      "city": "Seoul",
+      "date": "April 26",
+      "forecast_max_c": 22.6,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.91,
+      "signals": 28,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "17\u00b0C"
+    },
+    {
+      "accounts": 11,
+      "action_score": 332.6,
+      "city": "Munich",
+      "date": "April 26",
+      "forecast_max_c": 18.3,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.879,
+      "signals": 38,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "16\u00b0C"
+    },
+    {
+      "accounts": 3,
+      "action_score": 305.5,
+      "city": "Shanghai",
+      "date": "April 27",
+      "forecast_max_c": 25.8,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.983,
+      "signals": 29,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "24\u00b0C"
+    },
+    {
+      "accounts": 6,
+      "action_score": 299.5,
+      "city": "Seoul",
+      "date": "April 27",
+      "forecast_max_c": 16.5,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.983,
+      "signals": 23,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "15\u00b0C"
+    },
+    {
+      "accounts": 11,
+      "action_score": 292.8,
+      "city": "London",
+      "date": "April 26",
+      "forecast_max_c": 18.2,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.791,
+      "signals": 27,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "20\u00b0C"
+    },
+    {
+      "accounts": 5,
+      "action_score": 250.2,
+      "city": "Munich",
+      "date": "April 27",
+      "forecast_max_c": null,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.988,
+      "signals": 34,
+      "source_verdict": "fetch_error",
+      "top_temp": "18\u00b0C"
+    },
+    {
+      "accounts": 9,
+      "action_score": 238.3,
+      "city": "Ankara",
+      "date": "April 26",
+      "forecast_max_c": 20.4,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.637,
+      "signals": 32,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "18\u00b0C"
+    },
+    {
+      "accounts": 9,
+      "action_score": 230.1,
+      "city": "Tel Aviv",
+      "date": "April 26",
+      "forecast_max_c": 24.5,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.832,
+      "signals": 24,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "22\u00b0C"
+    },
+    {
+      "accounts": 6,
+      "action_score": 218.8,
+      "city": "Denver",
+      "date": "April 26",
+      "forecast_max_c": 14.8,
+      "operator_status": "source_proxy_aligned_needs_official_check",
+      "side": "NO",
+      "side_share": 0.83,
+      "signals": 20,
+      "source_verdict": "NO_aligned_with_proxy_exact_bin_false",
+      "top_temp": "64\u00b0F"
+    }
+  ],
+  "discord_brief": "M\u00e9t\u00e9o patterns gagnants: 85 comptes weather-heavy/mixed sur 10050 positifs. Pattern dominant: surface ville/date compl\u00e8te + source officielle + strict-limit. Top surface: Moscow April 26 NO 12\u00b0C.",
+  "implementation_priorities": [
+    "event_surface_builder",
+    "near_resolution_threshold_watcher",
+    "trader_activity_history_import",
+    "strategy_backtest_replay",
+    "paper_then_live_execution_loop"
+  ],
+  "orderbook_candidates": [
+    {
+      "accounts": 9,
+      "city": "Moscow",
+      "combined_score": 968.653,
+      "date": "April 26",
+      "label": "12\u00b0C",
+      "market_id": "2065210",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 32,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.987,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 8652.868749
+    },
+    {
+      "accounts": 10,
+      "city": "Shanghai",
+      "combined_score": 937.251,
+      "date": "April 26",
+      "label": "21\u00b0C",
+      "market_id": "2065032",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 30,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.954,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 7751.317905
+    },
+    {
+      "accounts": 8,
+      "city": "Beijing",
+      "combined_score": 760.67,
+      "date": "April 26",
+      "label": "22\u00b0C",
+      "market_id": "2065108",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 23,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.995,
+      "target_avg20": null,
+      "tradability": "extreme_or_missing",
+      "volume": 3269.908508
+    },
+    {
+      "accounts": 11,
+      "city": "Munich",
+      "combined_score": 605.649,
+      "date": "April 26",
+      "label": "16\u00b0C",
+      "market_id": "2064990",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 38,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.991,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 2849.046556
+    },
+    {
+      "accounts": 3,
+      "city": "Shanghai",
+      "combined_score": 556.871,
+      "date": "April 27",
+      "label": "24\u00b0C",
+      "market_id": "2074474",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 29,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.965,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 1471.34089
+    },
+    {
+      "accounts": 6,
+      "city": "Seoul",
+      "combined_score": 537.773,
+      "date": "April 27",
+      "label": "15\u00b0C",
+      "market_id": "2074308",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 23,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.978,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 2273.292452
+    },
+    {
+      "accounts": 11,
+      "city": "London",
+      "combined_score": 532.262,
+      "date": "April 26",
+      "label": "20\u00b0C",
+      "market_id": "2064828",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 27,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.975,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 3162.193549
+    },
+    {
+      "accounts": 5,
+      "city": "Munich",
+      "combined_score": 524.728,
+      "date": "April 27",
+      "label": "18\u00b0C",
+      "market_id": "2074433",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 34,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.93,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 1528.026828
+    },
+    {
+      "accounts": 10,
+      "city": "Seoul",
+      "combined_score": 481.954,
+      "date": "April 26",
+      "label": "17\u00b0C",
+      "market_id": "2064871",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 28,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.992,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 7654.258637
+    },
+    {
+      "accounts": 9,
+      "city": "Ankara",
+      "combined_score": 408.299,
+      "date": "April 26",
+      "label": "18\u00b0C",
+      "market_id": "2064957",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 32,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.978,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 2298.858687
+    },
+    {
+      "accounts": 9,
+      "city": "Tel Aviv",
+      "combined_score": 391.974,
+      "date": "April 26",
+      "label": "22\u00b0C",
+      "market_id": "2064997",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 24,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.993,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 1674.177272
+    },
+    {
+      "accounts": 6,
+      "city": "Denver",
+      "combined_score": 369.532,
+      "date": "April 26",
+      "label": "64\u00b0F",
+      "market_id": "2065171",
+      "operator_note": null,
+      "side": "NO",
+      "signals": 20,
+      "source_status": "proxy_aligned",
+      "target_ask": 0.955,
+      "target_avg20": null,
+      "tradability": "ok",
+      "volume": 4432.186793
+    }
+  ],
+  "rules": [
+    {
+      "id": "R1",
+      "name": "surface compl\u00e8te",
+      "operator_rule": "Group all markets by city/date/unit before scoring isolated bins."
+    },
+    {
+      "id": "R2",
+      "name": "side par source",
+      "operator_rule": "Choose YES/NO from the official settlement source, not from trader consensus alone."
+    },
+    {
+      "id": "R3",
+      "name": "incoh\u00e9rences voisines",
+      "operator_rule": "Prioritize thresholds/bins whose prices contradict neighboring bins or the implied temperature distribution."
+    },
+    {
+      "id": "R4",
+      "name": "consensus = carte",
+      "operator_rule": "Use profitable-account activity to select surfaces to inspect; require source and book validation before paper/live."
+    },
+    {
+      "id": "R5",
+      "name": "strict limit",
+      "operator_rule": "Enter only at strict limit when spread/slippage keep positive net edge."
+    },
+    {
+      "id": "R6",
+      "name": "caps portefeuille",
+      "operator_rule": "Prefer many tiny independent edges over one large conviction; cap by city/date/surface."
+    },
+    {
+      "id": "R7",
+      "name": "proxy s\u00e9par\u00e9",
+      "operator_rule": "Treat forecast proxies as filters only; official source pending means watch/paper-only at most."
+    }
+  ],
+  "summary": {
+    "classified_counts": {
+      "not enough public recent data to classify": 9,
+      "profitable in weather but currently/recently generalist": 6,
+      "weather specialist / weather-heavy": 67,
+      "weather-heavy mixed": 18
+    },
+    "positive_weather_accounts": 10050,
+    "top80_accounts_analyzed": 80,
+    "weather_heavy_or_mixed_accounts": 85
+  },
+  "top_cities": [
+    {
+      "city": "London",
+      "count": 1336
+    },
+    {
+      "city": "Seoul",
+      "count": 1249
+    },
+    {
+      "city": "New York City",
+      "count": 1060
+    },
+    {
+      "city": "Hong Kong",
+      "count": 961
+    },
+    {
+      "city": "Paris",
+      "count": 763
+    },
+    {
+      "city": "Ankara",
+      "count": 711
+    },
+    {
+      "city": "Miami",
+      "count": 632
+    },
+    {
+      "city": "Munich",
+      "count": 473
+    },
+    {
+      "city": "Madrid",
+      "count": 456
+    },
+    {
+      "city": "Denver",
+      "count": 426
+    },
+    {
+      "city": "Moscow",
+      "count": 425
+    },
+    {
+      "city": "Helsinki",
+      "count": 413
+    }
+  ],
+  "weather_title_kind_counts": {
+    "other_weather": 30,
+    "range_or_bin": 15305,
+    "threshold": 2734
+  }
+}

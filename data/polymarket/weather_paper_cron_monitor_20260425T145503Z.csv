@@ -1,0 +1,9 @@
+city,date,station,side,temp,unit,kind,filled_usdc,shares,entry_avg,current_forecast_max_c,forecast_move_c,best_bid_now,best_ask_now,p_side_now,edge_vs_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,action,reason,official_resolution_source_status,official_resolution_source
+Seoul,April 26,RKSI,NO,20,C,higher,17.24,70.485867,0.2446,16.0,-2.0,0.27,0.29,0.9938,0.7038,52.809,1.791,HOLD_CAPPED,large/capped position; no further add,available,https://www.wunderground.com/history/daily/kr/incheon/RKSI
+Beijing,April 26,ZBAA,NO,25,C,exact,15.0,24.1935,0.62,25.0,-1.0,0.61,0.62,0.721,0.101,2.444,-0.242,HOLD_CAPPED,large/capped position; no further add,available,https://www.wunderground.com/history/daily/cn/beijing/ZBAA
+Munich,April 26,EDDM,NO,18,C,exact,10.0,14.0845,0.71,16.0,-4.0,0.69,0.72,0.8951,0.1751,2.607,-0.282,HOLD_CAPPED,large/capped position; no further add,available,https://www.wunderground.com/history/daily/de/munich/EDDM
+Seoul,April 27,RKSI,NO,19,C,exact,10.0,12.1952,0.82,17.0,1.0,0.8,0.81,0.8951,0.0851,0.916,-0.244,HOLD_CAPPED,large/capped position; no further add,available,https://www.wunderground.com/history/daily/kr/incheon/RKSI
+Shanghai,April 26,ZSPD,NO,23,C,exact,4.7552,7.43,0.64,23.0,1.0,0.63,0.66,0.721,0.061,0.602,-0.074,HOLD_MONITOR,OK,available,https://www.wunderground.com/history/daily/cn/shanghai/ZSPD
+Munich,April 26,EDDM,NO,19,C,exact,5.0,7.6923,0.65,16.0,-4.0,0.65,0.68,0.9691,0.2891,2.455,-0.0,HOLD_MONITOR,OK,available,https://www.wunderground.com/history/daily/de/munich/EDDM
+Beijing,April 26,ZBAA,NO,24,C,exact,2.0,2.439,0.82,25.0,-1.0,0.8,0.84,0.7815,-0.0585,-0.094,-0.049,EXIT_PAPER,p_side 0.7815 < hard_stop 0.7900,available,https://www.wunderground.com/history/daily/cn/beijing/ZBAA
+Karachi,April 27,OPKC,NO,36,C,higher,10.0,18.867925,0.53,33.0,-1.0,0.38,0.55,0.9629,0.4129,8.168,-2.83,HOLD_CAPPED,large/capped position; no further add,available,https://www.wunderground.com/history/daily/pk/karachi/OPKC

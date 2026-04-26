@@ -1,0 +1,6 @@
+paper_status,stress_risk_bucket,city,date,station,label,outcome,paper_budget_usdc,limit_price_max,live_best_ask,live_best_bid,paper_ev_usdc_proxy,station_forecast_max_c,proxy_p_yes,proxy_p_no,yes_best_ask,no_best_ask,stress_positive_rate,stress_worst_edge,stress_median_edge,unique_accounts,signal_count,question
+FILLED_LIMIT,robust,Seoul,April 26,RKSI,20C or higher,No,15,0.32,0.27,0.25,36.1275,17.22,0.0517,0.9483,0.75,0.27,1.0,0.2698,0.6195,17,85,Will the highest temperature in Seoul be 20°C or higher on April 26?
+FILLED_LIMIT,robust,London,April 26,EGLC,18C,No,10,0.545,0.53,0.5,2.4058,18.89,0.2299,0.7701,0.5,0.53,1.0,0.0892,0.3318,20,75,Will the highest temperature in London be 18°C on April 26?
+FILLED_LIMIT,robust,Tokyo,April 26,RJTT,20C,No,10,0.575,0.56,0.53,2.875,20.0,0.279,0.721,0.48,0.56,1.0,0.0571,0.3026,21,88,Will the highest temperature in Tokyo be 20°C on April 26?
+FILLED_LIMIT,robust,Wellington,April 26,NZWN,17C,No,10,0.575,0.56,0.53,2.9339,17.22,0.2757,0.7243,0.47,0.56,1.0,0.0655,0.3012,17,69,Will the highest temperature in Wellington be 17°C on April 26?
+FILLED_LIMIT,robust,Singapore,April 26,WSSS,33C,No,10,0.635,0.62,0.6,3.2081,31.67,0.1811,0.8189,0.43,0.62,1.0,0.0158,0.2407,17,63,Will the highest temperature in Singapore be 33°C on April 26?

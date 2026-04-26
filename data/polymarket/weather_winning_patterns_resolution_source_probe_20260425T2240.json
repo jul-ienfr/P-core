@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-04-25T22:38:26Z",
+  "markets": [
+    {
+      "error": null,
+      "fields": {
+        "clobTokenIds": "[\"100023538109703029369758880772985456383696908863055471601914342598226690190092\", \"37487327121072705539749608133190437872064311389429081806066909545037248605713\"]",
+        "description": "This market will resolve to the temperature range that contains the highest temperature recorded by NOAA at the Vnukovo International Airport in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from NOAA, specifically the highest reading under the \"Temp\" column on the specified date once information is finalized for all hours on that date, available here: https://www.weather.gov/wrh/timeseries?site=UUWW\n\nTo toggle between Fahrenheit and Celsius, click the \"Switch to Metric Units\" button until the relevant table displays \u00b0C.\n\nThis market can not resolve to \"Yes\" until data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.",
+        "endDate": "2026-04-26T12:00:00Z",
+        "id": "2065210",
+        "outcomePrices": "[\"0.0225\", \"0.9775\"]",
+        "outcomes": "[\"Yes\", \"No\"]",
+        "question": "Will the highest temperature in Moscow be 12\u00b0C on April 26?",
+        "slug": "highest-temperature-in-moscow-on-april-26-2026-12c",
+        "startDate": "2026-04-24T04:18:31.569739Z",
+        "umaBond": "500",
+        "umaReward": "5"
+      },
+      "market_id": "2065210",
+      "ok": true,
+      "source_hints": [
+        "for this market will be information from NOAA, specifically the highest reading under the \"Temp\" column on the specified date once information is finalized for all hours on that date, available here: https://www",
+        "for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C",
+        "https://www.weather.gov/wrh/timeseries?site=UUWW"
+      ],
+      "source_text_excerpt": "This market will resolve to the temperature range that contains the highest temperature recorded by NOAA at the Vnukovo International Airport in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from NOAA, specifically the highest reading under the \"Temp\" column on the specified date once information is finalized for all hours on that date, available here: https://www.weather.gov/wrh/timeseries?site=UUWW\n\nTo toggle between Fahrenheit and Celsius, click the \"Switch to Metric Units\" button until the relevant table displays \u00b0C.\n\nThis market can not resolve to \"Yes\" until data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.\n\n"
+    },
+    {
+      "error": null,
+      "fields": {
+        "clobTokenIds": "[\"12831021511186173169760771467704558297855560104655134100790042154273917383333\", \"84770944915456838599766873023889328577144305067901486894506732613341464740700\"]",
+        "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Shanghai Pudong International Airport Station in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Shanghai Pudong International Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/cn/shanghai/ZSPD.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.",
+        "endDate": "2026-04-26T12:00:00Z",
+        "id": "2065032",
+        "outcomePrices": "[\"0.0545\", \"0.9455\"]",
+        "outcomes": "[\"Yes\", \"No\"]",
+        "question": "Will the highest temperature in Shanghai be 21\u00b0C on April 26?",
+        "resolutionSource": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD",
+        "slug": "highest-temperature-in-shanghai-on-april-26-2026-21c",
+        "startDate": "2026-04-24T04:33:27.785989Z",
+        "umaBond": "500",
+        "umaReward": "5"
+      },
+      "market_id": "2065032",
+      "ok": true,
+      "source_hints": [
+        "for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Shanghai Pudong International Airport Station once information is finalized, available here: https://www",
+        "for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C",
+        "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD"
+      ],
+      "source_text_excerpt": "This market will resolve to the temperature range that contains the highest temperature recorded at the Shanghai Pudong International Airport Station in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Shanghai Pudong International Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/cn/shanghai/ZSPD.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.\nhttps://www.wunderground.com/history/daily/cn/shanghai/ZSPD\n"
+    },
+    {
+      "error": null,
+      "fields": {
+        "clobTokenIds": "[\"114619580287372682587465163103045782788964253597956655510571944628262263538884\", \"61736232760892997033667032190091491555977286300406047476519803810866214301600\"]",
+        "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Shanghai Pudong International Airport Station in degrees Celsius on 27 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Shanghai Pudong International Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/cn/shanghai/ZSPD.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.",
+        "endDate": "2026-04-27T12:00:00Z",
+        "id": "2074474",
+        "outcomePrices": "[\"0.0135\", \"0.9865\"]",
+        "outcomes": "[\"Yes\", \"No\"]",
+        "question": "Will the highest temperature in Shanghai be 24\u00b0C on April 27?",
+        "resolutionSource": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD",
+        "slug": "highest-temperature-in-shanghai-on-april-27-2026-24c",
+        "startDate": "2026-04-25T05:02:15.362696Z",
+        "umaBond": "500",
+        "umaReward": "5"
+      },
+      "market_id": "2074474",
+      "ok": true,
+      "source_hints": [
+        "for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Shanghai Pudong International Airport Station once information is finalized, available here: https://www",
+        "for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C",
+        "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD"
+      ],
+      "source_text_excerpt": "This market will resolve to the temperature range that contains the highest temperature recorded at the Shanghai Pudong International Airport Station in degrees Celsius on 27 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Shanghai Pudong International Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/cn/shanghai/ZSPD.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.\nhttps://www.wunderground.com/history/daily/cn/shanghai/ZSPD\n"
+    },
+    {
+      "error": null,
+      "fields": {
+        "clobTokenIds": "[\"2956569303963729746334462212584195978903530044354995435412854229444332513051\", \"1492992677062604626096168632540137522103945928706827888441128399310634392710\"]",
+        "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Beijing Capital International Airport Station in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Beijing Capital International Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/cn/beijing/ZBAA.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.",
+        "endDate": "2026-04-26T12:00:00Z",
+        "id": "2065108",
+        "outcomePrices": "[\"0.0075\", \"0.9925\"]",
+        "outcomes": "[\"Yes\", \"No\"]",
+        "question": "Will the highest temperature in Beijing be 22\u00b0C on April 26?",
+        "resolutionSource": "https://www.wunderground.com/history/daily/cn/beijing/ZBAA",
+        "slug": "highest-temperature-in-beijing-on-april-26-2026-22c",
+        "startDate": "2026-04-24T04:25:59.501566Z",
+        "umaBond": "500",
+        "umaReward": "5"
+      },
+      "market_id": "2065108",
+      "ok": true,
+      "source_hints": [
+        "for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Beijing Capital International Airport Station once information is finalized, available here: https://www",
+        "for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C",
+        "https://www.wunderground.com/history/daily/cn/beijing/ZBAA"
+      ],
+      "source_text_excerpt": "This market will resolve to the temperature range that contains the highest temperature recorded at the Beijing Capital International Airport Station in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Beijing Capital International Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/cn/beijing/ZBAA.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.\nhttps://www.wunderground.com/history/daily/cn/beijing/ZBAA\n"
+    },
+    {
+      "error": null,
+      "fields": {
+        "clobTokenIds": "[\"21886288311114367476190858945365487925874310800246347282076568796168060003799\", \"36078689756507888311568989565986567551875097577582445740164860714464782203260\"]",
+        "description": "This market will resolve to the temperature range that contains the highest temperature recorded at the Munich Airport Station in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Munich Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/de/munich/EDDM.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.",
+        "endDate": "2026-04-26T12:00:00Z",
+        "id": "2064990",
+        "outcomePrices": "[\"0.0085\", \"0.9915\"]",
+        "outcomes": "[\"Yes\", \"No\"]",
+        "question": "Will the highest temperature in Munich be 16\u00b0C on April 26?",
+        "resolutionSource": "https://www.wunderground.com/history/daily/de/munich/EDDM",
+        "slug": "highest-temperature-in-munich-on-april-26-2026-16c",
+        "startDate": "2026-04-24T04:15:15.879632Z",
+        "umaBond": "500",
+        "umaReward": "5"
+      },
+      "market_id": "2064990",
+      "ok": true,
+      "source_hints": [
+        "for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Munich Airport Station once information is finalized, available here: https://www",
+        "for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C",
+        "https://www.wunderground.com/history/daily/de/munich/EDDM"
+      ],
+      "source_text_excerpt": "This market will resolve to the temperature range that contains the highest temperature recorded at the Munich Airport Station in degrees Celsius on 26 Apr '26.\n\nThe resolution source for this market will be information from Wunderground, specifically the highest temperature recorded for all times on this day by the Forecast for the Munich Airport Station once information is finalized, available here: https://www.wunderground.com/history/daily/de/munich/EDDM.\n\nTo toggle between Fahrenheit and Celsius, click the gear icon next to the search bar and switch the Temperature setting between \u00b0F and \u00b0C.\n\nThis market can not resolve to \"Yes\" until all data for this date has been finalized.\n\nThe resolution source for this market measures temperatures to whole degrees Celsius (eg, 9\u00b0C). Thus, this is the level of precision that will be used when resolving the market.\n\nAny revisions to temperatures recorded after data is finalized for this market's timeframe will not be considered for this market's resolution.\nhttps://www.wunderground.com/history/daily/de/munich/EDDM\n"
+    }
+  ]
+}

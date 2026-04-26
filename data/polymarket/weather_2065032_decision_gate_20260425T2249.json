@@ -1,0 +1,28 @@
+{
+  "current_partial_max": {
+    "source_url": "https://api.weather.com/v1/location/ZSPD:9:CN/observations/historical.json?apiKey=<weather_com_api_key>&units=e&startDate=20260426&endDate=20260426",
+    "temp_c": 12.8,
+    "temp_f": 55,
+    "time": 1777132800
+  },
+  "execution": {
+    "last_no_ask": 0.954,
+    "max_paper_budget_usdc": 0.45,
+    "no_real_order": true,
+    "paper_only": true,
+    "reason": "top ask size too thin; only tiny realistic paper fill if still available after final/source check",
+    "strict_limit": 0.954,
+    "top_ask_size": 0.47
+  },
+  "finality": "partial_day_not_finalized",
+  "generated_at": "2026-04-25T22:41:34Z",
+  "historical_api_available": true,
+  "market_id": "2065032",
+  "observations_count": 13,
+  "operator_action": "WAIT_FINAL_HISTORY_THEN_TINY_PAPER_IF_NO_21C_AND_ASK_LE_LIMIT",
+  "provisional_verdict": "NO_21C_supported_so_far",
+  "side": "NO",
+  "source": "Wunderground ZSPD historical API",
+  "source_url": "https://www.wunderground.com/history/daily/cn/shanghai/ZSPD/date/2026-04-26",
+  "surface": "Shanghai Apr 26 exact 21\u00b0C"
+}

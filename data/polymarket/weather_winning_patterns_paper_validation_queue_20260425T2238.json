@@ -1,0 +1,168 @@
+{
+  "generated_at": "2026-04-25T22:37:18Z",
+  "no_real_orders": true,
+  "paper_only": true,
+  "queue": [
+    {
+      "action": "SOURCE_CHECK_FIRST_THEN_PAPER_LIMIT",
+      "blockers": [
+        "official_source_not_confirmed"
+      ],
+      "city": "Moscow",
+      "date": "April 26",
+      "live_no_best_ask": 0.988,
+      "live_no_best_ask_size": 100.0,
+      "live_no_best_bid": 0.967,
+      "live_no_best_bid_size": 105.17,
+      "market_id": "2065210",
+      "matched_accounts": 9,
+      "no_real_order": true,
+      "original_combined_score": 968.653,
+      "paper_budget_usdc": 2.0,
+      "paper_only": true,
+      "question": "Will the highest temperature in Moscow be 12\u00b0C on April 26?",
+      "rank_score": 629.624,
+      "side": "NO",
+      "signals": 32,
+      "source_plan": {
+        "required": "confirm exact settlement source before any simulated fill",
+        "source": "Moscow official station/source from Polymarket rules",
+        "status": "manual_official_source_required"
+      },
+      "strict_limit": 0.988,
+      "threshold": 12.0,
+      "unit": "C"
+    },
+    {
+      "action": "SOURCE_CHECK_FIRST_THEN_PAPER_LIMIT",
+      "blockers": [
+        "thin_top_ask",
+        "official_source_not_confirmed"
+      ],
+      "city": "Shanghai",
+      "date": "April 26",
+      "live_no_best_ask": 0.954,
+      "live_no_best_ask_size": 0.47,
+      "live_no_best_bid": 0.95,
+      "live_no_best_bid_size": 8.0,
+      "market_id": "2065032",
+      "matched_accounts": 10,
+      "no_real_order": true,
+      "original_combined_score": 937.251,
+      "paper_budget_usdc": 5.0,
+      "paper_only": true,
+      "question": "Will the highest temperature in Shanghai be 21\u00b0C on April 26?",
+      "rank_score": 487.371,
+      "side": "NO",
+      "signals": 30,
+      "source_plan": {
+        "required": "confirm exact settlement source before any simulated fill",
+        "source": "China official/local station resolution source to confirm from Polymarket rules",
+        "status": "manual_official_source_required"
+      },
+      "strict_limit": 0.954,
+      "threshold": 21.0,
+      "unit": "C"
+    },
+    {
+      "action": "SOURCE_CHECK_FIRST_THEN_PAPER_LIMIT",
+      "blockers": [
+        "official_source_not_confirmed"
+      ],
+      "city": "Shanghai",
+      "date": "April 27",
+      "live_no_best_ask": 0.989,
+      "live_no_best_ask_size": 30.0,
+      "live_no_best_bid": 0.984,
+      "live_no_best_bid_size": 211.0,
+      "market_id": "2074474",
+      "matched_accounts": 3,
+      "no_real_order": true,
+      "original_combined_score": 556.871,
+      "paper_budget_usdc": 2.0,
+      "paper_only": true,
+      "question": "Will the highest temperature in Shanghai be 24\u00b0C on April 27?",
+      "rank_score": 361.966,
+      "side": "NO",
+      "signals": 29,
+      "source_plan": {
+        "required": "confirm exact settlement source before any simulated fill",
+        "source": "China official/local station resolution source to confirm from Polymarket rules",
+        "status": "manual_official_source_required"
+      },
+      "strict_limit": 0.989,
+      "threshold": 24.0,
+      "unit": "C"
+    },
+    {
+      "action": "MICRO_ONLY_AFTER_SOURCE_CHECK",
+      "blockers": [
+        "extreme_price",
+        "official_source_not_confirmed"
+      ],
+      "city": "Beijing",
+      "date": "April 26",
+      "live_no_best_ask": 0.998,
+      "live_no_best_ask_size": 90.9,
+      "live_no_best_bid": 0.987,
+      "live_no_best_bid_size": 99.99,
+      "market_id": "2065108",
+      "matched_accounts": 8,
+      "no_real_order": true,
+      "original_combined_score": 760.67,
+      "paper_budget_usdc": 1.0,
+      "paper_only": true,
+      "question": "Will the highest temperature in Beijing be 22\u00b0C on April 26?",
+      "rank_score": 173.052,
+      "side": "NO",
+      "signals": 23,
+      "source_plan": {
+        "required": "confirm exact settlement source before any simulated fill",
+        "source": "China official/local station resolution source to confirm from Polymarket rules",
+        "status": "manual_official_source_required"
+      },
+      "strict_limit": 0.998,
+      "threshold": 22.0,
+      "unit": "C"
+    },
+    {
+      "action": "MICRO_ONLY_AFTER_SOURCE_CHECK",
+      "blockers": [
+        "extreme_price",
+        "official_source_not_confirmed"
+      ],
+      "city": "Munich",
+      "date": "April 26",
+      "live_no_best_ask": 0.993,
+      "live_no_best_ask_size": 144.42,
+      "live_no_best_bid": 0.99,
+      "live_no_best_bid_size": 5.0,
+      "market_id": "2064990",
+      "matched_accounts": 11,
+      "no_real_order": true,
+      "original_combined_score": 605.649,
+      "paper_budget_usdc": 1.0,
+      "paper_only": true,
+      "question": "Will the highest temperature in Munich be 16\u00b0C on April 26?",
+      "rank_score": 137.785,
+      "side": "NO",
+      "signals": 38,
+      "source_plan": {
+        "required": "confirm exact settlement source before any simulated fill",
+        "source": "DWD/Munich official source from Polymarket rules",
+        "status": "manual_official_source_required"
+      },
+      "strict_limit": 0.993,
+      "threshold": 16.0,
+      "unit": "C"
+    }
+  ],
+  "source_live_validation": "data/polymarket/weather_winning_patterns_live_validation_20260425T2234.json",
+  "summary": {
+    "candidates": 5,
+    "eligible_now": 0,
+    "micro_only": 2,
+    "source_check_first": 3,
+    "top_market_id": "2065210"
+  }
+}

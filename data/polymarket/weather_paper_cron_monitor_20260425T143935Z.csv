@@ -1,0 +1,9 @@
+action,city,date,side,temp,filled_usdc,shares,entry_avg,forecast_target_date,current_forecast_max_c,forecast_move_c,p_side_now,best_bid_now,best_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,hard_stop_if_p_below,official_resolution_source_status,reason
+HOLD_CAPPED,Seoul,April 26,NO,20,17.24,70.485867,0.2446,2026-04-26,16,-2,0.9691,0.24,0.28,51.068,-0.323,0.2146,available,OK; capped no-add
+EXIT_PAPER,Beijing,April 26,NO,25,15.0,24.1935,0.62,2026-04-26,25,-1,0.5,0.61,0.62,-2.903,-0.242,0.59,available,p_side below hard stop
+HOLD,Munich,April 26,NO,18,10.0,14.0845,0.71,2026-04-26,16,-4,0.8951,0.69,0.7,2.607,-0.282,0.68,available,OK; no fresh add by cron rule
+HOLD,Seoul,April 27,NO,19,10.0,12.1952,0.82,2026-04-27,17,1,0.8951,0.81,0.82,0.916,-0.122,0.79,available,OK; no fresh add by cron rule
+EXIT_PAPER,Shanghai,April 26,NO,23,4.7552,7.43,0.64,2026-04-26,23,1,0.5,0.63,0.68,-1.04,-0.074,0.61,available,p_side below hard stop
+HOLD,Munich,April 26,NO,19,5.0,7.6923,0.65,2026-04-26,16,-4,0.9691,0.66,0.68,2.455,0.077,0.62,available,OK; no fresh add by cron rule
+EXIT_PAPER,Beijing,April 26,NO,24,2.0,2.439,0.82,2026-04-26,25,-1,0.7815,0.81,0.83,-0.094,-0.024,0.79,available,p_side below hard stop
+HOLD_NEW_CAPPED,Karachi,April 27,NO,36,10.0,18.867925,0.53,2026-04-27,33,-1,0.9691,0.37,0.54,8.285,-3.019,0.5,available,OK; capped no-add

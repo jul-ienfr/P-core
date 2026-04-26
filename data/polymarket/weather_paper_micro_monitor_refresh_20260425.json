@@ -1,0 +1,302 @@
+{
+  "generated_at": "2026-04-25T14:22:52.752398Z",
+  "mode": "paper monitor refresh only, no real orders",
+  "summary_counts": {
+    "CAN_ADD_MICRO_PAPER": 3,
+    "HOLD_PAPER": 2,
+    "HOLD_NO_ADD_PRICE_MOVED": 2,
+    "PENDING_LIMIT_STILL_NOT_FILLABLE": 1
+  },
+  "monitor": [
+    {
+      "city": "Seoul",
+      "date": "April 26",
+      "station": "RKSI",
+      "side": "NO",
+      "temp": 20,
+      "unit": "C",
+      "kind": "higher",
+      "risk_bucket": "robust",
+      "entry_avg": 0.28,
+      "filled_usdc": 2.24,
+      "old_forecast_max_c": 18,
+      "current_forecast_max_c": 18,
+      "forecast_move_c": 0,
+      "p_side_now": 0.858,
+      "edge_vs_entry_now": 0.578,
+      "best_ask_now": 0.24,
+      "best_bid_now": 0.21,
+      "strict_limit": 0.2806,
+      "edge_vs_ask_now": 0.618,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 5.0,
+        "shares": 20.8192,
+        "avg_price": 0.2402,
+        "fully_filled": true,
+        "levels": [
+          {
+            "price": 0.24,
+            "cost": 4.9152,
+            "shares": 20.48
+          },
+          {
+            "price": 0.25,
+            "cost": 0.0848,
+            "shares": 0.3392
+          }
+        ]
+      },
+      "action": "CAN_ADD_MICRO_PAPER",
+      "forecast_narrative": "Mainly sunny. Highs 17 to 19C and lows 10 to 12C.",
+      "question": "Will the highest temperature in Seoul be 20°C or higher on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026"
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "side": "NO",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "risk_bucket": "robust",
+      "entry_avg": 0.62,
+      "filled_usdc": 10.0,
+      "old_forecast_max_c": 26,
+      "current_forecast_max_c": 26,
+      "forecast_move_c": 0,
+      "p_side_now": 0.7815,
+      "edge_vs_entry_now": 0.1615,
+      "best_ask_now": 0.62,
+      "best_bid_now": 0.61,
+      "strict_limit": 0.62,
+      "edge_vs_ask_now": 0.1615,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 5.0,
+        "shares": 8.0645,
+        "avg_price": 0.62,
+        "fully_filled": true,
+        "levels": [
+          {
+            "price": 0.62,
+            "cost": 5.0,
+            "shares": 8.0645
+          }
+        ]
+      },
+      "action": "CAN_ADD_MICRO_PAPER",
+      "forecast_narrative": "Cloudy. Highs 25 to 27C and lows 10 to 12C.",
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 27",
+      "station": "RKSI",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "risk_bucket": "robust",
+      "entry_avg": 0.82,
+      "filled_usdc": 5.0,
+      "old_forecast_max_c": 16,
+      "current_forecast_max_c": 16,
+      "forecast_move_c": 0,
+      "p_side_now": 0.9691,
+      "edge_vs_entry_now": 0.1491,
+      "best_ask_now": 0.82,
+      "best_bid_now": 0.8,
+      "strict_limit": 0.82,
+      "edge_vs_ask_now": 0.1491,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 5.0,
+        "shares": 6.0976,
+        "avg_price": 0.82,
+        "fully_filled": true,
+        "levels": [
+          {
+            "price": 0.82,
+            "cost": 5.0,
+            "shares": 6.0976
+          }
+        ]
+      },
+      "action": "CAN_ADD_MICRO_PAPER",
+      "forecast_narrative": "Mostly cloudy. Highs 15 to 17C and lows 9 to 11C.",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026"
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "risk_bucket": "medium",
+      "entry_avg": 0.71,
+      "filled_usdc": 10.0,
+      "old_forecast_max_c": 20,
+      "current_forecast_max_c": 20,
+      "forecast_move_c": 0,
+      "p_side_now": 0.8951,
+      "edge_vs_entry_now": 0.1851,
+      "best_ask_now": 0.71,
+      "best_bid_now": 0.68,
+      "strict_limit": 0.71,
+      "edge_vs_ask_now": 0.1851,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 2.0,
+        "shares": 2.8169,
+        "avg_price": 0.71,
+        "fully_filled": true,
+        "levels": [
+          {
+            "price": 0.71,
+            "cost": 2.0,
+            "shares": 2.8169
+          }
+        ]
+      },
+      "action": "HOLD_PAPER",
+      "forecast_narrative": "Times of sun and clouds. Highs 19 to 21C and lows 0 to 2C.",
+      "question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026"
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "side": "NO",
+      "temp": 24,
+      "unit": "C",
+      "kind": "exact",
+      "risk_bucket": "medium",
+      "entry_avg": 0.82,
+      "filled_usdc": 2.0,
+      "old_forecast_max_c": 26,
+      "current_forecast_max_c": 26,
+      "forecast_move_c": 0,
+      "p_side_now": 0.8951,
+      "edge_vs_entry_now": 0.0751,
+      "best_ask_now": 0.82,
+      "best_bid_now": 0.81,
+      "strict_limit": 0.82,
+      "edge_vs_ask_now": 0.0751,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 2.0,
+        "shares": 2.439,
+        "avg_price": 0.82,
+        "fully_filled": true,
+        "levels": [
+          {
+            "price": 0.82,
+            "cost": 2.0,
+            "shares": 2.439
+          }
+        ]
+      },
+      "action": "HOLD_PAPER",
+      "forecast_narrative": "Cloudy. Highs 25 to 27C and lows 10 to 12C.",
+      "question": "Will the highest temperature in Beijing be 24°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026"
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 26",
+      "station": "ZSPD",
+      "side": "NO",
+      "temp": 23,
+      "unit": "C",
+      "kind": "exact",
+      "risk_bucket": "robust",
+      "entry_avg": 0.64,
+      "filled_usdc": 4.7552,
+      "old_forecast_max_c": 22,
+      "current_forecast_max_c": 22,
+      "forecast_move_c": 0,
+      "p_side_now": 0.7815,
+      "edge_vs_entry_now": 0.1415,
+      "best_ask_now": 0.67,
+      "best_bid_now": 0.64,
+      "strict_limit": 0.6405,
+      "edge_vs_ask_now": 0.1115,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 0.0,
+        "shares": 0.0,
+        "avg_price": null,
+        "fully_filled": false,
+        "levels": []
+      },
+      "action": "HOLD_NO_ADD_PRICE_MOVED",
+      "forecast_narrative": "More sun than clouds. Highs 21 to 23C and lows 14 to 16C.",
+      "question": "Will the highest temperature in Shanghai be 23°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026"
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "risk_bucket": "robust",
+      "entry_avg": 0.65,
+      "filled_usdc": 5.0,
+      "old_forecast_max_c": 20,
+      "current_forecast_max_c": 20,
+      "forecast_move_c": 0,
+      "p_side_now": 0.7815,
+      "edge_vs_entry_now": 0.1315,
+      "best_ask_now": 0.67,
+      "best_bid_now": 0.65,
+      "strict_limit": 0.65,
+      "edge_vs_ask_now": 0.1115,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 0.0,
+        "shares": 0.0,
+        "avg_price": null,
+        "fully_filled": false,
+        "levels": []
+      },
+      "action": "HOLD_NO_ADD_PRICE_MOVED",
+      "forecast_narrative": "Times of sun and clouds. Highs 19 to 21C and lows 0 to 2C.",
+      "question": "Will the highest temperature in Munich be 19°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026"
+    },
+    {
+      "city": "London",
+      "date": "April 26",
+      "station": "EGLC",
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "risk_bucket": "pending_unfilled",
+      "entry_avg": null,
+      "filled_usdc": 0,
+      "old_forecast_max_c": 18,
+      "current_forecast_max_c": 18,
+      "forecast_move_c": 0,
+      "p_side_now": 0.721,
+      "edge_vs_entry_now": null,
+      "best_ask_now": 0.57,
+      "best_bid_now": null,
+      "strict_limit": 0.5159,
+      "edge_vs_ask_now": 0.151,
+      "micro_add_fill_at_limit": {
+        "spend_filled": 0.0,
+        "shares": 0.0,
+        "avg_price": null,
+        "fully_filled": false,
+        "levels": []
+      },
+      "action": "PENDING_LIMIT_STILL_NOT_FILLABLE",
+      "question": "Will the highest temperature in London be 18°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-london-on-april-26-2026"
+    }
+  ]
+}

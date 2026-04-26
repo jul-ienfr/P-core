@@ -1,0 +1,9 @@
+action,city,date,side,temp,filled_usdc,shares,entry_avg,current_forecast_max_c,forecast_move_c,p_side_now,best_bid_now,best_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,hard_stop_if_p_below,official_resolution_source_status,reason
+HOLD_CAPPED,Seoul,April 26,NO,20,17.24,70.485867,0.2446,17,-1,0.9691,,,51.068,,0.2146,available,OK; capped no-add
+HOLD,Beijing,April 26,NO,25,15.0,24.1935,0.62,29,3,0.9691,,,8.446,,0.59,available,OK; no fresh add by cron rule
+EXIT_PAPER,Munich,April 26,NO,18,10.0,14.0845,0.71,18,-2,0.5,,,-2.958,,0.68,available,p_side below hard stop
+HOLD,Seoul,April 27,NO,19,10.0,12.1952,0.82,17,1,0.8951,,,0.916,,0.79,available,OK; no fresh add by cron rule
+HOLD,Shanghai,April 26,NO,23,4.7552,7.43,0.64,20,-2,0.9691,,,2.445,,0.61,available,OK; no fresh add by cron rule
+HOLD,Munich,April 26,NO,19,5.0,7.6923,0.65,18,-2,0.7815,,,1.012,,0.62,available,OK; no fresh add by cron rule
+HOLD,Beijing,April 26,NO,24,2.0,2.439,0.82,29,3,0.9691,,,0.364,,0.79,available,OK; no fresh add by cron rule
+HOLD_NEW_CAPPED,Karachi,April 27,NO,36,10.0,18.867925,0.53,34,0,0.858,0.39,0.53,6.189,-2.642,0.5,available,OK; capped no-add

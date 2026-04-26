@@ -185,6 +185,78 @@ def test_build_strategy_shortlist_extracts_city_when_question_has_no_date() -> N
     assert row["matched_traders"] == ["Signal"]
 
 
+def test_build_strategy_shortlist_embeds_dynamic_sizing_with_surface_key_and_wallet_style() -> None:
+    shortlist = build_strategy_shortlist(
+        {
+            "accounts": [
+                {
+                    "handle": "GridSharp",
+                    "wallet_style": "breadth/grid small-ticket surface trader",
+                    "top_cities": [{"city": "London", "count": 8}],
+                    "weather_pnl_usd": 12000.0,
+                }
+            ]
+        },
+        {
+            "opportunities": [
+                {
+                    "market_id": "london-20",
+                    "question": "Will the highest temperature in London be 20°C or higher on April 25?",
+                    "decision_status": "trade_small",
+                    "prediction_probability": 0.67,
+                    "market_price": 0.55,
+                    "probability_edge": 0.12,
+                    "all_in_cost_bps": 120.0,
+                    "order_book_depth_usd": 900.0,
+                    "confidence": 0.82,
+                    "spread": 0.03,
+                    "hours_to_resolution": 18.0,
+                    "source_direct": True,
+                }
+            ]
+        },
+        {"events": [{"event_key": "London|high|c|April 25", "inconsistencies": []}]},
+    )
+
+    row = shortlist["shortlist"][0]
+    assert row["surface_key"] == "London|April 25|high"
+    assert row["dynamic_sizing"]["action"] == "OPEN"
+    assert 5.0 <= row["dynamic_sizing"]["recommended_size_usdc"] <= 15.0
+    assert row["dynamic_sizing"]["wallet_style_reference"] == "breadth/grid small-ticket surface trader"
+    assert "grid_style_reference" in row["dynamic_sizing"]["reasons"]
+
+
+def test_build_strategy_shortlist_dynamic_sizing_caps_repeated_surface_adds() -> None:
+    shortlist = build_strategy_shortlist(
+        {"accounts": []},
+        {
+            "opportunities": [
+                {
+                    "market_id": "dallas-70",
+                    "question": "Will the highest temperature in Dallas be 70°F or higher on April 25?",
+                    "decision_status": "trade_small",
+                    "prediction_probability": 0.8,
+                    "market_price": 0.62,
+                    "probability_edge": 0.18,
+                    "all_in_cost_bps": 300.0,
+                    "order_book_depth_usd": 1500.0,
+                    "confidence": 0.9,
+                    "spread": 0.02,
+                    "hours_to_resolution": 4.0,
+                    "current_surface_exposure_usdc": 50.0,
+                    "source_direct": True,
+                }
+            ]
+        },
+        {"events": []},
+    )
+
+    dynamic = shortlist["shortlist"][0]["dynamic_sizing"]
+    assert dynamic["action"] == "HOLD_CAPPED"
+    assert dynamic["recommended_size_usdc"] == 0.0
+    assert "surface_cap_reached" in dynamic["reasons"]
+
+
 def test_build_strategy_shortlist_turns_execution_blockers_into_operational_next_actions() -> None:
     shortlist = build_strategy_shortlist(
         {"accounts": []},
@@ -594,6 +666,16 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
                 "action": "paper_trade_watch_direct_station",
                 "next_actions": ["poll_direct_resolution_source", "inspect_event_surface_prices", "paper_order_with_limit_and_fill_tracking"],
                 "reasons": ["tradeable_decision", "surface_anomaly", "profitable_trader_city", "direct_resolution_source"],
+                "dynamic_sizing": {
+                    "policy": "paper_weather_grid_default",
+                    "action": "OPEN",
+                    "recommended_size_usdc": 10.0,
+                    "max_market_remaining_usdc": 15.0,
+                    "max_surface_remaining_usdc": 50.0,
+                    "max_total_remaining_usdc": 250.0,
+                    "wallet_style_reference": "breadth/grid small-ticket surface trader",
+                    "reasons": ["grid_style_reference"],
+                },
             },
             {
                 "rank": 2,
@@ -693,7 +775,20 @@ def test_build_operator_shortlist_report_extracts_actionable_snapshot() -> None:
             "liquidity_state": "executable",
             "timing_state": "near_resolution",
         },
-        "operator_entry_summary": None,
+        "operator_entry_summary": {
+            "enter": None,
+            "action": None,
+            "side": None,
+            "price_window": None,
+            "market_price": None,
+            "model_probability": None,
+            "edge_net_all_in": None,
+            "size_hint_usd": None,
+            "blocked_by": [],
+            "dynamic_action": "OPEN",
+            "dynamic_size_usdc": 10.0,
+            "dynamic_reasons": ["grid_style_reference"],
+        },
     }
     assert report["watchlist"][1]["blocker"] == "missing_tradeable_quote"
     assert report["watchlist"][1]["execution_diagnostic"] == {

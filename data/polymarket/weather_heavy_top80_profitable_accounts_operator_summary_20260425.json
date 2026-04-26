@@ -1,0 +1,2367 @@
+{
+  "classified_account_counts": {
+    "weather specialist / weather-heavy": 76,
+    "weather-heavy mixed": 4
+  },
+  "discord_operator_brief": "M\u00e9t\u00e9o Polymarket: 8 march\u00e9 live avec comptes m\u00e9t\u00e9o rentables. Reco globale: paper_micro_only.\n- 2065018 \u2014 Hong Kong \u2014 5 comptes (5 heavy), blocker=extreme_price, verdict=paper_micro, top=Poligarch $50,120.07 / Maskache2 $49,973.43 / HenryTheAtmoPhD $45,563.27\n- 2065028 \u2014 Hong Kong \u2014 5 comptes (5 heavy), blocker=none, verdict=watch_or_paper, top=Poligarch $50,120.07 / Maskache2 $49,973.43 / HenryTheAtmoPhD $45,563.27\n- 2074350 \u2014 Dallas \u2014 5 comptes (5 heavy), blocker=missing_tradeable_quote, verdict=watch_or_paper, top=Handsanitizer23 $71,174.40 / Shoemaker34 $33,959.87 / khalidakup $29,585.79\n- 2074460 \u2014 Hong Kong \u2014 5 comptes (5 heavy), blocker=missing_tradeable_quote, verdict=watch_or_paper, top=Poligarch $50,120.07 / Maskache2 $49,973.43 / HenryTheAtmoPhD $45,563.27\n- 2064908 \u2014 Dallas \u2014 5 comptes (5 heavy), blocker=missing_tradeable_quote, verdict=watch_or_paper, top=Handsanitizer23 $71,174.40 / Shoemaker34 $33,959.87 / khalidakup $29,585.79",
+  "generated_from": {
+    "classified_accounts_csv": "data/polymarket/weather_profitable_accounts_classified_top100_live_refresh.csv",
+    "operator_report_json": "data/polymarket/weather_heavy_top80_live_operator_report_20260425.json",
+    "reverse_engineering_json": "docs/polymarket-weather-heavy-top80-title-reverse-engineering.json"
+  },
+  "live_market_signal_cards": [
+    {
+      "action": "paper_trade_watch_direct_station",
+      "blocker": "extreme_price",
+      "city": "Hong Kong",
+      "date": "April 26",
+      "market_id": "2065018",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "operator_verdict": {
+        "confidence": "high_signal_cautious_execution",
+        "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
+        "recommended_size": "micro_paper_only",
+        "status": "paper_micro"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 20.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "top_matched_accounts": [
+        {
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 50120.07
+        },
+        {
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 49973.43
+        },
+        {
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 45563.27
+        },
+        {
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 44964.15
+        },
+        {
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 32652.55
+        }
+      ],
+      "weather_heavy_count": 5
+    },
+    {
+      "action": "paper_trade_watch_direct_station",
+      "blocker": null,
+      "city": "Hong Kong",
+      "date": "April 26",
+      "market_id": "2065028",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_order_with_limit_and_fill_tracking"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 30.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "top_matched_accounts": [
+        {
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 50120.07
+        },
+        {
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 49973.43
+        },
+        {
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 45563.27
+        },
+        {
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 44964.15
+        },
+        {
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 32652.55
+        }
+      ],
+      "weather_heavy_count": 5
+    },
+    {
+      "action": "watch_only",
+      "blocker": "missing_tradeable_quote",
+      "city": "Dallas",
+      "date": "April 27",
+      "market_id": "2074350",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "top_matched_accounts": [
+        {
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 71174.4
+        },
+        {
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 33959.87
+        },
+        {
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 29585.79
+        },
+        {
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 21991.53
+        },
+        {
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 1084.02
+        }
+      ],
+      "weather_heavy_count": 5
+    },
+    {
+      "action": "watch_only",
+      "blocker": "missing_tradeable_quote",
+      "city": "Hong Kong",
+      "date": "April 27",
+      "market_id": "2074460",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 20.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "top_matched_accounts": [
+        {
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 50120.07
+        },
+        {
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 49973.43
+        },
+        {
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 45563.27
+        },
+        {
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 44964.15
+        },
+        {
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 32652.55
+        }
+      ],
+      "weather_heavy_count": 5
+    },
+    {
+      "action": "watch_only",
+      "blocker": "missing_tradeable_quote",
+      "city": "Dallas",
+      "date": "April 26",
+      "market_id": "2064908",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "top_matched_accounts": [
+        {
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 71174.4
+        },
+        {
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 33959.87
+        },
+        {
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 29585.79
+        },
+        {
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 21991.53
+        },
+        {
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 1084.02
+        }
+      ],
+      "weather_heavy_count": 5
+    },
+    {
+      "action": "watch_only",
+      "blocker": "missing_tradeable_quote",
+      "city": "Hong Kong",
+      "date": "April 27",
+      "market_id": "2074470",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 30.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "top_matched_accounts": [
+        {
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 50120.07
+        },
+        {
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 49973.43
+        },
+        {
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 45563.27
+        },
+        {
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 44964.15
+        },
+        {
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 32652.55
+        }
+      ],
+      "weather_heavy_count": 5
+    },
+    {
+      "action": "watch_only",
+      "blocker": "missing_tradeable_quote",
+      "city": "Dallas",
+      "date": "April 27",
+      "market_id": "2074360",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "top_matched_accounts": [
+        {
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 71174.4
+        },
+        {
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 33959.87
+        },
+        {
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 29585.79
+        },
+        {
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 21991.53
+        },
+        {
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 1084.02
+        }
+      ],
+      "weather_heavy_count": 5
+    },
+    {
+      "action": "watch_only",
+      "blocker": "high_slippage_risk",
+      "city": "Dallas",
+      "date": "April 26",
+      "market_id": "2064918",
+      "matched_profitable_weather_count": 5,
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_tighter_spread"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "signal_only_count": 0,
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+      "top_matched_accounts": [
+        {
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 71174.4
+        },
+        {
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 33959.87
+        },
+        {
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 29585.79
+        },
+        {
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 21991.53
+        },
+        {
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "weather_pnl_usd": 1084.02
+        }
+      ],
+      "weather_heavy_count": 5
+    }
+  ],
+  "live_matched_profitable_weather_accounts": [
+    {
+      "active_weather_positions": 15,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Handsanitizer23",
+      "matched_cities": [
+        "Dallas"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2074350",
+        "2064908",
+        "2074360",
+        "2064918"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+      "rank": 7,
+      "recent_weather_activity": 151,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 71174.4,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 62,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Poligarch",
+      "matched_cities": [
+        "Hong Kong"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2065018",
+        "2065028",
+        "2074460",
+        "2074470"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+      "rank": 18,
+      "recent_weather_activity": 178,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 50120.07,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 96,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Maskache2",
+      "matched_cities": [
+        "Hong Kong"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2065018",
+        "2065028",
+        "2074460",
+        "2074470"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x1f66796b45581868376365aef54b51eb84184c8d",
+      "rank": 19,
+      "recent_weather_activity": 198,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 49973.43,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 29,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "HenryTheAtmoPhD",
+      "matched_cities": [
+        "Hong Kong"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2065018",
+        "2065028",
+        "2074460",
+        "2074470"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+      "rank": 21,
+      "recent_weather_activity": 185,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 45563.27,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 31,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "JoeTheMeteorologist",
+      "matched_cities": [
+        "Hong Kong"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2065018",
+        "2065028",
+        "2074460",
+        "2074470"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+      "rank": 22,
+      "recent_weather_activity": 165,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 44964.15,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 18,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Shoemaker34",
+      "matched_cities": [
+        "Dallas"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2074350",
+        "2064908",
+        "2074360",
+        "2064918"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+      "rank": 26,
+      "recent_weather_activity": 100,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 33959.87,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 29,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "protrade3",
+      "matched_cities": [
+        "Hong Kong"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2065018",
+        "2065028",
+        "2074460",
+        "2074470"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x1c0f3e4c90a48e4dd93d0abcdf719a5a5f1599d0",
+      "rank": 28,
+      "recent_weather_activity": 185,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 32652.55,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 0,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "khalidakup",
+      "matched_cities": [
+        "Dallas"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2074350",
+        "2064908",
+        "2074360",
+        "2064918"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x97eb7ddf9139a3db0be99e81217e20546e219fbe",
+      "rank": 33,
+      "recent_weather_activity": 170,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 29585.79,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 13,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Junhoo2",
+      "matched_cities": [
+        "Dallas"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2074350",
+        "2064908",
+        "2074360",
+        "2064918"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x34eccd57d85a42273ea46d8699a2666ac600b7cf",
+      "rank": 45,
+      "recent_weather_activity": 136,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 21991.53,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "PythiaSnr",
+      "matched_cities": [
+        "Dallas"
+      ],
+      "matched_market_count": 4,
+      "matched_market_ids": [
+        "2074350",
+        "2064908",
+        "2074360",
+        "2064918"
+      ],
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xef98c81d560325c8a57b9f63adc8ba5cda78b586",
+      "rank": 1027,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "weather_pnl_usd": 1084.02,
+      "weather_volume_usd": 0.0
+    }
+  ],
+  "live_matched_profitable_weather_summary": {
+    "matched_cities": [
+      "Hong Kong",
+      "Dallas"
+    ],
+    "matched_market_ids": [
+      "2065018",
+      "2065028",
+      "2074350",
+      "2074460",
+      "2064908",
+      "2074470",
+      "2074360",
+      "2064918"
+    ],
+    "operator_recommendation": {
+      "confidence": "profitable_weather_signal_with_execution_caution",
+      "next_actions": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "do_not_use_normal_size_until_extreme_price_clears"
+      ],
+      "reason": "unique_profitable_weather_accounts_match_live_markets_but_extreme_price_blocks_normal_sizing",
+      "status": "paper_micro_only"
+    },
+    "row_level_match_count": 40,
+    "signal_only_unique_count": 0,
+    "top_account_handles_by_pnl": [
+      "Handsanitizer23",
+      "Poligarch",
+      "Maskache2",
+      "HenryTheAtmoPhD",
+      "JoeTheMeteorologist",
+      "Shoemaker34",
+      "protrade3",
+      "khalidakup",
+      "Junhoo2",
+      "PythiaSnr"
+    ],
+    "unique_account_count": 10,
+    "weather_heavy_unique_count": 10
+  },
+  "live_operator_focus": [
+    "paper_trade_watch_direct_station: 2",
+    "extreme_price: 1",
+    "high_slippage_risk: 1",
+    "missing_tradeable_quote: 5"
+  ],
+  "live_operator_summary": {
+    "blocked_count": 7,
+    "direct_source_count": 8,
+    "shortlisted": 8,
+    "surface_anomaly_count": 0,
+    "top_actions": [
+      "paper_trade_watch_direct_station",
+      "watch_only"
+    ],
+    "top_blockers": [
+      "extreme_price",
+      "high_slippage_risk",
+      "missing_tradeable_quote"
+    ],
+    "tradeable_count": 2
+  },
+  "live_watchlist": [
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "extreme_price",
+      "blocker_detail": {
+        "kind": "market_state",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "polling_focus": "hko_current_weather_api_and_daily_extract",
+        "severity": "caution",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "city": "Hong Kong",
+      "date": "April 26",
+      "decision_status": "trade_small",
+      "depth_usd": 0.0,
+      "direct_source": "hong_kong_observatory",
+      "edge": 0.15,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "executable_extreme_price",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2065018",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 62,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+          "rank": 18,
+          "recent_weather_activity": 178,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 50120.07,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 96,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1f66796b45581868376365aef54b51eb84184c8d",
+          "rank": 19,
+          "recent_weather_activity": 198,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 49973.43,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+          "rank": 21,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 45563.27,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 31,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+          "rank": 22,
+          "recent_weather_activity": 165,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 44964.15,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1c0f3e4c90a48e4dd93d0abcdf719a5a5f1599d0",
+          "rank": 28,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 32652.55,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "matched_weather_heavy_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "operator_verdict": {
+        "confidence": "high_signal_cautious_execution",
+        "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
+        "recommended_size": "micro_paper_only",
+        "status": "paper_micro"
+      },
+      "polling_focus": "hko_current_weather_api_and_daily_extract",
+      "rank": 1,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 20.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 49.91,
+      "anomalies": [],
+      "blocker": null,
+      "blocker_detail": null,
+      "city": "Hong Kong",
+      "date": "April 26",
+      "decision_status": "trade_small",
+      "depth_usd": 37.07,
+      "direct_source": "hong_kong_observatory",
+      "edge": 0.13,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "executable",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2065028",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 62,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+          "rank": 18,
+          "recent_weather_activity": 178,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 50120.07,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 96,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1f66796b45581868376365aef54b51eb84184c8d",
+          "rank": 19,
+          "recent_weather_activity": 198,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 49973.43,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+          "rank": 21,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 45563.27,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 31,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+          "rank": 22,
+          "recent_weather_activity": 165,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 44964.15,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1c0f3e4c90a48e4dd93d0abcdf719a5a5f1599d0",
+          "rank": 28,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 32652.55,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "matched_weather_heavy_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_order_with_limit_and_fill_tracking"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "polling_focus": "hko_current_weather_api_and_daily_extract",
+      "rank": 2,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 30.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "station_history_page",
+        "severity": "blocking",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "city": "Dallas",
+      "date": "April 27",
+      "decision_status": "skip",
+      "depth_usd": 0.1,
+      "direct_source": "wunderground:KDAL",
+      "edge": 0.15,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2074350",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 15,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+          "rank": 7,
+          "recent_weather_activity": 151,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 71174.4,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 18,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+          "rank": 26,
+          "recent_weather_activity": 100,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 33959.87,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 0,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x97eb7ddf9139a3db0be99e81217e20546e219fbe",
+          "rank": 33,
+          "recent_weather_activity": 170,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 29585.79,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 13,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x34eccd57d85a42273ea46d8699a2666ac600b7cf",
+          "rank": 45,
+          "recent_weather_activity": 136,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 21991.53,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 100,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xef98c81d560325c8a57b9f63adc8ba5cda78b586",
+          "rank": 1027,
+          "recent_weather_activity": 200,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 1084.02,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "matched_weather_heavy_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "polling_focus": "station_history_page",
+      "rank": 3,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "hko_current_weather_api_and_daily_extract",
+        "severity": "blocking",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "city": "Hong Kong",
+      "date": "April 27",
+      "decision_status": "skip",
+      "depth_usd": 0.05,
+      "direct_source": "hong_kong_observatory",
+      "edge": 0.15,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2074460",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 62,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+          "rank": 18,
+          "recent_weather_activity": 178,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 50120.07,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 96,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1f66796b45581868376365aef54b51eb84184c8d",
+          "rank": 19,
+          "recent_weather_activity": 198,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 49973.43,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+          "rank": 21,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 45563.27,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 31,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+          "rank": 22,
+          "recent_weather_activity": 165,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 44964.15,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1c0f3e4c90a48e4dd93d0abcdf719a5a5f1599d0",
+          "rank": 28,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 32652.55,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "matched_weather_heavy_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "polling_focus": "hko_current_weather_api_and_daily_extract",
+      "rank": 4,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 20.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "station_history_page",
+        "severity": "blocking",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "city": "Dallas",
+      "date": "April 26",
+      "decision_status": "skip",
+      "depth_usd": 0.0,
+      "direct_source": "wunderground:KDAL",
+      "edge": 0.15,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2064908",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 15,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+          "rank": 7,
+          "recent_weather_activity": 151,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 71174.4,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 18,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+          "rank": 26,
+          "recent_weather_activity": 100,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 33959.87,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 0,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x97eb7ddf9139a3db0be99e81217e20546e219fbe",
+          "rank": 33,
+          "recent_weather_activity": 170,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 29585.79,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 13,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x34eccd57d85a42273ea46d8699a2666ac600b7cf",
+          "rank": 45,
+          "recent_weather_activity": 136,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 21991.53,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 100,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xef98c81d560325c8a57b9f63adc8ba5cda78b586",
+          "rank": 1027,
+          "recent_weather_activity": 200,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 1084.02,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "matched_weather_heavy_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "polling_focus": "station_history_page",
+      "rank": 5,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "hko_current_weather_api_and_daily_extract",
+        "severity": "blocking",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "city": "Hong Kong",
+      "date": "April 27",
+      "decision_status": "skip",
+      "depth_usd": 11.07,
+      "direct_source": "hong_kong_observatory",
+      "edge": 0.13,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2074470",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 62,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Poligarch",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+          "rank": 18,
+          "recent_weather_activity": 178,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 50120.07,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 96,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Maskache2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1f66796b45581868376365aef54b51eb84184c8d",
+          "rank": 19,
+          "recent_weather_activity": 198,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 49973.43,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "HenryTheAtmoPhD",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+          "rank": 21,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 45563.27,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 31,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "JoeTheMeteorologist",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1838cca016850ac7185a9b149fe7d0bd2d6629b4",
+          "rank": 22,
+          "recent_weather_activity": 165,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 44964.15,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 29,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "protrade3",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x1c0f3e4c90a48e4dd93d0abcdf719a5a5f1599d0",
+          "rank": 28,
+          "recent_weather_activity": 185,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 32652.55,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "matched_weather_heavy_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "polling_focus": "hko_current_weather_api_and_daily_extract",
+      "rank": 6,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": true,
+          "latency_tier": "direct_latest",
+          "timestamp": "2026-04-25T21:00:00+08:00",
+          "value": 24.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "direct_daily_extract",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "observed_value": 24.0,
+          "status": "no",
+          "threshold": 30.0
+        },
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "station_history_page",
+        "severity": "blocking",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "city": "Dallas",
+      "date": "April 27",
+      "decision_status": "skip",
+      "depth_usd": 967.13,
+      "direct_source": "wunderground:KDAL",
+      "edge": 0.0,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2074360",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 15,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+          "rank": 7,
+          "recent_weather_activity": 151,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 71174.4,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 18,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+          "rank": 26,
+          "recent_weather_activity": 100,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 33959.87,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 0,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x97eb7ddf9139a3db0be99e81217e20546e219fbe",
+          "rank": 33,
+          "recent_weather_activity": 170,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 29585.79,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 13,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x34eccd57d85a42273ea46d8699a2666ac600b7cf",
+          "rank": 45,
+          "recent_weather_activity": 136,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 21991.53,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 100,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xef98c81d560325c8a57b9f63adc8ba5cda78b586",
+          "rank": 1027,
+          "recent_weather_activity": 200,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 1084.02,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "matched_weather_heavy_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "polling_focus": "station_history_page",
+      "rank": 7,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 2125.03,
+      "anomalies": [],
+      "blocker": "high_slippage_risk",
+      "blocker_detail": {
+        "kind": "execution_cost",
+        "operator_action": "wait_for_tighter_spread",
+        "polling_focus": "station_history_page",
+        "severity": "blocking",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "city": "Dallas",
+      "date": "April 26",
+      "decision_status": "skip",
+      "depth_usd": 986.0,
+      "direct_source": "wunderground:KDAL",
+      "edge": -0.54,
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "costly_execution",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2064918",
+      "matched_profitable_weather_accounts": [
+        {
+          "active_weather_positions": 15,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Handsanitizer23",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+          "rank": 7,
+          "recent_weather_activity": 151,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 71174.4,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 18,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Shoemaker34",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x8093017f08d8492927eb3b43c8b87aeffe38b208",
+          "rank": 26,
+          "recent_weather_activity": 100,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 33959.87,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 0,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "khalidakup",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x97eb7ddf9139a3db0be99e81217e20546e219fbe",
+          "rank": 33,
+          "recent_weather_activity": 170,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 29585.79,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 13,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "Junhoo2",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0x34eccd57d85a42273ea46d8699a2666ac600b7cf",
+          "rank": 45,
+          "recent_weather_activity": 136,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 21991.53,
+          "weather_volume_usd": 0.0
+        },
+        {
+          "active_weather_positions": 100,
+          "classification": "weather specialist / weather-heavy",
+          "handle": "PythiaSnr",
+          "pnl_over_volume_pct": 0.0,
+          "profile_url": "https://polymarket.com/profile/0xef98c81d560325c8a57b9f63adc8ba5cda78b586",
+          "rank": 1027,
+          "recent_weather_activity": 200,
+          "recommended_use": "model_and_execution_template",
+          "weather_pnl_usd": 1084.02,
+          "weather_volume_usd": 0.0
+        }
+      ],
+      "matched_profitable_weather_count": 5,
+      "matched_signal_only_traders": [],
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "matched_weather_heavy_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "Junhoo2",
+        "PythiaSnr"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_tighter_spread"
+      ],
+      "operator_verdict": {
+        "confidence": "profitable_account_match",
+        "reason": "profitable_weather_accounts_match_live_watchlist",
+        "recommended_size": "paper_until_execution_validated",
+        "status": "watch_or_paper"
+      },
+      "polling_focus": "station_history_page",
+      "rank": 8,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": {
+          "basis": "official_daily_extract",
+          "status": "pending"
+        },
+        "latest_direct": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "latency_tier": "unsupported",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": {
+          "basis": "latest_direct",
+          "status": "pending"
+        },
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-26",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    }
+  ],
+  "priority_weather_accounts": [
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "0xeC86a2d3f69015b1A9382e4dfA8695E1B48760E4-1770735132210",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xec86a2d3f69015b1a9382e4dfa8695e1b48760e4",
+      "rank": 111,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Shanghai be 21\u00b0C on April 26? highest-temperature-in-shanghai-on-april-26-2026-21c highest-temperature-in-shanghai-on-april-26-2026",
+        "Will the highest temperature in Shanghai be 20\u00b0C on April 26? highest-temperature-in-shanghai-on-april-26-2026-20c highest-temperature-in-shanghai-on-april-26-2026",
+        "Will the highest temperature in Beijing be 23\u00b0C on April 26? highest-temperature-in-beijing-on-april-26-2026-23c highest-temperature-in-beijing-on-april-26-2026",
+        "Will the highest temperature in Beijing be 22\u00b0C on April 26? highest-temperature-in-beijing-on-april-26-2026-22c highest-temperature-in-beijing-on-april-26-2026"
+      ],
+      "weather_pnl_usd": 10474.8,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Amano-Hina",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x8aa29c27241b6909a7c4d6cb4f400267aa215a0b",
+      "rank": 132,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in New York City be between 86-87\u00b0F on April 15? highest-temperature-in-nyc-on-april-15-2026-86-87f highest-temperature-in-nyc-on-april-15-2026",
+        "Will the highest temperature in Miami be between 78-79\u00b0F on April 1? highest-temperature-in-miami-on-april-1-2026-78-79f highest-temperature-in-miami-on-april-1-2026",
+        "Will the highest temperature in New York City be between 76-77\u00b0F on April 13? highest-temperature-in-nyc-on-april-13-2026-76-77f highest-temperature-in-nyc-on-april-13-2026",
+        "Will the highest temperature in San Francisco be between 64-65\u00b0F on April 20? highest-temperature-in-san-francisco-on-april-20-2026-64-65f highest-temperature-in-san-francisco-on-a"
+      ],
+      "weather_pnl_usd": 8831.67,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "StayFreshCheeseBags",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xc34f6b088bb9172625ee1ea2ee8da9ac4f037d2e",
+      "rank": 155,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Tokyo be 17\u00b0C on April 4? highest-temperature-in-tokyo-on-april-4-2026-17c highest-temperature-in-tokyo-on-april-4-2026",
+        "Will the highest temperature in Lagos be 33\u00b0C on April 23? highest-temperature-in-lagos-on-april-23-2026-33c highest-temperature-in-lagos-on-april-23-2026",
+        "Will the highest temperature in Houston be between 80-81\u00b0F on April 4? highest-temperature-in-houston-on-april-4-2026-80-81f highest-temperature-in-houston-on-april-4-2026",
+        "Will the highest temperature in Tel Aviv be 29\u00b0C on April 25? highest-temperature-in-tel-aviv-on-april-25-2026-29c highest-temperature-in-tel-aviv-on-april-25-2026"
+      ],
+      "weather_pnl_usd": 7272.38,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Jiuzhou",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x5499a872abba0f503ea8da708eaab775dffecf6d",
+      "rank": 517,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Manila be 39\u00b0C on April 25? highest-temperature-in-manila-on-april-25-2026-39c highest-temperature-in-manila-on-april-25-2026",
+        "Will the highest temperature in San Francisco be between 54-55\u00b0F on April 24? highest-temperature-in-san-francisco-on-april-24-2026-54-55f highest-temperature-in-san-francisco-on-a",
+        "Will the highest temperature in Panama City be 29\u00b0C on April 25? highest-temperature-in-panama-city-on-april-25-2026-29c highest-temperature-in-panama-city-on-april-25-2026",
+        "Will the highest temperature in Warsaw be 13\u00b0C on April 24? highest-temperature-in-warsaw-on-april-24-2026-13c highest-temperature-in-warsaw-on-april-24-2026"
+      ],
+      "weather_pnl_usd": 2332.69,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "hotcold",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xc1200dd35a85da9b9ba552582d6103dd3d39a7e3",
+      "rank": 522,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Chengdu be 34\u00b0C or higher on April 25? highest-temperature-in-chengdu-on-april-25-2026-34corhigher highest-temperature-in-chengdu-on-april-25-2026",
+        "Will the highest temperature in Chengdu be 33\u00b0C on April 25? highest-temperature-in-chengdu-on-april-25-2026-33c highest-temperature-in-chengdu-on-april-25-2026",
+        "Will the highest temperature in Wellington be 19\u00b0C or higher on April 25? highest-temperature-in-wellington-on-april-25-2026-19corhigher highest-temperature-in-wellington-on-april-",
+        "Will the highest temperature in Wellington be 18\u00b0C on April 25? highest-temperature-in-wellington-on-april-25-2026-18c highest-temperature-in-wellington-on-april-25-2026"
+      ],
+      "weather_pnl_usd": 2323.26,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "PaulaLolik",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x3a2c067d262e5b2b2100251359e4c7b877283d80",
+      "rank": 564,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Taipei be 33\u00b0C on April 23? highest-temperature-in-taipei-on-april-23-2026-33c highest-temperature-in-taipei-on-april-23-2026",
+        "Will the highest temperature in Warsaw be 17\u00b0C on April 23? highest-temperature-in-warsaw-on-april-23-2026-17c highest-temperature-in-warsaw-on-april-23-2026",
+        "Will the highest temperature in Chengdu be 28\u00b0C on April 23? highest-temperature-in-chengdu-on-april-23-2026-28c highest-temperature-in-chengdu-on-april-23-2026",
+        "Will the highest temperature in Karachi be 34\u00b0C on April 23? highest-temperature-in-karachi-on-april-23-2026-34c highest-temperature-in-karachi-on-april-23-2026"
+      ],
+      "weather_pnl_usd": 2153.2,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Wistesty",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xd3938e1d885f7849215c49d87465709d63400744",
+      "rank": 582,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in New York City be between 44-45\u00b0F on April 25? highest-temperature-in-nyc-on-april-25-2026-44-45f highest-temperature-in-nyc-on-april-25-2026",
+        "Will the highest temperature in Los Angeles be between 62-63\u00b0F on April 24? highest-temperature-in-los-angeles-on-april-24-2026-62-63f highest-temperature-in-los-angeles-on-april-2",
+        "Will the highest temperature in Taipei be 19\u00b0C on April 24? highest-temperature-in-taipei-on-april-24-2026-19c highest-temperature-in-taipei-on-april-24-2026",
+        "Will the highest temperature in New York City be between 58-59\u00b0F on April 24? highest-temperature-in-nyc-on-april-24-2026-58-59f highest-temperature-in-nyc-on-april-24-2026"
+      ],
+      "weather_pnl_usd": 2095.46,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "ruth777",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xb9033854e54310cca8a22368d16ed53cdfbea41b",
+      "rank": 594,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Helsinki be 11\u00b0C on April 24? highest-temperature-in-helsinki-on-april-24-2026-11c highest-temperature-in-helsinki-on-april-24-2026",
+        "Will the highest temperature in Miami be between 80-81\u00b0F on April 24? highest-temperature-in-miami-on-april-24-2026-80-81f highest-temperature-in-miami-on-april-24-2026",
+        "Will the highest temperature in Hong Kong be 27\u00b0C on April 27? highest-temperature-in-hong-kong-on-april-27-2026-27c highest-temperature-in-hong-kong-on-april-27-2026",
+        "Will the highest temperature in Atlanta be between 82-83\u00b0F on April 24? highest-temperature-in-atlanta-on-april-24-2026-82-83f highest-temperature-in-atlanta-on-april-24-2026"
+      ],
+      "weather_pnl_usd": 2034.45,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "sdgoppa",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x8eea2d8458fcad16bf50dec2b7de76e989d6e285",
+      "rank": 599,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Paris be 14\u00b0C on March 22? highest-temperature-in-paris-on-march-22-2026-14c highest-temperature-in-paris-on-march-22-2026",
+        "Will the highest temperature in Paris be 24\u00b0C or higher on April 6? highest-temperature-in-paris-on-april-6-2026-24corhigher highest-temperature-in-paris-on-april-6-2026",
+        "Will the highest temperature in Seoul be 13\u00b0C on March 28? highest-temperature-in-seoul-on-march-28-2026-13c highest-temperature-in-seoul-on-march-28-2026",
+        "Will the highest temperature in Seoul be 11\u00b0C on March 28? highest-temperature-in-seoul-on-march-28-2026-11c highest-temperature-in-seoul-on-march-28-2026"
+      ],
+      "weather_pnl_usd": 2010.52,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "0x2048",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xecc8b1562f4a521d0856e3f89c5bfa8bba969335",
+      "rank": 605,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Kuala Lumpur be 35\u00b0C on April 27? highest-temperature-in-kuala-lumpur-on-april-27-2026-35c highest-temperature-in-kuala-lumpur-on-april-27-2026",
+        "Will the highest temperature in Taipei be 34\u00b0C or higher on April 27? highest-temperature-in-taipei-on-april-27-2026-34corhigher highest-temperature-in-taipei-on-april-27-2026",
+        "Will the highest temperature in Tel Aviv be 31\u00b0C or higher on April 26? highest-temperature-in-tel-aviv-on-april-26-2026-31corhigher highest-temperature-in-tel-aviv-on-april-26-202",
+        "Will the highest temperature in Busan be 18\u00b0C on April 26? highest-temperature-in-busan-on-april-26-2026-18c highest-temperature-in-busan-on-april-26-2026"
+      ],
+      "weather_pnl_usd": 1993.01,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "airlorgedr",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xbc8405b2c4149332c835ebb7e29e68e53eaba0d2",
+      "rank": 622,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Mexico City be 20\u00b0C or higher on April 25? highest-temperature-in-mexico-city-on-april-25-2026-20corhigher highest-temperature-in-mexico-city-on-apr",
+        "Will the lowest temperature in Miami be 84\u00b0F or higher on April 26? lowest-temperature-in-miami-on-april-26-2026-84forhigher lowest-temperature-in-miami-on-april-26-2026",
+        "Will the highest temperature in Hong Kong be 21\u00b0C on April 25? highest-temperature-in-hong-kong-on-april-25-2026-21c highest-temperature-in-hong-kong-on-april-25-2026",
+        "Will the highest temperature in Lagos be 36\u00b0C or higher on April 25? highest-temperature-in-lagos-on-april-25-2026-36corhigher highest-temperature-in-lagos-on-april-25-2026"
+      ],
+      "weather_pnl_usd": 1933.26,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "patrickbro-wn",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x01f2a8baabe17c2541d1e3091220991f257ac3de",
+      "rank": 653,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Istanbul be 19\u00b0C on April 25? highest-temperature-in-istanbul-on-april-25-2026-19c highest-temperature-in-istanbul-on-april-25-2026",
+        "Will the highest temperature in Istanbul be 19\u00b0C on April 25? highest-temperature-in-istanbul-on-april-25-2026-19c highest-temperature-in-istanbul-on-april-25-2026",
+        "Will the lowest temperature in Hong Kong be 19\u00b0C on April 25? lowest-temperature-in-hong-kong-on-april-25-2026-19c lowest-temperature-in-hong-kong-on-april-25-2026",
+        "Will the highest temperature in Beijing be 27\u00b0C on April 25? highest-temperature-in-beijing-on-april-25-2026-27c highest-temperature-in-beijing-on-april-25-2026"
+      ],
+      "weather_pnl_usd": 1846.39,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "tinylonglong",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x04dcf8d1328b2bf5fa6e7aa8a200df95751cd572",
+      "rank": 687,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Hong Kong be 19\u00b0C on April 24? highest-temperature-in-hong-kong-on-april-24-2026-19c highest-temperature-in-hong-kong-on-april-24-2026",
+        "Will the highest temperature in Hong Kong be 18\u00b0C or below on April 24? highest-temperature-in-hong-kong-on-april-24-2026-18corbelow highest-temperature-in-hong-kong-on-april-24-20",
+        "Will the highest temperature in Hong Kong be 20\u00b0C on April 24? highest-temperature-in-hong-kong-on-april-24-2026-20c highest-temperature-in-hong-kong-on-april-24-2026",
+        "Will the highest temperature in Hong Kong be 19\u00b0C or below on April 25? highest-temperature-in-hong-kong-on-april-25-2026-19corbelow highest-temperature-in-hong-kong-on-april-25-20"
+      ],
+      "weather_pnl_usd": 1755.92,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "jeffkatsu",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0x570c03b5f037294ca24b743d90df8c1a993f91c5",
+      "rank": 735,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Hong Kong be 19\u00b0C on April 24? highest-temperature-in-hong-kong-on-april-24-2026-19c highest-temperature-in-hong-kong-on-april-24-2026",
+        "Will the highest temperature in Hong Kong be 26\u00b0C on April 24? highest-temperature-in-hong-kong-on-april-24-2026-26c highest-temperature-in-hong-kong-on-april-24-2026",
+        "Will the highest temperature in Hong Kong be 28\u00b0C or higher on April 24? highest-temperature-in-hong-kong-on-april-24-2026-28corhigher highest-temperature-in-hong-kong-on-april-24-",
+        "Will the highest temperature in Hong Kong be 21\u00b0C on April 24? highest-temperature-in-hong-kong-on-april-24-2026-21c highest-temperature-in-hong-kong-on-april-24-2026"
+      ],
+      "weather_pnl_usd": 1631.41,
+      "weather_volume_usd": 0.0
+    },
+    {
+      "active_weather_positions": 100,
+      "classification": "weather specialist / weather-heavy",
+      "handle": "Unpluggedstoic",
+      "pnl_over_volume_pct": 0.0,
+      "profile_url": "https://polymarket.com/profile/0xef988ffb5f3ffcf0da700614a2666c6de6a27926",
+      "rank": 744,
+      "recent_nonweather_activity": 0,
+      "recent_weather_activity": 200,
+      "recommended_use": "model_and_execution_template",
+      "sample_weather_titles": [
+        "Will the highest temperature in Shanghai be 17\u00b0C or below on April 6? highest-temperature-in-shanghai-on-april-6-2026-17corbelow highest-temperature-in-shanghai-on-april-6-2026",
+        "Will the highest temperature in Paris be 17\u00b0C on April 22? highest-temperature-in-paris-on-april-22-2026-17c highest-temperature-in-paris-on-april-22-2026",
+        "Will the highest temperature in Shanghai be 22\u00b0C on April 5? highest-temperature-in-shanghai-on-april-5-2026-22c highest-temperature-in-shanghai-on-april-5-2026",
+        "Will the highest temperature in Shanghai be 21\u00b0C on April 5? highest-temperature-in-shanghai-on-april-5-2026-21c highest-temperature-in-shanghai-on-april-5-2026"
+      ],
+      "weather_pnl_usd": 1614.11,
+      "weather_volume_usd": 0.0
+    }
+  ]
+}

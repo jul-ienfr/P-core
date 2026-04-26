@@ -1,0 +1,6 @@
+action,city,date,label,best_side,station,station_forecast_max_c_now,p_side_now,live_best_bid_now,live_best_ask_now,bid_change,ask_change,mtm_bid_usdc,unrealized_bid_pnl_usdc,pnl_change_usdc,ev_usdc_now,question
+HOLD_CAPPED,Seoul,April 26,20C or higher,NO,RKSI,17.22,0.9483,0.41,0.42,0.0,0.0,22.1046,7.1046,-0.0,36.1274,Will the highest temperature in Seoul be 20°C or higher on April 26?
+HOLD,London,April 26,18C,NO,EGLC,18.89,0.7701,0.5,0.51,0.01,0.0,5.01,-0.3006,0.1002,2.4058,Will the highest temperature in London be 18°C on April 26?
+HOLD_CAPPED,Tokyo,April 26,20C,NO,RJTT,20.56,0.7416,0.53,0.55,0.0,0.0,9.4643,-0.5357,-0.0,3.2424,Will the highest temperature in Tokyo be 20°C on April 26?
+HOLD_CAPPED,Wellington,April 26,17C,NO,NZWN,17.22,0.7243,0.53,0.56,0.0,0.0,9.4643,-0.5357,-0.0,2.9333,Will the highest temperature in Wellington be 17°C on April 26?
+HOLD_CAPPED,Singapore,April 26,33C,NO,WSSS,31.67,0.8189,0.61,0.62,0.0,0.0,9.8387,-0.1613,-0.0,3.2088,Will the highest temperature in Singapore be 33°C on April 26?

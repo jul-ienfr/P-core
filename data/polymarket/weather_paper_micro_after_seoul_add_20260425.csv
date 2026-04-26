@@ -1,0 +1,8 @@
+city,date,station,side,temp,unit,kind,filled_usdc,shares,entry_avg,station_forecast_max_c,base_ev_pct,question,url
+Seoul,April 26,RKSI,NO,20,C,higher,17.24,70.485867,0.2446,18,241.5,Will the highest temperature in Seoul be 20°C or higher on April 26?,https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026
+Beijing,April 26,ZBAA,NO,25,C,exact,15.0,24.1935,0.62,26,26.0,Will the highest temperature in Beijing be 25°C on April 26?,https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026
+Munich,April 26,EDDM,NO,18,C,exact,10.0,14.0845,0.71,20,26.1,Will the highest temperature in Munich be 18°C on April 26?,https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026
+Seoul,April 27,RKSI,NO,19,C,exact,10.0,12.1952,0.82,16,18.2,Will the highest temperature in Seoul be 19°C on April 27?,https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026
+Shanghai,April 26,ZSPD,NO,23,C,exact,4.7552,7.43,0.64,22,22.1,Will the highest temperature in Shanghai be 23°C on April 26?,https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026
+Munich,April 26,EDDM,NO,19,C,exact,5.0,7.6923,0.65,20,20.2,Will the highest temperature in Munich be 19°C on April 26?,https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026
+Beijing,April 26,ZBAA,NO,24,C,exact,2.0,2.439,0.82,26,9.2,Will the highest temperature in Beijing be 24°C on April 26?,https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026

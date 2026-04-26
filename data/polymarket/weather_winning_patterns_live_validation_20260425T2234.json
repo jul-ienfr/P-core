@@ -1,0 +1,318 @@
+{
+  "checks": [
+    {
+      "books": {
+        "NO": {
+          "ask_levels": 8,
+          "best_ask": {
+            "price": 0.988,
+            "size": 100.0
+          },
+          "best_bid": {
+            "price": 0.967,
+            "size": 105.17
+          },
+          "bid_levels": 67,
+          "ok": true
+        },
+        "YES": {
+          "ask_levels": 67,
+          "best_ask": {
+            "price": 0.033,
+            "size": 105.17
+          },
+          "best_bid": {
+            "price": 0.012,
+            "size": 100.0
+          },
+          "bid_levels": 8,
+          "ok": true
+        }
+      },
+      "candidate": {
+        "accounts": 9,
+        "city": "Moscow",
+        "combined_score": 968.653,
+        "date": "April 26",
+        "label": "12\u00b0C",
+        "market_id": "2065210",
+        "operator_note": null,
+        "side": "NO",
+        "signals": 32,
+        "source_status": "proxy_aligned",
+        "target_ask": 0.987,
+        "target_avg20": null,
+        "tradability": "ok",
+        "volume": 8652.868749
+      },
+      "gamma_error": null,
+      "gamma_ok": true,
+      "operator_decision": "strict_limit_paper_only_after_source_check",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "prices": [
+        "0.0225",
+        "0.9775"
+      ],
+      "question": "Will the highest temperature in Moscow be 12\u00b0C on April 26?",
+      "token_ids": [
+        "100023538109703029369758880772985456383696908863055471601914342598226690190092",
+        "37487327121072705539749608133190437872064311389429081806066909545037248605713"
+      ]
+    },
+    {
+      "books": {
+        "NO": {
+          "ask_levels": 15,
+          "best_ask": {
+            "price": 0.954,
+            "size": 0.47
+          },
+          "best_bid": {
+            "price": 0.95,
+            "size": 8.0
+          },
+          "bid_levels": 73,
+          "ok": true
+        },
+        "YES": {
+          "ask_levels": 71,
+          "best_ask": {
+            "price": 0.05,
+            "size": 8.0
+          },
+          "best_bid": {
+            "price": 0.046,
+            "size": 0.47
+          },
+          "bid_levels": 15,
+          "ok": true
+        }
+      },
+      "candidate": {
+        "accounts": 10,
+        "city": "Shanghai",
+        "combined_score": 937.251,
+        "date": "April 26",
+        "label": "21\u00b0C",
+        "market_id": "2065032",
+        "operator_note": null,
+        "side": "NO",
+        "signals": 30,
+        "source_status": "proxy_aligned",
+        "target_ask": 0.954,
+        "target_avg20": null,
+        "tradability": "ok",
+        "volume": 7751.317905
+      },
+      "gamma_error": null,
+      "gamma_ok": true,
+      "operator_decision": "source_and_book_validation_candidate",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "prices": [
+        "0.0545",
+        "0.9455"
+      ],
+      "question": "Will the highest temperature in Shanghai be 21\u00b0C on April 26?",
+      "token_ids": [
+        "12831021511186173169760771467704558297855560104655134100790042154273917383333",
+        "84770944915456838599766873023889328577144305067901486894506732613341464740700"
+      ]
+    },
+    {
+      "books": {
+        "NO": {
+          "ask_levels": 2,
+          "best_ask": {
+            "price": 0.998,
+            "size": 90.9
+          },
+          "best_bid": {
+            "price": 0.987,
+            "size": 99.99
+          },
+          "bid_levels": 65,
+          "ok": true
+        },
+        "YES": {
+          "ask_levels": 65,
+          "best_ask": {
+            "price": 0.013,
+            "size": 99.99
+          },
+          "best_bid": {
+            "price": 0.002,
+            "size": 90.9
+          },
+          "bid_levels": 2,
+          "ok": true
+        }
+      },
+      "candidate": {
+        "accounts": 8,
+        "city": "Beijing",
+        "combined_score": 760.67,
+        "date": "April 26",
+        "label": "22\u00b0C",
+        "market_id": "2065108",
+        "operator_note": null,
+        "side": "NO",
+        "signals": 23,
+        "source_status": "proxy_aligned",
+        "target_ask": 0.995,
+        "target_avg20": null,
+        "tradability": "extreme_or_missing",
+        "volume": 3269.908508
+      },
+      "gamma_error": null,
+      "gamma_ok": true,
+      "operator_decision": "micro_paper_only_if_source_confirmed_and_no_chase",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "prices": [
+        "0.0075",
+        "0.9925"
+      ],
+      "question": "Will the highest temperature in Beijing be 22\u00b0C on April 26?",
+      "token_ids": [
+        "2956569303963729746334462212584195978903530044354995435412854229444332513051",
+        "1492992677062604626096168632540137522103945928706827888441128399310634392710"
+      ]
+    },
+    {
+      "books": {
+        "NO": {
+          "ask_levels": 6,
+          "best_ask": {
+            "price": 0.993,
+            "size": 144.42
+          },
+          "best_bid": {
+            "price": 0.99,
+            "size": 5.0
+          },
+          "bid_levels": 59,
+          "ok": true
+        },
+        "YES": {
+          "ask_levels": 59,
+          "best_ask": {
+            "price": 0.01,
+            "size": 5.0
+          },
+          "best_bid": {
+            "price": 0.007,
+            "size": 144.42
+          },
+          "bid_levels": 6,
+          "ok": true
+        }
+      },
+      "candidate": {
+        "accounts": 11,
+        "city": "Munich",
+        "combined_score": 605.649,
+        "date": "April 26",
+        "label": "16\u00b0C",
+        "market_id": "2064990",
+        "operator_note": null,
+        "side": "NO",
+        "signals": 38,
+        "source_status": "proxy_aligned",
+        "target_ask": 0.991,
+        "target_avg20": null,
+        "tradability": "ok",
+        "volume": 2849.046556
+      },
+      "gamma_error": null,
+      "gamma_ok": true,
+      "operator_decision": "micro_paper_only_if_source_confirmed_and_no_chase",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "prices": [
+        "0.0085",
+        "0.9915"
+      ],
+      "question": "Will the highest temperature in Munich be 16\u00b0C on April 26?",
+      "token_ids": [
+        "21886288311114367476190858945365487925874310800246347282076568796168060003799",
+        "36078689756507888311568989565986567551875097577582445740164860714464782203260"
+      ]
+    },
+    {
+      "books": {
+        "NO": {
+          "ask_levels": 10,
+          "best_ask": {
+            "price": 0.989,
+            "size": 30.0
+          },
+          "best_bid": {
+            "price": 0.984,
+            "size": 211.0
+          },
+          "bid_levels": 79,
+          "ok": true
+        },
+        "YES": {
+          "ask_levels": 79,
+          "best_ask": {
+            "price": 0.016,
+            "size": 211.0
+          },
+          "best_bid": {
+            "price": 0.011,
+            "size": 30.0
+          },
+          "bid_levels": 10,
+          "ok": true
+        }
+      },
+      "candidate": {
+        "accounts": 3,
+        "city": "Shanghai",
+        "combined_score": 556.871,
+        "date": "April 27",
+        "label": "24\u00b0C",
+        "market_id": "2074474",
+        "operator_note": null,
+        "side": "NO",
+        "signals": 29,
+        "source_status": "proxy_aligned",
+        "target_ask": 0.965,
+        "target_avg20": null,
+        "tradability": "ok",
+        "volume": 1471.34089
+      },
+      "gamma_error": null,
+      "gamma_ok": true,
+      "operator_decision": "source_and_book_validation_candidate",
+      "outcomes": [
+        "Yes",
+        "No"
+      ],
+      "prices": [
+        "0.0135",
+        "0.9865"
+      ],
+      "question": "Will the highest temperature in Shanghai be 24\u00b0C on April 27?",
+      "token_ids": [
+        "114619580287372682587465163103045782788964253597956655510571944628262263538884",
+        "61736232760892997033667032190091491555977286300406047476519803810866214301600"
+      ]
+    }
+  ],
+  "generated_at": "2026-04-25T22:36:24Z",
+  "no_real_orders": true,
+  "paper_only": true,
+  "source_report": "data/polymarket/weather_winning_patterns_operator_report_20260425.json"
+}

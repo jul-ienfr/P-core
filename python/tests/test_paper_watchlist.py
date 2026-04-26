@@ -45,3 +45,76 @@ def test_build_paper_watch_row_flags_exit_when_probability_below_hard_stop():
     assert row["hard_stop_if_p_below"] == 0.5
     assert row["reason"] == "p_side 0.4900 < hard_stop 0.5000"
     assert row["add_allowed"] is False
+
+
+def test_build_paper_watch_row_caps_position_after_paper_add_to_prevent_repeat_add():
+    position = {
+        "city": "Shanghai",
+        "date": "April 26",
+        "station": "ZSPD",
+        "side": "NO",
+        "temp": 23,
+        "unit": "C",
+        "kind": "exact",
+        "filled_usdc": 9.7552,
+        "shares": 1257.43,
+        "entry_avg": 0.00775805,
+        "paper_add_executed_at": "20260426T192124Z",
+    }
+
+    row = build_paper_watch_row(position, p_side=0.721, best_bid=0.001, best_ask=0.004, forecast_c=23)
+
+    assert row["operator_action"] == "HOLD_CAPPED"
+    assert row["reason"] == "paper add already executed this cycle; no repeated add"
+    assert row["add_allowed"] is False
+
+
+def test_paper_watchlist_uses_dynamic_surface_cap_to_block_add():
+    position = {
+        "city": "Hong Kong",
+        "date": "April 26",
+        "station": "VHHH",
+        "side": "NO",
+        "temp": 29,
+        "unit": "C",
+        "kind": "higher",
+        "filled_usdc": 8.0,
+        "shares": 16.0,
+        "entry_avg": 0.5,
+        "market_id": "hk-higher-29",
+        "surface_key": "Hong Kong|April 26|higher",
+        "current_surface_exposure_usdc": 50.0,
+    }
+
+    row = build_paper_watch_row(position, p_side=0.82, best_bid=0.52, best_ask=0.58, forecast_c=27)
+
+    assert row["operator_action"] == "HOLD_CAPPED"
+    assert row["add_allowed"] is False
+    assert row["max_add_usdc"] == 0
+    assert row["dynamic_sizing"]["action"] == "HOLD_CAPPED"
+    assert "surface_cap_reached" in row["dynamic_sizing"]["reasons"]
+
+
+def test_paper_watchlist_caps_add_by_dynamic_recommended_size():
+    position = {
+        "city": "Warsaw",
+        "date": "April 26",
+        "station": "EPWA",
+        "side": "NO",
+        "temp": 11,
+        "unit": "C",
+        "kind": "exact",
+        "filled_usdc": 12.0,
+        "shares": 24.0,
+        "entry_avg": 0.5,
+        "market_id": "warsaw-exact-11",
+        "surface_key": "Warsaw|April 26|exact",
+    }
+
+    row = build_paper_watch_row(position, p_side=0.82, best_bid=0.52, best_ask=0.58, forecast_c=11)
+
+    assert row["operator_action"] == "HOLD_MONITOR"
+    assert row["add_allowed"] is True
+    assert row["dynamic_sizing"]["action"] == "ADD"
+    assert row["dynamic_sizing"]["recommended_size_usdc"] == 3.0
+    assert row["max_add_usdc"] == 3.0

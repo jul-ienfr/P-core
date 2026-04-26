@@ -1,0 +1,100 @@
+{
+  "artifacts": {
+    "json": "/home/jul/prediction_core/data/polymarket/weather_paper_2065028_post_entry_monitor_20260425T151619Z.json",
+    "markdown": "/home/jul/prediction_core/data/polymarket/weather_paper_2065028_post_entry_monitor_20260425T151619Z.md",
+    "source_ledger": "/home/jul/prediction_core/data/polymarket/weather_paper_micro_updated_ledger_with_2065028_20260425T150303Z.json"
+  },
+  "generated_at": "2026-04-25T15:16:19Z",
+  "hko": {
+    "action_operator": "monitor_until_official_daily_extract",
+    "current_place": "Hong Kong Observatory",
+    "current_temp_c": 24.0,
+    "current_update_time": "2026-04-25T23:02:00+08:00",
+    "official_daily_available": false,
+    "official_daily_value_c": null,
+    "provisional_outcome": "NO"
+  },
+  "market_id": "2065028",
+  "mode": "post-entry paper monitor refresh; no real orders",
+  "operator_action": "HOLD_MONITOR_OFFICIAL_EXTRACT",
+  "orderbook": {
+    "no_ask_levels": [
+      [
+        0.977,
+        81.41
+      ],
+      [
+        0.978,
+        38.32
+      ],
+      [
+        0.98,
+        222.2
+      ],
+      [
+        0.984,
+        20.0
+      ],
+      [
+        0.99,
+        653.0
+      ]
+    ],
+    "no_best_ask": 0.977,
+    "no_best_bid": 0.976,
+    "no_bid_levels": [
+      [
+        0.976,
+        55.0
+      ],
+      [
+        0.975,
+        6.07
+      ],
+      [
+        0.97,
+        1.76
+      ],
+      [
+        0.96,
+        35.0
+      ],
+      [
+        0.954,
+        200.0
+      ]
+    ],
+    "no_timestamp": "1777130156084",
+    "yes_best_ask": 0.024,
+    "yes_best_bid": 0.023
+  },
+  "position": {
+    "entry_avg": 0.977,
+    "shares": 5.117707,
+    "side": "NO",
+    "spend_usdc": 5.0
+  },
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "risk_controls": [
+    "paper_only",
+    "no_real_order",
+    "no_normal_size",
+    "no_add",
+    "latest_hko_is_provisional_until_daily_extract",
+    "review_exit_only_if_bid_or_official_extract_changes"
+  ],
+  "thresholds": {
+    "no_add": true,
+    "take_profit_review_if_bid_above": 0.98,
+    "trim_review_if_p_below": 0.997
+  },
+  "valuation": {
+    "exit_value_at_bid_usdc": 4.994882,
+    "gross_win_profit_usdc": 0.117707,
+    "gross_win_value_usdc": 5.117707,
+    "mtm_at_no_bid_usdc": -0.005118,
+    "mtm_mid_usdc": -0.002559,
+    "p_side_marker": 0.976,
+    "paper_ev_marker_usdc": -0.005118
+  }
+}

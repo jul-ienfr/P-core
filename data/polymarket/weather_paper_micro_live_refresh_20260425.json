@@ -1,0 +1,494 @@
+{
+  "generated_at": "2026-04-25T14:16:45.178721Z",
+  "mode": "paper ledger only, no real orders placed",
+  "selected_count": 8,
+  "executable_count": 7,
+  "paper_spend_if_submitted_now": 39.0,
+  "paper_ev_proxy_if_filled": 12.99,
+  "ledger": [
+    {
+      "status": "paper_fill_partial",
+      "city": "Seoul",
+      "date": "April 26",
+      "station": "RKSI",
+      "question": "Will the highest temperature in Seoul be 20°C or higher on April 26?",
+      "side": "NO",
+      "temp": 20,
+      "unit": "C",
+      "kind": "higher",
+      "token_id": "91957229395369621297773625284494208648929631998027248969309772006646049706563",
+      "station_prob": 0.858,
+      "strict_limit": 0.2806,
+      "paper_size_usdc": 20,
+      "best_ask_now": 0.28,
+      "best_bid_now": 0.24,
+      "top_ask_notional": 2.24,
+      "fill": {
+        "spend_requested": 20,
+        "limit": 0.2806,
+        "spend_filled": 2.24,
+        "shares": 8.0,
+        "avg_price": 0.28,
+        "fully_filled": false,
+        "levels_used": [
+          {
+            "price": 0.28,
+            "cost": 2.24,
+            "shares": 8.0
+          }
+        ]
+      },
+      "paper_ev_proxy_usdc": 4.624,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026"
+    },
+    {
+      "status": "skip_not_fillable_at_limit",
+      "city": "London",
+      "date": "April 26",
+      "station": "EGLC",
+      "question": "Will the highest temperature in London be 18°C on April 26?",
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "token_id": "86201645240616743636278318700292119246044778630063242375624602773072724159720",
+      "station_prob": 0.721,
+      "strict_limit": 0.5159,
+      "paper_size_usdc": 10,
+      "best_ask_now": 0.53,
+      "best_bid_now": 0.49,
+      "top_ask_notional": 15.88,
+      "fill": {
+        "spend_requested": 10,
+        "limit": 0.5159,
+        "spend_filled": 0.0,
+        "shares": 0.0,
+        "avg_price": null,
+        "fully_filled": false,
+        "levels_used": []
+      },
+      "paper_ev_proxy_usdc": 0,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-london-on-april-26-2026"
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "token_id": "12122639968770369125729645644048901611737971417299776708496745927294914393945",
+      "station_prob": 0.8951,
+      "strict_limit": 0.71,
+      "paper_size_usdc": 10,
+      "best_ask_now": 0.71,
+      "best_bid_now": 0.7,
+      "top_ask_notional": 22.72,
+      "fill": {
+        "spend_requested": 10,
+        "limit": 0.71,
+        "spend_filled": 10.0,
+        "shares": 14.0845,
+        "avg_price": 0.71,
+        "fully_filled": true,
+        "levels_used": [
+          {
+            "price": 0.71,
+            "cost": 10.0,
+            "shares": 14.0845
+          }
+        ]
+      },
+      "paper_ev_proxy_usdc": 2.607,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026"
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "side": "NO",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "token_id": "11804186718096027197244305944429420505649160948011436447515100751033693919285",
+      "station_prob": 0.7815,
+      "strict_limit": 0.62,
+      "paper_size_usdc": 10,
+      "best_ask_now": 0.62,
+      "best_bid_now": 0.6,
+      "top_ask_notional": 20.54,
+      "fill": {
+        "spend_requested": 10,
+        "limit": 0.62,
+        "spend_filled": 10.0,
+        "shares": 16.129,
+        "avg_price": 0.62,
+        "fully_filled": true,
+        "levels_used": [
+          {
+            "price": 0.62,
+            "cost": 10.0,
+            "shares": 16.129
+          }
+        ]
+      },
+      "paper_ev_proxy_usdc": 2.605,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026"
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Seoul",
+      "date": "April 27",
+      "station": "RKSI",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "token_id": "2734890257312417104412736033227441402813067293679395829390482776871857286705",
+      "station_prob": 0.9691,
+      "strict_limit": 0.82,
+      "paper_size_usdc": 5,
+      "best_ask_now": 0.82,
+      "best_bid_now": 0.8,
+      "top_ask_notional": 101.68,
+      "fill": {
+        "spend_requested": 5,
+        "limit": 0.82,
+        "spend_filled": 5.0,
+        "shares": 6.0976,
+        "avg_price": 0.82,
+        "fully_filled": true,
+        "levels_used": [
+          {
+            "price": 0.82,
+            "cost": 5.0,
+            "shares": 6.0976
+          }
+        ]
+      },
+      "paper_ev_proxy_usdc": 0.909,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026"
+    },
+    {
+      "status": "paper_fill_partial",
+      "city": "Shanghai",
+      "date": "April 26",
+      "station": "ZSPD",
+      "question": "Will the highest temperature in Shanghai be 23°C on April 26?",
+      "side": "NO",
+      "temp": 23,
+      "unit": "C",
+      "kind": "exact",
+      "token_id": "48340356564425638651690254632757217368774937619888753654873518473493102243100",
+      "station_prob": 0.7815,
+      "strict_limit": 0.6405,
+      "paper_size_usdc": 5,
+      "best_ask_now": 0.64,
+      "best_bid_now": 0.61,
+      "top_ask_notional": 4.76,
+      "fill": {
+        "spend_requested": 5,
+        "limit": 0.6405,
+        "spend_filled": 4.7552,
+        "shares": 7.43,
+        "avg_price": 0.64,
+        "fully_filled": false,
+        "levels_used": [
+          {
+            "price": 0.64,
+            "cost": 4.7552,
+            "shares": 7.43
+          }
+        ]
+      },
+      "paper_ev_proxy_usdc": 1.051,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026"
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "question": "Will the highest temperature in Munich be 19°C on April 26?",
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "token_id": "65150415710178668225912755798958866377138776739873410802848539258219208306639",
+      "station_prob": 0.7815,
+      "strict_limit": 0.65,
+      "paper_size_usdc": 5,
+      "best_ask_now": 0.65,
+      "best_bid_now": 0.63,
+      "top_ask_notional": 17.42,
+      "fill": {
+        "spend_requested": 5,
+        "limit": 0.65,
+        "spend_filled": 5.0,
+        "shares": 7.6923,
+        "avg_price": 0.65,
+        "fully_filled": true,
+        "levels_used": [
+          {
+            "price": 0.65,
+            "cost": 5.0,
+            "shares": 7.6923
+          }
+        ]
+      },
+      "paper_ev_proxy_usdc": 1.012,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026"
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "question": "Will the highest temperature in Beijing be 24°C on April 26?",
+      "side": "NO",
+      "temp": 24,
+      "unit": "C",
+      "kind": "exact",
+      "token_id": "4864927800095115501030477288289563032876018053782458052106292952392293746694",
+      "station_prob": 0.8951,
+      "strict_limit": 0.82,
+      "paper_size_usdc": 2,
+      "best_ask_now": 0.82,
+      "best_bid_now": 0.8,
+      "top_ask_notional": 39.36,
+      "fill": {
+        "spend_requested": 2,
+        "limit": 0.82,
+        "spend_filled": 2.0,
+        "shares": 2.439,
+        "avg_price": 0.82,
+        "fully_filled": true,
+        "levels_used": [
+          {
+            "price": 0.82,
+            "cost": 2.0,
+            "shares": 2.439
+          }
+        ]
+      },
+      "paper_ev_proxy_usdc": 0.183,
+      "risk_flags": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026"
+    }
+  ],
+  "watch_refresh": [
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "side": "YES",
+      "temp": 21,
+      "unit": "C",
+      "kind": "higher",
+      "question": "Will the highest temperature in Munich be 21°C or higher on April 26?",
+      "best_ask_now": 0.029,
+      "station_prob": 0.3605,
+      "edge_now": 0.3315,
+      "old_limit": 0.0321,
+      "alert_watch": true,
+      "reasons": [
+        "large_model_edge",
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 26",
+      "side": "YES",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 18°C on April 26?",
+      "best_ask_now": 0.06,
+      "station_prob": 0.279,
+      "edge_now": 0.219,
+      "old_limit": 0.0689,
+      "alert_watch": true,
+      "reasons": [
+        "large_model_edge",
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 26",
+      "side": "YES",
+      "temp": 17,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 17°C on April 26?",
+      "best_ask_now": 0.011,
+      "station_prob": 0.2185,
+      "edge_now": 0.2075,
+      "old_limit": 0.0185,
+      "alert_watch": true,
+      "reasons": [
+        "large_model_edge",
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 27",
+      "side": "YES",
+      "temp": 15,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 15°C on April 27?",
+      "best_ask_now": 0.029,
+      "station_prob": 0.2185,
+      "edge_now": 0.1895,
+      "old_limit": 0.0321,
+      "alert_watch": true,
+      "reasons": [
+        "large_model_edge",
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026"
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 26",
+      "side": "YES",
+      "temp": 21,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Shanghai be 21°C on April 26?",
+      "best_ask_now": 0.054,
+      "station_prob": 0.2185,
+      "edge_now": 0.1645,
+      "old_limit": 0.0674,
+      "alert_watch": false,
+      "reasons": [
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026"
+    },
+    {
+      "city": "Ankara",
+      "date": "April 26",
+      "side": "YES",
+      "temp": 22,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Ankara be 22°C on April 26?",
+      "best_ask_now": 0.079,
+      "station_prob": 0.2185,
+      "edge_now": 0.1395,
+      "old_limit": 0.0797,
+      "alert_watch": false,
+      "reasons": [
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-ankara-on-april-26-2026"
+    },
+    {
+      "city": "Seoul",
+      "date": "April 27",
+      "side": "YES",
+      "temp": 16,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Seoul be 16°C on April 27?",
+      "best_ask_now": 0.14,
+      "station_prob": 0.279,
+      "edge_now": 0.139,
+      "old_limit": 0.14,
+      "alert_watch": false,
+      "reasons": [
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026"
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "side": "YES",
+      "temp": 27,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Beijing be 27°C on April 26?",
+      "best_ask_now": 0.09,
+      "station_prob": 0.2185,
+      "edge_now": 0.1285,
+      "old_limit": 0.0931,
+      "alert_watch": false,
+      "reasons": [
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026"
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 27",
+      "side": "YES",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Shanghai be 25°C on April 27?",
+      "best_ask_now": 0.09,
+      "station_prob": 0.2185,
+      "edge_now": 0.1285,
+      "old_limit": 0.1101,
+      "alert_watch": false,
+      "reasons": [
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-27-2026"
+    },
+    {
+      "city": "Ankara",
+      "date": "April 26",
+      "side": "YES",
+      "temp": 23,
+      "unit": "C",
+      "kind": "higher",
+      "question": "Will the highest temperature in Ankara be 23°C or higher on April 26?",
+      "best_ask_now": 0.019,
+      "station_prob": 0.142,
+      "edge_now": 0.123,
+      "old_limit": 0.0235,
+      "alert_watch": false,
+      "reasons": [
+        "account_consensus_divergence"
+      ],
+      "url": "https://polymarket.com/event/highest-temperature-in-ankara-on-april-26-2026"
+    },
+    {
+      "city": "Ankara",
+      "date": "April 26",
+      "side": "NO",
+      "temp": 20,
+      "unit": "C",
+      "kind": "exact",
+      "question": "Will the highest temperature in Ankara be 20°C on April 26?",
+      "best_ask_now": 0.71,
+      "station_prob": 0.7815,
+      "edge_now": 0.0715,
+      "old_limit": 0.71,
+      "alert_watch": false,
+      "reasons": [],
+      "url": "https://polymarket.com/event/highest-temperature-in-ankara-on-april-26-2026"
+    }
+  ]
+}

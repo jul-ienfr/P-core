@@ -1,0 +1,9 @@
+status,city,date,station,side,temp,kind,filled_usdc,shares,entry_avg,current_forecast_max_c,best_bid_now,best_ask_now,p_side_now,paper_ev_now_usdc,paper_mtm_bid_usdc,action,reason,paper_exit_price,paper_realized_pnl_usdc
+active,Seoul,April 26,RKSI,NO,20,higher,17.24,70.485867,0.2446,16.0,0.26,0.29,0.9979,53.095,1.086,HOLD_CAPPED,large position; no further add,,
+active,Beijing,April 26,ZBAA,NO,25,exact,15.0,24.1935,0.62,25.0,0.61,0.62,0.721,2.443,-0.242,HOLD_CAPPED,large position; no further add,,
+active,Munich,April 26,EDDM,NO,18,exact,10.0,14.0845,0.71,16.0,0.68,0.69,0.8951,2.607,-0.423,HOLD_CAPPED,large position; no further add,,
+active,Seoul,April 27,RKSI,NO,19,exact,10.0,12.1952,0.82,17.0,0.8,0.82,0.8951,0.916,-0.244,HOLD_CAPPED,large position; no further add,,
+active,Shanghai,April 26,ZSPD,NO,23,exact,4.7552,7.43,0.64,23.0,0.65,0.68,0.721,0.602,0.074,HOLD_MONITOR,OK,,
+active,Munich,April 26,EDDM,NO,19,exact,5.0,7.6923,0.65,16.0,0.65,0.68,0.9691,2.455,-0.0,HOLD_MONITOR,OK,,
+active,Karachi,April 27,OPKC,NO,36,higher,10.0,18.867925,0.53,33.0,0.41,0.52,0.9839,8.565,-2.264,HOLD_CAPPED,large position; no further add,,
+closed,Beijing,April 26,ZBAA,NO,24,exact,2.0,2.439,0.82,25.0,0.81,0.84,0.7815,-0.094,-0.024,EXIT_PAPER,p_side 0.7815 < hard_stop 0.7900,0.81,-0.0244

@@ -1,0 +1,165 @@
+{
+  "books": {
+    "NO": {
+      "best_ask": 0.977,
+      "best_bid": 0.945,
+      "token_id": "52817872578288816749191973321023191193600420939968601808746765086788856187251",
+      "top_asks": [
+        {
+          "price": 0.977,
+          "size": 79.36
+        },
+        {
+          "price": 0.978,
+          "size": 38.32
+        },
+        {
+          "price": 0.98,
+          "size": 222.2
+        },
+        {
+          "price": 0.984,
+          "size": 20.0
+        },
+        {
+          "price": 0.99,
+          "size": 648.0
+        }
+      ],
+      "top_bids": [
+        {
+          "price": 0.945,
+          "size": 39.35
+        },
+        {
+          "price": 0.944,
+          "size": 162.0
+        },
+        {
+          "price": 0.942,
+          "size": 20.0
+        },
+        {
+          "price": 0.94,
+          "size": 45.0
+        },
+        {
+          "price": 0.937,
+          "size": 200.0
+        }
+      ]
+    },
+    "YES": {
+      "best_ask": 0.055,
+      "best_bid": 0.023,
+      "token_id": "6131281487843155887731200380910001326393601812623280243081546732770219880606",
+      "top_asks": [
+        {
+          "price": 0.055,
+          "size": 39.35
+        },
+        {
+          "price": 0.056,
+          "size": 162.0
+        },
+        {
+          "price": 0.058,
+          "size": 20.0
+        },
+        {
+          "price": 0.06,
+          "size": 45.0
+        },
+        {
+          "price": 0.063,
+          "size": 200.0
+        }
+      ],
+      "top_bids": [
+        {
+          "price": 0.023,
+          "size": 79.36
+        },
+        {
+          "price": 0.022,
+          "size": 38.32
+        },
+        {
+          "price": 0.02,
+          "size": 222.2
+        },
+        {
+          "price": 0.016,
+          "size": 20.0
+        },
+        {
+          "price": 0.01,
+          "size": 648.0
+        }
+      ]
+    }
+  },
+  "existing_position": {
+    "entry_avg": 0.977,
+    "filled_usdc": 5.0,
+    "found": true,
+    "shares": 5.117707,
+    "side": "NO",
+    "source_ledger": "/home/jul/prediction_core/data/polymarket/weather_paper_micro_updated_ledger_with_2065028_20260425T150303Z.json"
+  },
+  "generated_at": "2026-04-25T15:33:37.278667+00:00",
+  "market_id": "2065028",
+  "market_url": "https://polymarket.com/event/highest-temperature-in-hong-kong-on-april-26-2026-30corhigher",
+  "monitor": {
+    "action": "HOLD_MONITOR_OFFICIAL",
+    "best_ask": 0.977,
+    "best_bid": 0.945,
+    "expected_pnl_usdc": -0.06141274500000016,
+    "expected_settlement_value_usdc": 4.938587255,
+    "model_probability": 0.965,
+    "mtm_bid_pnl_usdc": -0.16376688500000025,
+    "mtm_bid_usdc": 4.836233115,
+    "next_actions": [
+      "monitor HKO official daily extract for 2026-04-26",
+      "no add / no real order",
+      "if official confirms NO, bookkeep paper settlement"
+    ],
+    "side": "NO"
+  },
+  "no_real_order_placed": true,
+  "paper_only": true,
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "resolution_status": {
+    "confirmed_outcome": {
+      "basis": "official_daily_extract",
+      "status": "pending"
+    },
+    "date": "2026-04-26",
+    "latest_direct": {
+      "available": true,
+      "fallback_station_used": false,
+      "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+      "station_found": "Hong Kong Observatory",
+      "timestamp": "2026-04-25T23:02:00+08:00",
+      "value": 24.0
+    },
+    "official_daily_extract": {
+      "available": false,
+      "error": null,
+      "matched_rows_preview": [],
+      "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "timestamp": null,
+      "value": null
+    },
+    "provider": "hong_kong_observatory",
+    "provisional_outcome": {
+      "basis": "latest_direct",
+      "observed_value": 24.0,
+      "status": "no",
+      "threshold": 30.0
+    },
+    "station": "HKO",
+    "threshold_c": 30.0
+  },
+  "source_monitor": "/home/jul/prediction_core/data/polymarket/weather_paper_2065028_monitor_20260425T153010Z.json"
+}

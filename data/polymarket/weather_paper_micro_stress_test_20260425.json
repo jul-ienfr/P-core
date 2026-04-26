@@ -1,0 +1,1266 @@
+{
+  "generated_at": "2026-04-25T14:18:07.776372Z",
+  "source": "stress-test of filled paper ledger; no real orders",
+  "scenario_grid": "forecast max bias [-2,-1,0,+1,+2] C x sigma [1.0,1.4,2.0,2.8] C",
+  "portfolio_spend": 39.0,
+  "positions": [
+    {
+      "status": "paper_fill_partial",
+      "city": "Seoul",
+      "date": "April 26",
+      "station": "RKSI",
+      "forecast_max_c": 18,
+      "side": "NO",
+      "temp": 20,
+      "unit": "C",
+      "kind": "higher",
+      "entry_avg": 0.28,
+      "filled_usdc": 2.24,
+      "shares": 8.0,
+      "base_p_side": 0.858,
+      "base_edge": 0.578,
+      "positive_scenarios": 20,
+      "good_scenarios": 19,
+      "scenario_count": 20,
+      "worst_edge": 0.0285,
+      "worst_scenario": {
+        "forecast_bias_c": 2,
+        "sigma_c": 1.0,
+        "p_side": 0.3085,
+        "edge": 0.0285
+      },
+      "breakeven_forecast_bias_c_sigma1p4": 2.3,
+      "risk_bucket": "robust",
+      "question": "Will the highest temperature in Seoul be 20°C or higher on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-26-2026",
+      "scenarios": [
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.0,
+          "p_side": 0.9998,
+          "edge": 0.7198
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.4,
+          "p_side": 0.9938,
+          "edge": 0.7138
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.0,
+          "p_side": 0.9599,
+          "edge": 0.6799
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.8,
+          "p_side": 0.8944,
+          "edge": 0.6144
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.0,
+          "p_side": 0.9938,
+          "edge": 0.7138
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.4,
+          "p_side": 0.9629,
+          "edge": 0.6829
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.0,
+          "p_side": 0.8944,
+          "edge": 0.6144
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.8,
+          "p_side": 0.814,
+          "edge": 0.534
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.0,
+          "p_side": 0.9332,
+          "edge": 0.6532
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.4,
+          "p_side": 0.858,
+          "edge": 0.578
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.0,
+          "p_side": 0.7734,
+          "edge": 0.4934
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.8,
+          "p_side": 0.7039,
+          "edge": 0.4239
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.0,
+          "p_side": 0.6915,
+          "edge": 0.4115
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.4,
+          "p_side": 0.6395,
+          "edge": 0.3595
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.0,
+          "p_side": 0.5987,
+          "edge": 0.3187
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.8,
+          "p_side": 0.5709,
+          "edge": 0.2909
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.0,
+          "p_side": 0.3085,
+          "edge": 0.0285
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.4,
+          "p_side": 0.3605,
+          "edge": 0.0805
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.0,
+          "p_side": 0.4013,
+          "edge": 0.1213
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.8,
+          "p_side": 0.4291,
+          "edge": 0.1491
+        }
+      ]
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "forecast_max_c": 26,
+      "side": "NO",
+      "temp": 25,
+      "unit": "C",
+      "kind": "exact",
+      "entry_avg": 0.62,
+      "filled_usdc": 10.0,
+      "shares": 16.129,
+      "base_p_side": 0.7815,
+      "base_edge": 0.1615,
+      "positive_scenarios": 19,
+      "good_scenarios": 19,
+      "scenario_count": 20,
+      "worst_edge": -0.0029,
+      "worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "edge": -0.0029
+      },
+      "breakeven_forecast_bias_c_sigma1p4": -1.0,
+      "risk_bucket": "robust",
+      "question": "Will the highest temperature in Beijing be 25°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026",
+      "scenarios": [
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": 0.1383
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": 0.1615
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.2053
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.2469
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.0,
+          "p_side": 0.6171,
+          "edge": -0.0029
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.4,
+          "p_side": 0.721,
+          "edge": 0.101
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.0,
+          "p_side": 0.8026,
+          "edge": 0.1826
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.8,
+          "p_side": 0.8583,
+          "edge": 0.2383
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": 0.1383
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": 0.1615
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.2053
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.2469
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.0,
+          "p_side": 0.9394,
+          "edge": 0.3194
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.4,
+          "p_side": 0.8951,
+          "edge": 0.2751
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.0,
+          "p_side": 0.879,
+          "edge": 0.259
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.8,
+          "p_side": 0.8899,
+          "edge": 0.2699
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.0,
+          "p_side": 0.994,
+          "edge": 0.374
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.4,
+          "p_side": 0.9691,
+          "edge": 0.3491
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.0,
+          "p_side": 0.9344,
+          "edge": 0.3144
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.8,
+          "p_side": 0.9197,
+          "edge": 0.2997
+        }
+      ]
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Seoul",
+      "date": "April 27",
+      "station": "RKSI",
+      "forecast_max_c": 16,
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "entry_avg": 0.82,
+      "filled_usdc": 5.0,
+      "shares": 6.0976,
+      "base_p_side": 0.9691,
+      "base_edge": 0.1491,
+      "positive_scenarios": 18,
+      "good_scenarios": 17,
+      "scenario_count": 20,
+      "worst_edge": -0.0617,
+      "worst_scenario": {
+        "forecast_bias_c": 2,
+        "sigma_c": 1.0,
+        "p_side": 0.7583,
+        "edge": -0.0617
+      },
+      "breakeven_forecast_bias_c_sigma1p4": 1.7,
+      "risk_bucket": "robust",
+      "question": "Will the highest temperature in Seoul be 19°C on April 27?",
+      "url": "https://polymarket.com/event/highest-temperature-in-seoul-on-april-27-2026",
+      "scenarios": [
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.0,
+          "p_side": 1.0,
+          "edge": 0.18
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.4,
+          "p_side": 0.9994,
+          "edge": 0.1794
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.0,
+          "p_side": 0.9908,
+          "edge": 0.1708
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.8,
+          "p_side": 0.9707,
+          "edge": 0.1507
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.0,
+          "p_side": 0.9998,
+          "edge": 0.1798
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.4,
+          "p_side": 0.9944,
+          "edge": 0.1744
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.0,
+          "p_side": 0.9722,
+          "edge": 0.1522
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.8,
+          "p_side": 0.9484,
+          "edge": 0.1284
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.0,
+          "p_side": 0.994,
+          "edge": 0.174
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.4,
+          "p_side": 0.9691,
+          "edge": 0.1491
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.0,
+          "p_side": 0.9344,
+          "edge": 0.1144
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.8,
+          "p_side": 0.9197,
+          "edge": 0.0997
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.0,
+          "p_side": 0.9394,
+          "edge": 0.1194
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.4,
+          "p_side": 0.8951,
+          "edge": 0.0751
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.0,
+          "p_side": 0.879,
+          "edge": 0.059
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.8,
+          "p_side": 0.8899,
+          "edge": 0.0699
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": -0.0617
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": -0.0385
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.0053
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.0469
+        }
+      ]
+    },
+    {
+      "status": "paper_fill_partial",
+      "city": "Shanghai",
+      "date": "April 26",
+      "station": "ZSPD",
+      "forecast_max_c": 22,
+      "side": "NO",
+      "temp": 23,
+      "unit": "C",
+      "kind": "exact",
+      "entry_avg": 0.64,
+      "filled_usdc": 4.7552,
+      "shares": 7.43,
+      "base_p_side": 0.7815,
+      "base_edge": 0.1415,
+      "positive_scenarios": 19,
+      "good_scenarios": 19,
+      "scenario_count": 20,
+      "worst_edge": -0.0229,
+      "worst_scenario": {
+        "forecast_bias_c": 1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "edge": -0.0229
+      },
+      "breakeven_forecast_bias_c_sigma1p4": 1.0,
+      "risk_bucket": "robust",
+      "question": "Will the highest temperature in Shanghai be 23°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-shanghai-on-april-26-2026",
+      "scenarios": [
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.0,
+          "p_side": 0.994,
+          "edge": 0.354
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.4,
+          "p_side": 0.9691,
+          "edge": 0.3291
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.0,
+          "p_side": 0.9344,
+          "edge": 0.2944
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.8,
+          "p_side": 0.9197,
+          "edge": 0.2797
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.0,
+          "p_side": 0.9394,
+          "edge": 0.2994
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.4,
+          "p_side": 0.8951,
+          "edge": 0.2551
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.0,
+          "p_side": 0.879,
+          "edge": 0.239
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.8,
+          "p_side": 0.8899,
+          "edge": 0.2499
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": 0.1183
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": 0.1415
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.1853
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.2269
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.0,
+          "p_side": 0.6171,
+          "edge": -0.0229
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.4,
+          "p_side": 0.721,
+          "edge": 0.081
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.0,
+          "p_side": 0.8026,
+          "edge": 0.1626
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.8,
+          "p_side": 0.8583,
+          "edge": 0.2183
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": 0.1183
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": 0.1415
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.1853
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.2269
+        }
+      ]
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "forecast_max_c": 20,
+      "side": "NO",
+      "temp": 19,
+      "unit": "C",
+      "kind": "exact",
+      "entry_avg": 0.65,
+      "filled_usdc": 5.0,
+      "shares": 7.6923,
+      "base_p_side": 0.7815,
+      "base_edge": 0.1315,
+      "positive_scenarios": 19,
+      "good_scenarios": 19,
+      "scenario_count": 20,
+      "worst_edge": -0.0329,
+      "worst_scenario": {
+        "forecast_bias_c": -1,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "edge": -0.0329
+      },
+      "breakeven_forecast_bias_c_sigma1p4": -1.0,
+      "risk_bucket": "robust",
+      "question": "Will the highest temperature in Munich be 19°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "scenarios": [
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": 0.1083
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": 0.1315
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.1753
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.2169
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.0,
+          "p_side": 0.6171,
+          "edge": -0.0329
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.4,
+          "p_side": 0.721,
+          "edge": 0.071
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.0,
+          "p_side": 0.8026,
+          "edge": 0.1526
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.8,
+          "p_side": 0.8583,
+          "edge": 0.2083
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": 0.1083
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": 0.1315
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.1753
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.2169
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.0,
+          "p_side": 0.9394,
+          "edge": 0.2894
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.4,
+          "p_side": 0.8951,
+          "edge": 0.2451
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.0,
+          "p_side": 0.879,
+          "edge": 0.229
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.8,
+          "p_side": 0.8899,
+          "edge": 0.2399
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.0,
+          "p_side": 0.994,
+          "edge": 0.344
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.4,
+          "p_side": 0.9691,
+          "edge": 0.3191
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.0,
+          "p_side": 0.9344,
+          "edge": 0.2844
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.8,
+          "p_side": 0.9197,
+          "edge": 0.2697
+        }
+      ]
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Munich",
+      "date": "April 26",
+      "station": "EDDM",
+      "forecast_max_c": 20,
+      "side": "NO",
+      "temp": 18,
+      "unit": "C",
+      "kind": "exact",
+      "entry_avg": 0.71,
+      "filled_usdc": 10.0,
+      "shares": 14.0845,
+      "base_p_side": 0.8951,
+      "base_edge": 0.1851,
+      "positive_scenarios": 19,
+      "good_scenarios": 18,
+      "scenario_count": 20,
+      "worst_edge": -0.0929,
+      "worst_scenario": {
+        "forecast_bias_c": -2,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "edge": -0.0929
+      },
+      "breakeven_forecast_bias_c_sigma1p4": -2.0,
+      "risk_bucket": "medium",
+      "question": "Will the highest temperature in Munich be 18°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-munich-on-april-26-2026",
+      "scenarios": [
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.0,
+          "p_side": 0.6171,
+          "edge": -0.0929
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.4,
+          "p_side": 0.721,
+          "edge": 0.011
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.0,
+          "p_side": 0.8026,
+          "edge": 0.0926
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.8,
+          "p_side": 0.8583,
+          "edge": 0.1483
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": 0.0483
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": 0.0715
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.1153
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.1569
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.0,
+          "p_side": 0.9394,
+          "edge": 0.2294
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.4,
+          "p_side": 0.8951,
+          "edge": 0.1851
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.0,
+          "p_side": 0.879,
+          "edge": 0.169
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.8,
+          "p_side": 0.8899,
+          "edge": 0.1799
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.0,
+          "p_side": 0.994,
+          "edge": 0.284
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.4,
+          "p_side": 0.9691,
+          "edge": 0.2591
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.0,
+          "p_side": 0.9344,
+          "edge": 0.2244
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.8,
+          "p_side": 0.9197,
+          "edge": 0.2097
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.0,
+          "p_side": 0.9998,
+          "edge": 0.2898
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.4,
+          "p_side": 0.9944,
+          "edge": 0.2844
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.0,
+          "p_side": 0.9722,
+          "edge": 0.2622
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.8,
+          "p_side": 0.9484,
+          "edge": 0.2384
+        }
+      ]
+    },
+    {
+      "status": "paper_fill_full",
+      "city": "Beijing",
+      "date": "April 26",
+      "station": "ZBAA",
+      "forecast_max_c": 26,
+      "side": "NO",
+      "temp": 24,
+      "unit": "C",
+      "kind": "exact",
+      "entry_avg": 0.82,
+      "filled_usdc": 2.0,
+      "shares": 2.439,
+      "base_p_side": 0.8951,
+      "base_edge": 0.0751,
+      "positive_scenarios": 15,
+      "good_scenarios": 14,
+      "scenario_count": 20,
+      "worst_edge": -0.2029,
+      "worst_scenario": {
+        "forecast_bias_c": -2,
+        "sigma_c": 1.0,
+        "p_side": 0.6171,
+        "edge": -0.2029
+      },
+      "breakeven_forecast_bias_c_sigma1p4": -3.3,
+      "risk_bucket": "medium",
+      "question": "Will the highest temperature in Beijing be 24°C on April 26?",
+      "url": "https://polymarket.com/event/highest-temperature-in-beijing-on-april-26-2026",
+      "scenarios": [
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.0,
+          "p_side": 0.6171,
+          "edge": -0.2029
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 1.4,
+          "p_side": 0.721,
+          "edge": -0.099
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.0,
+          "p_side": 0.8026,
+          "edge": -0.0174
+        },
+        {
+          "forecast_bias_c": -2,
+          "sigma_c": 2.8,
+          "p_side": 0.8583,
+          "edge": 0.0383
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.0,
+          "p_side": 0.7583,
+          "edge": -0.0617
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 1.4,
+          "p_side": 0.7815,
+          "edge": -0.0385
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.0,
+          "p_side": 0.8253,
+          "edge": 0.0053
+        },
+        {
+          "forecast_bias_c": -1,
+          "sigma_c": 2.8,
+          "p_side": 0.8669,
+          "edge": 0.0469
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.0,
+          "p_side": 0.9394,
+          "edge": 0.1194
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 1.4,
+          "p_side": 0.8951,
+          "edge": 0.0751
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.0,
+          "p_side": 0.879,
+          "edge": 0.059
+        },
+        {
+          "forecast_bias_c": 0,
+          "sigma_c": 2.8,
+          "p_side": 0.8899,
+          "edge": 0.0699
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.0,
+          "p_side": 0.994,
+          "edge": 0.174
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 1.4,
+          "p_side": 0.9691,
+          "edge": 0.1491
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.0,
+          "p_side": 0.9344,
+          "edge": 0.1144
+        },
+        {
+          "forecast_bias_c": 1,
+          "sigma_c": 2.8,
+          "p_side": 0.9197,
+          "edge": 0.0997
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.0,
+          "p_side": 0.9998,
+          "edge": 0.1798
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 1.4,
+          "p_side": 0.9944,
+          "edge": 0.1744
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.0,
+          "p_side": 0.9722,
+          "edge": 0.1522
+        },
+        {
+          "forecast_bias_c": 2,
+          "sigma_c": 2.8,
+          "p_side": 0.9484,
+          "edge": 0.1284
+        }
+      ]
+    }
+  ],
+  "portfolio_stress_sorted_worst_first": [
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 1.0,
+      "ev_usdc": 9.26,
+      "ev_pct_of_spend": 23.7
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 1.0,
+      "ev_usdc": 10.75,
+      "ev_pct_of_spend": 27.6
+    },
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 1.4,
+      "ev_usdc": 11.51,
+      "ev_pct_of_spend": 29.5
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 1.4,
+      "ev_usdc": 12.78,
+      "ev_pct_of_spend": 32.8
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 1.4,
+      "ev_usdc": 12.99,
+      "ev_pct_of_spend": 33.3
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 2.0,
+      "ev_usdc": 13.21,
+      "ev_pct_of_spend": 33.9
+    },
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 2.0,
+      "ev_usdc": 13.37,
+      "ev_pct_of_spend": 34.3
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 2.0,
+      "ev_usdc": 13.5,
+      "ev_pct_of_spend": 34.6
+    },
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 2.0,
+      "ev_usdc": 13.7,
+      "ev_pct_of_spend": 35.1
+    },
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 2.8,
+      "ev_usdc": 13.74,
+      "ev_pct_of_spend": 35.2
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 1.0,
+      "ev_usdc": 13.75,
+      "ev_pct_of_spend": 35.3
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 2.8,
+      "ev_usdc": 13.77,
+      "ev_pct_of_spend": 35.3
+    },
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 1.0,
+      "ev_usdc": 13.93,
+      "ev_pct_of_spend": 35.7
+    },
+    {
+      "forecast_bias_c": 2,
+      "sigma_c": 1.4,
+      "ev_usdc": 13.98,
+      "ev_pct_of_spend": 35.8
+    },
+    {
+      "forecast_bias_c": 0,
+      "sigma_c": 2.8,
+      "ev_usdc": 14.04,
+      "ev_pct_of_spend": 36.0
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 1.4,
+      "ev_usdc": 14.27,
+      "ev_pct_of_spend": 36.6
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 2.0,
+      "ev_usdc": 14.59,
+      "ev_pct_of_spend": 37.4
+    },
+    {
+      "forecast_bias_c": -1,
+      "sigma_c": 2.8,
+      "ev_usdc": 14.68,
+      "ev_pct_of_spend": 37.7
+    },
+    {
+      "forecast_bias_c": 1,
+      "sigma_c": 1.0,
+      "ev_usdc": 15.65,
+      "ev_pct_of_spend": 40.1
+    },
+    {
+      "forecast_bias_c": -2,
+      "sigma_c": 2.8,
+      "ev_usdc": 15.75,
+      "ev_pct_of_spend": 40.4
+    }
+  ],
+  "position_rules": [
+    {
+      "city": "Seoul",
+      "date": "April 26",
+      "side": "NO",
+      "temp": 20,
+      "risk_bucket": "robust",
+      "action": "keep_paper; can add only after refresh confirms source and book",
+      "adverse_move_definition": "forecast/source max moves toward the rejected outcome",
+      "breakeven_bias_c_at_sigma1p4": 2.3
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "side": "NO",
+      "temp": 25,
+      "risk_bucket": "robust",
+      "action": "keep_paper; can add only after refresh confirms source and book",
+      "adverse_move_definition": "forecast/source max moves toward the rejected outcome",
+      "breakeven_bias_c_at_sigma1p4": -1.0
+    },
+    {
+      "city": "Seoul",
+      "date": "April 27",
+      "side": "NO",
+      "temp": 19,
+      "risk_bucket": "robust",
+      "action": "keep_paper; can add only after refresh confirms source and book",
+      "adverse_move_definition": "forecast/source max moves toward the rejected outcome",
+      "breakeven_bias_c_at_sigma1p4": 1.7
+    },
+    {
+      "city": "Shanghai",
+      "date": "April 26",
+      "side": "NO",
+      "temp": 23,
+      "risk_bucket": "robust",
+      "action": "keep_paper; can add only after refresh confirms source and book",
+      "adverse_move_definition": "forecast/source max moves toward the rejected outcome",
+      "breakeven_bias_c_at_sigma1p4": 1.0
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "side": "NO",
+      "temp": 19,
+      "risk_bucket": "robust",
+      "action": "keep_paper; can add only after refresh confirms source and book",
+      "adverse_move_definition": "forecast/source max moves toward the rejected outcome",
+      "breakeven_bias_c_at_sigma1p4": -1.0
+    },
+    {
+      "city": "Munich",
+      "date": "April 26",
+      "side": "NO",
+      "temp": 18,
+      "risk_bucket": "medium",
+      "action": "keep paper only, no add",
+      "adverse_move_definition": "forecast/source max moves toward the rejected outcome",
+      "breakeven_bias_c_at_sigma1p4": -2.0
+    },
+    {
+      "city": "Beijing",
+      "date": "April 26",
+      "side": "NO",
+      "temp": 24,
+      "risk_bucket": "medium",
+      "action": "keep paper only, no add",
+      "adverse_move_definition": "forecast/source max moves toward the rejected outcome",
+      "breakeven_bias_c_at_sigma1p4": -3.3
+    }
+  ]
+}

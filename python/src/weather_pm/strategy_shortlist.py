@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Any
 
 from prediction_core.decision import EntryPolicy, evaluate_entry
+from weather_pm.dynamic_position_sizing import SizingInput, SizingPolicy, calculate_dynamic_position_size
 from weather_pm.edge_sizing import calculate_edge_sizing
 
 
@@ -181,7 +182,8 @@ def _execution_diagnostic(row: dict[str, Any]) -> dict[str, Any]:
 def _operator_entry_summary(row: dict[str, Any]) -> dict[str, Any] | None:
     policy = row.get("entry_policy") if isinstance(row.get("entry_policy"), dict) else None
     decision = row.get("entry_decision") if isinstance(row.get("entry_decision"), dict) else None
-    if policy is None and decision is None:
+    dynamic = row.get("dynamic_sizing") if isinstance(row.get("dynamic_sizing"), dict) else None
+    if policy is None and decision is None and dynamic is None:
         return None
     summary: dict[str, Any] = {
         "enter": bool(decision.get("enter")) if decision else None,
@@ -194,6 +196,14 @@ def _operator_entry_summary(row: dict[str, Any]) -> dict[str, Any] | None:
         "size_hint_usd": _optional_number(decision.get("size_hint_usd")) if decision else None,
         "blocked_by": list(decision.get("blocked_by") or []) if decision else [],
     }
+    if dynamic is not None:
+        summary.update(
+            {
+                "dynamic_action": dynamic.get("action"),
+                "dynamic_size_usdc": _optional_number(dynamic.get("recommended_size_usdc")),
+                "dynamic_reasons": list(dynamic.get("reasons") or []),
+            }
+        )
     return summary
 
 
@@ -397,19 +407,26 @@ def _shortlist_row(
     inconsistencies = [item for item in surface_event.get("inconsistencies", []) if isinstance(item, dict)] if surface_event else []
     reasons = _reasons(opportunity, matched_accounts=matched_accounts, inconsistencies=inconsistencies)
     action = _action(opportunity, direct=bool(opportunity.get("source_direct")), inconsistencies=inconsistencies)
+    edge_sizing = _edge_sizing(opportunity)
+    entry_policy = _entry_policy(opportunity).to_dict()
+    entry_decision = _entry_decision(opportunity)
+    surface_key = _surface_key(opportunity, city, date, surface_event=surface_event)
+    dynamic_sizing = _dynamic_sizing(opportunity, surface_key=surface_key, matched_accounts=matched_accounts, edge_sizing=edge_sizing, entry_decision=entry_decision)
     return {
         "rank": 0,
         "market_id": str(opportunity.get("market_id") or ""),
         "question": str(opportunity.get("question") or ""),
         "city": city,
         "date": date,
+        "surface_key": surface_key,
         "decision_status": str(opportunity.get("decision_status") or "skipped"),
         "probability_edge": _optional_number(opportunity.get("probability_edge")),
         "all_in_cost_bps": _optional_number(opportunity.get("all_in_cost_bps")),
         "order_book_depth_usd": _optional_number(opportunity.get("order_book_depth_usd")),
-        "edge_sizing": _edge_sizing(opportunity),
-        "entry_policy": _entry_policy(opportunity).to_dict(),
-        "entry_decision": _entry_decision(opportunity),
+        "edge_sizing": edge_sizing,
+        "entry_policy": entry_policy,
+        "entry_decision": entry_decision,
+        "dynamic_sizing": dynamic_sizing,
         "source_direct": bool(opportunity.get("source_direct")),
         "source_provider": opportunity.get("source_provider"),
         "source_station_code": opportunity.get("source_station_code"),
@@ -432,6 +449,80 @@ def _shortlist_row(
         "next_actions": _next_actions(opportunity, action=action, direct=bool(opportunity.get("source_direct")), inconsistencies=inconsistencies),
         "reasons": reasons,
     }
+
+
+def _surface_key(row: dict[str, Any], city: str, date: str, *, surface_event: dict[str, Any] | None = None) -> str:
+    explicit = row.get("surface_key") or row.get("city_date_surface")
+    if explicit:
+        return str(explicit)
+    event_key = str((surface_event or {}).get("event_key") or "")
+    parts = event_key.split("|")
+    if len(parts) >= 4 and parts[0]:
+        return "|".join([parts[0], parts[3], parts[1]])
+    surface_kind = str(row.get("surface_kind") or row.get("market_type") or row.get("variable") or "high").strip() or "high"
+    return "|".join([str(city or ""), str(date or ""), surface_kind])
+
+
+def _dominant_wallet_style(accounts: list[dict[str, Any]]) -> str | None:
+    for account in accounts:
+        for key in ("wallet_style", "sizing_style", "trading_style", "style", "primary_sizing_style"):
+            value = account.get(key)
+            if value:
+                return str(value)
+    archetypes = " ".join(str(account.get("primary_archetype") or "") for account in accounts).lower()
+    if "large" in archetypes or "conviction" in archetypes:
+        return "sparse/large-ticket conviction trader"
+    if "grid" in archetypes or "surface" in archetypes or "bin" in archetypes:
+        return "breadth/grid small-ticket surface trader"
+    if "selective" in archetypes:
+        return "selective weather trader"
+    return None
+
+
+def _dynamic_sizing(
+    opportunity: dict[str, Any],
+    *,
+    surface_key: str,
+    matched_accounts: list[dict[str, Any]],
+    edge_sizing: dict[str, Any] | None,
+    entry_decision: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    existing = opportunity.get("dynamic_sizing")
+    if isinstance(existing, dict):
+        return existing
+    prediction = _optional_number(opportunity.get("prediction_probability"))
+    price = _optional_number(opportunity.get("market_price"))
+    if prediction is None and entry_decision is not None:
+        prediction = _optional_number(entry_decision.get("model_probability"))
+    if price is None and entry_decision is not None:
+        price = _optional_number(entry_decision.get("market_price"))
+    if prediction is None or price is None:
+        return None
+    net_edge = _optional_number((edge_sizing or {}).get("net_edge"))
+    if net_edge is None and entry_decision is not None:
+        net_edge = _optional_number(entry_decision.get("edge_net_all_in"))
+    if net_edge is None:
+        raw_edge = _optional_number(opportunity.get("probability_edge")) or (prediction - price)
+        net_edge = raw_edge - ((_optional_number(opportunity.get("all_in_cost_bps")) or 0.0) / 10000.0)
+    decision = calculate_dynamic_position_size(
+        SizingInput(
+            market_id=str(opportunity.get("market_id") or ""),
+            surface_key=surface_key,
+            model_probability=prediction,
+            market_price=price,
+            net_edge=net_edge,
+            confidence=_optional_number(opportunity.get("confidence")) or _optional_number((entry_decision or {}).get("confidence")) or 0.8,
+            spread=_optional_number(opportunity.get("spread")) or 0.0,
+            depth_usd=_optional_number(opportunity.get("order_book_depth_usd")) or 0.0,
+            hours_to_resolution=_optional_number(opportunity.get("hours_to_resolution")),
+            wallet_style=_dominant_wallet_style(matched_accounts),
+            current_market_exposure_usdc=_optional_number(opportunity.get("current_market_exposure_usdc")) or 0.0,
+            current_surface_exposure_usdc=_optional_number(opportunity.get("current_surface_exposure_usdc")) or 0.0,
+            current_total_weather_exposure_usdc=_optional_number(opportunity.get("current_total_weather_exposure_usdc")) or 0.0,
+        ),
+        policy=SizingPolicy.paper_weather_grid_default(),
+    )
+    return decision.to_dict()
 
 
 def _edge_sizing(opportunity: dict[str, Any]) -> dict[str, Any] | None:

@@ -1,0 +1,174 @@
+{
+  "count": 10050,
+  "last_rank": "10050",
+  "last_positive_pnl": 29.777948,
+  "total_weather_pnl_usd": 7785695.26,
+  "total_weather_volume_usd": 612151077.16,
+  "top20": [
+    {
+      "rank": "1",
+      "handle": "gopfan2",
+      "pnl": 343843.44,
+      "vol": 4571379.83,
+      "roi_pct": 7.522,
+      "profile": "https://polymarket.com/profile/0xf2f6af4f27ec2dcf4072095ab804016e14cd5817"
+    },
+    {
+      "rank": "2",
+      "handle": "aenews2",
+      "pnl": 277050.19,
+      "vol": 9972308.56,
+      "roi_pct": 2.778,
+      "profile": "https://polymarket.com/profile/0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1"
+    },
+    {
+      "rank": "3",
+      "handle": "ColdMath",
+      "pnl": 121526.82,
+      "vol": 8835337.51,
+      "roi_pct": 1.375,
+      "profile": "https://polymarket.com/profile/0x594edb9112f526fa6a80b8f858a6379c8a2c1c11"
+    },
+    {
+      "rank": "4",
+      "handle": "gopfan",
+      "pnl": 118426.47,
+      "vol": 739900.98,
+      "roi_pct": 16.006,
+      "profile": "https://polymarket.com/profile/0x6af75d4e4aaf700450efbac3708cce1665810ff1"
+    },
+    {
+      "rank": "5",
+      "handle": "bama124",
+      "pnl": 86600.55,
+      "vol": 410556.07,
+      "roi_pct": 21.093,
+      "profile": "https://polymarket.com/profile/0xe5c8026239919339b988fdb150a7ef4ea196d3e7"
+    },
+    {
+      "rank": "6",
+      "handle": "Hans323",
+      "pnl": 80872.37,
+      "vol": 6971546.61,
+      "roi_pct": 1.16,
+      "profile": "https://polymarket.com/profile/0x0f37cb80dee49d55b5f6d9e595d52591d6371410"
+    },
+    {
+      "rank": "7",
+      "handle": "Handsanitizer23",
+      "pnl": 71174.4,
+      "vol": 953274.81,
+      "roi_pct": 7.466,
+      "profile": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641"
+    },
+    {
+      "rank": "8",
+      "handle": "automatedAItradingbot",
+      "pnl": 64617.53,
+      "vol": 2362463.72,
+      "roi_pct": 2.735,
+      "profile": "https://polymarket.com/profile/0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11"
+    },
+    {
+      "rank": "9",
+      "handle": "BeefSlayer",
+      "pnl": 63444.69,
+      "vol": 1418633.83,
+      "roi_pct": 4.472,
+      "profile": "https://polymarket.com/profile/0x331bf91c132af9d921e1908ca0979363fc47193f"
+    },
+    {
+      "rank": "10",
+      "handle": "BigMike11",
+      "pnl": 62776.72,
+      "vol": 850755.65,
+      "roi_pct": 7.379,
+      "profile": "https://polymarket.com/profile/0xecdbd79566a25693b9971c48d7de84bc05f7da79"
+    },
+    {
+      "rank": "11",
+      "handle": "Kapii",
+      "pnl": 57190.13,
+      "vol": 1833451.17,
+      "roi_pct": 3.119,
+      "profile": "https://polymarket.com/profile/0xb74711992caf6d04fa55eecc46b8efc95311b050"
+    },
+    {
+      "rank": "12",
+      "handle": "WeatherTraderBot",
+      "pnl": 57179.74,
+      "vol": 1788233.33,
+      "roi_pct": 3.198,
+      "profile": "https://polymarket.com/profile/0xacc8e9dcabf9d65a5c78e3bec6941ed53a2b7d08"
+    },
+    {
+      "rank": "13",
+      "handle": "HondaCivic",
+      "pnl": 55905.85,
+      "vol": 6389682.95,
+      "roi_pct": 0.875,
+      "profile": "https://polymarket.com/profile/0x15ceffed7bf820cd2d90f90ea24ae9909f5cd5fa"
+    },
+    {
+      "rank": "14",
+      "handle": "aenews-915",
+      "pnl": 55093.07,
+      "vol": 598139.14,
+      "roi_pct": 9.211,
+      "profile": "https://polymarket.com/profile/0xf1bb700a67e3e8a45dc8160a92f4e0405f41bf09"
+    },
+    {
+      "rank": "15",
+      "handle": "CoffeeLover",
+      "pnl": 51421.33,
+      "vol": 161054.39,
+      "roi_pct": 31.928,
+      "profile": "https://polymarket.com/profile/0xc1b399b26020a4f689108e9640fd3dc8ffc8501c"
+    },
+    {
+      "rank": "16",
+      "handle": "junkbonds",
+      "pnl": 51264.8,
+      "vol": 864204.69,
+      "roi_pct": 5.932,
+      "profile": "https://polymarket.com/profile/0xdaad6f960d507dba148c1ff908db5a28743169cc"
+    },
+    {
+      "rank": "17",
+      "handle": "chilling",
+      "pnl": 50781.1,
+      "vol": 741105.84,
+      "roi_pct": 6.852,
+      "profile": "https://polymarket.com/profile/0x5a181dcf3eb53a09fb32b20a5a9312fb8d26f689"
+    },
+    {
+      "rank": "18",
+      "handle": "Poligarch",
+      "pnl": 50100.52,
+      "vol": 6125525.43,
+      "roi_pct": 0.818,
+      "profile": "https://polymarket.com/profile/0xb40e89677d59665d5188541ad860450a6e2a7cc9"
+    },
+    {
+      "rank": "19",
+      "handle": "Maskache2",
+      "pnl": 49971.34,
+      "vol": 4620632.97,
+      "roi_pct": 1.081,
+      "profile": "https://polymarket.com/profile/0x1f66796b45581868376365aef54b51eb84184c8d"
+    },
+    {
+      "rank": "20",
+      "handle": "russell110320",
+      "pnl": 47285.29,
+      "vol": 1369849.57,
+      "roi_pct": 3.452,
+      "profile": "https://polymarket.com/profile/0x118689b24aead1d6e9507b8068d056b2ec4f051b"
+    }
+  ],
+  "artifacts": {
+    "raw_json": "/home/jul/prediction_core/data/polymarket/weather_profitable_leaderboard_raw.json",
+    "csv": "/home/jul/prediction_core/data/polymarket/weather_profitable_accounts.csv",
+    "top500_classified": "/home/jul/prediction_core/data/polymarket/weather_profitable_accounts_classified.csv"
+  }
+}

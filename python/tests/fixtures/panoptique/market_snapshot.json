@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "market_id": "pm-1",
+  "slug": "weather-nyc",
+  "question": "Will it rain in NYC?",
+  "source": "polymarket",
+  "active": true,
+  "closed": false,
+  "created_at": "2026-04-26T12:00:00+00:00",
+  "raw": {"gamma_id": "1"}
+}

@@ -193,3 +193,13 @@ Portée explicite :
 - stabiliser la coexistence `prediction_core.*` + `weather_pm.*`
 - converger ensuite vers un namespace Python plus unifié si utile
 - ne pas déplacer `prediction_core/rust` pendant cette phase
+
+## Panoptique Phase 1 optional dependencies
+
+The Panoptique Phase 1 storage foundation keeps runtime imports lightweight for local tests. PostgreSQL/TimescaleDB production access expects optional packages when running against the real database:
+
+- `SQLAlchemy>=2`
+- `asyncpg`
+- `alembic`
+
+The repository contracts and JSONL audit archive are importable without those packages; SQLite-backed tests cover the write-path contract shape when TimescaleDB is unavailable.

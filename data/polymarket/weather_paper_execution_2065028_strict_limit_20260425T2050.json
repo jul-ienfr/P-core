@@ -1,0 +1,230 @@
+{
+  "budget_usdc": 5.0,
+  "eligible_at_refresh": true,
+  "fill_simulation": {
+    "avg_price": 0.977,
+    "filled_shares": 5.117707,
+    "filled_spend_usdc": 5.0,
+    "fills": [
+      {
+        "price": 0.977,
+        "shares": 5.11770727,
+        "spend": 5.0
+      }
+    ],
+    "fully_filled": true,
+    "requested_budget_usdc": 5.0
+  },
+  "generated_at": "2026-04-25T18:48:12Z",
+  "hko_latest": {
+    "available": true,
+    "place": "Hong Kong Observatory",
+    "timestamp": "2026-04-26T02:02:00+08:00",
+    "url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+    "value": 23
+  },
+  "limit_price": 0.978,
+  "market_id": "2065028",
+  "mode": "paper-only refreshed strict-limit simulation; no real order",
+  "official_daily_extract": {
+    "available": false,
+    "raw_keys": [
+      "type",
+      "fields",
+      "data",
+      "legend"
+    ],
+    "url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4"
+  },
+  "orderbook": {
+    "no": {
+      "ask_levels": [
+        [
+          0.977,
+          81.41
+        ],
+        [
+          0.978,
+          38.32
+        ],
+        [
+          0.98,
+          222.2
+        ],
+        [
+          0.984,
+          20.0
+        ],
+        [
+          0.985,
+          81.85
+        ],
+        [
+          0.99,
+          753.0
+        ],
+        [
+          0.992,
+          115.0
+        ],
+        [
+          0.995,
+          39.0
+        ],
+        [
+          0.996,
+          61.17
+        ],
+        [
+          0.997,
+          2391.67
+        ]
+      ],
+      "best_ask": 0.977,
+      "best_bid": 0.976,
+      "bid_levels": [
+        [
+          0.976,
+          21.07
+        ],
+        [
+          0.97,
+          1.76
+        ],
+        [
+          0.965,
+          40.0
+        ],
+        [
+          0.963,
+          10.0
+        ],
+        [
+          0.961,
+          10.0
+        ],
+        [
+          0.96,
+          35.0
+        ],
+        [
+          0.95,
+          74.63
+        ],
+        [
+          0.948,
+          60.1
+        ],
+        [
+          0.947,
+          10.0
+        ],
+        [
+          0.946,
+          10.0
+        ]
+      ],
+      "timestamp": "1777129380370"
+    },
+    "yes": {
+      "ask_levels": [
+        [
+          0.024,
+          21.07
+        ],
+        [
+          0.03,
+          1.76
+        ],
+        [
+          0.035,
+          40.0
+        ],
+        [
+          0.037,
+          10.0
+        ],
+        [
+          0.039,
+          10.0
+        ],
+        [
+          0.04,
+          35.0
+        ],
+        [
+          0.05,
+          74.63
+        ],
+        [
+          0.052,
+          60.1
+        ],
+        [
+          0.053,
+          10.0
+        ],
+        [
+          0.054,
+          10.0
+        ]
+      ],
+      "best_ask": 0.024,
+      "best_bid": 0.023,
+      "bid_levels": [
+        [
+          0.023,
+          81.41
+        ],
+        [
+          0.022,
+          38.32
+        ],
+        [
+          0.02,
+          222.2
+        ],
+        [
+          0.016,
+          20.0
+        ],
+        [
+          0.015,
+          81.85
+        ],
+        [
+          0.01,
+          753.0
+        ],
+        [
+          0.008,
+          115.0
+        ],
+        [
+          0.005,
+          39.0
+        ],
+        [
+          0.004,
+          61.17
+        ],
+        [
+          0.003,
+          2391.67
+        ]
+      ],
+      "timestamp": "1777129380370"
+    }
+  },
+  "question": "Will the highest temperature in Hong Kong be 30\u00b0C or higher on April 26?",
+  "risk_controls": [
+    "paper_only",
+    "real_order_placed_false",
+    "refuse_fill_above_0.978",
+    "no_normal_size",
+    "official_resolution_pending",
+    "orderbook_snapshot_stale_repoll_before_any_real_or_new_paper_fill"
+  ],
+  "side": "NO",
+  "source_orderbook": "previous_saved_snapshot_from_2026-04-25T15:03:03Z; live Gamma/CLOB not reverified in this step"
+}

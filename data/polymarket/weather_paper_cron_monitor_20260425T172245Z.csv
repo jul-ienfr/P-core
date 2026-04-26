@@ -1,0 +1,6 @@
+city,date,station,side,kind,temp,filled_usdc,entry_avg,current_forecast_max_c,forecast_move_c,p_side_now,best_bid_now,best_ask_now,paper_ev_now_usdc,paper_mtm_bid_usdc,action,reason,hard_stop_if_p_below,official_resolution_source_status
+Beijing,April 26,ZBAA,NO,exact,25,15.0,0.62,25.0,0.0,0.721,0.54,0.55,2.443513,-1.93551,HOLD_CAPPED,fresh book/forecast; capped/no add; no exit trigger,0.59,missing
+Munich,April 26,EDDM,NO,exact,18,10.0,0.71,17.0,0.0,0.7815,0.65,0.68,1.007037,-0.845075,HOLD_CAPPED,fresh book/forecast; capped/no add; no exit trigger,0.68,missing
+Shanghai,April 26,ZSPD,NO,exact,23,4.7552,0.64,23.0,0.0,0.721,0.64,0.65,0.60183,0.0,HOLD_MONITOR,fresh book/forecast; no exit trigger,0.61,missing
+Munich,April 26,EDDM,NO,exact,19,5.0,0.65,17.0,0.0,0.8951,0.61,0.63,1.885378,-0.307697,HOLD_MONITOR,fresh book/forecast; no exit trigger,0.62,missing
+Karachi,April 27,OPKC,NO,higher,36,10.0,0.53,32.0,0.0,0.9938,0.4,0.74,8.750944,-2.45283,HOLD_CAPPED,fresh book/forecast; capped/no add; no exit trigger,0.5,present
