@@ -72,15 +72,15 @@
 ---
 
 ## Phase 4 — Intraday weather alert features
-**Progress:** 0%
+**Progress:** 100%
 
-- [ ] Add failing tests in `python/tests/test_weather_intraday_alerts.py` for momentum spike, peak-passed guard, stale observation, source-confirmed threshold margin, and no-data behavior.
-- [ ] Implement `python/src/weather_pm/intraday_alerts.py` as pure feature extraction helpers inspired by PolyWeather alert engine.
-- [ ] Add intraday alert summary into runtime operator/profile payloads where recent observation rows are present, preserving existing behavior when absent.
-- [ ] Run validation: `PYTHONPATH=python/src python3 -m pytest python/tests/test_weather_intraday_alerts.py python/tests/test_runtime_operator_profiles.py python/tests/test_weather_strategy_shortlist.py -q`.
+- [x] Add failing tests in `python/tests/test_weather_intraday_alerts.py` for momentum spike, peak-passed guard, stale observation, source-confirmed threshold margin, and no-data behavior.
+- [x] Implement `python/src/weather_pm/intraday_alerts.py` as pure feature extraction helpers inspired by PolyWeather alert engine.
+- [x] Add intraday alert summary into runtime operator/profile payloads where recent observation rows are present, preserving existing behavior when absent.
+- [x] Run validation: `PYTHONPATH=python/src python3 -m pytest python/tests/test_weather_intraday_alerts.py python/tests/test_runtime_operator_profiles.py python/tests/test_weather_strategy_shortlist.py -q`.
 
 ### Phase Status
-- [ ] Phase 4 complete
+- [x] Phase 4 complete
 
 ---
 

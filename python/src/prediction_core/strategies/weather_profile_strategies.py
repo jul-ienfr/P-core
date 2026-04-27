@@ -125,6 +125,7 @@ def build_weather_profile_signal(
             "forecast_source_latency_tier": score.get("forecast_source_latency_tier") or payload.get("forecast_source_latency_tier"),
             "feature_family": score.get("feature_family"),
             "portfolio_risk": dict(portfolio_risk) if portfolio_risk else {},
+            **({"intraday_alerts": dict((score.get("intraday_alerts") or payload.get("intraday_alerts")) or {})} if isinstance(score.get("intraday_alerts") or payload.get("intraday_alerts"), Mapping) else {}),
         },
         risks=risks,
         source={"adapter": "weather_profile_strategy", "profile_id": profile["id"], "references": list(payload.get("source_references") or [])},

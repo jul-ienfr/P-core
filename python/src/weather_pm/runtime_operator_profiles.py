@@ -13,6 +13,7 @@ from prediction_core.strategies.weather_profile_strategies import WeatherProfile
 
 from .consensus_tracker import build_weather_consensus_tracker
 from .event_surface import build_weather_event_surface
+from .intraday_alerts import build_intraday_alert_summary
 from .strategy_profiles import list_strategy_profiles, strategy_id_for_profile
 from .threshold_watcher import build_threshold_watch_report
 
@@ -139,7 +140,27 @@ def _price_context(market: Mapping[str, Any], probability: float | None) -> dict
     return {"market_price": float(market_price), "best_bid": best_bid, "best_ask": best_ask, "spread": round(spread, 6)}
 
 
-def _feature_reports(markets: list[Mapping[str, Any]]) -> dict[str, Any]:
+def _observation_rows(runtime_result: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    for key in ("weather_observations", "observations", "intraday_observations", "observation_rows"):
+        value = runtime_result.get(key)
+        if isinstance(value, list) and value:
+            return [row for row in value if isinstance(row, Mapping)]
+    return []
+
+
+def _intraday_alert_report(markets: list[Mapping[str, Any]], runtime_result: Mapping[str, Any]) -> dict[str, Any] | None:
+    observations = _observation_rows(runtime_result)
+    if not observations:
+        return None
+    market = _first_market(markets)
+    threshold = _number(market.get("threshold") or market.get("target") or market.get("line"))
+    direction = str(market.get("direction") or market.get("threshold_direction") or "above")
+    now = runtime_result.get("generated_at") or runtime_result.get("now") or runtime_result.get("as_of")
+    summary = build_intraday_alert_summary(observations, threshold=threshold, direction=direction, now=now)
+    return summary if summary.get("has_observations") else None
+
+
+def _feature_reports(markets: list[Mapping[str, Any]], runtime_result: Mapping[str, Any] | None = None) -> dict[str, Any]:
     normalized = []
     for market in markets:
         yes_price = _number(market.get("yes_price") or market.get("best_ask") or market.get("bestAsk"))
@@ -160,6 +181,9 @@ def _feature_reports(markets: list[Mapping[str, Any]]) -> dict[str, Any]:
         ])
     except Exception as exc:
         reports["consensus_error"] = repr(exc)
+    intraday = _intraday_alert_report(markets, runtime_result or {})
+    if intraday is not None:
+        reports["intraday_alerts"] = intraday
     return reports
 
 
@@ -189,6 +213,9 @@ def _profile_payload_features(profile_id: str, market: Mapping[str, Any], probab
         "liquidity_usd": liquidity,
         "edge": edge,
     }
+    intraday_alerts = reports.get("intraday_alerts") if isinstance(reports.get("intraday_alerts"), Mapping) else None
+    if intraday_alerts is not None:
+        base["intraday_alerts"] = dict(intraday_alerts)
     if profile_id == "surface_grid_trader":
         return {**base, "feature_family": "event_surface", "surface": reports.get("event_surface") or {"probability_yes": probability, "market_price": market_price, "edge": edge}}
     if profile_id == "exact_bin_anomaly_hunter":
@@ -364,6 +391,7 @@ def _signal_summary(signal: Any) -> dict[str, Any]:
         "blockers": list(features.get("blockers") or []),
         "portfolio_risk": dict(features.get("portfolio_risk") or {}),
         "feature_family": features.get("feature_family"),
+        **({"intraday_alerts": dict(features.get("intraday_alerts") or {})} if isinstance(features.get("intraday_alerts"), Mapping) else {}),
         "source_references": list(source.get("references") or []),
     }
 
@@ -393,7 +421,7 @@ def _decision_summary(signal: StrategySignal, payload_by_market: Mapping[str, Ma
     decision = paper_decision_from_signal(signal, _paper_context_for_signal(signal, payload_by_market)).to_dict()
     signal_payload = signal.to_dict()
     features = signal_payload.get("features") if isinstance(signal_payload.get("features"), dict) else {}
-    blockers = list(features.get("blockers") or []) + list(decision.get("blocked_by") or [])
+    blockers = list(dict.fromkeys([*list(features.get("blockers") or []), *list(decision.get("blocked_by") or [])]))
     action = str(decision.get("action") or "skip")
     return {
         "strategy_id": signal.strategy_id,
@@ -426,6 +454,7 @@ def _decision_summary(signal: StrategySignal, payload_by_market: Mapping[str, Ma
         "capped_spend_usdc": decision.get("size_hint_usd"),
         "risk_ok": not blockers,
         "portfolio_risk": dict(features.get("portfolio_risk") or {}),
+        **({"intraday_alerts": dict(features.get("intraday_alerts") or {})} if isinstance(features.get("intraday_alerts"), Mapping) else {}),
         "paper_only": True,
         "live_order_allowed": False,
         "raw_decision": decision,
@@ -445,7 +474,7 @@ def build_runtime_weather_profile_summary(
     runtime_result = runtime_result or {}
     artifacts = artifacts or {}
     profiles = list_strategy_profiles()
-    feature_reports = _feature_reports(markets)
+    feature_reports = _feature_reports(markets, runtime_result)
     enabled_profile_ids, config_by_strategy_id, default_enabled_all = _configured_profile_ids(profiles, config_path)
     profiles_by_id = {str(profile["id"]): profile for profile in profiles}
     payloads_by_profile = {
