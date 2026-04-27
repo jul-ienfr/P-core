@@ -7,6 +7,15 @@ from functools import partial
 from pathlib import Path
 
 from prediction_core.orchestrator import consume_weather_markets, run_weather_paper_batch, run_weather_workflow
+from prediction_core.polymarket_execution import (
+    ClobRestPolymarketExecutor,
+    DryRunPolymarketExecutor,
+    ExecutionCredentialsError,
+    ExecutionRiskLimits,
+    ExecutionRiskState,
+    JsonlExecutionAuditLog,
+    JsonlIdempotencyStore,
+)
 from prediction_core.polymarket_marketdata import (
     build_marketdata_worker_plan,
     dry_run_jsonl_stream_factory,
@@ -172,6 +181,15 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_cycle.add_argument("--min-liquidity", type=float, default=0.0, help="Minimum market liquidity for hot-path subscription")
     runtime_cycle.add_argument("--min-edge", type=float, default=0.0, help="Minimum probability minus ask edge for paper signal")
     runtime_cycle.add_argument("--paper-notional-usdc", type=float, default=5.0, help="Paper intent notional for disabled execution planner")
+    runtime_cycle.add_argument("--execution-mode", choices=("paper", "dry_run", "live"), default="paper", help="Execution mode; paper remains the safe default")
+    runtime_cycle.add_argument("--idempotency-jsonl", help="JSONL idempotency store path required for dry_run/live execution")
+    runtime_cycle.add_argument("--audit-jsonl", help="JSONL audit log path required for dry_run/live execution")
+    runtime_cycle.add_argument("--max-order-notional-usdc", type=float, help="Per-order risk cap required for dry_run/live execution")
+    runtime_cycle.add_argument("--max-total-exposure-usdc", type=float, help="Total exposure risk cap required for dry_run/live execution")
+    runtime_cycle.add_argument("--max-daily-loss-usdc", type=float, help="Daily loss risk cap required for dry_run/live execution")
+    runtime_cycle.add_argument("--max-spread", type=float, help="Maximum allowed bid/ask spread required for dry_run/live execution")
+    runtime_cycle.add_argument("--total-exposure-usdc", type=float, default=0.0, help="Current total exposure for risk checks")
+    runtime_cycle.add_argument("--daily-realized-pnl-usdc", type=float, default=0.0, help="Current daily realized PnL for risk checks")
     del runtime_plan
 
     return parser
@@ -307,6 +325,34 @@ def main() -> int:
             parser.error("--markets-json must contain a JSON array")
         if not isinstance(probabilities, dict):
             parser.error("--probabilities-json must contain a JSON object")
+        order_executor = None
+        risk_limits = None
+        risk_state = None
+        idempotency_store = None
+        audit_log = None
+        if args.execution_mode in {"dry_run", "live"}:
+            required_risk_values = [args.max_order_notional_usdc, args.max_total_exposure_usdc, args.max_daily_loss_usdc, args.max_spread]
+            if not args.idempotency_jsonl or not args.audit_jsonl or any(value is None for value in required_risk_values):
+                parser.error("live execution requires --idempotency-jsonl, --audit-jsonl, and risk limits")
+            risk_limits = ExecutionRiskLimits(
+                max_order_notional_usdc=args.max_order_notional_usdc,
+                max_total_exposure_usdc=args.max_total_exposure_usdc,
+                max_daily_loss_usdc=args.max_daily_loss_usdc,
+                max_spread=args.max_spread,
+            )
+            risk_state = ExecutionRiskState(
+                total_exposure_usdc=args.total_exposure_usdc,
+                daily_realized_pnl_usdc=args.daily_realized_pnl_usdc,
+            )
+            idempotency_store = JsonlIdempotencyStore(args.idempotency_jsonl)
+            audit_log = JsonlExecutionAuditLog(args.audit_jsonl)
+            if args.execution_mode == "dry_run":
+                order_executor = DryRunPolymarketExecutor()
+            else:
+                try:
+                    order_executor = ClobRestPolymarketExecutor.from_env()
+                except ExecutionCredentialsError as exc:
+                    parser.error(str(exc))
         result = asyncio.run(
             run_polymarket_runtime_cycle(
                 markets=markets,
@@ -316,6 +362,12 @@ def main() -> int:
                 min_liquidity=args.min_liquidity,
                 min_edge=args.min_edge,
                 paper_notional_usdc=args.paper_notional_usdc,
+                execution_mode=args.execution_mode,
+                order_executor=order_executor,
+                risk_limits=risk_limits,
+                risk_state=risk_state,
+                idempotency_store=idempotency_store,
+                audit_log=audit_log,
             )
         )
         print(json.dumps(result))
