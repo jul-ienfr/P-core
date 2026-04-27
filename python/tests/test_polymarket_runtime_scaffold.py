@@ -556,7 +556,9 @@ async def test_runtime_cycle_wires_discovery_stream_decision_and_disabled_execut
         paper_notional_usdc=6.0,
     )
 
-    assert result["mode"] == "paper/read-only polymarket runtime cycle"
+    assert result["mode"] == "paper polymarket runtime cycle"
+    assert result["paper_only"] is True
+    assert result["live_order_allowed"] is False
     assert result["marketdata"]["processed_events"] == 2
     assert result["decisions"]["summary"]["paper_signal_count"] == 1
     assert result["execution"]["orders_submitted"] == []

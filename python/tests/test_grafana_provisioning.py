@@ -19,9 +19,9 @@ def test_grafana_clickhouse_datasource_is_provisioned() -> None:
     assert "jsonData" in text
 
 
-def test_grafana_is_lan_accessible_but_clickhouse_defaults_local_only() -> None:
+def test_grafana_and_clickhouse_default_local_only() -> None:
     text = COMPOSE.read_text()
-    assert "${GRAFANA_BIND_ADDR:-0.0.0.0}:${GRAFANA_PORT:-3000}:3000" in text
+    assert "${GRAFANA_BIND_ADDR:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000" in text
     assert "${CLICKHOUSE_HTTP_BIND_ADDR:-127.0.0.1}:${CLICKHOUSE_HTTP_PORT:-8123}:8123" in text
     assert "${CLICKHOUSE_NATIVE_BIND_ADDR:-127.0.0.1}:${CLICKHOUSE_NATIVE_PORT:-9000}:9000" in text
 

@@ -867,4 +867,4 @@ def _normalize_live_order_response(response: Any) -> dict[str, Any]:
 
 
 def _sanitize_payload(value: Any) -> Any:
-    return redact_mapping(value)
+    return redact_mapping(value, replacement="[redacted]")

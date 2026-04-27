@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
-_SECRET_KEYS = ("PASSWORD", "SECRET", "ACCESS_KEY", "PRIVATE_KEY", "FUNDER", "API_KEY", "CREDENTIAL", "AUTH", "TOKEN")
+_SECRET_KEYS = ("PASSWORD", "SECRET", "ACCESS_KEY", "PRIVATE_KEY", "FUNDER", "API_KEY", "CREDENTIAL", "AUTH", "TOKEN", "SIGNATURE")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -91,19 +91,19 @@ def mask_url(url: str | None) -> str | None:
     return urlunsplit((parts.scheme, f"{username}:***@{hostinfo}", parts.path, query, parts.fragment))
 
 
-def redact_mapping(value: object) -> object:
+def redact_mapping(value: object, *, replacement: str = "***") -> object:
     if isinstance(value, dict):
         redacted: dict[str, object] = {}
         for key, item in value.items():
             if any(secret in str(key).upper() for secret in _SECRET_KEYS):
-                redacted[str(key)] = "***" if item else item
+                redacted[str(key)] = replacement if item else item
             elif str(key).lower().endswith("url") or str(key).lower().endswith("database_url") or str(key).lower().endswith("sync_database_url"):
                 redacted[str(key)] = mask_url(item if isinstance(item, str) else None)
             else:
-                redacted[str(key)] = redact_mapping(item)
+                redacted[str(key)] = redact_mapping(item, replacement=replacement)
         return redacted
     if isinstance(value, list):
-        return [redact_mapping(item) for item in value]
+        return [redact_mapping(item, replacement=replacement) for item in value]
     if isinstance(value, str) and "://" in value:
         return mask_url(value)
     return value
