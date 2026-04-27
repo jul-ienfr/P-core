@@ -182,6 +182,21 @@ class ExecutionEvent:
 
 
 @dataclass(frozen=True)
+class StrategyConfigEvent:
+    strategy_id: str
+    observed_at: datetime
+    enabled: bool
+    mode: str
+    allow_live: bool
+    settings: dict[str, Any]
+    raw: dict[str, Any] | None = None
+
+    @property
+    def table(self) -> str:
+        return "strategy_configs"
+
+
+@dataclass(frozen=True)
 class StrategyMetricEvent:
     run_id: str
     strategy_id: str
@@ -230,6 +245,9 @@ def serialize_event(event: Any) -> dict[str, Any]:
     observed_at = row.get("observed_at")
     if isinstance(observed_at, datetime):
         row["observed_at"] = _format_clickhouse_datetime64(observed_at)
+    settings = row.get("settings")
+    if isinstance(settings, dict):
+        row["settings"] = json.dumps(settings, sort_keys=True, separators=(",", ":"))
     raw = row.get("raw")
     row["raw"] = json.dumps(raw or {}, sort_keys=True, separators=(",", ":"))
     row.pop("table", None)

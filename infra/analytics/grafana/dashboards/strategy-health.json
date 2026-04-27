@@ -337,6 +337,79 @@
       ],
       "title": "Attentes risque",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "links": [
+            {
+              "title": "Configurer stratégie",
+              "url": "/strategies/config/${__data.fields.Stratégie}",
+              "targetBlank": true
+            },
+            {
+              "title": "Activer",
+              "url": "/strategies/config/${__data.fields.Stratégie}/enable",
+              "targetBlank": true
+            },
+            {
+              "title": "Désactiver",
+              "url": "/strategies/config/${__data.fields.Stratégie}/disable",
+              "targetBlank": true
+            },
+            {
+              "title": "Changer mode",
+              "url": "/strategies/config/${__data.fields.Stratégie}/mode",
+              "targetBlank": true
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, if(enabled, 'ACTIVEE', 'DESACTIVEE') AS `État activation`, mode AS `Mode configuré`, if(allow_live, 'LIVE_AUTORISE', 'LIVE_INTERDIT') AS `Garde-fou live`, settings AS `Configuration`, observed_at AS `Dernière config` FROM prediction_core.strategy_configs FINAL WHERE match(strategy_id, '${strategy:regex}') ORDER BY `État activation`, strategy_id",
+          "refId": "A"
+        }
+      ],
+      "title": "État configuré des stratégies",
+      "type": "table"
     }
   ],
   "refresh": "30s",

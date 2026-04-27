@@ -55,6 +55,7 @@ def test_weather_analytics_export_dry_run(tmp_path: Path) -> None:
         "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=1",
         "analytics.profile_metrics.rows=1",
+        "analytics.strategy_configs.rows=0",
         "analytics.strategy_metrics.rows=1",
         "analytics.strategy_signals.rows=1",
         "analytics.enabled=false",
@@ -91,6 +92,7 @@ def test_weather_analytics_smoke_fixture_dry_runs() -> None:
         "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=1",
         "analytics.profile_metrics.rows=1",
+        "analytics.strategy_configs.rows=0",
         "analytics.strategy_metrics.rows=1",
         "analytics.strategy_signals.rows=1",
         "analytics.enabled=false",
@@ -157,6 +159,7 @@ def test_weather_analytics_export_paper_ledger_dry_run(tmp_path: Path) -> None:
         "analytics.paper_positions.rows=1",
         "analytics.profile_decisions.rows=0",
         "analytics.profile_metrics.rows=0",
+        "analytics.strategy_configs.rows=0",
         "analytics.strategy_metrics.rows=0",
         "analytics.strategy_signals.rows=0",
         "analytics.enabled=false",
@@ -207,6 +210,7 @@ def test_weather_analytics_export_operator_report_as_paper_ledger_dry_run(tmp_pa
         "analytics.paper_positions.rows=1",
         "analytics.profile_decisions.rows=0",
         "analytics.profile_metrics.rows=0",
+        "analytics.strategy_configs.rows=0",
         "analytics.strategy_metrics.rows=0",
         "analytics.strategy_signals.rows=0",
         "analytics.enabled=false",
@@ -259,6 +263,56 @@ def test_weather_analytics_export_execution_events_dry_run(tmp_path: Path) -> No
         "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=0",
         "analytics.profile_metrics.rows=0",
+        "analytics.strategy_configs.rows=0",
+        "analytics.strategy_metrics.rows=0",
+        "analytics.strategy_signals.rows=0",
+        "analytics.enabled=false",
+    ]
+
+
+def test_weather_analytics_export_strategy_config_dry_run(tmp_path: Path) -> None:
+    config_path = tmp_path / "strategy_config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "strategies": {
+                    "weather_profile_surface_grid_trader_v1": {
+                        "enabled": True,
+                        "mode": "paper_only",
+                        "allow_live": False,
+                        "settings": {"max_order_usdc": 15.0},
+                    }
+                }
+            }
+        )
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "export-analytics-clickhouse",
+            "--strategy-config-json",
+            str(config_path),
+            "--dry-run",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        env={**os.environ, "PYTHONPATH": "src"},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    assert result.stdout.strip().splitlines() == [
+        "analytics.debug_decisions.rows=0",
+        "analytics.execution_events.rows=0",
+        "analytics.paper_orders.rows=0",
+        "analytics.paper_pnl_snapshots.rows=0",
+        "analytics.paper_positions.rows=0",
+        "analytics.profile_decisions.rows=0",
+        "analytics.profile_metrics.rows=0",
+        "analytics.strategy_configs.rows=1",
         "analytics.strategy_metrics.rows=0",
         "analytics.strategy_signals.rows=0",
         "analytics.enabled=false",
@@ -309,6 +363,7 @@ def test_weather_analytics_export_without_clickhouse_config_is_noop(tmp_path: Pa
         "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=0",
         "analytics.profile_metrics.rows=0",
+        "analytics.strategy_configs.rows=0",
         "analytics.strategy_metrics.rows=0",
         "analytics.strategy_signals.rows=0",
         "analytics.enabled=false",
@@ -358,6 +413,7 @@ def test_weather_analytics_export_inserts_with_env_writer(monkeypatch, tmp_path:
         "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=1",
         "analytics.profile_metrics.rows=1",
+        "analytics.strategy_configs.rows=0",
         "analytics.strategy_metrics.rows=1",
         "analytics.strategy_signals.rows=1",
         "analytics.enabled=true",

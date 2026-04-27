@@ -34,6 +34,9 @@ def test_strategy_config_store_updates_independent_strategy_settings(tmp_path) -
     payload = json.loads((tmp_path / "strategy_config.json").read_text())
     assert payload["strategies"]["weather_profile_surface_grid_trader_v1"]["settings"]["max_order_usdc"] == 15.0
     assert payload["strategies"]["weather_profile_threshold_resolution_harvester_v1"]["settings"]["max_order_usdc"] == 8.0
+    events = store.list_config_events()
+    assert [event.table for event in events] == ["strategy_configs", "strategy_configs"]
+    assert events[0].settings["max_order_usdc"] == 15.0
     assert len((tmp_path / "audit.jsonl").read_text().strip().splitlines()) == 2
 
 

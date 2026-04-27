@@ -8,6 +8,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
+from prediction_core.analytics.events import StrategyConfigEvent
+
 from .config import StrategyConfig
 from .contracts import StrategyMode
 
@@ -31,6 +33,10 @@ class StrategyConfigStore:
 
     def list_configs(self) -> dict[str, Any]:
         return {"strategies": {strategy_id: self._config_to_payload(config) for strategy_id, config in self._load_configs().items()}}
+
+    def list_config_events(self, *, observed_at: datetime | None = None) -> list[StrategyConfigEvent]:
+        timestamp = observed_at or datetime.now(UTC)
+        return [self._config_to_event(config, observed_at=timestamp) for config in self._load_configs().values()]
 
     def get_config(self, strategy_id: str) -> StrategyConfig:
         configs = self._load_configs()
@@ -107,6 +113,18 @@ class StrategyConfigStore:
         payload = asdict(config)
         payload["mode"] = config.mode.value
         return payload
+
+    def _config_to_event(self, config: StrategyConfig, *, observed_at: datetime) -> StrategyConfigEvent:
+        payload = self._config_to_payload(config)
+        return StrategyConfigEvent(
+            strategy_id=config.strategy_id,
+            observed_at=observed_at,
+            enabled=config.enabled,
+            mode=config.mode.value,
+            allow_live=config.allow_live,
+            settings=dict(config.settings),
+            raw=payload,
+        )
 
 
 def _validate_settings(settings: dict[str, Any]) -> None:

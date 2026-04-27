@@ -482,6 +482,79 @@
       ],
       "title": "Signaux par stratégie",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "links": [
+            {
+              "title": "Configurer stratégie",
+              "url": "/strategies/config/${__data.fields.Stratégie}",
+              "targetBlank": true
+            },
+            {
+              "title": "Activer",
+              "url": "/strategies/config/${__data.fields.Stratégie}/enable",
+              "targetBlank": true
+            },
+            {
+              "title": "Désactiver",
+              "url": "/strategies/config/${__data.fields.Stratégie}/disable",
+              "targetBlank": true
+            },
+            {
+              "title": "Changer mode",
+              "url": "/strategies/config/${__data.fields.Stratégie}/mode",
+              "targetBlank": true
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, enabled AS `Activée`, mode AS `Mode configuré`, allow_live AS `Live autorisé config`, settings AS `Configuration`, observed_at AS `Dernière config`, concat('/strategies/config/', strategy_id) AS `API config`, concat('/strategies/config/', strategy_id, '/enable') AS `API activer`, concat('/strategies/config/', strategy_id, '/disable') AS `API désactiver`, concat('/strategies/config/', strategy_id, '/mode') AS `API mode` FROM prediction_core.strategy_configs FINAL WHERE match(strategy_id, '${strategy:regex}') ORDER BY strategy_id",
+          "refId": "A"
+        }
+      ],
+      "title": "Configuration des stratégies",
+      "type": "table"
     }
   ],
   "refresh": "30s",

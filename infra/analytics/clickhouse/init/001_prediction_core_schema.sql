@@ -194,6 +194,18 @@ ENGINE = MergeTree
 PARTITION BY toYYYYMM(observed_at)
 ORDER BY (observed_at, run_id, strategy_id, profile_id, market_id, execution_event_id);
 
+CREATE TABLE IF NOT EXISTS prediction_core.strategy_configs (
+    strategy_id String,
+    observed_at DateTime64(3, 'UTC'),
+    enabled Bool,
+    mode String,
+    allow_live Bool DEFAULT false,
+    settings String,
+    raw String
+)
+ENGINE = ReplacingMergeTree(observed_at)
+ORDER BY strategy_id;
+
 CREATE TABLE IF NOT EXISTS prediction_core.resolution_events (
     run_id String,
     strategy_id String DEFAULT '',
