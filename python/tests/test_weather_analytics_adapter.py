@@ -1,0 +1,180 @@
+from datetime import UTC, datetime
+
+from prediction_core.analytics.events import serialize_event
+from weather_pm.analytics_adapter import (
+    debug_decision_events_from_shortlist,
+    paper_order_events_from_ledger,
+    paper_position_events_from_ledger,
+    profile_decision_events_from_shortlist,
+)
+
+
+def test_shortlist_rows_convert_to_profile_decision_events() -> None:
+    payload = {
+        "run_id": "run-1",
+        "generated_at": "2026-04-27T12:00:00+00:00",
+        "rows": [
+            {
+                "market_id": "m1",
+                "token_id": "t1",
+                "strategy_id": "weather_bookmaker_v1",
+                "strategy_profile_id": "surface_grid_trader",
+                "decision_status": "trade_small",
+                "execution_blocker": "",
+                "edge": 0.08,
+                "strict_limit_price": 0.42,
+                "source_direct": True,
+                "orderbook_ok": True,
+                "profile_execution_mode": "paper_micro_strict_limit",
+                "profile_risk_caps": {"max_order_usdc": 2.0},
+            }
+        ],
+    }
+
+    events = profile_decision_events_from_shortlist(payload, default_observed_at=datetime(2026, 4, 27, tzinfo=UTC))
+
+    assert len(events) == 1
+    event = events[0]
+    assert event.run_id == "run-1"
+    assert event.strategy_id == "weather_bookmaker_v1"
+    assert event.profile_id == "surface_grid_trader"
+    assert event.market_id == "m1"
+    assert event.token_id == "t1"
+    assert event.observed_at == datetime(2026, 4, 27, 12, tzinfo=UTC)
+    assert event.decision_status == "trade_small"
+    assert event.skip_reason == ""
+    assert event.execution_mode == "paper_micro_strict_limit"
+    assert event.edge == 0.08
+    assert event.limit_price == 0.42
+    assert event.capped_spend_usdc == 2.0
+    assert event.source_ok is True
+    assert event.orderbook_ok is True
+    assert event.risk_ok is True
+
+
+def test_shortlist_fallback_fields_and_serialization() -> None:
+    payload = {
+        "report_id": "report-1",
+        "observed_at": "2026-04-27T15:30:01Z",
+        "shortlist": [
+            {
+                "condition_id": "condition-1",
+                "profile_id": "strict_micro",
+                "strategy": "weather_pm_v2",
+                "action": "watch",
+                "skip_reason": "edge_below_threshold",
+                "probability_edge": "0.0125",
+                "limit_price": "0.51",
+                "requested_spend_usdc": "1.5",
+                "source_ok": True,
+                "order_book_depth_usd": 20.0,
+            }
+        ],
+    }
+
+    events = profile_decision_events_from_shortlist(payload)
+    event = events[0]
+
+    assert event.run_id == "report-1"
+    assert event.strategy_id == "weather_pm_v2"
+    assert event.profile_id == "strict_micro"
+    assert event.market_id == "condition-1"
+    assert event.decision_status == "watch"
+    assert event.skip_reason == "edge_below_threshold"
+    assert event.edge == 0.0125
+    assert event.limit_price == 0.51
+    assert event.requested_spend_usdc == 1.5
+    assert event.orderbook_ok is True
+    assert event.risk_ok is False
+    assert serialize_event(event)["observed_at"] == "2026-04-27 15:30:01.000"
+
+
+def test_shortlist_rows_convert_to_debug_decision_events() -> None:
+    payload = {
+        "run_id": "run-1",
+        "generated_at": "2026-04-27T12:00:00+00:00",
+        "rows": [
+            {
+                "market_id": "m1",
+                "token_id": "t1",
+                "strategy_id": "weather_bookmaker_v1",
+                "profile_id": "strict_micro",
+                "decision_status": "skip",
+                "skip_reason": "edge_below_threshold",
+                "edge": 0.01,
+                "limit_price": 0.42,
+                "source_ok": True,
+                "orderbook_ok": False,
+            }
+        ],
+    }
+
+    events = debug_decision_events_from_shortlist(payload)
+
+    assert len(events) == 1
+    event = events[0]
+    assert event.table == "debug_decisions"
+    assert event.run_id == "run-1"
+    assert event.strategy_id == "weather_bookmaker_v1"
+    assert event.profile_id == "strict_micro"
+    assert event.market_id == "m1"
+    assert event.blocker == "edge_below_threshold"
+    assert event.edge == 0.01
+    assert event.limit_price == 0.42
+    assert serialize_event(event)["raw"].startswith('{"decision_status":"skip"')
+
+
+def test_paper_ledger_rows_convert_to_order_and_position_events() -> None:
+    ledger = {
+        "run_id": "ledger-run-1",
+        "strategy_id": "weather_bookmaker_v1",
+        "profile_id": "strict_micro",
+        "mode": "paper",
+        "orders": [
+            {
+                "order_id": "order-1",
+                "created_at": "2026-04-27T12:00:00+00:00",
+                "updated_at": "2026-04-27T12:05:00+00:00",
+                "market_id": "m1",
+                "token_id": "t1",
+                "side": "NO",
+                "status": "filled",
+                "strict_limit": 0.3,
+                "filled_usdc": 5.0,
+                "shares": 17.5,
+                "avg_fill_price": 0.285714,
+                "opening_fee_usdc": 0.05,
+                "slippage_usdc": 0.01,
+                "estimated_exit_fee_usdc": 0.02,
+                "mtm_usdc": 6.0,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "order_id": "order-2",
+                "created_at": "2026-04-27T12:10:00+00:00",
+                "market_id": "m2",
+                "status": "skipped_price_moved",
+                "shares": 0.0,
+            },
+        ],
+    }
+
+    orders = paper_order_events_from_ledger(ledger)
+    positions = paper_position_events_from_ledger(ledger)
+
+    assert [event.table for event in orders] == ["paper_orders", "paper_orders"]
+    assert orders[0].run_id == "ledger-run-1"
+    assert orders[0].paper_order_id == "order-1"
+    assert orders[0].price == 0.285714
+    assert orders[0].size == 17.5
+    assert orders[0].spend_usdc == 5.0
+    assert orders[0].opening_slippage_usdc == 0.01
+    assert orders[0].estimated_exit_cost_usdc == 0.02
+    assert len(positions) == 1
+    assert positions[0].table == "paper_positions"
+    assert positions[0].paper_position_id == "order-1"
+    assert positions[0].quantity == 17.5
+    assert positions[0].exposure_usdc == 5.0
+    assert positions[0].mtm_bid_usdc == 6.0
+    assert serialize_event(positions[0])["observed_at"] == "2026-04-27 12:05:00.000"

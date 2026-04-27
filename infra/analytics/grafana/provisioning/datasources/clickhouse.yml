@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: PredictionCore ClickHouse
+    uid: prediction-core-clickhouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    isDefault: true
+    jsonData:
+      host: prediction-core-clickhouse
+      port: 8123
+      protocol: http
+      database: prediction_core
+      username: prediction
+      tlsSkipVerify: true
+    secureJsonData:
+      password: prediction

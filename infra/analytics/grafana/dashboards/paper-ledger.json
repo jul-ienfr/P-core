@@ -1,0 +1,129 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  observed_at,\n  strategy_id,\n  profile_id,\n  sum(exposure_usdc) AS exposure_usdc,\n  sum(net_pnl_usdc) AS net_pnl_usdc,\n  sum(costs_usdc) AS costs_usdc\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\nGROUP BY observed_at, strategy_id, profile_id\nORDER BY observed_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Paper Ledger Net PnL",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  market_id,\n  strategy_id,\n  profile_id,\n  sum(quantity) AS quantity,\n  anyLast(avg_price) AS avg_price,\n  anyLast(exposure_usdc) AS exposure_usdc,\n  anyLast(status) AS status\nFROM prediction_core.paper_positions\nWHERE $__timeFilter(observed_at)\nGROUP BY market_id, strategy_id, profile_id\nORDER BY exposure_usdc DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Paper Positions",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "prediction-core",
+    "clickhouse",
+    "paper"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Paper Ledger",
+  "uid": "prediction-core-paper-ledger",
+  "version": 1,
+  "weekStart": ""
+}

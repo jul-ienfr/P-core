@@ -1,0 +1,24 @@
+{
+  "run_id": "smoke-run-1",
+  "generated_at": "2026-04-27T12:00:00+00:00",
+  "mode": "paper",
+  "rows": [
+    {
+      "market_id": "smoke-market-1",
+      "token_id": "smoke-token-1",
+      "strategy_id": "weather_bookmaker_v1",
+      "strategy_profile_id": "surface_grid_trader",
+      "decision_status": "trade_small",
+      "execution_blocker": "",
+      "edge": 0.08,
+      "strict_limit_price": 0.42,
+      "requested_spend_usdc": 1.0,
+      "source_direct": true,
+      "orderbook_ok": true,
+      "profile_execution_mode": "paper_micro_strict_limit",
+      "profile_risk_caps": {
+        "max_order_usdc": 2.0
+      }
+    }
+  ]
+}
