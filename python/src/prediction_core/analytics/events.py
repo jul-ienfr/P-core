@@ -162,6 +162,26 @@ class PaperPnlSnapshotEvent:
 
 
 @dataclass(frozen=True)
+class ExecutionEvent:
+    run_id: str
+    strategy_id: str
+    profile_id: str
+    market_id: str
+    observed_at: datetime
+    execution_event_id: str
+    event_type: str
+    mode: str
+    token_id: str = ""
+    paper_only: bool = True
+    live_order_allowed: bool = False
+    raw: dict[str, Any] | None = None
+
+    @property
+    def table(self) -> str:
+        return "execution_events"
+
+
+@dataclass(frozen=True)
 class StrategyMetricEvent:
     run_id: str
     strategy_id: str

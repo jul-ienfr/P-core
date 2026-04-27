@@ -185,9 +185,23 @@ Operational rules:
 
 Audit events currently include decision-seen, blocked, submitted, and failed execution events. The idempotency key is derived from market id, token id, side, limit price, and notional.
 
+## Storage launch gate
+
+Complete this storage gate before any operator approval to move beyond read-only preflight. These checks materialize the production storage prerequisites but do not provision cloud services or enable live orders:
+
+- [ ] Run `prediction-core storage-readiness --section all --pretty` and review every section.
+- [ ] Run `prediction-core storage-health` and confirm configured dependencies are not degraded for the intended launch mode.
+- [ ] Confirm `summary.ready_for_live` is true only after Postgres, configured Redis/NATS/S3, ClickHouse expectations, and Grafana provisioning are reviewed.
+- [ ] Confirm latest backup exists, checksum verifies, and a disposable restore drill is current.
+- [ ] Confirm monitoring/alerting rules in `docs/storage-monitoring-alerting.md` are reviewed and owned.
+- [ ] Confirm staging validation in `docs/storage-staging-validation-checklist.md` is complete.
+- [ ] Confirm storage secrets are injected by the approved secrets manager and never printed.
+- [ ] Run `polymarket-live-preflight` as read-only and archive the redacted output.
+- [ ] Stop if any storage gate is failed, stale, or manually waived without written operator approval.
+
 ## Pre-live checklist
 
-Complete these items before any operator approval to move beyond read-only preflight. In the current CLI, `--execution-mode live` is not exposed by `polymarket-runtime-cycle`, is rejected by argparse, and must not be treated as an executable path:
+Complete these items before any operator approval to move beyond read-only preflight. In the current CLI, `--execution-mode live` remains guarded and must not be treated as executable unless every storage and runtime gate is satisfied:
 
 - [ ] Confirm the working tree contains only intended changes and no secrets.
 - [ ] Confirm latest relevant tests passed in a non-live environment.

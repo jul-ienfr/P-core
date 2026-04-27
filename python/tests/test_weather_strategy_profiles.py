@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from weather_pm.strategy_profiles import classify_candidate_row, get_strategy_profile, list_strategy_profiles, operator_profile_matrix
+from weather_pm.strategy_profiles import classify_candidate_row, get_strategy_profile, list_strategy_profiles, operator_profile_matrix, strategy_id_for_profile
 
 
 EXPECTED_PROFILE_IDS = [
@@ -32,6 +32,11 @@ def test_lists_six_canonical_profiles_with_required_decision_fields() -> None:
         assert profile["risk_caps"]["live_order_allowed"] is False
         assert profile["execution_mode"] in {"paper_strict_limit", "watchlist_only", "paper_micro_strict_limit", "operator_review"}
         assert profile["do_not_trade_rules"]
+
+
+def test_strategy_id_for_profile_is_stable() -> None:
+    assert strategy_id_for_profile("surface_grid_trader") == "weather_profile_surface_grid_trader_v1"
+    assert strategy_id_for_profile("unclassified") == "weather_profile_unclassified_v1"
 
 
 def test_fetch_by_id_returns_deterministic_profile_and_rejects_unknown() -> None:

@@ -6,7 +6,19 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Voir le debug décision",
+      "tooltip": "Drilldown décisions filtré",
+      "type": "dashboard",
+      "uid": "prediction-core-decision-debug"
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -47,7 +59,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at,\n  strategy_id,\n  profile_id,\n  sum(exposure_usdc) AS exposure_usdc,\n  sum(net_pnl_usdc) AS net_pnl_usdc,\n  sum(costs_usdc) AS costs_usdc\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\nGROUP BY observed_at, strategy_id, profile_id\nORDER BY observed_at",
+          "rawSql": "SELECT\n  observed_at,\n  strategy_id,\n  profile_id,\n  sum(exposure_usdc) AS exposure_usdc,\n  sum(net_pnl_usdc) AS net_pnl_usdc,\n  sum(costs_usdc) AS costs_usdc\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nGROUP BY observed_at, strategy_id, profile_id\nORDER BY observed_at",
           "refId": "A"
         }
       ],
@@ -98,7 +110,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  market_id,\n  strategy_id,\n  profile_id,\n  sum(quantity) AS quantity,\n  anyLast(avg_price) AS avg_price,\n  anyLast(exposure_usdc) AS exposure_usdc,\n  anyLast(status) AS status\nFROM prediction_core.paper_positions\nWHERE $__timeFilter(observed_at)\nGROUP BY market_id, strategy_id, profile_id\nORDER BY exposure_usdc DESC",
+          "rawSql": "SELECT\n  market_id,\n  strategy_id,\n  profile_id,\n  sum(quantity) AS quantity,\n  anyLast(avg_price) AS avg_price,\n  anyLast(exposure_usdc) AS exposure_usdc,\n  anyLast(status) AS status\nFROM prediction_core.paper_positions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nGROUP BY market_id, strategy_id, profile_id\nORDER BY exposure_usdc DESC",
           "refId": "A"
         }
       ],
@@ -149,7 +161,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at,\n  market_id,\n  side,\n  price,\n  size,\n  spend_usdc,\n  status,\n  opening_fee_usdc,\n  opening_slippage_usdc,\n  estimated_exit_cost_usdc\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\nORDER BY observed_at DESC\nLIMIT 500",
+          "rawSql": "SELECT\n  observed_at,\n  market_id,\n  side,\n  price,\n  size,\n  spend_usdc,\n  status,\n  opening_fee_usdc,\n  opening_slippage_usdc,\n  estimated_exit_cost_usdc\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nORDER BY observed_at DESC\nLIMIT 500",
           "refId": "A"
         }
       ],
@@ -191,12 +203,63 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  status,\n  count() AS orders\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\nGROUP BY status\nORDER BY orders DESC",
+          "rawSql": "SELECT\n  status,\n  count() AS orders\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nGROUP BY status\nORDER BY orders DESC",
           "refId": "A"
         }
       ],
       "title": "Paper Order Status",
       "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "WITH live AS\n(\n  SELECT\n    run_id,\n    strategy_id,\n    profile_id,\n    market_id,\n    token_id,\n    anyLast(JSONExtractString(raw, 'order_id')) AS `Ordre live`,\n    anyLast(event_type) AS `Statut live`,\n    anyLast(JSONExtractFloat(raw, 'price')) AS `Prix live`,\n    anyLast(JSONExtractFloat(raw, 'size')) AS `Taille live`,\n    max(observed_at) AS live_observed_at\n  FROM prediction_core.execution_events\n  WHERE $__timeFilter(observed_at)\n    AND mode = 'live'\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  GROUP BY run_id, strategy_id, profile_id, market_id, token_id\n)\nSELECT\n  p.observed_at AS `Paper observed_at`,\n  live.live_observed_at AS `Live observed_at`,\n  p.run_id AS `Run`,\n  p.market_id AS `Marché`,\n  p.token_id AS `Token`,\n  p.strategy_id AS `Stratégie`,\n  p.profile_id AS `Profil`,\n  p.paper_order_id AS `Ordre paper`,\n  live.`Ordre live`,\n  p.status AS `Statut paper`,\n  live.`Statut live`,\n  p.price AS `Prix paper`,\n  live.`Prix live`,\n  p.size AS `Taille paper`,\n  live.`Taille live`,\n  live.`Prix live` - p.price AS `Écart prix`,\n  live.`Taille live` - p.size AS `Écart taille`\nFROM prediction_core.paper_orders p\nLEFT JOIN live\n  ON p.run_id = live.run_id\n AND p.strategy_id = live.strategy_id\n AND p.profile_id = live.profile_id\n AND p.market_id = live.market_id\n AND p.token_id = live.token_id\nWHERE $__timeFilter(p.observed_at)\n  AND match(p.run_id, '${run_id:regex}')\n  AND match(p.strategy_id, '${strategy:regex}')\n  AND match(p.profile_id, '${profile:regex}')\n  AND match(p.market_id, '${market:regex}')\n  AND match(p.mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(p.observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(p.observed_at) BETWEEN 13 AND 21))\n  )\nORDER BY p.observed_at DESC\nLIMIT 500",
+          "refId": "A"
+        }
+      ],
+      "title": "Comparaison paper vs live",
+      "type": "table"
     }
   ],
   "refresh": "30s",
@@ -207,7 +270,165 @@
     "paper"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT run_id FROM prediction_core.paper_orders WHERE run_id != '' ORDER BY run_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Run",
+        "multi": true,
+        "name": "run_id",
+        "options": [],
+        "query": "SELECT DISTINCT run_id FROM prediction_core.paper_orders WHERE run_id != '' ORDER BY run_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT strategy_id FROM prediction_core.paper_orders WHERE strategy_id != '' ORDER BY strategy_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Stratégie",
+        "multi": true,
+        "name": "strategy",
+        "options": [],
+        "query": "SELECT DISTINCT strategy_id FROM prediction_core.paper_orders WHERE strategy_id != '' ORDER BY strategy_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT profile_id FROM prediction_core.paper_orders WHERE profile_id != '' ORDER BY profile_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Profil",
+        "multi": true,
+        "name": "profile",
+        "options": [],
+        "query": "SELECT DISTINCT profile_id FROM prediction_core.paper_orders WHERE profile_id != '' ORDER BY profile_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT market_id FROM prediction_core.paper_orders WHERE market_id != '' ORDER BY market_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Marché",
+        "multi": true,
+        "name": "market",
+        "options": [],
+        "query": "SELECT DISTINCT market_id FROM prediction_core.paper_orders WHERE market_id != '' ORDER BY market_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT mode FROM prediction_core.paper_orders WHERE mode != '' ORDER BY mode",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Mode",
+        "multi": true,
+        "name": "mode",
+        "options": [],
+        "query": "SELECT DISTINCT mode FROM prediction_core.paper_orders WHERE mode != '' ORDER BY mode",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Toutes",
+          "value": "all"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Temps métier",
+        "multi": false,
+        "name": "business_time",
+        "options": [
+          {
+            "selected": true,
+            "text": "Toutes",
+            "value": "all"
+          },
+          {
+            "selected": false,
+            "text": "Heures marché UTC",
+            "value": "business_hours"
+          },
+          {
+            "selected": false,
+            "text": "Hors heures marché UTC",
+            "value": "off_hours"
+          }
+        ],
+        "query": "all,business_hours,off_hours",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -217,6 +438,6 @@
   "timezone": "browser",
   "title": "Paper Ledger",
   "uid": "prediction-core-paper-ledger",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

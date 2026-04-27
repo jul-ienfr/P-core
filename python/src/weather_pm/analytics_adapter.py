@@ -5,6 +5,7 @@ from typing import Any
 
 from prediction_core.analytics.events import (
     DebugDecisionEvent,
+    ExecutionEvent,
     PaperOrderEvent,
     PaperPnlSnapshotEvent,
     PaperPositionEvent,
@@ -45,6 +46,14 @@ def _rows_from_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(candidate, list):
         return []
     return [row for row in candidate if isinstance(row, dict)]
+
+
+def _execution_rows_from_payload(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], str | None]:
+    for key, mode_hint in (("execution_events", None), ("events", None), ("live_orders", "live"), ("orders", None)):
+        candidate = payload.get(key)
+        if isinstance(candidate, list):
+            return [row for row in candidate if isinstance(row, dict)], mode_hint
+    return [], None
 
 
 def profile_decision_events_from_shortlist(
@@ -174,6 +183,47 @@ def strategy_signal_events_from_shortlist(
     return events
 
 
+def execution_events_from_payload(
+    payload: dict[str, Any], *, default_observed_at: datetime | None = None
+) -> list[ExecutionEvent]:
+    if not isinstance(payload, dict):
+        raise ValueError("execution events payload must be an object")
+
+    payload_observed_at = _parse_observed_at(payload, default_observed_at)
+    payload_run_id = payload.get("run_id") or payload.get("report_id") or payload_observed_at.strftime("weather-execution-%Y%m%dT%H%M%SZ")
+    rows, mode_hint = _execution_rows_from_payload(payload)
+    events: list[ExecutionEvent] = []
+    for index, row in enumerate(rows, start=1):
+        observed_at = _parse_datetime(row.get("observed_at")) or _parse_datetime(row.get("created_at")) or _parse_datetime(row.get("updated_at")) or payload_observed_at
+        run_id = row.get("run_id") or payload_run_id
+        strategy_id = row.get("strategy_id") or payload.get("strategy_id") or row.get("strategy") or "weather_pm"
+        profile_id = row.get("profile_id") or row.get("strategy_profile_id") or payload.get("profile_id") or "default"
+        market_id = str(row.get("market_id") or row.get("condition_id") or "")
+        token_id = str(row.get("token_id") or "")
+        event_id = row.get("execution_event_id") or row.get("order_id") or row.get("live_order_id") or row.get("paper_order_id")
+        if not event_id:
+            event_id = f"{run_id}:{strategy_id}:{profile_id}:{market_id}:{token_id}:{index}"
+        mode = str(row.get("mode") or payload.get("mode") or mode_hint or ("live" if row.get("live_order_allowed") else "paper"))
+        events.append(
+            ExecutionEvent(
+                run_id=str(run_id),
+                strategy_id=str(strategy_id),
+                profile_id=str(profile_id),
+                market_id=market_id,
+                token_id=token_id,
+                observed_at=observed_at,
+                execution_event_id=str(event_id),
+                event_type=str(row.get("event_type") or row.get("status") or row.get("order_status") or "unknown"),
+                mode=mode,
+                paper_only=_bool_from_row(row, "paper_only", mode != "live"),
+                live_order_allowed=_bool_from_row(row, "live_order_allowed", mode == "live"),
+                raw=row,
+            )
+        )
+    return events
+
+
+
 def _orders_from_ledger(ledger: dict[str, Any], observed_default: datetime) -> list[dict[str, Any]]:
     if isinstance(ledger.get("orders"), list):
         return [order for order in ledger["orders"] if isinstance(order, dict)]
@@ -209,12 +259,21 @@ def _orders_from_ledger(ledger: dict[str, Any], observed_default: datetime) -> l
                 "net_pnl_after_all_costs": 0.0,
                 "opening_fee_usdc": 0.0,
                 "estimated_exit_fee_usdc": 0.0,
-                "strategy_id": str(candidate.get("strategy_id") or ledger.get("strategy_id") or "weather_bookmaker_v1"),
-                "profile_id": str(candidate.get("profile_id") or ledger.get("profile_id") or "surface_grid_trader"),
+                "strategy_id": str(candidate.get("strategy_id") or ledger.get("strategy_id") or "weather_profile_surface_grid_trader_v1"),
+                "profile_id": str(candidate.get("profile_id") or candidate.get("strategy_profile_id") or ledger.get("profile_id") or "surface_grid_trader"),
                 "paper_only": True,
                 "live_order_allowed": bool(candidate.get("live_order_allowed", False)),
+                "candidate_rank": candidate.get("rank") or index,
+                "question": candidate.get("question") or candidate.get("title"),
+                "outcome": candidate.get("outcome"),
+                "execution_blocker": candidate.get("execution_blocker") or candidate.get("blocker"),
                 "source_status": candidate.get("source_status"),
+                "source_latency_tier": candidate.get("source_latency_tier"),
+                "source_latency_priority": candidate.get("source_latency_priority"),
                 "primary_archetype": candidate.get("primary_archetype"),
+                "profile_label": candidate.get("profile_label"),
+                "profile_execution_mode": candidate.get("profile_execution_mode"),
+                "execution": execution,
             }
         )
     return orders

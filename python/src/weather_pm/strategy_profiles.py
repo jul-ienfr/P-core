@@ -98,6 +98,10 @@ _PROFILES: tuple[StrategyProfile, ...] = (
 _PROFILE_BY_ID = {profile.id: profile for profile in _PROFILES}
 
 
+def strategy_id_for_profile(profile_id: str) -> str:
+    return f"weather_profile_{profile_id}_v1"
+
+
 def list_strategy_profiles() -> list[dict[str, Any]]:
     return [profile.to_dict() for profile in _PROFILES]
 

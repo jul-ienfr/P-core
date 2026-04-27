@@ -7,6 +7,7 @@ from typing import Any
 from prediction_core.decision import EntryPolicy, evaluate_entry
 from weather_pm.dynamic_position_sizing import SizingInput, SizingPolicy, calculate_dynamic_position_size
 from weather_pm.edge_sizing import calculate_edge_sizing
+from weather_pm.strategy_profiles import classify_candidate_row, get_strategy_profile, strategy_id_for_profile
 
 
 def build_strategy_shortlist(
@@ -412,6 +413,16 @@ def _shortlist_row(
     entry_decision = _entry_decision(opportunity)
     surface_key = _surface_key(opportunity, city, date, surface_event=surface_event)
     dynamic_sizing = _dynamic_sizing(opportunity, surface_key=surface_key, matched_accounts=matched_accounts, edge_sizing=edge_sizing, entry_decision=entry_decision)
+    profile_metadata = _profile_metadata_for_row(
+        {
+            **opportunity,
+            "matched_traders": [str(account.get("handle") or "") for account in matched_accounts[:5] if account.get("handle")],
+            "surface_inconsistency_count": len(inconsistencies),
+            "surface_inconsistency_types": _unique(str(item.get("type") or "") for item in inconsistencies if item.get("type")),
+            "execution_blocker": _execution_blocker(opportunity),
+            "action": action,
+        }
+    )
     return {
         "rank": 0,
         "market_id": str(opportunity.get("market_id") or ""),
@@ -448,6 +459,24 @@ def _shortlist_row(
         "action": action,
         "next_actions": _next_actions(opportunity, action=action, direct=bool(opportunity.get("source_direct")), inconsistencies=inconsistencies),
         "reasons": reasons,
+        **profile_metadata,
+    }
+
+
+def _profile_metadata_for_row(row: dict[str, Any]) -> dict[str, Any]:
+    classification = classify_candidate_row(row)
+    profile_id = classification.get("profile_id") or "unclassified"
+    profile = get_strategy_profile(profile_id) if profile_id != "unclassified" else None
+    return {
+        "strategy_id": strategy_id_for_profile(str(profile_id)),
+        "profile_id": str(profile_id),
+        "strategy_profile_id": str(profile_id),
+        "profile_label": str(profile["label"] if profile else "Unclassified"),
+        "profile_execution_mode": str(profile["execution_mode"] if profile else "watchlist_only"),
+        "profile_risk_caps": dict(profile["risk_caps"] if profile else {}),
+        "profile_entry_gates": list(profile["entry_gates"] if profile else []),
+        "profile_required_inputs": list(profile["required_inputs"] if profile else []),
+        "profile_blockers": list(classification.get("blockers") or []),
     }
 
 

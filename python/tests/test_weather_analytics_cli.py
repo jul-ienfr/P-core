@@ -49,6 +49,7 @@ def test_weather_analytics_export_dry_run(tmp_path: Path) -> None:
 
     assert result.stdout.strip().splitlines() == [
         "analytics.debug_decisions.rows=1",
+        "analytics.execution_events.rows=0",
         "analytics.paper_orders.rows=0",
         "analytics.paper_pnl_snapshots.rows=0",
         "analytics.paper_positions.rows=0",
@@ -84,6 +85,7 @@ def test_weather_analytics_smoke_fixture_dry_runs() -> None:
 
     assert result.stdout.strip().splitlines() == [
         "analytics.debug_decisions.rows=1",
+        "analytics.execution_events.rows=0",
         "analytics.paper_orders.rows=0",
         "analytics.paper_pnl_snapshots.rows=0",
         "analytics.paper_positions.rows=0",
@@ -149,6 +151,7 @@ def test_weather_analytics_export_paper_ledger_dry_run(tmp_path: Path) -> None:
 
     assert result.stdout.strip().splitlines() == [
         "analytics.debug_decisions.rows=0",
+        "analytics.execution_events.rows=0",
         "analytics.paper_orders.rows=1",
         "analytics.paper_pnl_snapshots.rows=1",
         "analytics.paper_positions.rows=1",
@@ -198,6 +201,7 @@ def test_weather_analytics_export_operator_report_as_paper_ledger_dry_run(tmp_pa
 
     assert result.stdout.strip().splitlines() == [
         "analytics.debug_decisions.rows=0",
+        "analytics.execution_events.rows=0",
         "analytics.paper_orders.rows=1",
         "analytics.paper_pnl_snapshots.rows=1",
         "analytics.paper_positions.rows=1",
@@ -209,7 +213,58 @@ def test_weather_analytics_export_operator_report_as_paper_ledger_dry_run(tmp_pa
     ]
 
 
-def test_weather_analytics_smoke_scripts_are_executable_and_safe() -> None:
+def test_weather_analytics_export_execution_events_dry_run(tmp_path: Path) -> None:
+    execution_path = tmp_path / "execution.json"
+    execution_path.write_text(
+        json.dumps(
+            {
+                "run_id": "exec-run-1",
+                "mode": "live",
+                "live_orders": [
+                    {
+                        "order_id": "live-1",
+                        "created_at": "2026-04-27T12:00:00+00:00",
+                        "strategy_id": "weather_profile_surface_grid_trader_v1",
+                        "profile_id": "surface_grid_trader",
+                        "market_id": "m1",
+                        "status": "submitted",
+                    }
+                ],
+            }
+        )
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "export-analytics-clickhouse",
+            "--execution-events-json",
+            str(execution_path),
+            "--dry-run",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        env={**os.environ, "PYTHONPATH": "src"},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    assert result.stdout.strip().splitlines() == [
+        "analytics.debug_decisions.rows=0",
+        "analytics.execution_events.rows=1",
+        "analytics.paper_orders.rows=0",
+        "analytics.paper_pnl_snapshots.rows=0",
+        "analytics.paper_positions.rows=0",
+        "analytics.profile_decisions.rows=0",
+        "analytics.profile_metrics.rows=0",
+        "analytics.strategy_metrics.rows=0",
+        "analytics.strategy_signals.rows=0",
+        "analytics.enabled=false",
+    ]
+
+
     for script in [SMOKE_CLICKHOUSE, SMOKE_WEATHER_EXPORT]:
         text = script.read_text()
         assert script.stat().st_mode & stat.S_IXUSR
@@ -248,6 +303,7 @@ def test_weather_analytics_export_without_clickhouse_config_is_noop(tmp_path: Pa
 
     assert result.stdout.strip().splitlines() == [
         "analytics.debug_decisions.rows=0",
+        "analytics.execution_events.rows=0",
         "analytics.paper_orders.rows=0",
         "analytics.paper_pnl_snapshots.rows=0",
         "analytics.paper_positions.rows=0",
@@ -296,6 +352,7 @@ def test_weather_analytics_export_inserts_with_env_writer(monkeypatch, tmp_path:
 
     assert capsys.readouterr().out.strip().splitlines() == [
         "analytics.debug_decisions.rows=1",
+        "analytics.execution_events.rows=0",
         "analytics.paper_orders.rows=0",
         "analytics.paper_pnl_snapshots.rows=0",
         "analytics.paper_positions.rows=0",

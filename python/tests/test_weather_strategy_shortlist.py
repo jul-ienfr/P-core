@@ -117,6 +117,14 @@ def test_build_strategy_shortlist_prioritizes_tradeable_surface_anomalies_and_tr
     london = shortlist["shortlist"][0]
     assert london["city"] == "London"
     assert london["decision_status"] == "trade_small"
+    assert london["profile_id"] == "surface_grid_trader"
+    assert london["strategy_profile_id"] == "surface_grid_trader"
+    assert london["strategy_id"] == "weather_profile_surface_grid_trader_v1"
+    assert london["profile_label"] == "Surface grid trader"
+    assert london["profile_execution_mode"] == "paper_strict_limit"
+    assert london["profile_risk_caps"]["max_order_usdc"] == 15.0
+    assert "event_surface" in london["profile_required_inputs"]
+    assert "surface_inconsistency_present" in london["profile_entry_gates"]
     assert london["trader_archetype_match"] == ["event_surface_grid_specialist"]
     assert london["matched_traders"] == ["ColdMath"]
     assert london["surface_inconsistency_count"] == 1

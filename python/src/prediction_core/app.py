@@ -189,6 +189,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     del storage_health_parser
 
+    storage_readiness = subparsers.add_parser(
+        "storage-readiness",
+        help="Print dry-run production storage readiness material as JSON without provisioning external services",
+    )
+    storage_readiness.add_argument(
+        "--section",
+        choices=("all", "infra", "secrets", "backup_restore", "monitoring", "launch_gates", "staging"),
+        default="all",
+        help="Readiness section to print",
+    )
+    storage_readiness.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
+
     mirror_artifacts = subparsers.add_parser(
         "mirror-artifacts-s3",
         help="Plan a safe S3 mirror for local artifacts; only dry-run is supported for now",
@@ -377,6 +389,13 @@ def main() -> int:
         from prediction_core.storage.health import storage_health
 
         print(json.dumps(storage_health(), default=str))
+        return 0
+
+    if args.command == "storage-readiness":
+        from prediction_core.storage.readiness import storage_readiness_section
+
+        indent = 2 if args.pretty else None
+        print(json.dumps(storage_readiness_section(args.section), indent=indent, sort_keys=bool(args.pretty)))
         return 0
 
     if args.command == "mirror-artifacts-s3":

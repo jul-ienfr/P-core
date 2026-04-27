@@ -1,0 +1,103 @@
+# Production storage readiness template for P-core.
+# This is a declarative operator checklist, not an apply/provisioning file.
+provisioning_enabled: false
+requires_real_cloud_credentials: false
+provisions_external_services: false
+live_trading_enabled: false
+
+secrets:
+  provider: external-secrets-manager
+  values: reference-only-never-inline
+  required_injection: runtime_environment_or_secret_volume
+  prohibited_locations:
+    - git
+    - .env files in production
+    - shell history
+    - CI logs
+
+postgres_timescale:
+  role: operational_source_of_truth
+  requirements:
+    high_availability: required
+    encrypted_storage: required
+    automated_backups: required
+    point_in_time_recovery: required
+    migration_tracking: alembic_version
+    required_tables:
+      - prediction_runs
+      - job_runs
+      - execution_idempotency_keys
+      - execution_audit_events
+      - storage_artifacts
+
+clickhouse:
+  role: analytics_source
+  requirements:
+    backups: required
+    partition_retention_review: required
+    dashboard_query_budget: required
+
+s3_artifacts:
+  role: immutable_artifact_store
+  requirements:
+    versioning: required
+    lifecycle_policy: reviewed
+    server_side_encryption: required
+    access_logging: required
+    delete_protection: reviewed
+
+redis:
+  role: ephemeral_cache_and_short_leases
+  source_of_truth: false
+  requirements:
+    auth: required
+    tls: required_in_production_networks
+    persistence: not_required_for_ephemeral_data
+
+nats:
+  role: runtime_event_fanout
+  source_of_truth: false
+  requirements:
+    auth: required
+    tls: required_in_production_networks
+    jetstream_retention: reviewed
+    durable_consumers: reviewed
+
+grafana:
+  role: operator_observability
+  requirements:
+    sso_or_strong_auth: required
+    alert_contact_points: required
+    dashboard_provisioning: reviewed
+
+backup_policy:
+  postgres:
+    encrypted_offsite_backup: required
+    checksum: required
+    restore_drill_frequency_days: 30
+  clickhouse:
+    partition_aware_backup: required
+  s3:
+    lifecycle_review_frequency_days: 30
+
+monitoring_signals:
+  - storage_health_ready_for_live
+  - postgres_unavailable
+  - postgres_migration_mismatch
+  - timescale_extension_missing
+  - clickhouse_unavailable
+  - redis_degraded
+  - nats_degraded
+  - s3_unavailable
+  - backup_age_exceeded
+  - restore_drill_stale
+  - audit_idempotency_write_failures
+
+launch_gates:
+  - storage_readiness_bundle_reviewed
+  - storage_health_ready_for_live_true
+  - staging_validation_complete
+  - backup_restore_drill_current
+  - monitoring_alerting_reviewed
+  - polymarket_live_preflight_read_only_reviewed
+  - operator_approval_recorded

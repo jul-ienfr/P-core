@@ -59,6 +59,8 @@ def _storage_source_of_truth_summary() -> dict[str, Any]:
         "ephemeral": ["redis", "nats"],
         "durable_event_transports": [],
         "live_trading_enabled": False,
+        "production_readiness_materialized": True,
+        "readiness_command": "prediction-core storage-readiness --section all",
     }
 
 

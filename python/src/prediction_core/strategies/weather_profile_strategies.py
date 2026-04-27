@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Mapping
 
-from weather_pm.strategy_profiles import get_strategy_profile, list_strategy_profiles
+from weather_pm.strategy_profiles import get_strategy_profile, list_strategy_profiles, strategy_id_for_profile
 
 from .contracts import StrategyDescriptor, StrategyMode, StrategyRunRequest, StrategyRunResult, StrategySide, StrategySignal, StrategyTarget
 
@@ -120,7 +120,7 @@ class WeatherProfileStrategy:
         self.profile = get_strategy_profile(profile_id)
         self.payloads = list(payloads or [])
         self.descriptor = StrategyDescriptor(
-            strategy_id=self.profile["id"],
+            strategy_id=strategy_id_for_profile(str(self.profile["id"])),
             name=self.profile["label"],
             target=StrategyTarget.EVENT_OUTCOME_FORECASTING,
             mode=resolved_mode,

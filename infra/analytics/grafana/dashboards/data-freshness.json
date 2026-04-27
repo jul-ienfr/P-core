@@ -1,0 +1,237 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  table,\n  max_observed_at,\n  dateDiff('minute', max_observed_at, now()) AS age_minutes,\n  rows\nFROM\n(\n  SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at, count() AS rows FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'profile_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_positions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_positions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_pnl_snapshots', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_pnl_snapshots WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\n)\nORDER BY age_minutes DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Fraîcheur des données par table",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  anyLast(run_id) AS `Dernière run`,\n  nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS `Dernier observed_at`,\n  count() AS `Rows`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id\nORDER BY `Dernier observed_at` DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Dernière run par stratégie/profil",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT 'profile_decisions' AS table, count() AS rows FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'debug_decisions', count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'strategy_signals', count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'paper_orders', count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'execution_events', count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\nORDER BY rows DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Rows dans la fenêtre sélectionnée",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT * FROM\n(\n  SELECT table, max_observed_at, dateDiff('minute', max_observed_at, now()) AS age_minutes\n  FROM\n  (\n    SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at FROM prediction_core.profile_decisions\n    UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.debug_decisions\n    UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.strategy_signals\n    UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.paper_orders\n    UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.execution_events\n  )\n)\nWHERE age_minutes > 60 OR max_observed_at IS NULL\nORDER BY age_minutes DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Sources stale",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "prediction-core",
+    "clickhouse",
+    "freshness"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Data Freshness",
+  "uid": "prediction-core-data-freshness",
+  "version": 1,
+  "weekStart": ""
+}

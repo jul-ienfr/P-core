@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from prediction_core.analytics.events import serialize_event
 from weather_pm.analytics_adapter import (
     debug_decision_events_from_shortlist,
+    execution_events_from_payload,
     paper_order_events_from_ledger,
     paper_pnl_snapshot_events_from_ledger,
     paper_position_events_from_ledger,
@@ -125,6 +126,41 @@ def test_shortlist_rows_convert_to_debug_decision_events() -> None:
     assert serialize_event(event)["raw"].startswith('{"decision_status":"skip"')
 
 
+def test_execution_events_payload_converts_live_orders() -> None:
+    payload = {
+        "run_id": "exec-run-1",
+        "mode": "live",
+        "live_orders": [
+            {
+                "order_id": "live-1",
+                "created_at": "2026-04-27T12:00:00+00:00",
+                "strategy_id": "weather_profile_surface_grid_trader_v1",
+                "profile_id": "surface_grid_trader",
+                "market_id": "m1",
+                "token_id": "t1",
+                "status": "submitted",
+                "price": 0.42,
+                "size": 10.0,
+            }
+        ],
+    }
+
+    events = execution_events_from_payload(payload)
+
+    assert len(events) == 1
+    event = events[0]
+    assert event.table == "execution_events"
+    assert event.run_id == "exec-run-1"
+    assert event.strategy_id == "weather_profile_surface_grid_trader_v1"
+    assert event.profile_id == "surface_grid_trader"
+    assert event.execution_event_id == "live-1"
+    assert event.event_type == "submitted"
+    assert event.mode == "live"
+    assert event.paper_only is False
+    assert event.live_order_allowed is True
+    assert serialize_event(event)["raw"] == '{"created_at":"2026-04-27T12:00:00+00:00","market_id":"m1","order_id":"live-1","price":0.42,"profile_id":"surface_grid_trader","size":10.0,"status":"submitted","strategy_id":"weather_profile_surface_grid_trader_v1","token_id":"t1"}'
+
+
 def test_paper_ledger_rows_convert_to_order_and_position_events() -> None:
     ledger = {
         "run_id": "ledger-run-1",
@@ -181,7 +217,44 @@ def test_paper_ledger_rows_convert_to_order_and_position_events() -> None:
     assert serialize_event(positions[0])["observed_at"] == "2026-04-27 12:05:00.000"
 
 
-def test_paper_ledger_summary_converts_to_pnl_snapshot_event() -> None:
+def test_operator_report_candidates_preserve_paper_order_context() -> None:
+    ledger = {
+        "run_id": "operator-run-1",
+        "generated_at": "2026-04-27T12:00:00+00:00",
+        "top_current_candidates": [
+            {
+                "rank": 3,
+                "market_id": "m1",
+                "token_id": "t1",
+                "question": "Will it rain?",
+                "side": "YES",
+                "strict_limit": 0.5,
+                "strategy_id": "weather_profile_threshold_resolution_harvester_v1",
+                "profile_id": "threshold_resolution_harvester",
+                "profile_label": "Threshold resolution harvester",
+                "profile_execution_mode": "paper_micro_strict_limit",
+                "execution_blocker": "",
+                "source_status": "direct_latest",
+                "source_latency_tier": "direct_latest",
+                "primary_archetype": "threshold_harvester",
+                "execution": {"fill_status": "filled", "avg_fill_price": 0.5, "fillable_spend": 5.0},
+            }
+        ],
+    }
+
+    orders = paper_order_events_from_ledger(ledger)
+
+    assert len(orders) == 1
+    event = orders[0]
+    assert event.strategy_id == "weather_profile_threshold_resolution_harvester_v1"
+    assert event.profile_id == "threshold_resolution_harvester"
+    assert event.raw["candidate_rank"] == 3
+    assert event.raw["question"] == "Will it rain?"
+    assert event.raw["source_latency_tier"] == "direct_latest"
+    assert event.raw["profile_execution_mode"] == "paper_micro_strict_limit"
+    assert event.raw["execution"]["fill_status"] == "filled"
+
+
     ledger = {
         "run_id": "ledger-run-1",
         "generated_at": "2026-04-27T12:00:00+00:00",

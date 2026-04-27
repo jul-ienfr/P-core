@@ -1,0 +1,184 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Prediction Core Analytics
+    folder: Prediction Core
+    interval: 1m
+    rules:
+      - uid: prediction-core-analytics-data-stale
+        title: Analytics data stale
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prediction-core-clickhouse
+            model:
+              datasource:
+                type: grafana-clickhouse-datasource
+                uid: prediction-core-clickhouse
+              queryType: sql
+              rawSql: |
+                SELECT max(age_minutes) AS value
+                FROM
+                (
+                  SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) AS age_minutes FROM prediction_core.profile_decisions
+                  UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.debug_decisions
+                  UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.strategy_signals
+                  UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.paper_orders
+                  UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.execution_events
+                )
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [60]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+        noDataState: Alerting
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Analytics data stale
+        labels:
+          severity: warning
+      - uid: prediction-core-no-recent-decisions
+        title: No recent decisions
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: prediction-core-clickhouse
+            model:
+              datasource:
+                type: grafana-clickhouse-datasource
+                uid: prediction-core-clickhouse
+              queryType: sql
+              rawSql: SELECT count() AS value FROM prediction_core.profile_decisions WHERE observed_at >= now() - INTERVAL 30 minute
+          - refId: C
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+        noDataState: Alerting
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: No recent decisions
+        labels:
+          severity: warning
+      - uid: prediction-core-high-skip-rate
+        title: High skip rate
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prediction-core-clickhouse
+            model:
+              datasource:
+                type: grafana-clickhouse-datasource
+                uid: prediction-core-clickhouse
+              queryType: sql
+              rawSql: |
+                SELECT if(sum(decision_count) >= 10, sum(skip_count) / nullIf(sum(decision_count), 0), 0) AS value
+                FROM prediction_core.profile_metrics
+                WHERE observed_at >= now() - INTERVAL 1 hour
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0.8]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: High skip rate
+        labels:
+          severity: warning
+      - uid: prediction-core-live-event-seen
+        title: Live event seen
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prediction-core-clickhouse
+            model:
+              datasource:
+                type: grafana-clickhouse-datasource
+                uid: prediction-core-clickhouse
+              queryType: sql
+              rawSql: SELECT count() AS value FROM prediction_core.execution_events WHERE observed_at >= now() - INTERVAL 1 hour AND (mode = 'live' OR live_order_allowed)
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+        noDataState: OK
+        execErrState: Error
+        for: 0m
+        annotations:
+          summary: Live event seen
+        labels:
+          severity: info

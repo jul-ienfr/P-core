@@ -14,7 +14,7 @@ EXPECTED_PROFILE_IDS = [
     "macro_weather_event_trader",
 ]
 
-EXPECTED_EXECUTABLE_IDS = ["weather_baseline", "panoptique_shadow_flow", *EXPECTED_PROFILE_IDS]
+EXPECTED_EXECUTABLE_IDS = ["weather_baseline", "panoptique_shadow_flow", *(f"weather_profile_{profile_id}_v1" for profile_id in EXPECTED_PROFILE_IDS)]
 
 
 def test_strategy_smoke_summary_fixture_safe() -> None:
@@ -40,5 +40,5 @@ def test_cli_main_prints_json(capsys) -> None:
     assert payload["command"] == "strategy-smoke"
     assert payload["safety"]["trading_action"] == "none"
     assert [item["mode"] for item in payload["executable_strategies"][:2]] == ["paper_only", "research_only"]
-    assert [item["strategy_id"] for item in payload["executable_strategies"][2:]] == EXPECTED_PROFILE_IDS
+    assert [item["strategy_id"] for item in payload["executable_strategies"][2:]] == EXPECTED_EXECUTABLE_IDS[2:]
     assert "strategies" not in payload

@@ -16,6 +16,7 @@ from prediction_core.analytics.events import serialize_event
 from prediction_core.analytics.metrics import build_profile_metric_events, build_strategy_metric_events
 from weather_pm.analytics_adapter import (
     debug_decision_events_from_shortlist,
+    execution_events_from_payload,
     paper_order_events_from_ledger,
     paper_pnl_snapshot_events_from_ledger,
     paper_position_events_from_ledger,
@@ -141,6 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_analytics = subparsers.add_parser("export-analytics-clickhouse", help="Export weather shortlist and paper ledger analytics to ClickHouse")
     export_analytics.add_argument("--shortlist-json", required=False, help="Strategy shortlist/profile JSON to export")
     export_analytics.add_argument("--paper-ledger-json", required=False, help="Paper ledger JSON to export")
+    export_analytics.add_argument("--execution-events-json", required=False, help="Execution events/live orders JSON to export")
     export_analytics.add_argument("--dry-run", action="store_true", help="Build rows and print counts without inserting")
 
     operator_refresh = subparsers.add_parser("operator-refresh", help="Refresh a saved live strategy shortlist or operator report for operator handoff")
@@ -397,8 +399,8 @@ def main() -> int:
         return 0
 
     if args.command == "export-analytics-clickhouse":
-        if not args.shortlist_json and not args.paper_ledger_json:
-            raise ValueError("provide --shortlist-json, --paper-ledger-json, or both")
+        if not args.shortlist_json and not args.paper_ledger_json and not args.execution_events_json:
+            raise ValueError("provide --shortlist-json, --paper-ledger-json, --execution-events-json, or a combination")
 
         rows_by_table: dict[str, list[dict[str, Any]]] = {
             "profile_decisions": [],
@@ -406,6 +408,7 @@ def main() -> int:
             "profile_metrics": [],
             "strategy_metrics": [],
             "strategy_signals": [],
+            "execution_events": [],
             "paper_orders": [],
             "paper_positions": [],
             "paper_pnl_snapshots": [],
@@ -429,6 +432,10 @@ def main() -> int:
             rows_by_table["paper_orders"] = [serialize_event(event) for event in order_events]
             rows_by_table["paper_positions"] = [serialize_event(event) for event in position_events]
             rows_by_table["paper_pnl_snapshots"] = [serialize_event(event) for event in pnl_events]
+        if args.execution_events_json:
+            execution_payload = json.loads(Path(args.execution_events_json).read_text())
+            execution_events = execution_events_from_payload(execution_payload)
+            rows_by_table["execution_events"] = [serialize_event(event) for event in execution_events]
 
         if args.dry_run:
             _print_analytics_export_counts(rows_by_table)

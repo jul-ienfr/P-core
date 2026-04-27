@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from weather_pm.strategy_profiles import get_strategy_profile
+from weather_pm.strategy_profiles import get_strategy_profile, strategy_id_for_profile
 
 from prediction_core.strategies.contracts import StrategyMode, StrategyRunRequest, StrategyTarget
 from prediction_core.strategies.weather_profile_strategies import WeatherProfileStrategy, build_weather_profile_strategies
@@ -21,7 +21,7 @@ EXPECTED_PROFILE_IDS = [
 def test_build_weather_profile_strategies_preserves_canonical_order() -> None:
     strategies = build_weather_profile_strategies()
 
-    assert [strategy.descriptor.strategy_id for strategy in strategies] == EXPECTED_PROFILE_IDS
+    assert [strategy.descriptor.strategy_id for strategy in strategies] == [strategy_id_for_profile(profile_id) for profile_id in EXPECTED_PROFILE_IDS]
 
 
 def test_weather_profile_strategy_emits_safe_signal() -> None:

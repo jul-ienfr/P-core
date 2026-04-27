@@ -89,11 +89,16 @@ jobs:
         working-directory: python
         run: |
           uv run pytest \
+            tests/test_storage_readiness.py \
             tests/test_storage_config.py \
             tests/test_panoptique_storage_exports.py \
             tests/test_panoptique_infra.py \
             tests/test_panoptique_migration_sql.py \
             tests/contracts/test_prediction_core_rust_storage_sql_contract.py
+
+      - name: Validate storage readiness JSON
+        working-directory: python
+        run: uv run python scripts/prediction-core storage-readiness --section all --pretty >/tmp/storage-readiness.json
 
   storage-rust:
     name: Rust storage unit tests

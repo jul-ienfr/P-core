@@ -6,7 +6,19 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Retour stratégie/profil",
+      "tooltip": "Comparer les stratégies",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-vs-profile"
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -53,7 +65,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at,\n  market_id,\n  strategy_id,\n  profile_id,\n  decision_status,\n  skip_reason,\n  edge,\n  limit_price,\n  source_ok,\n  orderbook_ok,\n  risk_ok,\n  blocker\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\nORDER BY observed_at DESC\nLIMIT 500",
+          "rawSql": "SELECT\n  observed_at,\n  market_id,\n  strategy_id,\n  profile_id,\n  decision_status,\n  skip_reason,\n  edge,\n  limit_price,\n  source_ok,\n  orderbook_ok,\n  risk_ok,\n  blocker\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nORDER BY observed_at DESC\nLIMIT 500",
           "refId": "A"
         }
       ],
@@ -95,12 +107,63 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  skip_reason,\n  count() AS count\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND decision_status NOT IN ('trade', 'trade_small')\nGROUP BY skip_reason\nORDER BY count DESC",
+          "rawSql": "SELECT\n  skip_reason,\n  count() AS count\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND decision_status NOT IN ('trade', 'trade_small')\nGROUP BY skip_reason\nORDER BY count DESC",
           "refId": "A"
         }
       ],
       "title": "Skip Reasons",
       "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  observed_at,\n  run_id,\n  market_id,\n  token_id,\n  strategy_id,\n  profile_id,\n  decision_status,\n  skip_reason,\n  edge,\n  limit_price,\n  source_ok,\n  orderbook_ok,\n  risk_ok,\n  blocker\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nORDER BY observed_at DESC\nLIMIT 500",
+          "refId": "A"
+        }
+      ],
+      "title": "Drilldown marché",
+      "type": "table"
     }
   ],
   "refresh": "30s",
@@ -111,7 +174,165 @@
     "debug"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT run_id FROM prediction_core.debug_decisions WHERE run_id != '' ORDER BY run_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Run",
+        "multi": true,
+        "name": "run_id",
+        "options": [],
+        "query": "SELECT DISTINCT run_id FROM prediction_core.debug_decisions WHERE run_id != '' ORDER BY run_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT strategy_id FROM prediction_core.debug_decisions WHERE strategy_id != '' ORDER BY strategy_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Stratégie",
+        "multi": true,
+        "name": "strategy",
+        "options": [],
+        "query": "SELECT DISTINCT strategy_id FROM prediction_core.debug_decisions WHERE strategy_id != '' ORDER BY strategy_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT profile_id FROM prediction_core.debug_decisions WHERE profile_id != '' ORDER BY profile_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Profil",
+        "multi": true,
+        "name": "profile",
+        "options": [],
+        "query": "SELECT DISTINCT profile_id FROM prediction_core.debug_decisions WHERE profile_id != '' ORDER BY profile_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT market_id FROM prediction_core.debug_decisions WHERE market_id != '' ORDER BY market_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Marché",
+        "multi": true,
+        "name": "market",
+        "options": [],
+        "query": "SELECT DISTINCT market_id FROM prediction_core.debug_decisions WHERE market_id != '' ORDER BY market_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT mode FROM prediction_core.debug_decisions WHERE mode != '' ORDER BY mode",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Mode",
+        "multi": true,
+        "name": "mode",
+        "options": [],
+        "query": "SELECT DISTINCT mode FROM prediction_core.debug_decisions WHERE mode != '' ORDER BY mode",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Toutes",
+          "value": "all"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Temps métier",
+        "multi": false,
+        "name": "business_time",
+        "options": [
+          {
+            "selected": true,
+            "text": "Toutes",
+            "value": "all"
+          },
+          {
+            "selected": false,
+            "text": "Heures marché UTC",
+            "value": "business_hours"
+          },
+          {
+            "selected": false,
+            "text": "Hors heures marché UTC",
+            "value": "off_hours"
+          }
+        ],
+        "query": "all,business_hours,off_hours",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -121,6 +342,6 @@
   "timezone": "browser",
   "title": "Decision Debug",
   "uid": "prediction-core-decision-debug",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
