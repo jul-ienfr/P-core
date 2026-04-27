@@ -4,6 +4,7 @@ from prediction_core.analytics.events import serialize_event
 from weather_pm.analytics_adapter import (
     debug_decision_events_from_shortlist,
     paper_order_events_from_ledger,
+    paper_pnl_snapshot_events_from_ledger,
     paper_position_events_from_ledger,
     profile_decision_events_from_shortlist,
 )
@@ -178,3 +179,45 @@ def test_paper_ledger_rows_convert_to_order_and_position_events() -> None:
     assert positions[0].exposure_usdc == 5.0
     assert positions[0].mtm_bid_usdc == 6.0
     assert serialize_event(positions[0])["observed_at"] == "2026-04-27 12:05:00.000"
+
+
+def test_paper_ledger_summary_converts_to_pnl_snapshot_event() -> None:
+    ledger = {
+        "run_id": "ledger-run-1",
+        "generated_at": "2026-04-27T12:00:00+00:00",
+        "strategy_id": "weather_bookmaker_v1",
+        "profile_id": "strict_micro",
+        "mode": "paper",
+        "summary": {
+            "orders": 2,
+            "filled_usdc": 10.0,
+            "pnl_usdc": 3.0,
+            "opening_fee_usdc": 0.1,
+            "estimated_exit_fee_usdc": 0.2,
+            "realized_exit_fee_usdc": 0.3,
+            "net_pnl_after_all_costs": 2.4,
+        },
+        "orders": [
+            {"order_id": "win", "status": "settled_win", "filled_usdc": 5.0, "pnl_usdc": 2.0, "net_pnl_after_all_costs": 1.8},
+            {"order_id": "loss", "status": "settled_loss", "filled_usdc": 5.0, "pnl_usdc": 1.0, "net_pnl_after_all_costs": 0.6},
+        ],
+    }
+
+    events = paper_pnl_snapshot_events_from_ledger(ledger)
+
+    assert len(events) == 1
+    event = events[0]
+    assert event.table == "paper_pnl_snapshots"
+    assert event.run_id == "ledger-run-1"
+    assert event.strategy_id == "weather_bookmaker_v1"
+    assert event.profile_id == "strict_micro"
+    assert event.market_id == ""
+    assert event.gross_pnl_usdc == 3.0
+    assert event.net_pnl_usdc == 2.4
+    assert event.costs_usdc == 0.6
+    assert event.exposure_usdc == 10.0
+    assert event.roi == 0.24
+    assert event.winrate == 0.5
+    row = serialize_event(event)
+    assert row["observed_at"] == "2026-04-27 12:00:00.000"
+    assert '"orders":2' in row["raw"]

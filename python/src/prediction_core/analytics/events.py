@@ -116,6 +116,27 @@ class PaperPositionEvent:
 
 
 @dataclass(frozen=True)
+class PaperPnlSnapshotEvent:
+    run_id: str
+    strategy_id: str
+    profile_id: str
+    market_id: str
+    observed_at: datetime
+    mode: str
+    gross_pnl_usdc: float | None = None
+    net_pnl_usdc: float | None = None
+    costs_usdc: float | None = None
+    exposure_usdc: float | None = None
+    roi: float | None = None
+    winrate: float | None = None
+    raw: dict[str, Any] | None = None
+
+    @property
+    def table(self) -> str:
+        return "paper_pnl_snapshots"
+
+
+@dataclass(frozen=True)
 class StrategyMetricEvent:
     run_id: str
     strategy_id: str

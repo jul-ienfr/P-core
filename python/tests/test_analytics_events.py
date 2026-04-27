@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta, timezone
 from prediction_core.analytics.events import (
     DebugDecisionEvent,
     PaperOrderEvent,
+    PaperPnlSnapshotEvent,
     PaperPositionEvent,
     ProfileDecisionEvent,
     ProfileMetricEvent,
@@ -92,6 +93,20 @@ def test_all_phase6_event_types_expose_tables_and_serialize() -> None:
             quantity=1.0,
             status="filled",
         ),
+        PaperPnlSnapshotEvent(
+            run_id="run-1",
+            strategy_id="s1",
+            profile_id="p1",
+            market_id="",
+            observed_at=observed_at,
+            mode="paper",
+            gross_pnl_usdc=1.2,
+            net_pnl_usdc=1.0,
+            costs_usdc=0.2,
+            exposure_usdc=5.0,
+            roi=0.2,
+            raw={"summary": {"orders": 1}},
+        ),
         ProfileMetricEvent(
             run_id="run-1",
             strategy_id="s1",
@@ -117,7 +132,11 @@ def test_all_phase6_event_types_expose_tables_and_serialize() -> None:
         "debug_decisions",
         "paper_orders",
         "paper_positions",
+        "paper_pnl_snapshots",
         "profile_metrics",
         "strategy_metrics",
     ]
-    assert [serialize_event(event)["observed_at"] for event in events] == ["2026-04-27 12:00:00.000"] * 5
+    assert [serialize_event(event)["observed_at"] for event in events] == ["2026-04-27 12:00:00.000"] * 6
+    pnl_row = serialize_event(events[3])
+    assert pnl_row["net_pnl_usdc"] == 1.0
+    assert pnl_row["raw"] == '{"summary":{"orders":1}}'

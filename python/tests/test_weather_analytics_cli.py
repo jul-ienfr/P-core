@@ -48,7 +48,13 @@ def test_weather_analytics_export_dry_run(tmp_path: Path) -> None:
     )
 
     assert result.stdout.strip().splitlines() == [
+        "analytics.debug_decisions.rows=1",
+        "analytics.paper_orders.rows=0",
+        "analytics.paper_pnl_snapshots.rows=0",
+        "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=1",
+        "analytics.profile_metrics.rows=1",
+        "analytics.strategy_metrics.rows=1",
         "analytics.enabled=false",
     ]
 
@@ -76,7 +82,77 @@ def test_weather_analytics_smoke_fixture_dry_runs() -> None:
     )
 
     assert result.stdout.strip().splitlines() == [
+        "analytics.debug_decisions.rows=1",
+        "analytics.paper_orders.rows=0",
+        "analytics.paper_pnl_snapshots.rows=0",
+        "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=1",
+        "analytics.profile_metrics.rows=1",
+        "analytics.strategy_metrics.rows=1",
+        "analytics.enabled=false",
+    ]
+
+
+def test_weather_analytics_export_paper_ledger_dry_run(tmp_path: Path) -> None:
+    ledger_path = tmp_path / "ledger.json"
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "run_id": "ledger-run-1",
+                "generated_at": "2026-04-27T12:00:00+00:00",
+                "summary": {
+                    "orders": 1,
+                    "filled_usdc": 5.0,
+                    "pnl_usdc": 1.0,
+                    "opening_fee_usdc": 0.1,
+                    "estimated_exit_fee_usdc": 0.2,
+                    "net_pnl_after_all_costs": 0.7,
+                },
+                "orders": [
+                    {
+                        "order_id": "order-1",
+                        "created_at": "2026-04-27T12:00:00+00:00",
+                        "updated_at": "2026-04-27T12:05:00+00:00",
+                        "market_id": "m1",
+                        "token_id": "t1",
+                        "side": "NO",
+                        "status": "filled",
+                        "strict_limit": 0.3,
+                        "filled_usdc": 5.0,
+                        "shares": 17.5,
+                        "avg_fill_price": 0.285714,
+                        "mtm_usdc": 6.0,
+                    }
+                ],
+            }
+        )
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "export-analytics-clickhouse",
+            "--paper-ledger-json",
+            str(ledger_path),
+            "--dry-run",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        env={**os.environ, "PYTHONPATH": "src"},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    assert result.stdout.strip().splitlines() == [
+        "analytics.debug_decisions.rows=0",
+        "analytics.paper_orders.rows=1",
+        "analytics.paper_pnl_snapshots.rows=1",
+        "analytics.paper_positions.rows=1",
+        "analytics.profile_decisions.rows=0",
+        "analytics.profile_metrics.rows=0",
+        "analytics.strategy_metrics.rows=0",
         "analytics.enabled=false",
     ]
 
@@ -119,7 +195,13 @@ def test_weather_analytics_export_without_clickhouse_config_is_noop(tmp_path: Pa
     )
 
     assert result.stdout.strip().splitlines() == [
+        "analytics.debug_decisions.rows=0",
+        "analytics.paper_orders.rows=0",
+        "analytics.paper_pnl_snapshots.rows=0",
+        "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=0",
+        "analytics.profile_metrics.rows=0",
+        "analytics.strategy_metrics.rows=0",
         "analytics.enabled=false",
     ]
 
@@ -160,7 +242,13 @@ def test_weather_analytics_export_inserts_with_env_writer(monkeypatch, tmp_path:
     assert cli.main() == 0
 
     assert capsys.readouterr().out.strip().splitlines() == [
+        "analytics.debug_decisions.rows=1",
+        "analytics.paper_orders.rows=0",
+        "analytics.paper_pnl_snapshots.rows=0",
+        "analytics.paper_positions.rows=0",
         "analytics.profile_decisions.rows=1",
+        "analytics.profile_metrics.rows=1",
+        "analytics.strategy_metrics.rows=1",
         "analytics.enabled=true",
     ]
     assert inserted["profile_decisions"][0]["run_id"] == "run-1"

@@ -14,7 +14,13 @@ from typing import Any, Sequence
 from prediction_core.analytics.clickhouse_writer import create_clickhouse_writer_from_env
 from prediction_core.analytics.events import serialize_event
 from prediction_core.analytics.metrics import build_profile_metric_events, build_strategy_metric_events
-from weather_pm.analytics_adapter import debug_decision_events_from_shortlist, profile_decision_events_from_shortlist
+from weather_pm.analytics_adapter import (
+    debug_decision_events_from_shortlist,
+    paper_order_events_from_ledger,
+    paper_pnl_snapshot_events_from_ledger,
+    paper_position_events_from_ledger,
+    profile_decision_events_from_shortlist,
+)
 from weather_pm.decision import build_decision
 from weather_pm.event_surface import build_weather_event_surface
 from weather_pm.execution_features import build_execution_features
@@ -131,9 +137,10 @@ def build_parser() -> argparse.ArgumentParser:
     operator_shortlist.add_argument("--limit", required=False, type=int, default=10, help="Maximum watchlist rows to include")
     operator_shortlist.add_argument("--output-json", required=False, help="Optional path to write the refreshed operator action report")
 
-    export_analytics = subparsers.add_parser("export-analytics-clickhouse", help="Export weather shortlist profile decisions to ClickHouse analytics")
-    export_analytics.add_argument("--shortlist-json", required=True, help="Strategy shortlist/profile JSON to export")
-    export_analytics.add_argument("--dry-run", action="store_true", help="Build rows and print a count without inserting")
+    export_analytics = subparsers.add_parser("export-analytics-clickhouse", help="Export weather shortlist and paper ledger analytics to ClickHouse")
+    export_analytics.add_argument("--shortlist-json", required=False, help="Strategy shortlist/profile JSON to export")
+    export_analytics.add_argument("--paper-ledger-json", required=False, help="Paper ledger JSON to export")
+    export_analytics.add_argument("--dry-run", action="store_true", help="Build rows and print counts without inserting")
 
     operator_refresh = subparsers.add_parser("operator-refresh", help="Refresh a saved live strategy shortlist or operator report for operator handoff")
     operator_refresh.add_argument("--input-json", required=True, help="Saved strategy shortlist or operator report JSON")
@@ -243,6 +250,11 @@ def _add_paper_cycle_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--bankroll-usd", required=False, type=float, help="Bankroll used for decision sizing")
     parser.add_argument("--requested-quantity", required=False, type=float, default=1.0, help="Requested quantity per tradeable market")
     parser.add_argument("--max-impact-bps", required=False, type=float, help="Override max executable price impact in bps")
+
+
+def _print_analytics_export_counts(rows_by_table: dict[str, list[dict[str, Any]]]) -> None:
+    for table in sorted(rows_by_table):
+        print(f"analytics.{table}.rows={len(rows_by_table[table])}")
 
 
 def main() -> int:
@@ -384,28 +396,48 @@ def main() -> int:
         return 0
 
     if args.command == "export-analytics-clickhouse":
-        payload = json.loads(Path(args.shortlist_json).read_text())
-        events = profile_decision_events_from_shortlist(payload)
-        debug_events = debug_decision_events_from_shortlist(payload)
-        metric_events = [*build_profile_metric_events(events), *build_strategy_metric_events(events)]
-        rows_by_table = {
-            "profile_decisions": [serialize_event(event) for event in events],
-            "debug_decisions": [serialize_event(event) for event in debug_events],
-            "profile_metrics": [serialize_event(event) for event in metric_events if event.table == "profile_metrics"],
-            "strategy_metrics": [serialize_event(event) for event in metric_events if event.table == "strategy_metrics"],
+        if not args.shortlist_json and not args.paper_ledger_json:
+            raise ValueError("provide --shortlist-json, --paper-ledger-json, or both")
+
+        rows_by_table: dict[str, list[dict[str, Any]]] = {
+            "profile_decisions": [],
+            "debug_decisions": [],
+            "profile_metrics": [],
+            "strategy_metrics": [],
+            "paper_orders": [],
+            "paper_positions": [],
+            "paper_pnl_snapshots": [],
         }
+        if args.shortlist_json:
+            payload = json.loads(Path(args.shortlist_json).read_text())
+            events = profile_decision_events_from_shortlist(payload)
+            debug_events = debug_decision_events_from_shortlist(payload)
+            metric_events = [*build_profile_metric_events(events), *build_strategy_metric_events(events)]
+            rows_by_table["profile_decisions"] = [serialize_event(event) for event in events]
+            rows_by_table["debug_decisions"] = [serialize_event(event) for event in debug_events]
+            rows_by_table["profile_metrics"] = [serialize_event(event) for event in metric_events if event.table == "profile_metrics"]
+            rows_by_table["strategy_metrics"] = [serialize_event(event) for event in metric_events if event.table == "strategy_metrics"]
+        if args.paper_ledger_json:
+            ledger = json.loads(Path(args.paper_ledger_json).read_text())
+            order_events = paper_order_events_from_ledger(ledger)
+            position_events = paper_position_events_from_ledger(ledger)
+            pnl_events = paper_pnl_snapshot_events_from_ledger(ledger)
+            rows_by_table["paper_orders"] = [serialize_event(event) for event in order_events]
+            rows_by_table["paper_positions"] = [serialize_event(event) for event in position_events]
+            rows_by_table["paper_pnl_snapshots"] = [serialize_event(event) for event in pnl_events]
+
         if args.dry_run:
-            print(f"analytics.profile_decisions.rows={len(rows_by_table['profile_decisions'])}")
+            _print_analytics_export_counts(rows_by_table)
             print("analytics.enabled=false")
             return 0
         writer = create_clickhouse_writer_from_env()
         if writer is None:
-            print(f"analytics.profile_decisions.rows={len(rows_by_table['profile_decisions'])}")
+            _print_analytics_export_counts(rows_by_table)
             print("analytics.enabled=false")
             return 0
         for table, rows in rows_by_table.items():
             writer.insert_rows(table, rows)
-        print(f"analytics.profile_decisions.rows={len(rows_by_table['profile_decisions'])}")
+        _print_analytics_export_counts(rows_by_table)
         print("analytics.enabled=true")
         return 0
 

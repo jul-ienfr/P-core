@@ -8,7 +8,7 @@ Final cockpit stack:
 Start locally:
 
 ```bash
-cd /tmp/P-core-clickhouse-grafana/infra/analytics
+cd /home/jul/P-core/infra/analytics
 docker compose up -d
 ```
 

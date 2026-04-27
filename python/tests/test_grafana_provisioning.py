@@ -53,6 +53,6 @@ def test_decision_debug_dashboard_has_required_panels() -> None:
 def test_paper_ledger_dashboard_has_required_panels() -> None:
     dashboard = json.loads(PAPER_LEDGER.read_text())
     text = json.dumps(dashboard)
-    for label in ["Paper Ledger", "paper_pnl_snapshots", "paper_positions", "net_pnl_usdc"]:
+    for label in ["Paper Ledger", "paper_pnl_snapshots", "paper_positions", "paper_orders", "Paper Orders", "Paper Order Status", "net_pnl_usdc"]:
         assert label in text
     assert "prediction-core-clickhouse" in text

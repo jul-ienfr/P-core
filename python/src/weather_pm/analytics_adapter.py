@@ -3,7 +3,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from prediction_core.analytics.events import DebugDecisionEvent, PaperOrderEvent, PaperPositionEvent, ProfileDecisionEvent
+from prediction_core.analytics.events import (
+    DebugDecisionEvent,
+    PaperOrderEvent,
+    PaperPnlSnapshotEvent,
+    PaperPositionEvent,
+    ProfileDecisionEvent,
+)
 
 
 def _parse_datetime(value: Any) -> datetime | None:
@@ -201,6 +207,74 @@ def paper_position_events_from_ledger(
                 mtm_bid_usdc=_optional_float(order.get("mtm_usdc")),
                 status=str(order.get("status") or "unknown"),
                 raw=order,
+            )
+        )
+    return events
+
+
+def paper_pnl_snapshot_events_from_ledger(
+    ledger: dict[str, Any], *, default_observed_at: datetime | None = None
+) -> list[PaperPnlSnapshotEvent]:
+    """Convert a weather paper ledger summary to paper_pnl_snapshots events."""
+    if not isinstance(ledger, dict):
+        raise ValueError("paper ledger payload must be an object")
+
+    run_id = str(ledger.get("run_id") or ledger.get("report_id") or "weather-paper-ledger")
+    mode = str(ledger.get("mode") or "paper")
+    observed_at = _parse_observed_at(ledger, default_observed_at)
+    summary = ledger.get("summary") if isinstance(ledger.get("summary"), dict) else {}
+    orders = [order for order in ledger.get("orders", []) if isinstance(order, dict)] if isinstance(ledger.get("orders"), list) else []
+
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for order in orders:
+        strategy_id = str(order.get("strategy_id") or ledger.get("strategy_id") or "weather_pm")
+        profile_id = str(order.get("profile_id") or ledger.get("profile_id") or "default")
+        groups.setdefault((strategy_id, profile_id), []).append(order)
+
+    if not groups:
+        groups[(str(ledger.get("strategy_id") or "weather_pm"), str(ledger.get("profile_id") or "default"))] = []
+
+    events: list[PaperPnlSnapshotEvent] = []
+    use_summary = len(groups) == 1
+    for (strategy_id, profile_id), group_orders in groups.items():
+        gross_pnl = _optional_float(summary.get("pnl_usdc")) if use_summary else None
+        net_pnl = _optional_float(summary.get("net_pnl_after_all_costs")) if use_summary else None
+        exposure = _optional_float(summary.get("filled_usdc")) if use_summary else None
+        opening_fee = _optional_float(summary.get("opening_fee_usdc")) if use_summary else None
+        estimated_exit_fee = _optional_float(summary.get("estimated_exit_fee_usdc")) if use_summary else None
+        realized_exit_fee = _optional_float(summary.get("realized_exit_fee_usdc")) if use_summary else None
+
+        if gross_pnl is None:
+            gross_pnl = sum(float(order.get("pnl_usdc") or 0.0) for order in group_orders)
+        if net_pnl is None:
+            net_pnl = sum(float(order.get("net_pnl_after_all_costs") or order.get("pnl_usdc") or 0.0) for order in group_orders)
+        if exposure is None:
+            exposure = sum(float(order.get("filled_usdc") or order.get("spend_usdc") or 0.0) for order in group_orders)
+        if opening_fee is None:
+            opening_fee = sum(float(order.get("opening_fee_usdc") or 0.0) for order in group_orders)
+        if estimated_exit_fee is None:
+            estimated_exit_fee = sum(float(order.get("estimated_exit_fee_usdc") or 0.0) for order in group_orders)
+        if realized_exit_fee is None:
+            realized_exit_fee = sum(float(order.get("realized_exit_fee_usdc") or 0.0) for order in group_orders)
+
+        costs = round(opening_fee + estimated_exit_fee + realized_exit_fee, 6)
+        settled_orders = [order for order in group_orders if str(order.get("status") or "").startswith("settled_")]
+        wins = [order for order in settled_orders if str(order.get("status") or "") == "settled_win"]
+        events.append(
+            PaperPnlSnapshotEvent(
+                run_id=run_id,
+                strategy_id=strategy_id,
+                profile_id=profile_id,
+                market_id="",
+                observed_at=observed_at,
+                mode=mode,
+                gross_pnl_usdc=gross_pnl,
+                net_pnl_usdc=net_pnl,
+                costs_usdc=costs,
+                exposure_usdc=exposure,
+                roi=round(net_pnl / exposure, 6) if exposure else None,
+                winrate=(len(wins) / len(settled_orders)) if settled_orders else None,
+                raw={"summary": summary, "orders": group_orders},
             )
         )
     return events

@@ -104,6 +104,99 @@
       ],
       "title": "Paper Positions",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  observed_at,\n  market_id,\n  side,\n  price,\n  size,\n  spend_usdc,\n  status,\n  opening_fee_usdc,\n  opening_slippage_usdc,\n  estimated_exit_cost_usdc\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\nORDER BY observed_at DESC\nLIMIT 500",
+          "refId": "A"
+        }
+      ],
+      "title": "Paper Orders",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "xField": "status"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  status,\n  count() AS orders\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\nGROUP BY status\nORDER BY orders DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Paper Order Status",
+      "type": "barchart"
     }
   ],
   "refresh": "30s",

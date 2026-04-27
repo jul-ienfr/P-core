@@ -4,6 +4,7 @@ from .entities import canonicalize_entity_type
 from .events import (
     DebugDecisionEvent,
     PaperOrderEvent,
+    PaperPnlSnapshotEvent,
     PaperPositionEvent,
     ProfileDecisionEvent,
     ProfileMetricEvent,
@@ -18,6 +19,7 @@ from .trade_density import TradeDensity, TradeDensitySummary, summarize_trade_de
 __all__ = [
     "DebugDecisionEvent",
     "PaperOrderEvent",
+    "PaperPnlSnapshotEvent",
     "PaperPositionEvent",
     "ProfileDecisionEvent",
     "ProfileMetricEvent",

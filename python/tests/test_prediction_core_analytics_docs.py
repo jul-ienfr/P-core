@@ -15,6 +15,8 @@ def test_prediction_core_runbook_documents_operator_commands() -> None:
         "infra/analytics/scripts/smoke_weather_export.sh",
         "python3 -m weather_pm.cli export-analytics-clickhouse",
         "--dry-run",
+        "--paper-ledger-json",
+        "/home/jul/P-core",
     ]:
         assert command in text
 

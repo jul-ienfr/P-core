@@ -11,14 +11,14 @@ ClickHouse + Grafana is the final analytics cockpit stack for Prediction Core.
 Preferred Docker Compose v2 command:
 
 ```bash
-cd /home/jul/P-core-clickhouse-grafana/infra/analytics
+cd /home/jul/P-core/infra/analytics
 docker compose up -d
 ```
 
 Fallback for systems that only have legacy Compose v1:
 
 ```bash
-cd /home/jul/P-core-clickhouse-grafana/infra/analytics
+cd /home/jul/P-core/infra/analytics
 PYTHONNOUSERSITE=1 docker-compose up -d
 ```
 
@@ -70,7 +70,7 @@ curl -fsS \
 From the repository root:
 
 ```bash
-cd /home/jul/P-core-clickhouse-grafana
+cd /home/jul/P-core
 infra/analytics/scripts/smoke_clickhouse.sh
 ```
 
@@ -79,7 +79,7 @@ This starts ClickHouse if needed, waits for `/ping`, verifies `SELECT 1`, checks
 Run the weather export smoke:
 
 ```bash
-cd /home/jul/P-core-clickhouse-grafana
+cd /home/jul/P-core
 infra/analytics/scripts/smoke_weather_export.sh
 ```
 
@@ -92,23 +92,37 @@ Current local environment quirk: this environment does not have Docker Compose v
 Dry-run export is safe and does not require ClickHouse configuration:
 
 ```bash
-cd /home/jul/P-core-clickhouse-grafana
+cd /home/jul/P-core
 PYTHONPATH=python/src python3 -m weather_pm.cli export-analytics-clickhouse \
   --shortlist-json python/tests/fixtures/weather_analytics_shortlist.json \
   --dry-run
 ```
 
-Expected output for the included fixture:
+Expected output for the included fixture includes the shortlist tables and zero paper rows:
 
 ```text
 analytics.profile_decisions.rows=1
+analytics.paper_orders.rows=0
+analytics.paper_positions.rows=0
+analytics.paper_pnl_snapshots.rows=0
 analytics.enabled=false
 ```
+
+Dry-run paper ledger export is also safe:
+
+```bash
+cd /home/jul/P-core
+PYTHONPATH=python/src python3 -m weather_pm.cli export-analytics-clickhouse \
+  --paper-ledger-json data/polymarket/latest/weather_paper_ledger_latest.json \
+  --dry-run
+```
+
+A combined export can pass both `--shortlist-json` and `--paper-ledger-json` to feed decision, debug, paper order, position, PnL, and metric tables in one run.
 
 Real configured export requires ClickHouse to be reachable and analytics environment variables to be set:
 
 ```bash
-cd /home/jul/P-core-clickhouse-grafana
+cd /home/jul/P-core
 export PREDICTION_CORE_CLICKHOUSE_URL=http://127.0.0.1:8123
 export PREDICTION_CORE_CLICKHOUSE_HOST=127.0.0.1
 export PREDICTION_CORE_CLICKHOUSE_PORT=8123
