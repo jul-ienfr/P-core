@@ -74,7 +74,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT countDistinct(strategy_id) AS `Stratégies actives` FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )",
+          "rawSql": "SELECT countDistinct(strategy_id) AS `Stratégies actives` FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )",
           "refId": "A"
         }
       ],
@@ -221,11 +221,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT count() AS `Stratégies stale` FROM (SELECT strategy_id, dateDiff('minute', max(observed_at), now()) AS âge_minutes FROM prediction_core.profile_metrics GROUP BY strategy_id) WHERE âge_minutes > 60",
+          "rawSql": "SELECT count() AS `Stratégies obsolètes` FROM (SELECT strategy_id, dateDiff('minute', max(observed_at), now()) AS âge_minutes FROM prediction_core.profile_metrics GROUP BY strategy_id) WHERE âge_minutes > 60",
           "refId": "A"
         }
       ],
-      "title": "Stratégies stale",
+      "title": "Stratégies obsolètes",
       "type": "stat"
     },
     {
@@ -255,7 +255,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -272,7 +272,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "WITH metrics AS\n(\n  SELECT\n    strategy_id,\n    groupUniqArray(profile_id) AS profiles,\n    anyLast(mode) AS mode,\n    max(observed_at) AS last_observed_at,\n    dateDiff('minute', max(observed_at), now()) AS âge_minutes,\n    sum(decision_count) AS decisions,\n    sum(trade_count) AS trades,\n    sum(skip_count) AS skips,\n    sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate,\n    sum(net_pnl_usdc) AS net_pnl_usdc,\n    avg(roi) AS roi,\n    sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  GROUP BY strategy_id\n), live AS\n(\n  SELECT strategy_id, max(live_order_allowed OR mode = 'live') AS live_seen\n  FROM prediction_core.execution_events\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), blockers AS\n(\n  SELECT strategy_id, countIf(blocker != '' OR skip_reason != '') AS blocker_count\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n)\nSELECT\n  metrics.strategy_id AS `Stratégie`,\n  arrayStringConcat(metrics.profiles, ', ') AS `Profils`,\n  metrics.mode AS `Mode détecté`,\n  metrics.last_observed_at AS `Dernier observed_at`,\n  metrics.âge_minutes AS `Âge minutes`,\n  metrics.decisions AS `Décisions`,\n  metrics.trades AS `Trades`,\n  metrics.skips AS `Skips`,\n  metrics.skip_rate AS `Taux de skip`,\n  metrics.net_pnl_usdc AS `PnL net`,\n  metrics.roi AS `ROI`,\n  metrics.exposure_usdc AS `Exposition`,\n  ifNull(live.live_seen, 0) AS `Live autorisé / vu`,\n  multiIf(metrics.decisions = 0, 'PAS_DE_DONNEES', metrics.âge_minutes > 60, 'DONNEES_OBSOLETES', ifNull(live.live_seen, 0), 'LIVE_ACTIF', ifNull(blockers.blocker_count, 0) > 0 OR metrics.skip_rate > 0.8, 'DEGRADE', metrics.mode = 'paper', 'PAPER_SEUL', 'OK') AS `Statut de santé`\nFROM metrics\nLEFT JOIN live ON metrics.strategy_id = live.strategy_id\nLEFT JOIN blockers ON metrics.strategy_id = blockers.strategy_id\nORDER BY `PnL net` DESC",
+          "rawSql": "WITH metrics AS\n(\n  SELECT\n    strategy_id,\n    groupUniqArray(profile_id) AS profiles,\n    anyLast(mode) AS mode,\n    max(observed_at) AS last_observed_at,\n    dateDiff('minute', max(observed_at), now()) AS âge_minutes,\n    sum(decision_count) AS decisions,\n    sum(trade_count) AS trades,\n    sum(skip_count) AS skips,\n    sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate,\n    sum(net_pnl_usdc) AS net_pnl_usdc,\n    avg(roi) AS roi,\n    sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  GROUP BY strategy_id\n), live AS\n(\n  SELECT strategy_id, max(live_order_allowed OR mode = 'live') AS live_seen\n  FROM prediction_core.execution_events\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), blockers AS\n(\n  SELECT strategy_id, countIf(blocker != '' OR skip_reason != '') AS blocker_count\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n)\nSELECT\n  metrics.strategy_id AS `Stratégie`,\n  arrayStringConcat(metrics.profiles, ', ') AS `Profils`,\n  metrics.mode AS `Mode détecté`,\n  formatDateTime(toTimeZone(metrics.last_observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière observation (Paris)`,\n  metrics.âge_minutes AS `Âge minutes`,\n  metrics.decisions AS `Décisions`,\n  metrics.trades AS `Trades`,\n  metrics.skips AS `Skips`,\n  metrics.skip_rate AS `Taux de skip`,\n  metrics.net_pnl_usdc AS `PnL net`,\n  metrics.roi AS `ROI`,\n  metrics.exposure_usdc AS `Exposition`,\n  ifNull(live.live_seen, 0) AS `Live autorisé / vu`,\n  multiIf(metrics.decisions = 0, 'PAS_DE_DONNEES', metrics.âge_minutes > 60, 'DONNEES_OBSOLETES', ifNull(live.live_seen, 0), 'LIVE_ACTIF', ifNull(blockers.blocker_count, 0) > 0 OR metrics.skip_rate > 0.8, 'DEGRADE', metrics.mode = 'paper', 'PAPER_SEUL', 'OK') AS `Statut de santé`\nFROM metrics\nLEFT JOIN live ON metrics.strategy_id = live.strategy_id\nLEFT JOIN blockers ON metrics.strategy_id = blockers.strategy_id\nORDER BY `PnL net` DESC",
           "refId": "A"
         }
       ],
@@ -306,7 +306,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -323,7 +323,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT strategy_id AS `Stratégie`, profile_id AS `Profil`, sum(net_pnl_usdc) AS `PnL net`, avg(roi) AS `ROI`, sum(trade_count) AS `Trades`, sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`, (100 * ifNull(avg(roi), 0) + 5 * log10(1 + greatest(sum(trade_count), 0)) - 20 * ifNull(sum(skip_count) / nullIf(sum(decision_count), 0), 0)) AS `Score` FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  ) GROUP BY strategy_id, profile_id ORDER BY `Score` DESC",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, profile_id AS `Profil`, sum(net_pnl_usdc) AS `PnL net`, avg(roi) AS `ROI`, sum(trade_count) AS `Trades`, sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`, (100 * ifNull(avg(roi), 0) + 5 * log10(1 + greatest(sum(trade_count), 0)) - 20 * ifNull(sum(skip_count) / nullIf(sum(decision_count), 0), 0)) AS `Score` FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  ) GROUP BY strategy_id, profile_id ORDER BY `Score` DESC",
           "refId": "A"
         }
       ],
@@ -357,7 +357,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -374,7 +374,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT strategy_id AS `Stratégie`, mode AS `Mode`, paper_only AS `Paper only`, live_order_allowed AS `Live autorisé`, count() AS `Événements` FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at) GROUP BY strategy_id, mode, paper_only, live_order_allowed ORDER BY `Événements` DESC",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, mode AS `Mode`, paper_only AS `Paper uniquement`, live_order_allowed AS `Live autorisé`, count() AS `Événements` FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at) GROUP BY strategy_id, mode, paper_only, live_order_allowed ORDER BY `Événements` DESC",
           "refId": "A"
         }
       ],
@@ -408,7 +408,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -425,7 +425,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT strategy_id AS `Stratégie`, if(blocker = '', skip_reason, blocker) AS `Blocker`, count() AS `Nombre` FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at) AND (blocker != '' OR skip_reason != '') GROUP BY strategy_id, `Blocker` ORDER BY `Nombre` DESC LIMIT 50",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, if(blocker = '', skip_reason, blocker) AS `Blocage`, count() AS `Nombre` FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at) AND (blocker != '' OR skip_reason != '') GROUP BY strategy_id, `Blocage` ORDER BY `Nombre` DESC LIMIT 50",
           "refId": "A"
         }
       ],
@@ -459,7 +459,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -476,7 +476,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT strategy_id AS `Stratégie`, count() AS `Signaux`, max(observed_at) AS `Dernier signal` FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at) GROUP BY strategy_id ORDER BY `Signaux` DESC",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, count() AS `Signaux`, formatDateTime(toTimeZone(max(observed_at), 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernier signal (Paris)` FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at) GROUP BY strategy_id ORDER BY `Signaux` DESC",
           "refId": "A"
         }
       ],
@@ -532,7 +532,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -549,7 +549,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT strategy_id AS `Stratégie`, enabled AS `Activée`, mode AS `Mode configuré`, allow_live AS `Live autorisé config`, settings AS `Configuration`, observed_at AS `Dernière config`, concat('/strategies/config/', strategy_id) AS `API config`, concat('/strategies/config/', strategy_id, '/enable') AS `API activer`, concat('/strategies/config/', strategy_id, '/disable') AS `API désactiver`, concat('/strategies/config/', strategy_id, '/mode') AS `API mode` FROM prediction_core.strategy_configs FINAL WHERE match(strategy_id, '${strategy:regex}') ORDER BY strategy_id",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, enabled AS `Activée`, mode AS `Mode configuré`, allow_live AS `Live autorisé config`, settings AS `Configuration`, formatDateTime(toTimeZone(observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière config (Paris)`, concat('/strategies/config/', strategy_id) AS `API config`, concat('/strategies/config/', strategy_id, '/enable') AS `API activer`, concat('/strategies/config/', strategy_id, '/disable') AS `API désactiver`, concat('/strategies/config/', strategy_id, '/mode') AS `API mode` FROM prediction_core.strategy_configs FINAL WHERE match(strategy_id, '${strategy:regex}') ORDER BY strategy_id",
           "refId": "A"
         }
       ],
@@ -580,7 +580,7 @@
         "definition": "SELECT DISTINCT run_id FROM prediction_core.profile_metrics WHERE run_id != '' ORDER BY run_id",
         "hide": 0,
         "includeAll": true,
-        "label": "Run",
+        "label": "Run / exécution",
         "multi": true,
         "name": "run_id",
         "options": [],
@@ -685,12 +685,12 @@
           },
           {
             "selected": false,
-            "text": "Heures marché UTC",
+            "text": "Heures marché Paris",
             "value": "business_hours"
           },
           {
             "selected": false,
-            "text": "Hors heures marché UTC",
+            "text": "Hors heures marché Paris",
             "value": "off_hours"
           }
         ],
@@ -705,7 +705,7 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
+  "timezone": "Europe/Paris",
   "title": "Vue d’ensemble des stratégies",
   "uid": "prediction-core-strategy-overview",
   "version": 1,

@@ -57,8 +57,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Strategy Health",
-      "tooltip": "Strategy Health",
+      "title": "Santé stratégies",
+      "tooltip": "Santé et attentes des stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-health"
     }
@@ -123,7 +123,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  sum(net_pnl_usdc) AS `PnL net total`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  sum(net_pnl_usdc) AS `PnL net total`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -188,7 +188,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  avg(roi) AS `ROI moyen`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  avg(roi) AS `ROI moyen`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -240,7 +240,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  sum(trade_count) AS `Trades`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  sum(trade_count) AS `Trades`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -309,7 +309,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -356,7 +356,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  sum(net_pnl_usdc) AS `PnL net`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  sum(net_pnl_usdc) AS `PnL net`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
           "refId": "A"
         }
       ],
@@ -403,7 +403,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  avg(roi) AS `ROI`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  avg(roi) AS `ROI`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
           "refId": "A"
         }
       ],
@@ -481,7 +481,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -504,7 +504,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(decision_count) AS `Décisions`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  avg(roi) AS `ROI moyen`,\n  anyLast(exposure_usdc) AS `Exposition récente`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY `PnL net` DESC",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(decision_count) AS `Décisions`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  avg(roi) AS `ROI moyen`,\n  anyLast(exposure_usdc) AS `Exposition récente`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY `PnL net` DESC",
           "refId": "A"
         }
       ],
@@ -551,7 +551,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -568,7 +568,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(signal_count) AS `Signaux`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  avg(avg_edge) AS `Edge moyen`,\n  sum(gross_pnl_usdc) AS `PnL brut`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  anyLast(exposure_usdc) AS `Exposition récente`\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY `PnL net` DESC",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(signal_count) AS `Signaux`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  avg(avg_edge) AS `Edge moyen`,\n  sum(gross_pnl_usdc) AS `PnL brut`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  anyLast(exposure_usdc) AS `Exposition récente`\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY `PnL net` DESC",
           "refId": "A"
         }
       ],
@@ -610,7 +610,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Trades` DESC",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Trades` DESC",
           "refId": "A"
         }
       ],
@@ -652,7 +652,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  if(skip_reason = '', 'inconnue', skip_reason) AS `Raison`,\n  count() AS `Nombre`\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND decision_status NOT IN ('trade', 'trade_small')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Raison`\nORDER BY `Nombre` DESC\nLIMIT 20",
+          "rawSql": "SELECT\n  if(skip_reason = '', 'inconnue', skip_reason) AS `Raison`,\n  count() AS `Nombre`\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND decision_status NOT IN ('trade', 'trade_small')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Raison`\nORDER BY `Nombre` DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
@@ -694,7 +694,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  avg(avg_edge) AS `Edge moyen`\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Edge moyen` DESC",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  avg(avg_edge) AS `Edge moyen`\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Edge moyen` DESC",
           "refId": "A"
         }
       ],
@@ -736,7 +736,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  round(edge, 2) AS `Bucket d’edge`,\n  count() AS `Signaux`\nFROM prediction_core.strategy_signals\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Bucket d’edge`\nORDER BY `Bucket d’edge`",
+          "rawSql": "SELECT\n  round(edge, 2) AS `Bucket d’edge`,\n  count() AS `Signaux`\nFROM prediction_core.strategy_signals\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Bucket d’edge`\nORDER BY `Bucket d’edge`",
           "refId": "A"
         }
       ],
@@ -783,7 +783,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' exposition') AS series,\n  sum(exposure_usdc) AS `Valeur`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nUNION ALL\nSELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' PnL net') AS series,\n  sum(net_pnl_usdc) AS `Valeur`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' exposition') AS series,\n  sum(exposure_usdc) AS `Valeur`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nUNION ALL\nSELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' PnL net') AS series,\n  sum(net_pnl_usdc) AS `Valeur`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
           "refId": "A"
         }
       ],
@@ -827,7 +827,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  sum(costs_usdc) AS `Coûts`,\n  sum(gross_pnl_usdc) AS `PnL brut`,\n  sum(net_pnl_usdc) AS `PnL net`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Coûts` DESC",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  sum(costs_usdc) AS `Coûts`,\n  sum(gross_pnl_usdc) AS `PnL brut`,\n  sum(net_pnl_usdc) AS `PnL net`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Coûts` DESC",
           "refId": "A"
         }
       ],
@@ -861,7 +861,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -878,7 +878,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  sum(decision_count) AS `Décisions`,\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`,\n  avg(roi) AS `ROI moyen`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  sum(exposure_usdc) AS `Exposition`,\n  (100 * ifNull(avg(roi), 0) + 5 * log10(1 + greatest(sum(trade_count), 0)) - 20 * ifNull(sum(skip_count) / nullIf(sum(decision_count), 0), 0) + ifNull(sum(net_pnl_usdc) / nullIf(sum(exposure_usdc), 0), 0)) AS `Score composite`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nGROUP BY strategy_id, profile_id\nORDER BY `Score composite` DESC",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  sum(decision_count) AS `Décisions`,\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`,\n  avg(roi) AS `ROI moyen`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  sum(exposure_usdc) AS `Exposition`,\n  (100 * ifNull(avg(roi), 0) + 5 * log10(1 + greatest(sum(trade_count), 0)) - 20 * ifNull(sum(skip_count) / nullIf(sum(decision_count), 0), 0) + ifNull(sum(net_pnl_usdc) / nullIf(sum(exposure_usdc), 0), 0)) AS `Score composite`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\nGROUP BY strategy_id, profile_id\nORDER BY `Score composite` DESC",
           "refId": "A"
         }
       ],
@@ -909,7 +909,7 @@
         "definition": "SELECT DISTINCT run_id FROM prediction_core.profile_metrics WHERE run_id != '' ORDER BY run_id",
         "hide": 0,
         "includeAll": true,
-        "label": "Run",
+        "label": "Run / exécution",
         "multi": true,
         "name": "run_id",
         "options": [],
@@ -1039,12 +1039,12 @@
           },
           {
             "selected": false,
-            "text": "Heures marché UTC",
+            "text": "Heures marché Paris",
             "value": "business_hours"
           },
           {
             "selected": false,
-            "text": "Hors heures marché UTC",
+            "text": "Hors heures marché Paris",
             "value": "off_hours"
           }
         ],
@@ -1059,7 +1059,7 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
+  "timezone": "Europe/Paris",
   "title": "Comparaison stratégies / profils",
   "uid": "prediction-core-strategy-vs-profile",
   "version": 6,

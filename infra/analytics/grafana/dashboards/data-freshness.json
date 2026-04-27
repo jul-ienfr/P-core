@@ -35,8 +35,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Strategy Health",
-      "tooltip": "Strategy Health",
+      "title": "Santé stratégies",
+      "tooltip": "Santé et attentes des stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-health"
     }
@@ -70,7 +70,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -87,7 +87,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  table,\n  max_observed_at,\n  dateDiff('minute', max_observed_at, now()) AS âge_minutes,\n  rows\nFROM\n(\n  SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at, count() AS rows FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'profile_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_positions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_positions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_pnl_snapshots', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_pnl_snapshots WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_configs', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_configs WHERE $__timeFilter(observed_at)\n)\nORDER BY âge_minutes DESC",
+          "rawSql": "SELECT\n  table,\n  max_observed_at,\n  dateDiff('minute', max_observed_at, now()) AS âge_minutes,\n  lignes\nFROM\n(\n  SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at, count() AS lignes FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'profile_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_positions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_positions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_pnl_snapshots', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_pnl_snapshots WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_configs', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_configs WHERE $__timeFilter(observed_at)\n)\nORDER BY âge_minutes DESC",
           "refId": "A"
         }
       ],
@@ -121,7 +121,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -138,7 +138,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  formatDateTime(toTimeZone(parseDateTimeBestEffortOrNull(argMax(run_id, observed_at)), 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière run (Paris)`,\n  formatDateTime(toTimeZone(nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernier observed_at (Paris)`,\n  count() AS `Lignes`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id\nORDER BY max(observed_at) DESC",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  formatDateTime(toTimeZone(parseDateTimeBestEffortOrNull(argMax(run_id, observed_at)), 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière run (Paris)`,\n  formatDateTime(toTimeZone(nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière observation (Paris)`,\n  count() AS `Lignes`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id\nORDER BY max(observed_at) DESC",
           "refId": "A"
         }
       ],
@@ -172,7 +172,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -189,7 +189,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT 'profile_decisions' AS table, count() AS rows FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'debug_decisions', count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'strategy_signals', count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'paper_orders', count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'execution_events', count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\nORDER BY rows DESC",
+          "rawSql": "SELECT 'profile_decisions' AS table, count() AS lignes FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'debug_decisions', count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'strategy_signals', count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'paper_orders', count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\nUNION ALL SELECT 'execution_events', count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\nORDER BY lignes DESC",
           "refId": "A"
         }
       ],
@@ -223,7 +223,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -263,7 +263,7 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
+  "timezone": "Europe/Paris",
   "title": "Fraîcheur des données",
   "uid": "prediction-core-data-freshness",
   "version": 2,

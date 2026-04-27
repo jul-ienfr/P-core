@@ -72,7 +72,7 @@ def test_strategy_vs_profile_dashboard_has_required_panels() -> None:
 def test_decision_debug_dashboard_has_required_panels() -> None:
     dashboard = json.loads(DECISION_DEBUG.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Decision Debug", "Drilldown marché", "debug_decisions", "skip_reason", "risk_ok", "run_id", "market", "business_time"]:
+    for label in ["Debug des décisions", "Drilldown marché", "Observation (Paris)", "Prix limite", "Carnet OK", "Risque OK", "debug_decisions", "skip_reason", "risk_ok", "run_id", "market", "business_time"]:
         assert label in text
     assert "prediction-core-clickhouse" in text
 
@@ -80,7 +80,7 @@ def test_decision_debug_dashboard_has_required_panels() -> None:
 def test_paper_ledger_dashboard_has_required_panels() -> None:
     dashboard = json.loads(PAPER_LEDGER.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Paper Ledger", "paper_pnl_snapshots", "paper_positions", "paper_orders", "Paper Orders", "Paper Order Status", "net_pnl_usdc", "Comparaison paper vs live", "execution_events", "run_id", "market", "business_time"]:
+    for label in ["Ledger paper", "paper_pnl_snapshots", "paper_positions", "paper_orders", "Ordres paper", "Statut des ordres paper", "PnL net USDC", "Comparaison paper / live", "Observation paper (Paris)", "Observation live (Paris)", "execution_events", "run_id", "market", "business_time"]:
         assert label in text
     assert "prediction-core-clickhouse" in text
 
@@ -88,7 +88,7 @@ def test_paper_ledger_dashboard_has_required_panels() -> None:
 def test_data_freshness_dashboard_is_provisioned() -> None:
     dashboard = json.loads(DATA_FRESHNESS.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Fraîcheur des données", "Fraîcheur des données par table", "Dernière run par stratégie/profil", "Dernière run (Paris)", "Dernier observed_at (Paris)", "Lignes dans la fenêtre sélectionnée", "Sources obsolètes", "âge_minutes"]:
+    for label in ["Fraîcheur des données", "Fraîcheur des données par table", "Dernière run par stratégie/profil", "Dernière run (Paris)", "Dernière observation (Paris)", "Lignes dans la fenêtre sélectionnée", "Sources obsolètes", "âge_minutes"]:
         assert label in text
     for source in ["profile_decisions", "debug_decisions", "strategy_signals", "profile_metrics", "strategy_metrics", "paper_orders", "paper_positions", "paper_pnl_snapshots", "execution_events", "strategy_configs"]:
         assert source in text
@@ -98,7 +98,7 @@ def test_data_freshness_dashboard_is_provisioned() -> None:
 def test_strategy_overview_dashboard_is_provisioned() -> None:
     dashboard = json.loads(STRATEGY_OVERVIEW.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Vue d’ensemble des stratégies", "Stratégies actives", "Stratégies en live", "Stratégies en paper", "Stratégies stale", "Classement score / PnL / ROI", "Répartition paper / live", "Principaux blocages par stratégie", "Configuration des stratégies", "Activée", "Mode configuré", "Configurer stratégie"]:
+    for label in ["Vue d’ensemble des stratégies", "Stratégies actives", "Stratégies en live", "Stratégies en paper", "Stratégies obsolètes", "Classement score / PnL / ROI", "Répartition paper / live", "Principaux blocages par stratégie", "Configuration des stratégies", "Activée", "Mode configuré", "Configurer stratégie"]:
         assert label in text
     for label in ["strategy", "profile", "run_id", "mode", "business_time", "Statut de santé"]:
         assert label in text

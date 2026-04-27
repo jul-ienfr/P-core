@@ -46,8 +46,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Strategy Health",
-      "tooltip": "Strategy Health",
+      "title": "Santé stratégies",
+      "tooltip": "Santé et attentes des stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-health"
     }
@@ -81,7 +81,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -98,11 +98,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at,\n  market_id,\n  strategy_id,\n  profile_id,\n  decision_status,\n  skip_reason,\n  edge,\n  limit_price,\n  source_ok,\n  orderbook_ok,\n  risk_ok,\n  blocker\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nORDER BY observed_at DESC\nLIMIT 500",
+          "rawSql": "SELECT\n  formatDateTime(toTimeZone(observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  decision_status AS `Décision`,\n  skip_reason AS `Raison de skip`,\n  edge AS `Edge`,\n  limit_price AS `Prix limite`,\n  source_ok AS `Source OK`,\n  orderbook_ok AS `Carnet OK`,\n  risk_ok AS `Risque OK`,\n  blocker AS `Blocage`\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\nORDER BY observed_at DESC\nLIMIT 500",
           "refId": "A"
         }
       ],
-      "title": "Decision Debug",
+      "title": "Debug des décisions",
       "type": "table"
     },
     {
@@ -140,11 +140,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  skip_reason,\n  count() AS count\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  AND decision_status NOT IN ('trade', 'trade_small')\nGROUP BY skip_reason\nORDER BY count DESC",
+          "rawSql": "SELECT\n  skip_reason AS `Raison de skip`,\n  count() AS `Nombre`\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  AND decision_status NOT IN ('trade', 'trade_small')\nGROUP BY `Raison de skip`\nORDER BY `Nombre` DESC",
           "refId": "A"
         }
       ],
-      "title": "Skip Reasons",
+      "title": "Raisons de skip",
       "type": "barchart"
     },
     {
@@ -174,7 +174,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
+          "countLignes": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -191,7 +191,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at,\n  run_id,\n  market_id,\n  token_id,\n  strategy_id,\n  profile_id,\n  decision_status,\n  skip_reason,\n  edge,\n  limit_price,\n  source_ok,\n  orderbook_ok,\n  risk_ok,\n  blocker\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\nORDER BY observed_at DESC\nLIMIT 500",
+          "rawSql": "SELECT\n  formatDateTime(toTimeZone(observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Observation (Paris)`,\n  run_id AS `Run / exécution`,\n  market_id AS `Marché`,\n  token_id AS `Token`,\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  decision_status AS `Décision`,\n  skip_reason AS `Raison de skip`,\n  edge AS `Edge`,\n  limit_price AS `Prix limite`,\n  source_ok AS `Source OK`,\n  orderbook_ok AS `Carnet OK`,\n  risk_ok AS `Risque OK`,\n  blocker AS `Blocage`\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\nORDER BY observed_at DESC\nLIMIT 500",
           "refId": "A"
         }
       ],
@@ -222,7 +222,7 @@
         "definition": "SELECT DISTINCT run_id FROM prediction_core.debug_decisions WHERE run_id != '' ORDER BY run_id",
         "hide": 0,
         "includeAll": true,
-        "label": "Run",
+        "label": "Run / exécution",
         "multi": true,
         "name": "run_id",
         "options": [],
@@ -352,12 +352,12 @@
           },
           {
             "selected": false,
-            "text": "Heures marché UTC",
+            "text": "Heures marché Paris",
             "value": "business_hours"
           },
           {
             "selected": false,
-            "text": "Hors heures marché UTC",
+            "text": "Hors heures marché Paris",
             "value": "off_hours"
           }
         ],
@@ -372,8 +372,8 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Decision Debug",
+  "timezone": "Europe/Paris",
+  "title": "Debug des décisions",
   "uid": "prediction-core-decision-debug",
   "version": 3,
   "weekStart": ""
