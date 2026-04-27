@@ -59,7 +59,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -236,7 +236,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -287,7 +287,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -338,7 +338,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -389,7 +389,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -440,7 +440,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -491,7 +491,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -542,7 +542,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -615,7 +615,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"

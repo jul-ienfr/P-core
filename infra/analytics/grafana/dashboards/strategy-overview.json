@@ -221,7 +221,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT count() AS `Stratégies obsolètes` FROM (SELECT strategy_id, dateDiff('minute', max(observed_at), now()) AS âge_minutes FROM prediction_core.profile_metrics GROUP BY strategy_id) WHERE âge_minutes > 60",
+          "rawSql": "SELECT count() AS `Stratégies obsolètes` FROM (SELECT strategy_id, dateDiff('minute', max(observed_at), now()) AS age_minutes FROM prediction_core.profile_metrics GROUP BY strategy_id) WHERE age_minutes > 60",
           "refId": "A"
         }
       ],
@@ -255,7 +255,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -272,7 +272,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "WITH metrics AS\n(\n  SELECT\n    strategy_id,\n    groupUniqArray(profile_id) AS profiles,\n    anyLast(mode) AS mode,\n    max(observed_at) AS last_observed_at,\n    dateDiff('minute', max(observed_at), now()) AS âge_minutes,\n    sum(decision_count) AS decisions,\n    sum(trade_count) AS trades,\n    sum(skip_count) AS skips,\n    sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate,\n    sum(net_pnl_usdc) AS net_pnl_usdc,\n    avg(roi) AS roi,\n    sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  GROUP BY strategy_id\n), live AS\n(\n  SELECT strategy_id, max(live_order_allowed OR mode = 'live') AS live_seen\n  FROM prediction_core.execution_events\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), blockers AS\n(\n  SELECT strategy_id, countIf(blocker != '' OR skip_reason != '') AS blocker_count\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n)\nSELECT\n  metrics.strategy_id AS `Stratégie`,\n  arrayStringConcat(metrics.profiles, ', ') AS `Profils`,\n  metrics.mode AS `Mode détecté`,\n  formatDateTime(toTimeZone(metrics.last_observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière observation (Paris)`,\n  metrics.âge_minutes AS `Âge minutes`,\n  metrics.decisions AS `Décisions`,\n  metrics.trades AS `Trades`,\n  metrics.skips AS `Skips`,\n  metrics.skip_rate AS `Taux de skip`,\n  metrics.net_pnl_usdc AS `PnL net`,\n  metrics.roi AS `ROI`,\n  metrics.exposure_usdc AS `Exposition`,\n  ifNull(live.live_seen, 0) AS `Live autorisé / vu`,\n  multiIf(metrics.decisions = 0, 'PAS_DE_DONNEES', metrics.âge_minutes > 60, 'DONNEES_OBSOLETES', ifNull(live.live_seen, 0), 'LIVE_ACTIF', ifNull(blockers.blocker_count, 0) > 0 OR metrics.skip_rate > 0.8, 'DEGRADE', metrics.mode = 'paper', 'PAPER_SEUL', 'OK') AS `Statut de santé`\nFROM metrics\nLEFT JOIN live ON metrics.strategy_id = live.strategy_id\nLEFT JOIN blockers ON metrics.strategy_id = blockers.strategy_id\nORDER BY `PnL net` DESC",
+          "rawSql": "WITH metrics AS\n(\n  SELECT\n    strategy_id,\n    groupUniqArray(profile_id) AS profiles,\n    anyLast(mode) AS mode,\n    max(observed_at) AS last_observed_at,\n    dateDiff('minute', max(observed_at), now()) AS age_minutes,\n    sum(decision_count) AS decisions,\n    sum(trade_count) AS trades,\n    sum(skip_count) AS skips,\n    sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate,\n    sum(net_pnl_usdc) AS net_pnl_usdc,\n    avg(roi) AS roi,\n    sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  GROUP BY strategy_id\n), live AS\n(\n  SELECT strategy_id, max(live_order_allowed OR mode = 'live') AS live_seen\n  FROM prediction_core.execution_events\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), blockers AS\n(\n  SELECT strategy_id, countIf(blocker != '' OR skip_reason != '') AS blocker_count\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n)\nSELECT\n  metrics.strategy_id AS `Stratégie`,\n  arrayStringConcat(metrics.profiles, ', ') AS `Profils`,\n  metrics.mode AS `Mode détecté`,\n  formatDateTime(toTimeZone(metrics.last_observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière observation (Paris)`,\n  metrics.age_minutes AS `Âge minutes`,\n  metrics.decisions AS `Décisions`,\n  metrics.trades AS `Trades`,\n  metrics.skips AS `Skips`,\n  metrics.skip_rate AS `Taux de skip`,\n  metrics.net_pnl_usdc AS `PnL net`,\n  metrics.roi AS `ROI`,\n  metrics.exposure_usdc AS `Exposition`,\n  ifNull(live.live_seen, 0) AS `Live autorisé / vu`,\n  multiIf(metrics.decisions = 0, 'PAS_DE_DONNEES', metrics.age_minutes > 60, 'DONNEES_OBSOLETES', ifNull(live.live_seen, 0), 'LIVE_ACTIF', ifNull(blockers.blocker_count, 0) > 0 OR metrics.skip_rate > 0.8, 'DEGRADE', metrics.mode = 'paper', 'PAPER_SEUL', 'OK') AS `Statut de santé`\nFROM metrics\nLEFT JOIN live ON metrics.strategy_id = live.strategy_id\nLEFT JOIN blockers ON metrics.strategy_id = blockers.strategy_id\nORDER BY `PnL net` DESC",
           "refId": "A"
         }
       ],
@@ -306,7 +306,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -357,7 +357,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -408,7 +408,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -459,7 +459,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -532,7 +532,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"

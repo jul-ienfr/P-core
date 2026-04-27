@@ -59,7 +59,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -76,7 +76,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "WITH decisions AS\n(\n  SELECT strategy_id, max(observed_at) AS last_observed_at, dateDiff('minute', max(observed_at), now()) AS âge_minutes, count() AS decisions, avg(source_ok) AS source_ok_rate, avg(orderbook_ok) AS orderbook_ok_rate, avg(risk_ok) AS risk_ok_rate, countIf(blocker != '' OR skip_reason != '') AS blockers\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  GROUP BY strategy_id\n), signals AS\n(\n  SELECT strategy_id, count() AS signals, max(live_order_allowed OR mode = 'live') AS live_allowed\n  FROM prediction_core.strategy_signals\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), metrics AS\n(\n  SELECT strategy_id, sum(trade_count) AS trades, sum(skip_count) AS skips, sum(decision_count) AS metric_decisions, sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate, sum(net_pnl_usdc) AS net_pnl_usdc, avg(roi) AS roi, sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  GROUP BY strategy_id\n)\nSELECT\n  decisions.strategy_id AS `Stratégie`,\n  formatDateTime(toTimeZone(decisions.last_observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière observation (Paris)`,\n  decisions.âge_minutes AS `Âge minutes`,\n  ifNull(signals.signals, 0) AS `Signaux`,\n  decisions.decisions AS `Décisions`,\n  ifNull(metrics.trades, 0) AS `Trades`,\n  ifNull(metrics.skip_rate, 0) AS `Taux de skip`,\n  decisions.source_ok_rate AS `Taux source OK`,\n  decisions.orderbook_ok_rate AS `Taux carnet OK`,\n  decisions.risk_ok_rate AS `Taux risque OK`,\n  decisions.blockers AS `Blocages`,\n  ifNull(signals.live_allowed, 0) AS `Préparation live`,\n  ifNull(metrics.net_pnl_usdc, 0) AS `PnL net`,\n  ifNull(metrics.roi, 0) AS `ROI`,\n  ifNull(metrics.exposure_usdc, 0) AS `Exposition`,\n  multiIf(decisions.âge_minutes > 60, 'DONNEES_OBSOLETES', ifNull(signals.signals, 0) = 0, 'AUCUN_SIGNAL_RECENT', decisions.risk_ok_rate < 0.8, 'RISQUE_BLOQUE', decisions.source_ok_rate < 0.8, 'SOURCE_BLOQUEE', decisions.orderbook_ok_rate < 0.8, 'CARNET_BLOQUE', decisions.blockers > 0, 'BLOQUE', ifNull(signals.live_allowed, 0), 'LIVE_ACTIF', ifNull(metrics.trades, 0) = 0 AND ifNull(signals.signals, 0) > 0, 'PAPER_SEUL', 'OK') AS `Statut attentes`\nFROM decisions\nLEFT JOIN signals ON decisions.strategy_id = signals.strategy_id\nLEFT JOIN metrics ON decisions.strategy_id = metrics.strategy_id\nORDER BY `Statut attentes`, `Âge minutes` DESC",
+          "rawSql": "WITH decisions AS\n(\n  SELECT strategy_id, max(observed_at) AS last_observed_at, dateDiff('minute', max(observed_at), now()) AS age_minutes, count() AS decisions, avg(source_ok) AS source_ok_rate, avg(orderbook_ok) AS orderbook_ok_rate, avg(risk_ok) AS risk_ok_rate, countIf(blocker != '' OR skip_reason != '') AS blockers\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  GROUP BY strategy_id\n), signals AS\n(\n  SELECT strategy_id, count() AS signals, max(live_order_allowed OR mode = 'live') AS live_allowed\n  FROM prediction_core.strategy_signals\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), metrics AS\n(\n  SELECT strategy_id, sum(trade_count) AS trades, sum(skip_count) AS skips, sum(decision_count) AS metric_decisions, sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate, sum(net_pnl_usdc) AS net_pnl_usdc, avg(roi) AS roi, sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\n  GROUP BY strategy_id\n)\nSELECT\n  decisions.strategy_id AS `Stratégie`,\n  formatDateTime(toTimeZone(decisions.last_observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière observation (Paris)`,\n  decisions.age_minutes AS `Âge minutes`,\n  ifNull(signals.signals, 0) AS `Signaux`,\n  decisions.decisions AS `Décisions`,\n  ifNull(metrics.trades, 0) AS `Trades`,\n  ifNull(metrics.skip_rate, 0) AS `Taux de skip`,\n  decisions.source_ok_rate AS `Taux source OK`,\n  decisions.orderbook_ok_rate AS `Taux carnet OK`,\n  decisions.risk_ok_rate AS `Taux risque OK`,\n  decisions.blockers AS `Blocages`,\n  ifNull(signals.live_allowed, 0) AS `Préparation live`,\n  ifNull(metrics.net_pnl_usdc, 0) AS `PnL net`,\n  ifNull(metrics.roi, 0) AS `ROI`,\n  ifNull(metrics.exposure_usdc, 0) AS `Exposition`,\n  multiIf(decisions.age_minutes > 60, 'DONNEES_OBSOLETES', ifNull(signals.signals, 0) = 0, 'AUCUN_SIGNAL_RECENT', decisions.risk_ok_rate < 0.8, 'RISQUE_BLOQUE', decisions.source_ok_rate < 0.8, 'SOURCE_BLOQUEE', decisions.orderbook_ok_rate < 0.8, 'CARNET_BLOQUE', decisions.blockers > 0, 'BLOQUE', ifNull(signals.live_allowed, 0), 'LIVE_ACTIF', ifNull(metrics.trades, 0) = 0 AND ifNull(signals.signals, 0) > 0, 'PAPER_SEUL', 'OK') AS `Statut attentes`\nFROM decisions\nLEFT JOIN signals ON decisions.strategy_id = signals.strategy_id\nLEFT JOIN metrics ON decisions.strategy_id = metrics.strategy_id\nORDER BY `Statut attentes`, `Âge minutes` DESC",
           "refId": "A"
         }
       ],
@@ -110,7 +110,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -161,7 +161,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -212,7 +212,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -263,7 +263,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -314,7 +314,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -387,7 +387,7 @@
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countLignes": false,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
