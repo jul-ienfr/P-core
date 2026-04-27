@@ -21,10 +21,10 @@ groups:
                 uid: prediction-core-clickhouse
               queryType: sql
               rawSql: |
-                SELECT max(âge_minutes) AS value
+                SELECT max(age_minutes) AS value
                 FROM
                 (
-                  SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) AS âge_minutes FROM prediction_core.profile_decisions
+                  SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) AS age_minutes FROM prediction_core.profile_decisions
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.debug_decisions
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.strategy_signals
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.paper_orders
