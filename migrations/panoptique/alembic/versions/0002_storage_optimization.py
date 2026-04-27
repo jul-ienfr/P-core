@@ -93,8 +93,7 @@ FROM orderbook_snapshots
 GROUP BY market_id, token_id, bucket
 WITH NO DATA;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS shadow_prediction_outcomes_15m
-WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS shadow_prediction_outcomes_15m AS
 SELECT sp.agent_id, sp.market_id, time_bucket('15 minutes', cfo.observed_at) AS bucket,
        avg(CASE WHEN cfo.direction_hit THEN 1.0 ELSE 0.0 END) AS direction_hit_rate,
        avg(cfo.price_delta) AS avg_price_delta,
@@ -112,7 +111,6 @@ SELECT add_continuous_aggregate_policy('market_price_5m', start_offset => INTERV
 SELECT add_continuous_aggregate_policy('market_price_15m', start_offset => INTERVAL '90 days', end_offset => INTERVAL '15 minutes', schedule_interval => INTERVAL '15 minutes', if_not_exists => TRUE);
 SELECT add_continuous_aggregate_policy('trade_volume_5m', start_offset => INTERVAL '30 days', end_offset => INTERVAL '5 minutes', schedule_interval => INTERVAL '5 minutes', if_not_exists => TRUE);
 SELECT add_continuous_aggregate_policy('orderbook_liquidity_5m', start_offset => INTERVAL '30 days', end_offset => INTERVAL '5 minutes', schedule_interval => INTERVAL '5 minutes', if_not_exists => TRUE);
-SELECT add_continuous_aggregate_policy('shadow_prediction_outcomes_15m', start_offset => INTERVAL '90 days', end_offset => INTERVAL '15 minutes', schedule_interval => INTERVAL '15 minutes', if_not_exists => TRUE);
 """
 
 RETENTION_POLICY_SQL_DOCUMENTED_ONLY = """
@@ -124,6 +122,23 @@ RETENTION_POLICY_SQL_DOCUMENTED_ONLY = """
 -- SELECT add_retention_policy('trade_events', INTERVAL '365 days', if_not_exists => TRUE);
 """
 
+CONTINUOUS_AGGREGATES = [
+    "market_price_1m",
+    "market_price_5m",
+    "market_price_15m",
+    "trade_volume_5m",
+    "orderbook_liquidity_5m",
+]
+
+ALL_MATERIALIZED_VIEWS = [
+    "shadow_prediction_outcomes_15m",
+    "orderbook_liquidity_5m",
+    "trade_volume_5m",
+    "market_price_15m",
+    "market_price_5m",
+    "market_price_1m",
+]
+
 
 def upgrade() -> None:
     op.execute(COMPRESSION_SQL)
@@ -133,14 +148,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    for view in [
-        "shadow_prediction_outcomes_15m",
-        "orderbook_liquidity_5m",
-        "trade_volume_5m",
-        "market_price_15m",
-        "market_price_5m",
-        "market_price_1m",
-    ]:
+    for view in CONTINUOUS_AGGREGATES:
+        op.execute(f"SELECT remove_continuous_aggregate_policy('{view}', if_exists => TRUE)")
+    for table in HIGH_VOLUME_HYPERTABLES:
+        op.execute(f"SELECT remove_compression_policy('{table}', if_exists => TRUE)")
+    for view in ALL_MATERIALIZED_VIEWS:
         op.execute(f"DROP MATERIALIZED VIEW IF EXISTS {view} CASCADE")
     for table in HIGH_VOLUME_HYPERTABLES:
-        op.execute(f"ALTER TABLE {table} SET (timescaledb.compress = false)")
+        op.execute(f"ALTER TABLE IF EXISTS {table} SET (timescaledb.compress = false)")

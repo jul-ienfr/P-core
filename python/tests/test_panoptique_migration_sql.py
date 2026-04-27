@@ -59,3 +59,6 @@ def test_storage_optimization_migration_documents_safe_policies() -> None:
         assert f"CREATE MATERIALIZED VIEW IF NOT EXISTS {aggregate}" in sql
     assert "Destructive retention is intentionally not executed" in sql
     assert "add_retention_policy" in sql
+    assert "remove_continuous_aggregate_policy" in sql
+    assert "remove_compression_policy" in sql
+    assert "if_exists => TRUE" in sql

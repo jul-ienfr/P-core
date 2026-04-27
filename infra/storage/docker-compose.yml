@@ -1,0 +1,136 @@
+services:
+  postgres:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: prediction-core-postgres
+    environment:
+      POSTGRES_DB: ${PREDICTION_CORE_POSTGRES_DB:-panoptique}
+      POSTGRES_USER: ${PREDICTION_CORE_POSTGRES_USER:-panoptique}
+      POSTGRES_PASSWORD: ${PREDICTION_CORE_POSTGRES_PASSWORD:-panoptique}
+    ports:
+      - "${PREDICTION_CORE_POSTGRES_BIND_ADDR:-127.0.0.1}:${PREDICTION_CORE_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: prediction-core-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${PREDICTION_CORE_REDIS_BIND_ADDR:-127.0.0.1}:${PREDICTION_CORE_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  nats:
+    image: nats:2-alpine
+    container_name: prediction-core-nats
+    command: ["-js", "-m", "8222"]
+    ports:
+      - "${PREDICTION_CORE_NATS_BIND_ADDR:-127.0.0.1}:${PREDICTION_CORE_NATS_PORT:-4222}:4222"
+      - "${PREDICTION_CORE_NATS_MONITOR_BIND_ADDR:-127.0.0.1}:${PREDICTION_CORE_NATS_MONITOR_PORT:-8222}:8222"
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: prediction-core-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${PREDICTION_CORE_S3_ACCESS_KEY_ID:-prediction}
+      MINIO_ROOT_PASSWORD: ${PREDICTION_CORE_S3_SECRET_ACCESS_KEY:-prediction-secret}
+    ports:
+      - "${PREDICTION_CORE_MINIO_BIND_ADDR:-127.0.0.1}:${PREDICTION_CORE_MINIO_PORT:-9002}:9000"
+      - "${PREDICTION_CORE_MINIO_CONSOLE_BIND_ADDR:-127.0.0.1}:${PREDICTION_CORE_MINIO_CONSOLE_PORT:-9003}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: prediction-core-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${PREDICTION_CORE_S3_ACCESS_KEY_ID:-prediction}
+      MINIO_ROOT_PASSWORD: ${PREDICTION_CORE_S3_SECRET_ACCESS_KEY:-prediction-secret}
+      PREDICTION_CORE_S3_BUCKET: ${PREDICTION_CORE_S3_BUCKET:-prediction-core-artifacts}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+      mc mb --ignore-existing local/$${PREDICTION_CORE_S3_BUCKET}
+      "
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.12
+    container_name: prediction-core-clickhouse
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-prediction_core}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-prediction}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-prediction}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "${CLICKHOUSE_HTTP_BIND_ADDR:-127.0.0.1}:${CLICKHOUSE_HTTP_PORT:-8123}:8123"
+      - "${CLICKHOUSE_NATIVE_BIND_ADDR:-127.0.0.1}:${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ../analytics/clickhouse/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  grafana:
+    image: grafana/grafana-oss:11.4.0
+    container_name: prediction-core-grafana
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-clickhouse-datasource
+    ports:
+      - "${GRAFANA_BIND_ADDR:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../analytics/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../analytics/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  redis_data:
+  nats_data:
+  minio_data:
+  clickhouse_data:
+  grafana_data:

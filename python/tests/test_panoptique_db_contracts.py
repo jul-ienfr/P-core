@@ -22,7 +22,7 @@ def test_database_url_loader_can_return_default_for_local_dev(monkeypatch) -> No
 def test_sync_database_url_derives_asyncpg_url(monkeypatch) -> None:
     monkeypatch.setenv("PANOPTIQUE_DATABASE_URL", "postgresql+asyncpg://u:p@localhost/db")
     monkeypatch.delenv("PANOPTIQUE_SYNC_DATABASE_URL", raising=False)
-    assert get_sync_database_url() == "postgresql://u:p@localhost/db"
+    assert get_sync_database_url() == "postgresql+psycopg://u:p@localhost/db"
 
 
 def test_mask_database_url_hides_password() -> None:

@@ -4,12 +4,15 @@ import argparse
 import asyncio
 import json
 import math
+import os
 from functools import partial
 from pathlib import Path
 
 from prediction_core.orchestrator import consume_weather_markets, run_weather_paper_batch, run_weather_workflow
 from prediction_core.polymarket_execution import (
     ClobRestPolymarketExecutor,
+    CompositeExecutionAuditLog,
+    CompositeIdempotencyStore,
     DryRunPolymarketExecutor,
     ExecutionCredentialsError,
     ExecutionRiskLimits,
@@ -17,6 +20,8 @@ from prediction_core.polymarket_execution import (
     JsonlExecutionAuditLog,
     JsonlIdempotencyStore,
     LiveExecutionUnavailableError,
+    PostgresExecutionAuditLog,
+    PostgresIdempotencyStore,
 )
 from prediction_core.polymarket_marketdata import (
     build_marketdata_worker_plan,
@@ -26,7 +31,6 @@ from prediction_core.polymarket_marketdata import (
 )
 from prediction_core.polymarket_runtime import build_polymarket_runtime_scaffold, preflight_polymarket_live_readiness, run_polymarket_runtime_cycle
 from prediction_core.polymarket_stack import recommended_polymarket_stack, stack_decision_table
-from prediction_core.server import build_server
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -178,6 +182,37 @@ def build_parser() -> argparse.ArgumentParser:
     )
     del live_preflight
 
+    storage_health_parser = subparsers.add_parser(
+        "storage-health",
+        help="Check configured PostgreSQL, ClickHouse, Redis, NATS, S3, and Grafana storage components",
+    )
+    del storage_health_parser
+
+    mirror_artifacts = subparsers.add_parser(
+        "mirror-artifacts-s3",
+        help="Plan a safe S3 mirror for local artifacts; only dry-run is supported for now",
+    )
+    mirror_artifacts.add_argument("--input-dir", required=True, help="Local artifact directory to scan")
+    mirror_artifacts.add_argument("--bucket", help="Target S3 bucket; defaults to PREDICTION_CORE_S3_BUCKET")
+    mirror_artifacts.add_argument("--prefix", default="raw", help="Target S3 key prefix")
+    mirror_artifacts.add_argument("--source", default="local", help="Artifact source label for the S3 key")
+    mirror_artifacts.add_argument("--max-files", type=int, help="Maximum number of files to include in the plan")
+    mirror_artifacts.add_argument("--max-file-size-bytes", type=int, help="Reject files larger than this many bytes")
+    mirror_artifacts.add_argument("--max-total-bytes", type=int, help="Reject plans larger than this many total bytes")
+    mirror_artifacts.add_argument(
+        "--allow-outside-artifacts-root",
+        action="store_true",
+        help="Allow scanning outside the default approved artifact roots",
+    )
+    mirror_artifacts.add_argument("--dry-run", action="store_true", default=True, help="Plan only; uploads are intentionally not enabled yet")
+
+    replay_jsonl = subparsers.add_parser(
+        "replay-jsonl-audit",
+        help="Plan replay of a JSONL execution audit file into durable storage; dry-run only for now",
+    )
+    replay_jsonl.add_argument("--jsonl", required=True, help="JSONL audit file to inspect")
+    replay_jsonl.add_argument("--max-rows", type=int, help="Maximum rows to include in the dry-run plan")
+    replay_jsonl.add_argument("--dry-run", action="store_true", default=True, help="Plan only; writes are intentionally not enabled yet")
 
     runtime_cycle = subparsers.add_parser(
         "polymarket-runtime-cycle",
@@ -210,6 +245,8 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.command == "serve":
+        from prediction_core.server import build_server
+
         server = build_server(host=args.host, port=args.port)
         print(f"prediction_core server listening on http://{args.host}:{args.port}")
         try:
@@ -332,6 +369,37 @@ def main() -> int:
         print(json.dumps(preflight_polymarket_live_readiness()))
         return 0
 
+    if args.command == "storage-health":
+        from prediction_core.storage.health import storage_health
+
+        print(json.dumps(storage_health(), default=str))
+        return 0
+
+    if args.command == "mirror-artifacts-s3":
+        from os import environ
+        from prediction_core.storage.artifact_ops import plan_artifact_mirror
+
+        bucket = args.bucket or environ.get("PREDICTION_CORE_S3_BUCKET")
+        if not bucket:
+            parser.error("--bucket or PREDICTION_CORE_S3_BUCKET is required")
+        result = plan_artifact_mirror(
+            input_dir=args.input_dir,
+            bucket=bucket,
+            prefix=args.prefix,
+            source=args.source,
+            max_files=args.max_files,
+            allow_outside_artifacts_root=args.allow_outside_artifacts_root,
+            **({"max_file_size_bytes": args.max_file_size_bytes} if args.max_file_size_bytes is not None else {}),
+            **({"max_total_bytes": args.max_total_bytes} if args.max_total_bytes is not None else {}),
+        )
+        print(json.dumps(result))
+        return 0
+
+    if args.command == "replay-jsonl-audit":
+        from prediction_core.storage.artifact_ops import replay_jsonl_audit_plan
+
+        print(json.dumps(replay_jsonl_audit_plan(jsonl_path=args.jsonl, max_rows=args.max_rows)))
+        return 0
 
     if args.command == "polymarket-runtime-cycle":
         markets = _read_json_file(Path(args.markets_json))
@@ -368,6 +436,16 @@ def main() -> int:
                 parser.error(str(exc))
             idempotency_store = JsonlIdempotencyStore(args.idempotency_jsonl)
             audit_log = JsonlExecutionAuditLog(args.audit_jsonl)
+            postgres_repository = _try_build_operational_state_repository()
+            if postgres_repository is not None:
+                idempotency_store = CompositeIdempotencyStore(
+                    idempotency_store,
+                    PostgresIdempotencyStore(postgres_repository, mode=args.execution_mode, paper_only=True),
+                )
+                audit_log = CompositeExecutionAuditLog(
+                    audit_log,
+                    PostgresExecutionAuditLog(postgres_repository, paper_only=True, live_order_allowed=False),
+                )
             if args.execution_mode == "dry_run":
                 order_executor = DryRunPolymarketExecutor()
             else:
@@ -398,6 +476,20 @@ def main() -> int:
 
     parser.print_help()
     return 0
+
+
+def _try_build_operational_state_repository():
+    if not (os.environ.get("PREDICTION_CORE_SYNC_DATABASE_URL") or os.environ.get("PANOPTIQUE_SYNC_DATABASE_URL")):
+        return None
+    try:
+        from prediction_core.storage.postgres import OperationalStateRepository, create_prediction_core_sync_engine_from_env
+
+        return OperationalStateRepository(create_prediction_core_sync_engine_from_env())
+    except Exception as exc:
+        import warnings
+
+        warnings.warn(f"Postgres dual-write setup failed; continuing with JSONL primary behavior: {type(exc).__name__}", RuntimeWarning, stacklevel=2)
+        return None
 
 
 def _read_jsonl_events(path: Path) -> list[dict]:
