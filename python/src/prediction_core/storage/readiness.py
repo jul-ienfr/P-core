@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Final
 
 SECTION_NAMES: Final = ("infra", "secrets", "backup_restore", "monitoring", "launch_gates", "staging")
+ROOT: Final = Path(__file__).resolve().parents[4]
 
 
 def _base_section(name: str, *, required_files: list[str], validation_commands: list[str], checks: list[str]) -> dict[str, Any]:
@@ -202,3 +204,76 @@ def storage_readiness_section(section: str) -> dict[str, Any]:
         return bundle["sections"][section]
     except KeyError as exc:
         raise ValueError(f"unknown storage readiness section: {section}") from exc
+
+
+def storage_live_validation_report(
+    *,
+    health: dict[str, Any] | None = None,
+    backup_evidence: str | None = None,
+    restore_drill_evidence: str | None = None,
+    monitoring_evidence: str | None = None,
+    staging_evidence: str | None = None,
+    operator_approval: str | None = None,
+) -> dict[str, Any]:
+    if health is None:
+        from prediction_core.storage.health import storage_health
+
+        health = storage_health()
+    readiness = storage_readiness_bundle()
+    checks = [
+        _check("readiness_bundle", readiness.get("live_trading_enabled") is False and len(readiness.get("sections", {})) == len(SECTION_NAMES), "storage readiness bundle is materialized and live-disabled"),
+        _check("storage_health_ready_for_live", bool(health.get("summary", {}).get("ready_for_live")), "storage-health summary.ready_for_live is true"),
+        _check("storage_health_not_degraded", not bool(health.get("summary", {}).get("degraded")), "storage-health reports no degraded configured dependencies"),
+        _check("source_of_truth_live_disabled", health.get("source_of_truth", {}).get("live_trading_enabled") is False, "storage source-of-truth metadata does not enable live trading"),
+        _evidence_check("backup_evidence", backup_evidence, "backup evidence file exists"),
+        _evidence_check("restore_drill_evidence", restore_drill_evidence, "restore drill evidence file exists"),
+        _evidence_check("monitoring_evidence", monitoring_evidence, "monitoring/alerting evidence file exists"),
+        _evidence_check("staging_evidence", staging_evidence, "staging validation evidence file exists"),
+        _evidence_check("operator_approval", operator_approval, "operator approval evidence file exists"),
+    ]
+    blocking_failures = [check for check in checks if not check["ok"]]
+    return {
+        "schema_version": "prediction_core.storage_live_validation.v1",
+        "dry_run": True,
+        "destructive": False,
+        "provisions_external_services": False,
+        "live_trading_enabled": False,
+        "decision": "GO" if not blocking_failures else "NO_GO",
+        "ready_for_live": not blocking_failures,
+        "checks": checks,
+        "blocking_failures": blocking_failures,
+        "required_evidence": {
+            "backup_evidence": backup_evidence,
+            "restore_drill_evidence": restore_drill_evidence,
+            "monitoring_evidence": monitoring_evidence,
+            "staging_evidence": staging_evidence,
+            "operator_approval": operator_approval,
+        },
+    }
+
+
+def _check(name: str, ok: bool, description: str) -> dict[str, Any]:
+    return {"name": name, "ok": ok, "description": description}
+
+
+def _evidence_check(name: str, path: str | None, description: str) -> dict[str, Any]:
+    if not path:
+        return {"name": name, "ok": False, "description": description, "error": "missing_path"}
+    evidence_path = Path(path)
+    if not evidence_path.is_absolute():
+        evidence_path = ROOT / evidence_path
+    try:
+        resolved = evidence_path.resolve(strict=False)
+    except OSError as exc:
+        return {"name": name, "ok": False, "description": description, "path": str(evidence_path), "error": type(exc).__name__}
+    try:
+        relative = resolved.relative_to(ROOT)
+    except ValueError:
+        return {"name": name, "ok": False, "description": description, "path": str(resolved), "error": "outside_repo_root"}
+    return {
+        "name": name,
+        "ok": resolved.is_file(),
+        "description": description,
+        "path": str(relative),
+        **({} if resolved.is_file() else {"error": "file_not_found"}),
+    }

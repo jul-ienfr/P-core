@@ -18,6 +18,7 @@ from prediction_core.paper import (
     derive_filled_execution,
     derive_requested_quantity,
 )
+from prediction_core.strategies.config_store import StrategyConfigStore
 from weather_pm.cli import (
     _score_market_from_market_id,
     resolution_status_for_market_id,
@@ -40,6 +41,25 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
         if parsed_url.path == "/health":
             self._json_response(200, {"status": "ok", "service": "prediction_core_python"})
             return
+        if parsed_url.path == "/strategies/config":
+            try:
+                self._json_response(200, strategy_config_store().list_configs())
+            except ValueError as exc:
+                self._json_response(400, {"status": "error", "message": str(exc)})
+            except Exception as exc:  # pragma: no cover - defensive boundary
+                self._json_response(500, {"status": "error", "message": f"internal error: {exc}"})
+            return
+        if parsed_url.path.startswith("/strategies/config/"):
+            strategy_id = parsed_url.path.removeprefix("/strategies/config/").strip("/")
+            if strategy_id and "/" not in strategy_id:
+                try:
+                    config = strategy_config_store().get_config(strategy_id)
+                    self._json_response(200, {"strategy": strategy_config_payload(config)})
+                except ValueError as exc:
+                    self._json_response(400, {"status": "error", "message": str(exc)})
+                except Exception as exc:  # pragma: no cover - defensive boundary
+                    self._json_response(500, {"status": "error", "message": f"internal error: {exc}"})
+                return
         if parsed_url.path == "/weather/polymarket/markets":
             try:
                 result = polymarket_weather_markets_query(parse_qs(parsed_url.query))
@@ -59,6 +79,11 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
             return
 
         try:
+            if self.path.startswith("/strategies/config/"):
+                result = strategy_config_mutation_request(self.path, payload)
+                self._json_response(200, result)
+                return
+
             if self.path == "/weather/parse-market":
                 question = self._require_string(payload, "question")
                 result = parse_market_question(question).to_dict()
@@ -145,7 +170,43 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-def fetch_markets_request(payload: dict[str, Any]) -> list[dict[str, Any]]:
+def strategy_config_store() -> StrategyConfigStore:
+    return StrategyConfigStore()
+
+
+def strategy_config_payload(config: Any) -> dict[str, Any]:
+    return {
+        "strategy_id": config.strategy_id,
+        "enabled": config.enabled,
+        "mode": config.mode.value,
+        "allow_live": config.allow_live,
+        "settings": dict(config.settings),
+    }
+
+
+def strategy_config_mutation_request(path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    parts = [part for part in path.strip("/").split("/") if part]
+    if len(parts) < 3 or parts[0] != "strategies" or parts[1] != "config":
+        raise ValueError("invalid strategy config path")
+    strategy_id = parts[2]
+    if not strategy_id:
+        raise ValueError("strategy_id is required")
+    store = strategy_config_store()
+    if len(parts) == 3:
+        config = store.update_config(strategy_id, payload)
+    elif len(parts) == 4 and parts[3] == "enable":
+        config = store.set_enabled(strategy_id, True)
+    elif len(parts) == 4 and parts[3] == "disable":
+        config = store.set_enabled(strategy_id, False)
+    elif len(parts) == 4 and parts[3] == "mode":
+        mode = _required_string(payload, "mode")
+        allow_live = payload.get("allow_live")
+        config = store.set_mode(strategy_id, mode, allow_live=bool(allow_live) if allow_live is not None else None)
+    else:
+        raise ValueError("unknown strategy config action")
+    return {"strategy": strategy_config_payload(config)}
+
+
     source = _coerce_source(payload.get("source", "fixture"))
     limit_value = _coerce_limit(payload.get("limit", 100))
     return _normalized_weather_markets(source=source, limit=limit_value)

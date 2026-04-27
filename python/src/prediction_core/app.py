@@ -201,6 +201,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     storage_readiness.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
 
+    storage_live_validate = subparsers.add_parser(
+        "storage-live-validate",
+        help="Print a non-destructive storage live GO/NO-GO report as JSON",
+    )
+    storage_live_validate.add_argument("--backup-evidence", help="Path to backup evidence/checksum report")
+    storage_live_validate.add_argument("--restore-drill-evidence", help="Path to disposable restore drill evidence")
+    storage_live_validate.add_argument("--monitoring-evidence", help="Path to monitoring/alerting review evidence")
+    storage_live_validate.add_argument("--staging-evidence", help="Path to staging validation evidence")
+    storage_live_validate.add_argument("--operator-approval", help="Path to operator approval evidence")
+    storage_live_validate.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
+
     mirror_artifacts = subparsers.add_parser(
         "mirror-artifacts-s3",
         help="Plan a safe S3 mirror for local artifacts; only dry-run is supported for now",
@@ -396,6 +407,20 @@ def main() -> int:
 
         indent = 2 if args.pretty else None
         print(json.dumps(storage_readiness_section(args.section), indent=indent, sort_keys=bool(args.pretty)))
+        return 0
+
+    if args.command == "storage-live-validate":
+        from prediction_core.storage.readiness import storage_live_validation_report
+
+        indent = 2 if args.pretty else None
+        report = storage_live_validation_report(
+            backup_evidence=args.backup_evidence,
+            restore_drill_evidence=args.restore_drill_evidence,
+            monitoring_evidence=args.monitoring_evidence,
+            staging_evidence=args.staging_evidence,
+            operator_approval=args.operator_approval,
+        )
+        print(json.dumps(report, indent=indent, sort_keys=bool(args.pretty)))
         return 0
 
     if args.command == "mirror-artifacts-s3":

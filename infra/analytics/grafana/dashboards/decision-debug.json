@@ -17,6 +17,39 @@
       "tooltip": "Comparer les stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-vs-profile"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Strategy Overview",
+      "tooltip": "Strategy Overview",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-overview"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Strategy Detail",
+      "tooltip": "Strategy Detail",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-detail"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Strategy Health",
+      "tooltip": "Strategy Health",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-health"
     }
   ],
   "liveNow": false,
@@ -342,6 +375,6 @@
   "timezone": "browser",
   "title": "Decision Debug",
   "uid": "prediction-core-decision-debug",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

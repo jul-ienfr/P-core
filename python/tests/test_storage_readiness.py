@@ -2,7 +2,7 @@ import json
 import subprocess
 
 from prediction_core.storage.health import storage_health
-from prediction_core.storage.readiness import SECTION_NAMES, storage_readiness_bundle, storage_readiness_section
+from prediction_core.storage.readiness import SECTION_NAMES, storage_live_validation_report, storage_readiness_bundle, storage_readiness_section
 
 
 SCRIPT = "../python/scripts/prediction-core"
@@ -88,3 +88,105 @@ def test_storage_health_points_to_materialized_readiness(monkeypatch):
     assert health["source_of_truth"]["live_trading_enabled"] is False
     assert health["source_of_truth"]["production_readiness_materialized"] is True
     assert health["source_of_truth"]["readiness_command"] == "prediction-core storage-readiness --section all"
+
+
+def test_storage_live_validation_reports_no_go_without_evidence():
+    health = {
+        "summary": {"ready_for_live": True, "degraded": False},
+        "source_of_truth": {"live_trading_enabled": False},
+    }
+
+    report = storage_live_validation_report(health=health)
+
+    assert report["decision"] == "NO_GO"
+    assert report["ready_for_live"] is False
+    assert report["dry_run"] is True
+    assert report["destructive"] is False
+    assert {failure["name"] for failure in report["blocking_failures"]} == {
+        "backup_evidence",
+        "restore_drill_evidence",
+        "monitoring_evidence",
+        "staging_evidence",
+        "operator_approval",
+    }
+
+
+def test_storage_live_validation_reports_go_with_ready_health_and_evidence(tmp_path):
+    evidence = {}
+    for name in ("backup", "restore", "monitoring", "staging", "approval"):
+        path = tmp_path / f"{name}.json"
+        path.write_text('{"ok": true}', encoding="utf-8")
+        evidence[name] = str(path)
+    health = {
+        "summary": {"ready_for_live": True, "degraded": False},
+        "source_of_truth": {"live_trading_enabled": False},
+    }
+
+    report = storage_live_validation_report(
+        health=health,
+        backup_evidence=evidence["backup"],
+        restore_drill_evidence=evidence["restore"],
+        monitoring_evidence=evidence["monitoring"],
+        staging_evidence=evidence["staging"],
+        operator_approval=evidence["approval"],
+    )
+
+    assert report["decision"] == "NO_GO"
+    assert report["ready_for_live"] is False
+    assert {failure["name"] for failure in report["blocking_failures"]} == {
+        "backup_evidence",
+        "restore_drill_evidence",
+        "monitoring_evidence",
+        "staging_evidence",
+        "operator_approval",
+    }
+    assert {failure["error"] for failure in report["blocking_failures"]} == {"outside_repo_root"}
+
+
+def test_storage_live_validation_reports_go_for_repo_local_evidence(tmp_path):
+    repo_evidence_dir = tmp_path / "repo"
+    repo_evidence_dir.mkdir()
+    health = {
+        "summary": {"ready_for_live": True, "degraded": False},
+        "source_of_truth": {"live_trading_enabled": False},
+    }
+    from prediction_core.storage import readiness
+
+    original_root = readiness.ROOT
+    readiness.ROOT = repo_evidence_dir
+    try:
+        paths = []
+        for name in ("backup", "restore", "monitoring", "staging", "approval"):
+            path = repo_evidence_dir / f"{name}.json"
+            path.write_text('{"ok": true}', encoding="utf-8")
+            paths.append(str(path))
+
+        report = storage_live_validation_report(
+            health=health,
+            backup_evidence=paths[0],
+            restore_drill_evidence=paths[1],
+            monitoring_evidence=paths[2],
+            staging_evidence=paths[3],
+            operator_approval=paths[4],
+        )
+    finally:
+        readiness.ROOT = original_root
+
+    assert report["decision"] == "GO"
+    assert report["ready_for_live"] is True
+    assert report["blocking_failures"] == []
+
+
+def test_storage_live_validate_cli_outputs_no_go_json():
+    result = subprocess.run(
+        [SCRIPT, "storage-live-validate", "--pretty"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["decision"] == "NO_GO"
+    assert payload["live_trading_enabled"] is False
+    assert payload["destructive"] is False

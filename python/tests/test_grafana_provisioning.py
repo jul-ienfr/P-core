@@ -9,6 +9,9 @@ STRATEGY_VS_PROFILE = DASHBOARDS / "strategy-vs-profile.json"
 DECISION_DEBUG = DASHBOARDS / "decision-debug.json"
 PAPER_LEDGER = DASHBOARDS / "paper-ledger.json"
 DATA_FRESHNESS = DASHBOARDS / "data-freshness.json"
+STRATEGY_OVERVIEW = DASHBOARDS / "strategy-overview.json"
+STRATEGY_DETAIL = DASHBOARDS / "strategy-detail.json"
+STRATEGY_HEALTH = DASHBOARDS / "strategy-health.json"
 ALERTS = ROOT / "infra" / "analytics" / "grafana" / "provisioning" / "alerting" / "prediction-core-alerts.yml"
 COMPOSE = ROOT / "infra" / "analytics" / "docker-compose.yml"
 
@@ -92,7 +95,51 @@ def test_data_freshness_dashboard_is_provisioned() -> None:
     assert "prediction-core-clickhouse" in text
 
 
-def test_grafana_alerts_are_provisioned() -> None:
+def test_strategy_overview_dashboard_is_provisioned() -> None:
+    dashboard = json.loads(STRATEGY_OVERVIEW.read_text())
+    text = json.dumps(dashboard, ensure_ascii=False)
+    for label in ["Strategy Overview", "Vue d’ensemble stratégies", "Stratégies actives", "Stratégies live", "Stratégies paper", "Stratégies stale", "Classement score / PnL / ROI", "Répartition paper vs live", "Top blockers par stratégie"]:
+        assert label in text
+    for label in ["strategy", "profile", "run_id", "mode", "business_time", "Statut santé"]:
+        assert label in text
+    for source in ["profile_metrics", "debug_decisions", "strategy_signals", "profile_decisions", "execution_events"]:
+        assert source in text
+    assert dashboard["uid"] == "prediction-core-strategy-overview"
+    assert "prediction-core-clickhouse" in text
+
+
+def test_strategy_detail_dashboard_is_provisioned() -> None:
+    dashboard = json.loads(STRATEGY_DETAIL.read_text())
+    text = json.dumps(dashboard, ensure_ascii=False)
+    for label in ["Strategy Detail", "Résumé stratégie", "PnL net dans le temps", "ROI dans le temps", "Décisions récentes", "Marchés actifs", "Ordres paper récents", "Événements live récents", "Paper vs live pour cette stratégie", "Diagnostic raw"]:
+        assert label in text
+    for source in ["profile_metrics", "debug_decisions", "paper_orders", "execution_events"]:
+        assert source in text
+    assert dashboard["uid"] == "prediction-core-strategy-detail"
+    assert "prediction-core-clickhouse" in text
+
+
+def test_strategy_health_dashboard_is_provisioned() -> None:
+    dashboard = json.loads(STRATEGY_HEALTH.read_text())
+    text = json.dumps(dashboard, ensure_ascii=False)
+    for label in ["Strategy Health / Expectations", "Health matrix stratégies", "Stratégies sans données récentes", "Stratégies bloquées par source/orderbook/risk", "Écart attentes vs activité", "Live readiness", "Risk expectations"]:
+        assert label in text
+    for status in ["OK", "PAPER_ONLY", "LIVE_ACTIVE", "STALE", "BLOCKED", "RISK_BLOCKED", "SOURCE_BLOCKED", "ORDERBOOK_BLOCKED", "NO_RECENT_SIGNALS"]:
+        assert status in text
+    for source in ["profile_metrics", "debug_decisions", "strategy_signals", "execution_events"]:
+        assert source in text
+    assert dashboard["uid"] == "prediction-core-strategy-health"
+    assert "prediction-core-clickhouse" in text
+
+
+def test_existing_dashboards_link_to_strategy_console() -> None:
+    for path in [STRATEGY_VS_PROFILE, DECISION_DEBUG, PAPER_LEDGER, DATA_FRESHNESS]:
+        text = path.read_text()
+        assert "prediction-core-strategy-overview" in text
+        assert "prediction-core-strategy-detail" in text
+        assert "prediction-core-strategy-health" in text
+
+
     text = ALERTS.read_text()
     for label in ["prediction-core-clickhouse", "Analytics data stale", "No recent decisions", "High skip rate", "Live event seen", "execution_events"]:
         assert label in text
