@@ -1,20 +1,101 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
+from datetime import datetime, timezone
 from typing import Any
 
 from prediction_core.polymarket_execution import (
+    ClobRestPolymarketExecutor,
     DryRunPolymarketExecutor,
     ExecutionRiskLimits,
     ExecutionRiskState,
     JsonlExecutionAuditLog,
     JsonlIdempotencyStore,
     OrderExecutor,
+    OrderManagementExecutor,
     OrderRequest,
+    reconcile_orders,
     OrderSide,
     OrderType,
     evaluate_execution_risk,
 )
+
+
+def preflight_polymarket_live_readiness(
+    env: dict[str, str] | None = None,
+    *,
+    order_management: OrderManagementExecutor | None = None,
+    local_orders: list[dict[str, Any]] | None = None,
+    positions_confirmed: bool = False,
+) -> dict[str, Any]:
+    """Check live CLOB environment without constructing a live executor or submitting/canceling orders."""
+    source = env if env is not None else __import__("os").environ
+    required = list(ClobRestPolymarketExecutor.REQUIRED_ENV)
+    missing = [name for name in required if not str(source.get(name, "")).strip()]
+    configured = [name for name in required if name not in missing]
+    credentials_ready = not missing
+    live_submission_wired = False
+    execution_available = False
+    exchange_orders: list[dict[str, Any]] | None = None
+    reconciliation: dict[str, Any] | None = None
+    open_orders_confirmed = False
+    open_orders_error: dict[str, str] | None = None
+    if order_management is not None:
+        try:
+            exchange_orders = order_management.list_open_orders()
+        except Exception as exc:
+            exchange_orders = None
+            open_orders_error = _sanitize_preflight_error(exc, source)
+        else:
+            reconciliation = reconcile_orders(local_orders=local_orders or [], exchange_orders=exchange_orders)
+            open_orders_confirmed = reconciliation["status"] == "ok" and not reconciliation["open_order_ids"]
+    readiness_blockers = []
+    if not credentials_ready:
+        readiness_blockers.append("missing_clob_credentials")
+    if not live_submission_wired:
+        readiness_blockers.append("live_submission_unavailable")
+    if order_management is None:
+        readiness_blockers.append("open_orders_not_confirmed")
+    elif open_orders_error is not None:
+        readiness_blockers.append("open_orders_check_failed")
+    elif not open_orders_confirmed:
+        readiness_blockers.append("open_orders_or_reconciliation_not_clear")
+    if not positions_confirmed:
+        readiness_blockers.append("positions_not_confirmed")
+    ready = credentials_ready and live_submission_wired and execution_available and open_orders_confirmed and positions_confirmed
+    return {
+        "mode": "polymarket live read-only preflight",
+        "ready": ready,
+        "not_ready": not ready,
+        "credentials_ready": credentials_ready,
+        "live_submission_wired": live_submission_wired,
+        "execution_available": execution_available,
+        "open_orders_confirmed": open_orders_confirmed,
+        "positions_confirmed": positions_confirmed,
+        "readiness_blockers": readiness_blockers,
+        "checks": {
+            "clob_env": {
+                "ready": credentials_ready,
+                "required": required,
+                "configured": configured,
+                "missing": missing,
+            },
+            "live_submission_wired": live_submission_wired,
+            "execution_available": execution_available,
+            "executor_constructed": False,
+            "orders_submitted": 0,
+            "cancel_submitted": False,
+            "open_orders": {
+                "source_injected": order_management is not None,
+                "confirmed": open_orders_confirmed,
+                "count": len(exchange_orders or []),
+                "error": open_orders_error,
+            },
+            "positions_confirmed": positions_confirmed,
+            "reconciliation": reconciliation,
+        },
+    }
+
 from prediction_core.polymarket_marketdata import (
     MarketDataCache,
     dry_run_jsonl_stream_factory,
@@ -78,9 +159,10 @@ def evaluate_cached_market_decisions(
     snapshots: dict[str, dict[str, Any]],
     probabilities: dict[str, float],
     min_edge: float = 0.0,
+    max_snapshot_age_seconds: float | None = None,
 ) -> dict[str, Any]:
     decisions: list[dict[str, Any]] = []
-    summary = {"paper_signal_count": 0, "hold_count": 0, "missing_snapshot_count": 0}
+    summary = {"paper_signal_count": 0, "hold_count": 0, "missing_snapshot_count": 0, "invalid_snapshot_count": 0, "stale_snapshot_count": 0}
 
     for market in markets:
         if market.get("closed") is True:
@@ -96,8 +178,14 @@ def evaluate_cached_market_decisions(
             outcome = str(outcomes[index]) if index < len(outcomes) else f"outcome_{index}"
             snapshot = snapshots.get(token_id)
             probability = _coerce_probability(probabilities.get(token_id))
-            if not snapshot or snapshot.get("best_ask") is None or probability is None:
-                summary["missing_snapshot_count"] += 1
+            wait_reason = _marketdata_wait_reason(snapshot, probability=probability, max_snapshot_age_seconds=max_snapshot_age_seconds)
+            if wait_reason is not None:
+                if wait_reason == "missing_snapshot":
+                    summary["missing_snapshot_count"] += 1
+                elif wait_reason == "stale_snapshot":
+                    summary["stale_snapshot_count"] += 1
+                else:
+                    summary["invalid_snapshot_count"] += 1
                 decisions.append(
                     {
                         "market_id": market_id,
@@ -106,10 +194,12 @@ def evaluate_cached_market_decisions(
                         "outcome": outcome,
                         "action": "WAIT_MARKETDATA",
                         "execution_enabled": False,
+                        "wait_reason": wait_reason,
                     }
                 )
                 continue
 
+            assert snapshot is not None
             best_ask = float(snapshot["best_ask"])
             best_bid = snapshot.get("best_bid")
             edge = round(probability - best_ask, 10)
@@ -127,6 +217,11 @@ def evaluate_cached_market_decisions(
                     "best_bid": best_bid,
                     "best_ask": best_ask,
                     "spread": snapshot.get("spread"),
+                    "bid_depth": snapshot.get("bid_depth"),
+                    "ask_depth": snapshot.get("ask_depth"),
+                    "sequence": snapshot.get("sequence"),
+                    "received_at": snapshot.get("received_at"),
+                    "source": snapshot.get("source"),
                     "model_probability": probability,
                     "edge_vs_ask": edge,
                     "action": action,
@@ -159,10 +254,13 @@ def plan_disabled_execution_actions(
         raise ExecutionDisabledError("real Polymarket execution is disabled in this scaffold")
     if execution_mode not in {"paper", "dry_run", "live"}:
         raise ValueError('execution_mode must be "paper", "dry_run", or "live"')
-    if execution_mode == "dry_run" and order_executor is None:
-        order_executor = DryRunPolymarketExecutor()
-    if execution_mode == "live" and order_executor is None:
-        raise ExecutionDisabledError("live execution requires an explicit order executor")
+    if execution_mode == "dry_run":
+        if order_executor is None:
+            order_executor = DryRunPolymarketExecutor()
+        elif type(order_executor) is not DryRunPolymarketExecutor:
+            raise ExecutionDisabledError("dry-run Polymarket execution only accepts the built-in DryRunPolymarketExecutor")
+    if execution_mode == "live":
+        raise ExecutionDisabledError("live Polymarket submission is unavailable from this library; use dry_run with a safe executor")
     if execution_mode in {"dry_run", "live"} and (risk_limits is None or risk_state is None):
         raise ExecutionDisabledError("live/dry-run execution requires risk limits and risk state")
     if execution_mode in {"dry_run", "live"} and (idempotency_store is None or audit_log is None):
@@ -171,6 +269,17 @@ def plan_disabled_execution_actions(
     paper_intents = []
     orders_submitted = []
     order_attempts = []
+    summary = {
+        "risk_blocked_count": 0,
+        "duplicate_skipped_count": 0,
+        "executor_failed_count": 0,
+        "not_accepted_count": 0,
+        "rejected_count": 0,
+        "submitted_count": 0,
+        "pending_count": 0,
+        "reserved_exposure_usdc": 0.0,
+    }
+    reserved_exposure_usdc = 0.0
     for decision in decisions:
         if decision.get("action") != "PAPER_SIGNAL_ONLY":
             continue
@@ -192,29 +301,60 @@ def plan_disabled_execution_actions(
             assert idempotency_store is not None
             assert audit_log is not None
             audit_log.append("execution_decision_seen", {"decision": decision, "order": order.to_dict()})
-            risk = evaluate_execution_risk(order, limits=risk_limits, state=risk_state, market_snapshot=_snapshot_from_decision(decision))
+            effective_risk_state = ExecutionRiskState(
+                total_exposure_usdc=risk_state.total_exposure_usdc + reserved_exposure_usdc,
+                daily_realized_pnl_usdc=risk_state.daily_realized_pnl_usdc,
+            )
+            risk = evaluate_execution_risk(order, limits=risk_limits, state=effective_risk_state, market_snapshot=_snapshot_from_decision(decision))
             if not risk.allowed:
                 attempt = {"status": "risk_blocked", "idempotency_key": order.idempotency_key, "order": order.to_dict(), "risk": risk.to_dict()}
                 order_attempts.append(attempt)
+                summary["risk_blocked_count"] += 1
                 audit_log.append("execution_order_blocked", attempt)
                 continue
-            if idempotency_store.seen(order.idempotency_key):
+            claimed = idempotency_store.claim(
+                order.idempotency_key,
+                metadata={"market_id": order.market_id, "token_id": order.token_id, "mode": execution_mode},
+                status="pending",
+            )
+            if not claimed:
                 attempt = {"status": "duplicate_skipped", "idempotency_key": order.idempotency_key, "order": order.to_dict(), "risk": risk.to_dict()}
                 order_attempts.append(attempt)
+                summary["duplicate_skipped_count"] += 1
                 audit_log.append("execution_order_blocked", attempt)
                 continue
-            idempotency_store.claim(order.idempotency_key, metadata={"market_id": order.market_id, "token_id": order.token_id})
+            summary["pending_count"] += 1
             try:
                 executor_result = order_executor.submit_order(order)  # type: ignore[union-attr]
             except Exception as exc:
                 attempt = {"status": "executor_failed", "idempotency_key": order.idempotency_key, "order": order.to_dict(), "error": str(exc)}
                 order_attempts.append(attempt)
+                summary["executor_failed_count"] += 1
                 audit_log.append("execution_order_failed", attempt)
                 raise
             submitted = {"order": order.to_dict(), "executor_result": executor_result.to_dict(), "risk": risk.to_dict()}
-            orders_submitted.append(submitted)
-            order_attempts.append({"status": executor_result.status, "idempotency_key": order.idempotency_key, **submitted})
-            audit_log.append("execution_order_submitted", submitted)
+            if executor_result.accepted:
+                idempotency_store.mark_submitted(
+                    order.idempotency_key,
+                    metadata={"market_id": order.market_id, "token_id": order.token_id, "status": executor_result.status, "mode": execution_mode},
+                )
+                reserved_exposure_usdc += order.notional_usdc
+                summary["submitted_count"] += 1
+                summary["pending_count"] -= 1
+                summary["reserved_exposure_usdc"] = reserved_exposure_usdc
+                orders_submitted.append(submitted)
+                order_attempts.append({"status": executor_result.status, "idempotency_key": order.idempotency_key, **submitted})
+                audit_log.append("execution_order_submitted", submitted)
+            else:
+                idempotency_store.mark_rejected(
+                    order.idempotency_key,
+                    metadata={"market_id": order.market_id, "token_id": order.token_id, "status": executor_result.status, "mode": execution_mode, "accepted": False},
+                )
+                summary["pending_count"] -= 1
+                summary["not_accepted_count"] += 1
+                summary["rejected_count"] += 1
+                order_attempts.append({"status": "not_accepted", "idempotency_key": order.idempotency_key, **submitted})
+                audit_log.append("execution_order_rejected", submitted)
         else:
             paper_intents.append({k: v for k, v in order_dict.items() if k != "idempotency_key"} | {"reason": "execution disabled; paper intent only"})
 
@@ -224,6 +364,7 @@ def plan_disabled_execution_actions(
         "orders_submitted": orders_submitted,
         "order_attempts": order_attempts,
         "paper_intents": paper_intents,
+        "summary": summary,
     }
 
 
@@ -236,6 +377,7 @@ async def run_polymarket_runtime_cycle(
     max_events: int | None = None,
     min_liquidity: float = 0.0,
     min_edge: float = 0.0,
+    max_snapshot_age_seconds: float | None = None,
     paper_notional_usdc: float = 5.0,
     execution_mode: str = "paper",
     order_executor: OrderExecutor | None = None,
@@ -253,7 +395,14 @@ async def run_polymarket_runtime_cycle(
             "received_events": 0,
             "processed_events": 0,
             "ignored_events": 0,
+            "unsubscribed_events": 0,
             "invalid_events": 0,
+            "invalid_json_events": 0,
+            "sequence_rejected_events": 0,
+            "stale_events": 0,
+            "idle_timeouts": 0,
+            "stream_errors": 0,
+            "reconnects": 0,
             "errors": [],
             "snapshots": {},
         }
@@ -278,6 +427,7 @@ async def run_polymarket_runtime_cycle(
         snapshots=marketdata["snapshots"],
         probabilities=probabilities,
         min_edge=min_edge,
+        max_snapshot_age_seconds=max_snapshot_age_seconds,
     )
     execution = plan_disabled_execution_actions(
         decisions["decisions"],
@@ -305,6 +455,46 @@ async def run_polymarket_runtime_cycle(
     }
 
 
+def _sanitize_preflight_error(exc: Exception, source: dict[str, str] | Any) -> dict[str, str]:
+    message = str(exc)
+    for value in getattr(source, "values", lambda: [])():
+        secret = str(value or "")
+        if secret and len(secret) >= 4:
+            message = message.replace(secret, "[redacted]")
+    return {"type": exc.__class__.__name__, "message": message[:500]}
+
+
+def _marketdata_wait_reason(snapshot: dict[str, Any] | None, *, probability: float | None, max_snapshot_age_seconds: float | None) -> str | None:
+    if not snapshot:
+        return "missing_snapshot"
+    if probability is None:
+        return "missing_probability"
+    if snapshot.get("best_ask") is None:
+        return "missing_best_ask"
+    if snapshot.get("best_bid") is None:
+        return "missing_best_bid"
+    if snapshot.get("valid") is False:
+        return str(snapshot.get("invalid_reason") or "invalid_snapshot")
+    if max_snapshot_age_seconds is not None:
+        age = _snapshot_age_seconds(snapshot.get("received_at"))
+        if age is None or age > max_snapshot_age_seconds:
+            return "stale_snapshot"
+    return None
+
+
+def _snapshot_age_seconds(received_at: Any) -> float | None:
+    if not isinstance(received_at, str) or not received_at.strip():
+        return None
+    normalized = received_at.strip().replace("Z", "+00:00")
+    try:
+        timestamp = datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - timestamp.astimezone(timezone.utc)).total_seconds()
+
+
 def _dry_run_factory(path: str) -> Callable[[str, dict[str, Any]], AsyncIterator[dict[str, Any]]]:
     async def factory(url: str, subscribe_message: dict[str, Any]) -> AsyncIterator[dict[str, Any]]:
         async for event in dry_run_jsonl_stream_factory(url, subscribe_message, path=path):
@@ -318,6 +508,8 @@ def _build_order_dict(decision: dict[str, Any], *, notional_usdc: float) -> dict
     token_id = decision.get("token_id")
     limit_price = float(decision.get("best_ask"))
     notional = float(notional_usdc)
+    if notional <= 0.0 or notional != notional or notional in (float("inf"), float("-inf")):
+        raise ValueError("notional_usdc must be finite and positive")
     return {
         "market_id": market_id,
         "token_id": token_id,
@@ -330,7 +522,16 @@ def _build_order_dict(decision: dict[str, Any], *, notional_usdc: float) -> dict
 
 
 def _snapshot_from_decision(decision: dict[str, Any]) -> dict[str, Any]:
-    return {"spread": decision.get("spread"), "best_bid": decision.get("best_bid"), "best_ask": decision.get("best_ask")}
+    return {
+        "spread": decision.get("spread"),
+        "best_bid": decision.get("best_bid"),
+        "best_ask": decision.get("best_ask"),
+        "bid_depth": decision.get("bid_depth"),
+        "ask_depth": decision.get("ask_depth"),
+        "sequence": decision.get("sequence"),
+        "received_at": decision.get("received_at"),
+        "source": decision.get("source"),
+    }
 
 
 def _coerce_list(value: Any) -> list[str]:

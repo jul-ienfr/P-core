@@ -89,16 +89,16 @@ prediction-core polymarket-runtime-cycle --markets-json /tmp/markets.json --prob
 
 ## Polymarket low-latency stack
 
-Le choix canonique ajouté pour `prediction_core` est :
+Le choix canonique ajouté pour `prediction_core` est une architecture cible, pas une surface d'exécution réelle opérable aujourd'hui :
 
 ```text
 Gamma REST      -> découverte marché + règles + clobTokenIds, en cache hors hot path
 CLOB WebSocket  -> flux live orderbook/prix, hot path
-CLOB REST       -> passage/annulation d'ordres, hot path auth
+CLOB REST       -> passage/annulation d'ordres, hot path auth futur ; submit/cancel réels non câblés aujourd'hui
 Data API        -> analytics wallets/trades/positions, hors hot path
 ```
 
-Le repo officiel `Polymarket/polymarket-cli` est conservé comme surface opérateur/script JSON rapide, mais pas comme boucle trading serrée : chaque commande relance un process. Pour le moteur live, la cible rapide est un daemon Rust long-running basé sur `Polymarket/rs-clob-client` avec feature WebSocket.
+Le repo officiel `Polymarket/polymarket-cli` est conservé comme surface opérateur/script JSON rapide, mais pas comme boucle trading serrée : chaque commande relance un process. Pour le moteur live, la cible rapide est un daemon Rust long-running basé sur `Polymarket/rs-clob-client` avec feature WebSocket. Le passage et l'annulation d'ordres réels restent explicitement indisponibles dans ce scaffold.
 
 Commandes de référence :
 
@@ -118,7 +118,7 @@ Commandes de référence :
 
 `marketdata-stream` ajoute le worker async injectable qui consomme le même contrat dans un cache local. Par défaut il reste déterministe avec `--dry-run-events-jsonl`. Le mode réseau réel existe seulement derrière `--live` et impose `--max-events` pour éviter un run opérateur infini ; il reste read-only et ne place aucun ordre.
 
-`polymarket-runtime-plan` et `polymarket-runtime-cycle` mettent en place le pipeline complet demandé, même si l’exécution réelle n’est pas utilisée : découverte Gamma-like locale, sélection des `clobTokenIds`, marketdata CLOB WebSocket/replay, décision sur cache local, puis planification d’intentions **paper-only**. Le worker d’exécution CLOB REST est présent dans le scaffold mais `status=disabled`, `execution_enabled=false`, `orders_submitted=[]` ; toute tentative d’activer l’exécution réelle lève une erreur explicite.
+`polymarket-runtime-plan` et `polymarket-runtime-cycle` mettent en place le pipeline complet demandé, même si l’exécution réelle n’est pas utilisée : découverte Gamma-like locale, sélection des `clobTokenIds`, marketdata CLOB WebSocket/replay, décision sur cache local, puis exécution selon le mode choisi. En `paper`, le runtime planifie uniquement des intentions papier (`paper_intents`), avec `execution_enabled=false` et `orders_submitted=[]`. En `dry_run`, il emprunte le chemin d’exécution canonique avec risques/idempotence/audit, peut remplir `orders_submitted` avec des ids `dry-run:<idempotency_key>`, mais ne fait aucun appel réseau de placement d’ordre réel. `live` n’est pas un choix exposé par `polymarket-runtime-cycle` ; utiliser `polymarket-live-preflight` pour les vérifications opérateur read-only.
 
 Le scaffold `marketdata-plan` formalise le prochain découpage rapide sans encore placer d'ordre réel :
 

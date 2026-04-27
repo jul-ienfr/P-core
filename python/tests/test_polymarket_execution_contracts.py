@@ -5,6 +5,7 @@ from prediction_core.polymarket_execution import (
     DryRunPolymarketExecutor,
     ExecutionCredentialsError,
     ExecutionMode,
+    LiveExecutionUnavailableError,
     OrderRequest,
     OrderResult,
     OrderSide,
@@ -38,7 +39,7 @@ def test_order_request_serializes_limit_buy():
 
 
 def test_order_request_rejects_invalid_price_and_size():
-    with pytest.raises(ValueError, match="limit_price must be between 0 and 1"):
+    with pytest.raises(ValueError, match="limit_price must be finite and between 0 and 1"):
         OrderRequest(
             market_id="m1",
             token_id="t",
@@ -49,7 +50,7 @@ def test_order_request_rejects_invalid_price_and_size():
             notional_usdc=5,
             idempotency_key="k",
         )
-    with pytest.raises(ValueError, match="notional_usdc must be positive"):
+    with pytest.raises(ValueError, match="notional_usdc must be finite and positive"):
         OrderRequest(
             market_id="m1",
             token_id="t",
@@ -99,9 +100,41 @@ def test_dry_run_executor_accepts_without_network_and_records_order():
     assert result.status == "dry_run_accepted"
     assert result.exchange_order_id == "dry-run:k1"
     assert executor.orders == [order]
+    assert executor.list_open_orders() == [{"id": "dry-run:k1", "status": "open", "idempotency_key": "k1", "token_id": "yes-token"}]
     assert result.raw_response["dry_run"] is True
+
+
+def test_dry_run_cancel_is_recorded_but_never_submitted():
+    executor = DryRunPolymarketExecutor()
+
+    result = executor.cancel_order("ord-1")
+
+    assert result.accepted is False
+    assert result.status == "dry_run_cancel_not_submitted"
+    assert executor.cancel_requests == ["ord-1"]
+    assert result.raw_response["cancel_submitted"] is False
 
 
 def test_clob_rest_executor_requires_credentials():
     with pytest.raises(ExecutionCredentialsError, match="credentials are required"):
         ClobRestPolymarketExecutor.from_env(env={})
+
+
+def test_clob_rest_executor_fails_closed_even_with_credentials_until_submit_is_wired():
+    with pytest.raises(LiveExecutionUnavailableError, match="not wired yet"):
+        ClobRestPolymarketExecutor.from_env(
+            env={
+                "POLYMARKET_PRIVATE_KEY": "secret",
+                "POLYMARKET_FUNDER_ADDRESS": "0xabc",
+                "POLYMARKET_CHAIN_ID": "137",
+            }
+        )
+
+
+def test_clob_rest_order_management_fails_closed_without_cancel_network_call():
+    executor = ClobRestPolymarketExecutor(private_key="secret", funder_address="0xabc", chain_id="137")
+
+    with pytest.raises(LiveExecutionUnavailableError, match="open-order listing is not wired"):
+        executor.list_open_orders()
+    with pytest.raises(LiveExecutionUnavailableError, match="cancel is not wired"):
+        executor.cancel_order("ord-1")

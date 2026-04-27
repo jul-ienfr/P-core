@@ -102,3 +102,44 @@ def test_risk_blocks_missing_spread_fail_closed():
 
     assert result.allowed is False
     assert "missing_spread" in result.blocked_by
+
+
+def test_risk_blocks_invalid_or_non_finite_spread_fail_closed():
+    for spread in ("bad", float("nan"), float("inf")):
+        result = evaluate_execution_risk(
+            _order(),
+            limits=ExecutionRiskLimits(
+                max_order_notional_usdc=10,
+                max_total_exposure_usdc=100,
+                max_daily_loss_usdc=25,
+                max_spread=0.05,
+            ),
+            state=ExecutionRiskState(total_exposure_usdc=20, daily_realized_pnl_usdc=0),
+            market_snapshot={"spread": spread, "sequence": 10},
+        )
+
+        assert result.allowed is False
+        assert "invalid_spread" in result.blocked_by
+
+
+def test_risk_limits_reject_non_finite_values_fail_closed():
+    try:
+        ExecutionRiskLimits(
+            max_order_notional_usdc=float("nan"),
+            max_total_exposure_usdc=100,
+            max_daily_loss_usdc=25,
+            max_spread=0.05,
+        )
+    except ValueError as exc:
+        assert "max_order_notional_usdc must be finite and positive" in str(exc)
+    else:
+        raise AssertionError("nan risk limit should fail closed")
+
+
+def test_risk_state_rejects_invalid_exposure_fail_closed():
+    try:
+        ExecutionRiskState(total_exposure_usdc=float("inf"), daily_realized_pnl_usdc=0)
+    except ValueError as exc:
+        assert "total_exposure_usdc must be finite and non-negative" in str(exc)
+    else:
+        raise AssertionError("infinite exposure should fail closed")

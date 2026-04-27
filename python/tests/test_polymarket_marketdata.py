@@ -1,3 +1,6 @@
+import asyncio
+import json
+
 import pytest
 
 from prediction_core.polymarket_marketdata import (
@@ -84,6 +87,61 @@ def test_marketdata_cache_ignores_malformed_levels_without_poisoning_book():
     assert snapshot.best_ask == 0.24
     assert snapshot.bid_depth == 5.0
     assert snapshot.ask_depth == 6.0
+    assert snapshot.received_at is not None
+
+
+def test_marketdata_cache_rejects_regressive_sequence_without_overwriting_snapshot():
+    cache = MarketDataCache()
+    initial = cache.update_book(
+        token_id="yes-token",
+        bids=[{"price": "0.4", "size": "1"}],
+        asks=[{"price": "0.5", "size": "1"}],
+        sequence=10,
+    )
+
+    with pytest.raises(ValueError, match="sequence must be newer"):
+        cache.update_book(
+            token_id="yes-token",
+            bids=[{"price": "0.3", "size": "1"}],
+            asks=[{"price": "0.6", "size": "1"}],
+            sequence=9,
+        )
+
+    assert cache.snapshot(" yes-token ") == initial
+
+
+def test_marketdata_cache_rejects_missing_sequence_after_sequenced_snapshot():
+    cache = MarketDataCache()
+    initial = cache.update_book(
+        token_id="yes-token",
+        bids=[{"price": "0.4", "size": "1"}],
+        asks=[{"price": "0.5", "size": "1"}],
+        sequence=10,
+    )
+
+    with pytest.raises(ValueError, match="sequence is required"):
+        cache.update_book(
+            token_id="yes-token",
+            bids=[{"price": "0.3", "size": "1"}],
+            asks=[{"price": "0.6", "size": "1"}],
+        )
+
+    assert cache.snapshot("yes-token") == initial
+
+
+def test_marketdata_cache_marks_crossed_book_invalid_and_rejects_out_of_range_prices():
+    cache = MarketDataCache()
+
+    snapshot = cache.update_book(
+        token_id="yes-token",
+        bids=[{"price": "1.2", "size": "3"}, {"price": "0.7", "size": "2"}],
+        asks=[{"price": "0", "size": "1"}, {"price": "0.6", "size": "2"}],
+    )
+
+    assert snapshot.best_bid == 0.7
+    assert snapshot.best_ask == 0.6
+    assert snapshot.valid is False
+    assert snapshot.invalid_reason == "crossed_book"
 
 
 def test_select_hot_path_subscriptions_only_keeps_tradeable_token_ids():
@@ -169,6 +227,69 @@ def test_replay_clob_ws_events_reports_bad_book_events_without_stopping_replay()
     assert summary["snapshots"]["no-token"]["best_bid"] == 0.11
 
 
+def test_replay_clob_ws_events_ignores_unsubscribed_tokens():
+    summary = replay_clob_ws_events(
+        [
+            {"event_type": "book", "asset_id": "yes-token", "bids": [{"price": "0.4", "size": "1"}], "asks": [{"price": "0.5", "size": "1"}]},
+            {"event_type": "book", "asset_id": "other-token", "bids": [{"price": "0.2", "size": "1"}], "asks": [{"price": "0.3", "size": "1"}]},
+        ],
+        token_ids=["yes-token"],
+    )
+
+    assert summary["processed_events"] == 1
+    assert summary["ignored_events"] == 1
+    assert summary["unsubscribed_events"] == 1
+    assert set(summary["snapshots"]) == {"yes-token"}
+
+
+def test_incomplete_price_change_does_not_clear_existing_book():
+    cache = MarketDataCache()
+    summary = replay_clob_ws_events(
+        [
+            {"event_type": "book", "asset_id": "yes-token", "bids": [{"price": "0.4", "size": "1"}], "asks": [{"price": "0.5", "size": "1"}], "sequence": 1},
+            {"event_type": "price_change", "asset_id": "yes-token", "bids": [{"price": "0.41", "size": "2"}], "sequence": 2},
+        ],
+        cache=cache,
+    )
+
+    assert summary["processed_events"] == 1
+    assert summary["invalid_events"] == 1
+    assert summary["ignored_events"] == 1
+    assert summary["snapshots"]["yes-token"]["best_bid"] == 0.4
+    assert summary["snapshots"]["yes-token"]["best_ask"] == 0.5
+    assert summary["errors"] == [{"index": 1, "error": "price_change requires complete bids and asks lists"}]
+
+
+def test_regressive_sequence_is_counted_without_overwriting_snapshot():
+    summary = replay_clob_ws_events(
+        [
+            {"event_type": "book", "asset_id": "yes-token", "bids": [{"price": "0.4", "size": "1"}], "asks": [{"price": "0.5", "size": "1"}], "sequence": 5},
+            {"event_type": "book", "asset_id": "yes-token", "bids": [{"price": "0.3", "size": "1"}], "asks": [{"price": "0.6", "size": "1"}], "sequence": 4},
+        ]
+    )
+
+    assert summary["processed_events"] == 1
+    assert summary["invalid_events"] == 1
+    assert summary["sequence_rejected_events"] == 1
+    assert summary["stale_events"] == 1
+    assert summary["snapshots"]["yes-token"]["sequence"] == 5
+
+
+def test_missing_sequence_after_sequence_is_counted_without_overwriting_snapshot():
+    summary = replay_clob_ws_events(
+        [
+            {"event_type": "book", "asset_id": "yes-token", "bids": [{"price": "0.4", "size": "1"}], "asks": [{"price": "0.5", "size": "1"}], "sequence": 5},
+            {"event_type": "book", "asset_id": "yes-token", "bids": [{"price": "0.3", "size": "1"}], "asks": [{"price": "0.6", "size": "1"}]},
+        ]
+    )
+
+    assert summary["processed_events"] == 1
+    assert summary["invalid_events"] == 1
+    assert summary["sequence_rejected_events"] == 1
+    assert summary["stale_events"] == 1
+    assert summary["snapshots"]["yes-token"]["sequence"] == 5
+
+
 @pytest.mark.asyncio
 async def test_run_clob_marketdata_stream_subscribes_and_stops_after_event_limit():
     sent_messages = []
@@ -213,6 +334,54 @@ async def test_run_clob_marketdata_stream_subscribes_and_stops_after_event_limit
     assert summary["ignored_events"] == 1
     assert summary["snapshots"]["yes-token"]["best_bid"] == 0.62
     assert "no-token" not in summary["snapshots"]
+
+
+@pytest.mark.asyncio
+async def test_run_clob_marketdata_stream_reconnects_after_invalid_json_error():
+    calls = 0
+
+    async def fake_stream_factory(url, subscribe_message):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise json.JSONDecodeError("bad", "{", 0)
+        yield {
+            "event_type": "book",
+            "asset_id": "yes-token",
+            "bids": [{"price": "0.42", "size": "3"}],
+            "asks": [{"price": "0.47", "size": "2"}],
+        }
+
+    summary = await run_clob_marketdata_stream(
+        token_ids=["yes-token"],
+        stream_factory=fake_stream_factory,
+        max_events=1,
+        max_reconnects=1,
+        reconnect_backoff_seconds=0,
+    )
+
+    assert calls == 2
+    assert summary["invalid_json_events"] == 1
+    assert summary["reconnects"] == 1
+    assert summary["processed_events"] == 1
+    assert summary["snapshots"]["yes-token"]["best_bid"] == 0.42
+
+
+@pytest.mark.asyncio
+async def test_run_clob_marketdata_stream_reports_idle_timeout():
+    async def idle_stream_factory(url, subscribe_message):
+        await asyncio.sleep(0.05)
+        yield {"event_type": "book", "asset_id": "yes-token", "bids": [], "asks": []}
+
+    summary = await run_clob_marketdata_stream(
+        token_ids=["yes-token"],
+        stream_factory=idle_stream_factory,
+        idle_timeout_seconds=0.001,
+    )
+
+    assert summary["idle_timeouts"] == 1
+    assert summary["received_events"] == 0
+    assert summary["processed_events"] == 0
 
 
 @pytest.mark.asyncio

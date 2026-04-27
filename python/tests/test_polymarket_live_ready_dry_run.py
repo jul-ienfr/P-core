@@ -12,7 +12,12 @@ from prediction_core.polymarket_runtime import run_polymarket_runtime_cycle
 
 
 @pytest.mark.asyncio
-async def test_runtime_cycle_dry_run_rehearsal_submits_via_canonical_executor(tmp_path):
+async def test_runtime_cycle_dry_run_rehearsal_submits_via_canonical_executor(tmp_path, monkeypatch):
+    monkeypatch.delenv("PREDICTION_CORE_SYNC_DATABASE_URL", raising=False)
+    monkeypatch.delenv("PANOPTIQUE_SYNC_DATABASE_URL", raising=False)
+    monkeypatch.delenv("PREDICTION_CORE_DATABASE_URL", raising=False)
+    monkeypatch.delenv("PANOPTIQUE_DATABASE_URL", raising=False)
+
     idempotency_path = tmp_path / "ids.jsonl"
     audit_path = tmp_path / "audit.jsonl"
 
@@ -68,7 +73,8 @@ async def test_runtime_cycle_dry_run_rehearsal_submits_via_canonical_executor(tm
     assert submitted["order"]["token_id"] == "yes-token"
 
     id_rows = [json.loads(line) for line in idempotency_path.read_text().splitlines()]
-    assert [row["key"] for row in id_rows] == [submitted["order"]["idempotency_key"]]
+    assert {row["key"] for row in id_rows} == {submitted["order"]["idempotency_key"]}
+    assert [row["status"] for row in id_rows] == ["pending", "submitted"]
 
     audit_rows = [json.loads(line) for line in audit_path.read_text().splitlines()]
     assert [row["event_type"] for row in audit_rows] == [

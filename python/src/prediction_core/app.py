@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 from functools import partial
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from prediction_core.polymarket_execution import (
     ExecutionRiskState,
     JsonlExecutionAuditLog,
     JsonlIdempotencyStore,
+    LiveExecutionUnavailableError,
 )
 from prediction_core.polymarket_marketdata import (
     build_marketdata_worker_plan,
@@ -22,7 +24,7 @@ from prediction_core.polymarket_marketdata import (
     replay_clob_ws_events,
     run_clob_marketdata_stream,
 )
-from prediction_core.polymarket_runtime import build_polymarket_runtime_scaffold, run_polymarket_runtime_cycle
+from prediction_core.polymarket_runtime import build_polymarket_runtime_scaffold, preflight_polymarket_live_readiness, run_polymarket_runtime_cycle
 from prediction_core.polymarket_stack import recommended_polymarket_stack, stack_decision_table
 from prediction_core.server import build_server
 
@@ -170,6 +172,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the complete read-only Polymarket runtime scaffold including disabled execution",
     )
 
+    live_preflight = subparsers.add_parser(
+        "polymarket-live-preflight",
+        help="Check live Polymarket CLOB environment readiness without constructing an executor or submitting orders",
+    )
+    del live_preflight
+
+
     runtime_cycle = subparsers.add_parser(
         "polymarket-runtime-cycle",
         help="Run a bounded read-only discovery→marketdata→decision→disabled-execution cycle from local fixtures",
@@ -180,14 +189,15 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_cycle.add_argument("--max-events", type=int, required=True, help="Stop after this many CLOB events")
     runtime_cycle.add_argument("--min-liquidity", type=float, default=0.0, help="Minimum market liquidity for hot-path subscription")
     runtime_cycle.add_argument("--min-edge", type=float, default=0.0, help="Minimum probability minus ask edge for paper signal")
+    runtime_cycle.add_argument("--max-snapshot-age-seconds", type=float, help="Maximum CLOB snapshot age allowed for decisions")
     runtime_cycle.add_argument("--paper-notional-usdc", type=float, default=5.0, help="Paper intent notional for disabled execution planner")
-    runtime_cycle.add_argument("--execution-mode", choices=("paper", "dry_run", "live"), default="paper", help="Execution mode; paper remains the safe default")
-    runtime_cycle.add_argument("--idempotency-jsonl", help="JSONL idempotency store path required for dry_run/live execution")
-    runtime_cycle.add_argument("--audit-jsonl", help="JSONL audit log path required for dry_run/live execution")
-    runtime_cycle.add_argument("--max-order-notional-usdc", type=float, help="Per-order risk cap required for dry_run/live execution")
-    runtime_cycle.add_argument("--max-total-exposure-usdc", type=float, help="Total exposure risk cap required for dry_run/live execution")
-    runtime_cycle.add_argument("--max-daily-loss-usdc", type=float, help="Daily loss risk cap required for dry_run/live execution")
-    runtime_cycle.add_argument("--max-spread", type=float, help="Maximum allowed bid/ask spread required for dry_run/live execution")
+    runtime_cycle.add_argument("--execution-mode", choices=("paper", "dry_run"), default="paper", help="Execution mode; paper remains the safe default; live submission is not available")
+    runtime_cycle.add_argument("--idempotency-jsonl", help="JSONL idempotency store path required for dry_run execution")
+    runtime_cycle.add_argument("--audit-jsonl", help="JSONL audit log path required for dry_run execution")
+    runtime_cycle.add_argument("--max-order-notional-usdc", type=float, help="Per-order risk cap required for dry_run execution")
+    runtime_cycle.add_argument("--max-total-exposure-usdc", type=float, help="Total exposure risk cap required for dry_run execution")
+    runtime_cycle.add_argument("--max-daily-loss-usdc", type=float, help="Daily loss risk cap required for dry_run execution")
+    runtime_cycle.add_argument("--max-spread", type=float, help="Maximum allowed bid/ask spread required for dry_run execution")
     runtime_cycle.add_argument("--total-exposure-usdc", type=float, default=0.0, help="Current total exposure for risk checks")
     runtime_cycle.add_argument("--daily-realized-pnl-usdc", type=float, default=0.0, help="Current daily realized PnL for risk checks")
     del runtime_plan
@@ -318,6 +328,11 @@ def main() -> int:
         print(json.dumps(build_polymarket_runtime_scaffold()))
         return 0
 
+    if args.command == "polymarket-live-preflight":
+        print(json.dumps(preflight_polymarket_live_readiness()))
+        return 0
+
+
     if args.command == "polymarket-runtime-cycle":
         markets = _read_json_file(Path(args.markets_json))
         probabilities = _read_json_file(Path(args.probabilities_json))
@@ -330,20 +345,27 @@ def main() -> int:
         risk_state = None
         idempotency_store = None
         audit_log = None
+        if args.paper_notional_usdc is None or not math.isfinite(float(args.paper_notional_usdc)) or float(args.paper_notional_usdc) <= 0.0:
+            parser.error("--paper-notional-usdc must be finite and positive")
+        if args.execution_mode == "live":
+            parser.error("--execution-mode live is unavailable: real Polymarket CLOB REST submission is not wired; use paper or dry_run")
         if args.execution_mode in {"dry_run", "live"}:
             required_risk_values = [args.max_order_notional_usdc, args.max_total_exposure_usdc, args.max_daily_loss_usdc, args.max_spread]
             if not args.idempotency_jsonl or not args.audit_jsonl or any(value is None for value in required_risk_values):
-                parser.error("live execution requires --idempotency-jsonl, --audit-jsonl, and risk limits")
-            risk_limits = ExecutionRiskLimits(
-                max_order_notional_usdc=args.max_order_notional_usdc,
-                max_total_exposure_usdc=args.max_total_exposure_usdc,
-                max_daily_loss_usdc=args.max_daily_loss_usdc,
-                max_spread=args.max_spread,
-            )
-            risk_state = ExecutionRiskState(
-                total_exposure_usdc=args.total_exposure_usdc,
-                daily_realized_pnl_usdc=args.daily_realized_pnl_usdc,
-            )
+                parser.error("dry_run execution requires --idempotency-jsonl, --audit-jsonl, and risk limits")
+            try:
+                risk_limits = ExecutionRiskLimits(
+                    max_order_notional_usdc=args.max_order_notional_usdc,
+                    max_total_exposure_usdc=args.max_total_exposure_usdc,
+                    max_daily_loss_usdc=args.max_daily_loss_usdc,
+                    max_spread=args.max_spread,
+                )
+                risk_state = ExecutionRiskState(
+                    total_exposure_usdc=args.total_exposure_usdc,
+                    daily_realized_pnl_usdc=args.daily_realized_pnl_usdc,
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
             idempotency_store = JsonlIdempotencyStore(args.idempotency_jsonl)
             audit_log = JsonlExecutionAuditLog(args.audit_jsonl)
             if args.execution_mode == "dry_run":
@@ -351,7 +373,7 @@ def main() -> int:
             else:
                 try:
                     order_executor = ClobRestPolymarketExecutor.from_env()
-                except ExecutionCredentialsError as exc:
+                except (ExecutionCredentialsError, LiveExecutionUnavailableError) as exc:
                     parser.error(str(exc))
         result = asyncio.run(
             run_polymarket_runtime_cycle(
@@ -361,6 +383,7 @@ def main() -> int:
                 max_events=args.max_events,
                 min_liquidity=args.min_liquidity,
                 min_edge=args.min_edge,
+                max_snapshot_age_seconds=args.max_snapshot_age_seconds,
                 paper_notional_usdc=args.paper_notional_usdc,
                 execution_mode=args.execution_mode,
                 order_executor=order_executor,
