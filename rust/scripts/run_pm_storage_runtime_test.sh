@@ -3,6 +3,9 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 workspace_dir="$repo_root"
+target_dir="${CARGO_TARGET_DIR:-/tmp/pm_storage_runtime_target}"
+registry_dir="${CARGO_REGISTRY_DIR:-/tmp/pm_storage_runtime_registry}"
+git_dir="${CARGO_GIT_DIR:-/tmp/pm_storage_runtime_git}"
 crate_name="pm_storage"
 postgres_image="${POSTGRES_IMAGE:-postgres:16}"
 rust_image="${RUST_IMAGE:-rust:1.89-bookworm}"
@@ -66,10 +69,16 @@ run_one() {
   echo "[pm_storage runtime] DATABASE_URL=${masked_database_url}"
   echo "[pm_storage runtime] cargo ${cargo_args[*]}"
 
+  mkdir -p "$target_dir" "$registry_dir" "$git_dir"
+
   "$docker_bin" run --rm \
     --network "$network" \
-    -v "$repo_root":/workspace \
+    -v "$repo_root":/workspace:ro \
+    -v "$target_dir":/cargo-target \
+    -v "$registry_dir":/usr/local/cargo/registry \
+    -v "$git_dir":/usr/local/cargo/git \
     -w /workspace \
+    -e CARGO_TARGET_DIR=/cargo-target \
     -e DATABASE_URL="$database_url" \
     "$rust_image" \
     bash -lc 'export PATH=/usr/local/cargo/bin:$PATH; cargo "$@"' bash "${cargo_args[@]}"

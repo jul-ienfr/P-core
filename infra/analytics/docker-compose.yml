@@ -31,7 +31,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_INSTALL_PLUGINS: grafana-clickhouse-datasource
     ports:
-      - "${GRAFANA_BIND_ADDR:-0.0.0.0}:${GRAFANA_PORT:-3000}:3000"
+      - "${GRAFANA_BIND_ADDR:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro

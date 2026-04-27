@@ -95,7 +95,7 @@ pg_dump --format=custom --no-owner --no-acl \
 
 ### Restore smoke test
 
-Restore into a disposable database, never over the primary DB:
+Restore into a disposable database, never over the primary DB. Never target production without explicit operator approval, checksum verification, a documented rollback plan, and a successful disposable target restore verification first:
 
 ```bash
 createdb panoptique_restore_smoke

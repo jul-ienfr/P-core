@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import asdict, dataclass
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
-_SECRET_KEYS = ("PASSWORD", "SECRET", "ACCESS_KEY", "TOKEN")
+_SECRET_KEYS = ("PASSWORD", "SECRET", "ACCESS_KEY", "PRIVATE_KEY", "FUNDER", "API_KEY", "CREDENTIAL", "AUTH", "TOKEN")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -84,10 +84,11 @@ def mask_url(url: str | None) -> str | None:
     if not url:
         return url
     parts = urlsplit(url)
+    query = urlencode([(key, "***" if any(secret in key.upper() for secret in _SECRET_KEYS) else value) for key, value in parse_qsl(parts.query, keep_blank_values=True)])
     if "@" not in parts.netloc or ":" not in parts.netloc.split("@", 1)[0]:
-        return url
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
     username, hostinfo = parts.netloc.rsplit("@", 1)[0].split(":", 1)[0], parts.netloc.rsplit("@", 1)[1]
-    return urlunsplit((parts.scheme, f"{username}:***@{hostinfo}", parts.path, parts.query, parts.fragment))
+    return urlunsplit((parts.scheme, f"{username}:***@{hostinfo}", parts.path, query, parts.fragment))
 
 
 def redact_mapping(value: object) -> object:
@@ -96,13 +97,15 @@ def redact_mapping(value: object) -> object:
         for key, item in value.items():
             if any(secret in str(key).upper() for secret in _SECRET_KEYS):
                 redacted[str(key)] = "***" if item else item
-            elif str(key).endswith("url") or str(key).endswith("database_url") or str(key).endswith("sync_database_url"):
+            elif str(key).lower().endswith("url") or str(key).lower().endswith("database_url") or str(key).lower().endswith("sync_database_url"):
                 redacted[str(key)] = mask_url(item if isinstance(item, str) else None)
             else:
                 redacted[str(key)] = redact_mapping(item)
         return redacted
     if isinstance(value, list):
         return [redact_mapping(item) for item in value]
+    if isinstance(value, str) and "://" in value:
+        return mask_url(value)
     return value
 
 

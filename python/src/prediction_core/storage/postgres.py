@@ -94,6 +94,23 @@ class OperationalStateRepository:
             },
         )
 
+    def update_idempotency_key_status(
+        self,
+        *,
+        key: str,
+        status: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        result = self._execute(
+            """
+            UPDATE execution_idempotency_keys
+            SET metadata = metadata || CAST(:metadata AS jsonb)
+            WHERE key = :key
+            """,
+            {"key": key, "metadata": {**(metadata or {}), "status": status}},
+        )
+        return bool(getattr(result, "rowcount", 0))
+
     def claim_idempotency_key(
         self,
         *,

@@ -10,6 +10,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
+from prediction_core.storage.config import redact_mapping
+
 
 class ExecutionMode(str, Enum):
     PAPER = "paper"
@@ -353,16 +355,23 @@ class PostgresIdempotencyStore:
         )
 
     def mark_submitted(self, key: str, metadata: dict[str, Any] | None = None) -> bool:
+        update = getattr(self.repository, "update_idempotency_key_status", None)
+        if callable(update):
+            return bool(update(key=key, status="submitted", metadata=metadata))
         return True
 
     def mark_rejected(self, key: str, metadata: dict[str, Any] | None = None) -> bool:
+        update = getattr(self.repository, "update_idempotency_key_status", None)
+        if callable(update):
+            return bool(update(key=key, status="rejected", metadata=metadata))
         return True
 
 
 class CompositeIdempotencyStore:
-    def __init__(self, primary: IdempotencyStore, secondary: IdempotencyStore | None = None) -> None:
+    def __init__(self, primary: IdempotencyStore, secondary: IdempotencyStore | None = None, *, strict_secondary_writes: bool = False) -> None:
         self.primary = primary
         self.secondary = secondary
+        self.strict_secondary_writes = strict_secondary_writes
 
     def seen(self, key: str) -> bool:
         return self.primary.seen(key)
@@ -373,7 +382,8 @@ class CompositeIdempotencyStore:
             try:
                 self.secondary.claim(key, metadata, status=status)
             except Exception:
-                pass
+                if self.strict_secondary_writes:
+                    raise
         return claimed
 
     def mark_submitted(self, key: str, metadata: dict[str, Any] | None = None) -> bool:
@@ -382,7 +392,8 @@ class CompositeIdempotencyStore:
             try:
                 self.secondary.mark_submitted(key, metadata)
             except Exception:
-                pass
+                if self.strict_secondary_writes:
+                    raise
         return marked
 
     def mark_rejected(self, key: str, metadata: dict[str, Any] | None = None) -> bool:
@@ -391,7 +402,8 @@ class CompositeIdempotencyStore:
             try:
                 self.secondary.mark_rejected(key, metadata)
             except Exception:
-                pass
+                if self.strict_secondary_writes:
+                    raise
         return marked
 
 
@@ -414,9 +426,10 @@ class PostgresExecutionAuditLog:
 
 
 class CompositeExecutionAuditLog:
-    def __init__(self, primary: ExecutionAuditLog, secondary: ExecutionAuditLog | None = None) -> None:
+    def __init__(self, primary: ExecutionAuditLog, secondary: ExecutionAuditLog | None = None, *, strict_secondary_writes: bool = False) -> None:
         self.primary = primary
         self.secondary = secondary
+        self.strict_secondary_writes = strict_secondary_writes
 
     def append(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         row = self.primary.append(event_type, payload)
@@ -424,7 +437,8 @@ class CompositeExecutionAuditLog:
             try:
                 self.secondary.append(event_type, payload)
             except Exception:
-                pass
+                if self.strict_secondary_writes:
+                    raise
         return row
 
 
@@ -853,16 +867,4 @@ def _normalize_live_order_response(response: Any) -> dict[str, Any]:
 
 
 def _sanitize_payload(value: Any) -> Any:
-    secret_markers = ("key", "secret", "passphrase", "signature", "auth", "private")
-    if isinstance(value, Mapping):
-        sanitized: dict[str, Any] = {}
-        for key, item in value.items():
-            text_key = str(key)
-            if any(marker in text_key.lower() for marker in secret_markers):
-                sanitized[text_key] = "[redacted]"
-            else:
-                sanitized[text_key] = _sanitize_payload(item)
-        return sanitized
-    if isinstance(value, list):
-        return [_sanitize_payload(item) for item in value]
-    return value
+    return redact_mapping(value)

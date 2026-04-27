@@ -5,7 +5,7 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 from urllib.request import urlopen
 
-from prediction_core.storage.config import load_storage_stack_config
+from prediction_core.storage.config import load_storage_stack_config, mask_url
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -35,12 +35,20 @@ def storage_health_summary(checks: dict[str, dict[str, Any]]) -> dict[str, Any]:
     healthy = [name for name, check in checks.items() if check.get("ok")]
     unhealthy = [name for name in configured if name not in healthy]
     required_primary = ["postgres"]
+    degraded_services = [name for name in ("redis", "nats", "s3") if name in unhealthy]
     missing_required_primary = [name for name in required_primary if name not in healthy]
+    degraded = bool(degraded_services)
+    ready_for_paper = not missing_required_primary
+    ready_for_live = ready_for_paper and not degraded
     return {
         "configured_count": len(configured),
         "healthy_count": len(healthy),
         "unhealthy": unhealthy,
-        "ready": not missing_required_primary,
+        "degraded": degraded,
+        "degraded_services": degraded_services,
+        "ready": ready_for_paper,
+        "ready_for_paper": ready_for_paper,
+        "ready_for_live": ready_for_live,
         "missing_required_primary": missing_required_primary,
     }
 
@@ -117,7 +125,7 @@ def _nats_health(url: str | None, *, monitor_url: str | None = None, monitor_por
             "configured": True,
             "ok": 200 <= status < 300,
             "response": body,
-            "monitor_url": health_url,
+            "monitor_url": mask_url(health_url),
             "status": status,
         }
     except Exception as exc:

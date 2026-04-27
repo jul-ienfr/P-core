@@ -6,6 +6,7 @@ on:
       - ".github/workflows/storage-ci.yml"
       - ".gitignore"
       - "docs/panoptique/storage-architecture.md"
+      - "infra/analytics/docker-compose.yml"
       - "infra/storage/**"
       - "infra/panoptique/**"
       - "migrations/panoptique/**"
@@ -18,6 +19,7 @@ on:
       - ".github/workflows/storage-ci.yml"
       - ".gitignore"
       - "docs/panoptique/storage-architecture.md"
+      - "infra/analytics/docker-compose.yml"
       - "infra/storage/**"
       - "infra/panoptique/**"
       - "migrations/panoptique/**"
@@ -29,6 +31,34 @@ permissions:
   contents: read
 
 jobs:
+  infra-hardening:
+    name: Infra hardening checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check storage hardening invariants
+        run: |
+          set -euo pipefail
+          ! grep -RInE 'image: .*:latest([[:space:]]|$)|image: .*:latest-' infra/storage infra/panoptique infra/analytics
+          ! grep -RInE ':-0\.0\.0\.0|"0\.0\.0\.0:| 0\.0\.0\.0:' infra/storage/*.yml infra/panoptique/*.yml infra/analytics/*.yml
+          generated="$(git ls-files | grep -E '(^|/)(__pycache__|\.pytest_cache)(/|$)|\.(pyc|jsonl|parquet|dump|sha256)$' || true)"
+          secrets="$(git ls-files | grep -E '(^|/)\.env(\.|/|$)|\.(pem|key|p12|pfx|pgpass)$' | grep -v -E '(^|/)\.env\.example$' || true)"
+          if [[ -n "$generated$secrets" ]]; then
+            if [[ -n "$generated" ]]; then
+              echo "Tracked generated/cache artifacts:"
+              echo "$generated"
+            fi
+            if [[ -n "$secrets" ]]; then
+              echo "Tracked secret-bearing files:"
+              echo "$secrets"
+            fi
+            exit 1
+          fi
+          bash -n infra/storage/backup_postgres.sh infra/storage/restore_postgres_check.sh
+
   storage-python:
     name: Python storage tests
     runs-on: ubuntu-latest
@@ -42,9 +72,14 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Install Python storage package
         working-directory: python
-        run: python -m pip install --upgrade pip && python -m pip install -e ".[storage]" pytest
+        run: |
+          test -f uv.lock
+          uv sync --locked --extra storage --with pytest
 
       - name: Validate storage compose config
         working-directory: infra/storage
@@ -53,7 +88,7 @@ jobs:
       - name: Run storage-focused Python tests
         working-directory: python
         run: |
-          pytest \
+          uv run pytest \
             tests/test_storage_config.py \
             tests/test_panoptique_storage_exports.py \
             tests/test_panoptique_infra.py \

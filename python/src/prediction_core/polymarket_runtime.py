@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+from prediction_core.storage.config import redact_mapping
+
 from prediction_core.polymarket_execution import (
     ClobRestPolymarketExecutor,
     DryRunPolymarketExecutor,
@@ -377,7 +379,7 @@ def plan_disabled_execution_actions(
                 executor_result = order_executor.submit_order(order)  # type: ignore[union-attr]
             except Exception as exc:
                 attempt_status = "execution_order_unknown" if execution_mode == "live" else "executor_failed"
-                attempt = {"status": attempt_status, "idempotency_key": order.idempotency_key, "order": order.to_dict(), "error": str(exc)}
+                attempt = {"status": attempt_status, "idempotency_key": order.idempotency_key, "order": order.to_dict(), "error": redact_mapping({"error": str(exc)})["error"]}
                 order_attempts.append(attempt)
                 summary["executor_failed_count"] += 1
                 audit_log.append("execution_order_failed", attempt)
@@ -409,8 +411,10 @@ def plan_disabled_execution_actions(
             paper_intents.append({k: v for k, v in order_dict.items() if k != "idempotency_key"} | {"reason": "execution disabled; paper intent only"})
 
     return {
-        "mode": f"{execution_mode} polymarket execution planner" if execution_mode != "paper" else "paper/read-only disabled execution planner",
+        "mode": f"{execution_mode} polymarket execution planner",
         "execution_enabled": execution_mode in {"dry_run", "live"},
+        "paper_only": execution_mode != "live",
+        "live_order_allowed": execution_mode == "live" and live_permit is not None,
         "orders_submitted": orders_submitted,
         "order_attempts": order_attempts,
         "paper_intents": paper_intents,
@@ -495,7 +499,9 @@ async def run_polymarket_runtime_cycle(
     )
     scaffold = build_polymarket_runtime_scaffold()
     return {
-        "mode": "paper/read-only polymarket runtime cycle",
+        "mode": f"{execution_mode} polymarket runtime cycle",
+        "paper_only": execution_mode != "live",
+        "live_order_allowed": execution_mode == "live" and live_permit is not None,
         "guardrails": scaffold["guardrails"],
         "subscriptions": subscriptions,
         "marketdata": marketdata,
@@ -510,8 +516,10 @@ async def run_polymarket_runtime_cycle(
 
 
 def _sanitize_preflight_error(exc: Exception, source: dict[str, str] | Any) -> dict[str, str]:
-    message = str(exc)
-    for value in getattr(source, "values", lambda: [])():
+    message = str(redact_mapping({"error": str(exc)})["error"])
+    for key, value in getattr(source, "items", lambda: [])():
+        if not any(secret in str(key).upper() for secret in ("PASSWORD", "SECRET", "ACCESS_KEY", "PRIVATE_KEY", "FUNDER", "API_KEY", "CREDENTIAL", "AUTH", "TOKEN")):
+            continue
         secret = str(value or "")
         if secret and len(secret) >= 4:
             message = message.replace(secret, "[redacted]")

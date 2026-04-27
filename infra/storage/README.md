@@ -69,7 +69,7 @@ Validate that a dump is structurally readable before planning any restore:
 ./restore_postgres_check.sh /secure/local/backup/path/postgres-panoptique-YYYYMMDDTHHMMSSZ.dump
 ```
 
-`restore_postgres_check.sh` only runs `pg_restore --list`; it does not connect to a database and does not restore, drop, or overwrite data. Actual production restore commands are intentionally not automated here because they require operator approval, a verified target, and an environment-specific rollback plan.
+`restore_postgres_check.sh` verifies an adjacent `.sha256` file when present, then runs `pg_restore --list`; it does not connect to a database and does not restore, drop, or overwrite data. Actual production restore commands are intentionally not automated here. Never target production without explicit operator approval, checksum verification, a documented rollback plan, and a disposable target restore verification first.
 
 ## Retention, compression, and lifecycle notes
 
