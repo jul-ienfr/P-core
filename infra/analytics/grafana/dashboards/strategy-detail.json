@@ -468,7 +468,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT formatDateTime(toTimeZone(p.observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Observation paper (Paris)`, p.run_id AS `Run / exécution`, p.market_id AS `Marché`, p.strategy_id AS `Stratégie`, p.profile_id AS `Profil`, p.paper_order_id AS `Ordre paper`, p.status AS `Statut paper`, p.price AS `Prix paper`, p.size AS `Taille paper` FROM prediction_core.paper_orders p WHERE $__timeFilter(p.observed_at) ORDER BY p.observed_at DESC LIMIT 500",
+          "rawSql": "SELECT formatDateTime(toTimeZone(p.observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Observation paper (Paris)`, p.run_id AS `Run / exécution`, p.market_id AS `Marché`, p.strategy_id AS `Stratégie`, p.profile_id AS `Profil`, p.paper_order_id AS `Ordre paper`, p.status AS `Statut paper`, p.price AS `Prix paper`, p.size AS `Taille paper` FROM prediction_core.paper_orders p WHERE $__timeFilter(p.observed_at)\n  AND match(p.run_id, '${run_id:regex}')\n  AND match(p.strategy_id, '${strategy:regex}')\n  AND match(p.profile_id, '${profile:regex}')\n  AND match(p.market_id, '${market:regex}')\n  AND match(p.mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(p.observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(p.observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  ) ORDER BY p.observed_at DESC LIMIT 500",
           "refId": "A"
         }
       ],

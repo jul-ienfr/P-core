@@ -175,6 +175,8 @@ def test_paper_ledger_refresh_updates_mtm_pnl_and_operator_actions():
 
     order = refreshed["orders"][0]
     assert order["operator_action"] == "TAKE_PROFIT_REVIEW_PAPER"
+    assert order["exit_policy"]["action"] == "HOLD"
+    assert order["exit_policy"]["reason"] == "no_exit_trigger"
     assert order["status"] == "filled"
     assert order["actual_refresh_price"] == 0.44
     assert order["mtm_usdc"] == pytest.approx(7.678571, rel=1e-6)

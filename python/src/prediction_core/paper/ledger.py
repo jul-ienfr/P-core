@@ -5,6 +5,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
+from prediction_core.paper.exit_policy import annotate_order_with_exit_policy
+
 PAPER_LEDGER_STATUSES = {
     "planned",
     "filled",
@@ -125,6 +127,7 @@ def paper_ledger_refresh(
             _apply_settlement(order, outcome)
         else:
             _apply_refresh(order, refresh, max_position_usdc=max_position_usdc)
+            order = annotate_order_with_exit_policy(order)
         order["updated_at"] = _utc_now()
         refreshed_orders.append(order)
     result["orders"] = refreshed_orders

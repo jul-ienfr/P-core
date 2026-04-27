@@ -41,9 +41,10 @@ def _side(payload: Mapping[str, Any], gate_status: str) -> StrategySide:
 
 def _blockers(payload: Mapping[str, Any]) -> list[str]:
     raw = payload.get("blockers") or payload.get("execution_blockers") or []
-    if isinstance(raw, str):
-        return [raw]
-    return [str(item) for item in raw]
+    blockers = [raw] if isinstance(raw, str) else [str(item) for item in raw]
+    portfolio_risk = payload.get("portfolio_risk") if isinstance(payload.get("portfolio_risk"), Mapping) else {}
+    risk_blockers = portfolio_risk.get("blockers") if isinstance(portfolio_risk.get("blockers"), list) else []
+    return [*blockers, *[str(item) for item in risk_blockers]]
 
 
 def _missing_gates(payload: Mapping[str, Any], profile: Mapping[str, Any]) -> list[str]:
@@ -80,6 +81,8 @@ def build_weather_profile_signal(
     edge = _float_or_none(score.get("edge", score.get("probability_edge", payload.get("edge", payload.get("probability_edge")))))
     risk_caps = profile.get("risk_caps") if isinstance(profile.get("risk_caps"), Mapping) else {}
     risks = ["paper/research profile adapter; no live execution", *blockers]
+    portfolio_risk = payload.get("portfolio_risk") if isinstance(payload.get("portfolio_risk"), Mapping) else {}
+    risks.extend(str(reason) for reason in portfolio_risk.get("reasons") or [])
     if missing_gates:
         risks.append("missing profile entry gates: " + ", ".join(missing_gates))
     if gate_status == "not_enough_data":
@@ -110,7 +113,18 @@ def build_weather_profile_signal(
             "best_ask": score.get("best_ask"),
             "spread": score.get("spread"),
             "liquidity_usd": score.get("liquidity_usd"),
+            "probability_source": score.get("probability_source") or payload.get("probability_source"),
+            "probability_method": score.get("probability_method") or payload.get("probability_method"),
+            "probability_synthetic": score.get("probability_synthetic") if score.get("probability_synthetic") is not None else payload.get("probability_synthetic"),
+            "probability_market_derived": score.get("probability_market_derived") if score.get("probability_market_derived") is not None else payload.get("probability_market_derived"),
+            "probability_confidence": score.get("probability_confidence") or payload.get("probability_confidence"),
+            "probability_error": score.get("probability_error") or payload.get("probability_error"),
+            "forecast_source_provider": score.get("forecast_source_provider") or payload.get("forecast_source_provider"),
+            "forecast_source_station_code": score.get("forecast_source_station_code") or payload.get("forecast_source_station_code"),
+            "forecast_source_url": score.get("forecast_source_url") or payload.get("forecast_source_url"),
+            "forecast_source_latency_tier": score.get("forecast_source_latency_tier") or payload.get("forecast_source_latency_tier"),
             "feature_family": score.get("feature_family"),
+            "portfolio_risk": dict(portfolio_risk) if portfolio_risk else {},
         },
         risks=risks,
         source={"adapter": "weather_profile_strategy", "profile_id": profile["id"], "references": list(payload.get("source_references") or [])},

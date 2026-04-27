@@ -28,6 +28,8 @@ groups:
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.debug_decisions
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.strategy_signals
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.paper_orders
+                  UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.paper_positions
+                  UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.paper_pnl_snapshots
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.execution_events
                 )
           - refId: C

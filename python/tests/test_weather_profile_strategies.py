@@ -36,6 +36,18 @@ def test_weather_profile_strategy_emits_safe_signal() -> None:
                 "action": "paper_probe",
                 "satisfied_gates": ["surface_inconsistency_present", "source_confirmed", "edge_survives_fill", "strict_limit_not_crossed"],
                 "source_references": ["fixture://surface"],
+                "score": {
+                    "probability_source": "weather_model",
+                    "probability_method": "calibrated_threshold_v1",
+                    "probability_synthetic": False,
+                    "probability_market_derived": False,
+                    "probability_confidence": 0.64,
+                    "forecast_source_provider": "open_meteo",
+                    "forecast_source_station_code": None,
+                    "forecast_source_url": "https://example.test/forecast",
+                    "forecast_source_latency_tier": "direct",
+                    "feature_family": "event_surface",
+                },
             }
         ],
     )
@@ -47,8 +59,46 @@ def test_weather_profile_strategy_emits_safe_signal() -> None:
     assert signal.mode == StrategyMode.PAPER_ONLY
     assert signal.target == StrategyTarget.EVENT_OUTCOME_FORECASTING
     assert signal.features["profile_id"] == "surface_grid_trader"
+    assert signal.features["probability_source"] == "weather_model"
+    assert signal.features["probability_method"] == "calibrated_threshold_v1"
+    assert signal.features["probability_synthetic"] is False
+    assert signal.features["probability_market_derived"] is False
+    assert signal.features["forecast_source_provider"] == "open_meteo"
+    assert signal.features["forecast_source_url"] == "https://example.test/forecast"
+    assert signal.features["forecast_source_latency_tier"] == "direct"
     assert signal.source["adapter"] == "weather_profile_strategy"
     assert "paper/research profile adapter; no live execution" in signal.risks
+
+
+def test_weather_profile_strategy_carries_portfolio_risk_blockers() -> None:
+    strategy = WeatherProfileStrategy(
+        "surface_grid_trader",
+        payloads=[
+            {
+                "market_id": "fixture-risk",
+                "probability_yes": 0.64,
+                "confidence": 0.7,
+                "edge": 0.08,
+                "action": "paper_probe",
+                "satisfied_gates": ["surface_inconsistency_present", "source_confirmed", "edge_survives_fill", "strict_limit_not_crossed"],
+                "portfolio_risk": {
+                    "ok": False,
+                    "blockers": ["circuit_breaker_tripped"],
+                    "reasons": ["circuit breaker tripped: operator_pause"],
+                    "diagnostics": {"paper_only": True, "live_order_allowed": False},
+                },
+            }
+        ],
+    )
+
+    signal = strategy.run(StrategyRunRequest(market_id="fixture")).signals[0]
+
+    assert signal.gate_status == "skip"
+    assert signal.side.value == "skip"
+    assert "circuit_breaker_tripped" in signal.features["blockers"]
+    assert signal.features["portfolio_risk"]["ok"] is False
+    assert signal.features["portfolio_risk"]["reasons"] == ["circuit breaker tripped: operator_pause"]
+    assert "circuit breaker tripped: operator_pause" in signal.risks
 
 
 def test_weather_profile_strategy_rejects_live_allowed() -> None:

@@ -147,9 +147,9 @@ def test_score_market_command_uses_calibrated_threshold_probability_surface() ->
 
     assert result.returncode == 0
     payload = json.loads(result.stdout)
-    assert payload["model"]["method"] == "calibrated_threshold_v1"
+    assert payload["model"]["method"] == "calibrated_gaussian_threshold_v1"
     assert payload["model"]["probability_yes"] == 0.57
-    assert payload["model"]["confidence"] == 0.68
+    assert payload["model"]["confidence"] == 0.66
     assert payload["edge"]["theoretical_yes_price"] == 0.57
     assert payload["edge"]["probability_edge"] == 0.14
 
@@ -165,11 +165,11 @@ def test_score_market_command_keeps_exact_bin_probability_more_conservative_than
 
     assert result.returncode == 0
     payload = json.loads(result.stdout)
-    assert payload["model"]["method"] == "calibrated_bin_v1"
-    assert payload["model"]["probability_yes"] == 0.23
-    assert payload["model"]["confidence"] == 0.56
-    assert payload["edge"]["theoretical_yes_price"] == 0.23
-    assert payload["edge"]["probability_edge"] == 0.06
+    assert payload["model"]["method"] == "calibrated_gaussian_bin_v1"
+    assert payload["model"]["probability_yes"] == 0.22
+    assert payload["model"]["confidence"] == 0.66
+    assert payload["edge"]["theoretical_yes_price"] == 0.22
+    assert payload["edge"]["probability_edge"] == 0.05
 
 
 def test_score_market_command_below_threshold_flips_probability_direction() -> None:
@@ -183,7 +183,7 @@ def test_score_market_command_below_threshold_flips_probability_direction() -> N
 
     assert result.returncode == 0
     payload = json.loads(result.stdout)
-    assert payload["model"]["method"] == "calibrated_threshold_v1"
+    assert payload["model"]["method"] == "calibrated_gaussian_threshold_v1"
     assert payload["model"]["probability_yes"] == 0.57
     assert payload["edge"]["probability_edge"] == 0.07
 
@@ -237,11 +237,11 @@ def test_score_market_command_live_source_uses_forecast_provider_when_available(
     ):
         payload = weather_cli._score_market_from_market_id("live-forecast-1", source="live")
 
-    assert payload["model"]["method"] == "calibrated_threshold_v1"
-    assert payload["model"]["probability_yes"] == 0.85
-    assert payload["model"]["confidence"] == 0.61
-    assert payload["edge"]["theoretical_yes_price"] == 0.85
-    assert payload["edge"]["probability_edge"] == 0.42
+    assert payload["model"]["method"] == "calibrated_gaussian_threshold_v1"
+    assert payload["model"]["probability_yes"] == 0.95
+    assert payload["model"]["confidence"] == 0.58
+    assert payload["edge"]["theoretical_yes_price"] == 0.95
+    assert payload["edge"]["probability_edge"] == 0.52
 
 
 def test_score_market_command_live_event_extracts_clean_resolution_metadata() -> None:

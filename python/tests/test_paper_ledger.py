@@ -89,6 +89,9 @@ def test_paper_ledger_refresh_marks_to_market_and_settles_orders() -> None:
     by_token = {order["token_id"]: order for order in refreshed["orders"]}
     assert by_token["active"]["mtm_usdc"] == pytest.approx(7.678571, rel=1e-6)
     assert by_token["active"]["pnl_usdc"] == pytest.approx(2.678571, rel=1e-6)
+    assert by_token["active"]["exit_policy"]["action"] == "HOLD"
+    assert by_token["active"]["exit_policy"]["reason"] == "no_exit_trigger"
+    assert by_token["active"]["operator_action"] == "TAKE_PROFIT_REVIEW_PAPER"
     assert by_token["winner"]["status"] == "settled_win"
     assert by_token["winner"]["pnl_usdc"] == pytest.approx(12.857142, rel=1e-6)
     assert by_token["loser"]["status"] == "settled_loss"

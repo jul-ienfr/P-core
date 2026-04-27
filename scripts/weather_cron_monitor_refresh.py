@@ -20,6 +20,10 @@ from weather_pm.analytics_adapter import (  # noqa: E402
     profile_decision_events_from_shortlist,
     strategy_signal_events_from_shortlist,
 )
+from weather_pm.forecast_client import build_forecast_bundle  # noqa: E402
+from weather_pm.market_parser import parse_market_question  # noqa: E402
+from weather_pm.probability_model import build_model_output  # noqa: E402
+from weather_pm.resolution_parser import parse_resolution_metadata  # noqa: E402
 from weather_pm.runtime_operator_profiles import build_runtime_weather_profile_summary  # noqa: E402
 from weather_pm.paper_report import build_paper_portfolio_report  # noqa: E402
 from weather_pm.polymarket_settlement import (  # noqa: E402
@@ -252,6 +256,27 @@ def _num(value, default=0.0):
         return default
 
 
+def build_weather_model_probability_record(market):
+    try:
+        structure=parse_market_question(str(market.get('question') or ''))
+        resolution=parse_resolution_metadata(resolution_source=market.get('resolution_source'), description=market.get('description'), rules=market.get('rules'))
+        forecast=build_forecast_bundle(structure, live=True, resolution=resolution)
+        model=build_model_output(structure, forecast)
+        return {
+            'probability_yes': model.probability_yes,
+            'confidence': model.confidence,
+            'source': 'weather_model',
+            'method': model.method,
+            'synthetic': False,
+            'forecast_source_provider': forecast.source_provider,
+            'forecast_source_station_code': forecast.source_station_code,
+            'forecast_source_url': forecast.source_url,
+            'forecast_source_latency_tier': forecast.source_latency_tier,
+        }
+    except Exception as exc:
+        return {'probability_yes': None, 'confidence': 0.0, 'source': 'weather_model_unavailable', 'method': 'unavailable', 'synthetic': True, 'error': repr(exc)}
+
+
 def _paper_market_id(position):
     return str(position.get('market_id') or position.get('slug') or position.get('question') or position.get('token_id') or '')
 
@@ -302,6 +327,77 @@ def build_paper_basket_analytics_rows(report, stamp):
     return {'paper_orders':[serialize_event(event) for event in order_events],'paper_positions':[serialize_event(event) for event in position_events],'paper_pnl_snapshots':[serialize_event(pnl_event)]}
 
 
+def _profile_decision_price(decision):
+    raw=decision.get('raw_decision') if isinstance(decision.get('raw_decision'), dict) else {}
+    for key in ('limit_price','strict_limit_price','market_price'):
+        value=decision.get(key)
+        if value is not None:
+            try: return float(value)
+            except (TypeError, ValueError): pass
+    value=raw.get('market_price')
+    if value is not None:
+        try: return float(value)
+        except (TypeError, ValueError): pass
+    return None
+
+
+def _profile_decision_spend(decision):
+    for key in ('capped_spend_usdc','requested_spend_usdc','capped_notional_usdc','requested_notional_usdc','paper_notional_usd'):
+        value=decision.get(key)
+        if value is not None:
+            try: return float(value)
+            except (TypeError, ValueError): pass
+    return None
+
+
+def build_profile_decision_paper_analytics_rows(report, stamp):
+    observed_at=ch_time(stamp)
+    observed_dt=datetime.strptime(observed_at, '%Y-%m-%d %H:%M:%S.%f').replace(tzinfo=timezone.utc)
+    runtime_report=report.get('runtime_strategies') if isinstance(report.get('runtime_strategies'), dict) else report
+    weather_profiles=runtime_report.get('weather_profiles') if isinstance(runtime_report.get('weather_profiles'), dict) else {}
+    decisions=weather_profiles.get('decisions') if isinstance(weather_profiles.get('decisions'), list) else []
+    mode=str(report.get('runtime_execution_mode') or runtime_report.get('runtime_execution_mode') or 'dry_run')
+    run_id=str(report.get('run_id') or runtime_report.get('run_id') or stamp)
+    order_events=[]; position_events=[]; grouped={}; order_ids={}
+    for index, decision in enumerate(decisions, start=1):
+        if not isinstance(decision, dict): continue
+        if decision.get('decision') != 'enter': continue
+        if decision.get('paper_only', True) is not True: continue
+        if decision.get('live_order_allowed', False) is not False: continue
+        strategy_id=str(decision.get('strategy_id') or '')
+        profile_id=str(decision.get('profile_id') or '')
+        market_id=str(decision.get('market_id') or '')
+        token_id=str(decision.get('token_id') or '')
+        price=_profile_decision_price(decision)
+        spend=_profile_decision_spend(decision)
+        if not strategy_id or not profile_id or not market_id or not token_id or price is None or price <= 0 or spend is None or spend <= 0:
+            continue
+        size=round(spend/price, 8)
+        side=str(decision.get('side') or '')
+        status='profile_enter_paper_planned'
+        paper_order_base=f'profile-decision:{strategy_id}:{profile_id}:{market_id}:{token_id}:{side}:{status}'
+        duplicate_count=order_ids.get(paper_order_base, 0)+1
+        order_ids[paper_order_base]=duplicate_count
+        paper_order_id=paper_order_base if duplicate_count == 1 else f'{paper_order_base}:{duplicate_count}'
+        raw_decision=decision.get('raw_decision') if isinstance(decision.get('raw_decision'), dict) else {}
+        fill_status=str(decision.get('fill_status') or raw_decision.get('fill_status') or decision.get('status') or raw_decision.get('status') or '').lower()
+        filled=fill_status in {'filled','partial'}
+        fill_semantics='simulated_fill' if filled else 'planned_intent'
+        raw={**decision,'analytics_source':'runtime_weather_profile_decision','fill_semantics':fill_semantics,'simulated':True,'paper_only':True,'live_order_allowed':False,'no_real_order_placed':True,'runtime_execution_mode':mode}
+        order_events.append(PaperOrderEvent(run_id=run_id,strategy_id=strategy_id,profile_id=profile_id,market_id=market_id,token_id=token_id,observed_at=observed_dt,mode=mode,paper_order_id=paper_order_id,side=side,price=price,size=size,spend_usdc=spend,status=status,opening_fee_usdc=0.0,opening_slippage_usdc=0.0,estimated_exit_cost_usdc=0.0,paper_only=True,live_order_allowed=False,raw=raw))
+        if not filled:
+            continue
+        position_events.append(PaperPositionEvent(run_id=run_id,strategy_id=strategy_id,profile_id=profile_id,market_id=market_id,token_id=token_id,observed_at=observed_dt,mode=mode,paper_position_id=f'{paper_order_id}:position',quantity=size,avg_price=price,exposure_usdc=spend,mtm_bid_usdc=0.0,status=status,raw=raw))
+        grouped.setdefault((strategy_id, profile_id), {'exposure':0.0,'orders':[]})
+        grouped[(strategy_id, profile_id)]['exposure']+=spend
+        grouped[(strategy_id, profile_id)]['orders'].append(paper_order_id)
+    pnl_events=[]
+    for (strategy_id, profile_id), group in grouped.items():
+        exposure=round(float(group['exposure']), 6)
+        pnl_events.append(PaperPnlSnapshotEvent(run_id=run_id,strategy_id=strategy_id,profile_id=profile_id,market_id='',observed_at=observed_dt,mode=mode,gross_pnl_usdc=0.0,net_pnl_usdc=0.0,costs_usdc=0.0,exposure_usdc=exposure,roi=0.0 if exposure > 0 else None,winrate=None,raw={'analytics_source':'runtime_weather_profile_decision','fill_semantics':'simulated_fill','simulated':True,'paper_only':True,'live_order_allowed':False,'no_real_order_placed':True,'runtime_execution_mode':mode,'paper_order_ids':group['orders']}))
+    return {'paper_orders':[serialize_event(event) for event in order_events],'paper_positions':[serialize_event(event) for event in position_events],'paper_pnl_snapshots':[serialize_event(event) for event in pnl_events]}
+
+
 def build_runtime_analytics_rows(report, stamp):
     observed_at=ch_time(stamp)
     observed_dt=datetime.strptime(observed_at, '%Y-%m-%d %H:%M:%S.%f').replace(tzinfo=timezone.utc)
@@ -341,7 +437,11 @@ def build_runtime_analytics_rows(report, stamp):
     for strategy_id, row in strategy_metrics_by_id.items(): row['raw']=json.dumps({'strategy_id':strategy_id,'runtime_summary':runtime_report.get('runtime_summary')}, sort_keys=True)
     rows={'prediction_runs':prediction_runs,'strategy_signals':strategy_signals,'profile_decisions':profile_decisions,'debug_decisions':debug_decisions,'execution_events':execution_events,'profile_metrics':profile_metrics,'strategy_metrics':list(strategy_metrics_by_id.values())}
     paper_rows=build_paper_basket_analytics_rows(report, stamp)
-    rows.update(paper_rows)
+    profile_paper_rows=build_profile_decision_paper_analytics_rows(report, stamp)
+    for table, table_rows in paper_rows.items():
+        rows.setdefault(table, []).extend(table_rows)
+    for table, table_rows in profile_paper_rows.items():
+        rows.setdefault(table, []).extend(table_rows)
     return rows
 
 
@@ -368,12 +468,16 @@ def build_runtime_strategy_report(stamp):
     markets_path=runtime_dir/f'weather_runtime_live_markets_{stamp}.json'
     events_path=runtime_dir/f'weather_runtime_live_events_{stamp}.jsonl'
     probabilities_path=runtime_dir/f'weather_runtime_live_probabilities_{stamp}.json'
+    runtime_probabilities_path=runtime_dir/f'weather_runtime_cycle_probabilities_{stamp}.json'
     runtime_path=runtime_dir/f'weather_runtime_dryrun_{stamp}.json'
     ids_path=audit_dir/f'weather_runtime_ids_{stamp}.jsonl'
     audit_path=audit_dir/f'weather_runtime_audit_{stamp}.jsonl'
     probe_code=f"""
 import json
+import sys
 from pathlib import Path
+sys.path.insert(0, {str(Path(__file__).resolve().parent)!r})
+from weather_cron_monitor_refresh import build_weather_model_probability_record
 from weather_pm.polymarket_live import list_live_weather_markets
 markets=list_live_weather_markets(limit=12, active=True, closed=False)
 selected=[]
@@ -384,13 +488,15 @@ for m in markets:
         selected.append(m)
 if len(selected) < 3:
     selected=markets[:3]
-markets_for_runtime=[]; events=[]; probs={{}}
+markets_for_runtime=[]; events=[]; probs={{}}; runtime_probs={{}}
 for m in selected:
     tid=str(m.get('clob_token_id'))
     yes_ask=float(m.get('best_ask') or 0) or None
     yes_bid=float(m.get('best_bid') or 0)
-    probs[tid]=round(min(0.99, max(0.0, (yes_ask or 0.01) + 0.05)), 6)
-    markets_for_runtime.append({{'id':str(m.get('id')),'question':m.get('question'),'clob_token_id':tid,'clobTokenIds':[tid],'outcomes':['Yes'],'best_bid':yes_bid,'best_ask':yes_ask,'liquidity':float(m.get('volume') or m.get('ask_depth_usd') or 1000),'strategy_id':'weather_runtime_cycle_v1','profile_id':'runtime_cycle','closed':False}})
+    model_probability=build_weather_model_probability_record(m)
+    probs[tid]=model_probability
+    runtime_probs[tid]=round(min(0.99, max(0.0, (yes_ask or 0.01) + 0.05)), 6)
+    markets_for_runtime.append({{'id':str(m.get('id')),'question':m.get('question'),'clob_token_id':tid,'clobTokenIds':[tid],'outcomes':['Yes'],'best_bid':yes_bid,'best_ask':yes_ask,'liquidity':float(m.get('volume') or m.get('ask_depth_usd') or 1000),'strategy_id':'weather_runtime_cycle_v1','profile_id':'runtime_cycle','closed':False,'probability_source':model_probability.get('source'),'probability_method':model_probability.get('method'),'forecast_source_provider':model_probability.get('forecast_source_provider'),'forecast_source_latency_tier':model_probability.get('forecast_source_latency_tier')}})
     bids=m.get('bids') or []; asks=m.get('asks') or []
     event={{'event_type':'book','asset_id':tid,'bids':bids[:10],'asks':asks[:10],'source_market_id':str(m.get('id')),'source':'live_gamma_clob_snapshot'}}
     if not event['asks'] and yes_ask: event['asks']=[{{'price':yes_ask,'size':float(m.get('best_ask_size') or 1)}}]
@@ -399,13 +505,14 @@ for m in selected:
 Path({str(markets_path)!r}).write_text(json.dumps(markets_for_runtime, indent=2, sort_keys=True), encoding='utf-8')
 Path({str(events_path)!r}).write_text('\\n'.join(json.dumps(e, sort_keys=True) for e in events)+'\\n', encoding='utf-8')
 Path({str(probabilities_path)!r}).write_text(json.dumps(probs, indent=2, sort_keys=True), encoding='utf-8')
+Path({str(runtime_probabilities_path)!r}).write_text(json.dumps(runtime_probs, indent=2, sort_keys=True), encoding='utf-8')
 print(json.dumps({{'selected':len(selected),'market_ids':[m.get('id') for m in selected]}}))
 """
     probe=run_cmd([PYTHON,'-c',probe_code], timeout=180)
-    artifacts={'markets_json':str(markets_path),'events_jsonl':str(events_path),'probabilities_json':str(probabilities_path),'runtime_json':str(runtime_path),'idempotency_jsonl':str(ids_path),'audit_jsonl':str(audit_path)}
+    artifacts={'markets_json':str(markets_path),'events_jsonl':str(events_path),'probabilities_json':str(probabilities_path),'runtime_probabilities_json':str(runtime_probabilities_path),'runtime_json':str(runtime_path),'idempotency_jsonl':str(ids_path),'audit_jsonl':str(audit_path)}
     if probe.returncode != 0:
         return {'ok':False,'stage':'live_probe','paper_only':True,'error':probe.stderr[-2000:],'stdout':probe.stdout[-1000:],'artifacts':artifacts}
-    cmd=[str(PREDICTION_CORE),'polymarket-runtime-cycle','--markets-json',str(markets_path),'--dry-run-events-jsonl',str(events_path),'--probabilities-json',str(probabilities_path),'--max-events','3','--paper-notional-usdc','5','--min-edge','0.02','--execution-mode','dry_run','--idempotency-jsonl',str(ids_path),'--audit-jsonl',str(audit_path),'--max-order-notional-usdc','5','--max-total-exposure-usdc','20','--max-daily-loss-usdc','10','--max-spread','0.05']
+    cmd=[str(PREDICTION_CORE),'polymarket-runtime-cycle','--markets-json',str(markets_path),'--dry-run-events-jsonl',str(events_path),'--probabilities-json',str(runtime_probabilities_path),'--max-events','3','--paper-notional-usdc','5','--min-edge','0.02','--execution-mode','dry_run','--idempotency-jsonl',str(ids_path),'--audit-jsonl',str(audit_path),'--max-order-notional-usdc','5','--max-total-exposure-usdc','20','--max-daily-loss-usdc','10','--max-spread','0.05']
     cycle=run_cmd(cmd, timeout=180)
     if cycle.stdout.strip(): runtime_path.write_text(cycle.stdout, encoding='utf-8')
     if cycle.returncode != 0:
