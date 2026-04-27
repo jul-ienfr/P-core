@@ -85,17 +85,17 @@
 ---
 
 ## Phase 5 — Final regression and audit note
-**Progress:** 0%
+**Progress:** 100%
 
-- [ ] Add or update a short docs note `docs/polymarket-weather-external-repo-extraction.md` listing what was reused conceptually and what was deliberately not imported.
-- [ ] Run final targeted suite: `PYTHONPATH=python/src python3 -m pytest python/tests/test_weather_calibrated_probability.py python/tests/test_paper_exit_policy.py python/tests/test_portfolio_risk_guards.py python/tests/test_weather_intraday_alerts.py python/tests/test_runtime_operator_profiles.py python/tests/test_weather_profile_strategies.py python/tests/test_weather_cron_monitor_refresh.py -q`.
-- [ ] Run path-scoped git status/diff review to confirm only intended P-core files changed and no external repo files/secrets were copied.
+- [x] Add or update a short docs note `docs/polymarket-weather-external-repo-extraction.md` listing what was reused conceptually and what was deliberately not imported.
+- [x] Run final targeted suite: `PYTHONPATH=python/src python3 -m pytest python/tests/test_weather_calibrated_probability.py python/tests/test_paper_exit_policy.py python/tests/test_portfolio_risk_guards.py python/tests/test_weather_intraday_alerts.py python/tests/test_runtime_operator_profiles.py python/tests/test_weather_profile_strategies.py python/tests/test_weather_cron_monitor_refresh.py -q`.
+- [x] Run path-scoped git status/diff review to confirm only intended P-core files changed and no external repo files/secrets were copied.
 
 ### Phase Status
-- [ ] Phase 5 complete
+- [x] Phase 5 complete
 
 ---
 
 ## Global Status
-**Overall Progress:** 0%
-- [ ] Plan complete
+**Overall Progress:** 100%
+- [x] Plan complete
