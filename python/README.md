@@ -49,7 +49,7 @@ Cette zone réutilisera progressivement le Python utile déjà présent dans l�
 ## Commandes
 
 ```bash
-cd /home/jul/prediction_core/python
+cd /home/jul/P-core/python
 PYTHONPATH=src pytest -q
 python3 -m weather_pm.cli --help
 PYTHONPATH=src python3 -m weather_pm.cli paper-cycle-report \
@@ -74,7 +74,7 @@ PYTHONPATH=src python3 -m weather_pm.cli paper-cycle-report \
 Après installation editable éventuelle :
 
 ```bash
-cd /home/jul/prediction_core/python
+cd /home/jul/P-core/python
 prediction-core serve --host 127.0.0.1 --port 8080
 prediction-core consume-markets --base-url http://127.0.0.1:8080 --source live --limit 3 --min-status watchlist
 prediction-core polymarket-stack
@@ -161,7 +161,7 @@ CLI screener compact :
 - `python3 -m weather_pm.cli operator-shortlist --shortlist-json shortlist.json --limit 10` compacte un shortlist sauvegardé en rapport d’action opérateur sans relancer le scan
 - `python3 -m weather_pm.cli station-source-plan --market-id ... --source live --start-date YYYY-MM-DD --end-date YYYY-MM-DD` retourne le binding exact station/source, la meilleure source latest à poller, la source finale officielle et l’action opérateur associée
 - `python3 -m weather_pm.cli source-coverage` retourne l’inventaire compact des sources météo intégrées, groupées par catégorie/support, sans prétendre à une exhaustivité mondiale impossible
-- `python3 -m weather_pm.cli monitor-paper-resolution --market-id ... --source live --date YYYY-MM-DD --paper-side yes --paper-notional-usd 5 --paper-shares 17.24` sauvegarde un snapshot paper-only de résolution : JSON brut + markdown opérateur sous `/home/jul/prediction_core/data/polymarket`, en séparant latest direct provisoire et daily extract officiel final
+- `python3 -m weather_pm.cli monitor-paper-resolution --market-id ... --source live --date YYYY-MM-DD --paper-side yes --paper-notional-usd 5 --paper-shares 17.24` sauvegarde un snapshot paper-only de résolution : JSON brut + markdown opérateur sous `/home/jul/P-core/data/polymarket`, en séparant latest direct provisoire et daily extract officiel final
 - par défaut, le report n’affiche que les candidats exécutables (`trade` / `trade_small`) pour éviter le bruit ; ajouter `--include-skipped` pour diagnostiquer les marchés ignorés
 - filtres report : `--tradeable-only`, `--include-skipped`, `--min-edge`, `--max-cost-bps`, `--min-depth-usd`
 

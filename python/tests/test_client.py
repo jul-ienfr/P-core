@@ -6,6 +6,7 @@ import pytest
 
 from prediction_core.client import PredictionCoreClient, PredictionCoreClientError
 from prediction_core.server import build_server
+from weather_pm.forecast_client import build_synthetic_forecast_bundle
 
 
 def _start_server() -> tuple[object, threading.Thread, int]:
@@ -91,7 +92,11 @@ def test_client_paper_cycle_returns_simulation_bundle() -> None:
         thread.join(timeout=2)
 
 
-def test_client_score_market_live_question_exposes_execution_costs_quote() -> None:
+def test_client_score_market_live_question_exposes_execution_costs_quote(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "weather_pm.pipeline.build_forecast_bundle",
+        lambda structure, **_: build_synthetic_forecast_bundle(structure),
+    )
     server, thread, port = _start_server()
     client = PredictionCoreClient(f"http://127.0.0.1:{port}")
     try:
@@ -120,7 +125,11 @@ def test_client_score_market_live_question_exposes_execution_costs_quote() -> No
         thread.join(timeout=2)
 
 
-def test_client_paper_cycle_live_question_embeds_execution_quote_metadata() -> None:
+def test_client_paper_cycle_live_question_embeds_execution_quote_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "weather_pm.pipeline.build_forecast_bundle",
+        lambda structure, **_: build_synthetic_forecast_bundle(structure),
+    )
     server, thread, port = _start_server()
     client = PredictionCoreClient(f"http://127.0.0.1:{port}")
     try:

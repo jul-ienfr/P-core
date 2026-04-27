@@ -16,34 +16,48 @@
       },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          }
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "currencyUSD"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 4,
+        "w": 6,
         "x": 0,
         "y": 0
       },
       "id": 1,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
           ],
-          "show": false
+          "fields": "",
+          "values": false
         },
-        "showHeader": true
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "targets": [
         {
@@ -53,12 +67,12 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id,\n  profile_id,\n  sum(net_pnl_usdc) AS net_pnl\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id\nORDER BY net_pnl DESC",
+          "rawSql": "SELECT\n  sum(net_pnl_usdc) AS total_net_pnl_usdc\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
-      "title": "Net PnL",
-      "type": "table"
+      "title": "PnL net total",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -66,25 +80,216 @@
         "uid": "prediction-core-clickhouse"
       },
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  avg(roi) AS average_roi\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "refId": "A"
+        }
+      ],
+      "title": "ROI moyen",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  sum(trade_count) AS trades\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "refId": "A"
+        }
+      ],
+      "title": "Trades",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "red",
+                "value": 0.5
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "refId": "A"
+        }
+      ],
+      "title": "Taux de skip",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 0
+        "x": 0,
+        "y": 4
       },
-      "id": 2,
+      "id": 5,
       "options": {
         "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -95,12 +300,59 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id,\n  profile_id,\n  sum(trade_count) AS trades,\n  sum(skip_count) AS skips,\n  avg(roi) AS roi\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  sum(net_pnl_usdc) AS net_pnl_usdc\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
           "refId": "A"
         }
       ],
-      "title": "Trade Count / Skip Count",
-      "type": "barchart"
+      "title": "PnL net dans le temps",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  avg(roi) AS roi\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "ROI dans le temps",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -117,15 +369,129 @@
             "inspect": false
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "net_pnl_usdc"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "avg_roi|skip_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_exposure_usdc"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "net_pnl_usdc"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  strategy_id,\n  profile_id,\n  sum(decision_count) AS decisions,\n  sum(trade_count) AS trades,\n  sum(skip_count) AS skips,\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate,\n  sum(net_pnl_usdc) AS net_pnl_usdc,\n  avg(roi) AS avg_roi,\n  anyLast(exposure_usdc) AS latest_exposure_usdc\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY net_pnl_usdc DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Classement stratégies / profils",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "gross_pnl_usdc|net_pnl_usdc|latest_exposure_usdc"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 8
+        "y": 21
       },
-      "id": 3,
+      "id": 8,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -146,22 +512,358 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id,\n  profile_id,\n  avg(avg_edge) AS avg_edge\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id",
+          "rawSql": "SELECT\n  strategy_id,\n  profile_id,\n  sum(signal_count) AS signals,\n  sum(trade_count) AS trades,\n  sum(skip_count) AS skips,\n  avg(avg_edge) AS avg_edge,\n  sum(gross_pnl_usdc) AS gross_pnl_usdc,\n  sum(net_pnl_usdc) AS net_pnl_usdc,\n  anyLast(exposure_usdc) AS latest_exposure_usdc\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY net_pnl_usdc DESC",
           "refId": "A"
         }
       ],
-      "title": "Average Edge",
+      "title": "Synthèse stratégie",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "normal",
+        "xField": "strategy_profile"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS strategy_profile,\n  sum(trade_count) AS trades,\n  sum(skip_count) AS skips\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_profile\nORDER BY trades DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Trades / skips",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "xField": "skip_reason"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  if(skip_reason = '', 'unknown', skip_reason) AS skip_reason,\n  count() AS count\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND decision_status NOT IN ('trade', 'trade_small')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY skip_reason\nORDER BY count DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Raisons de skip",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 29
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "xField": "strategy_profile"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS strategy_profile,\n  avg(avg_edge) AS avg_edge\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_profile\nORDER BY avg_edge DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Edge moyen",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "xField": "edge_bucket"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  round(edge, 2) AS edge_bucket,\n  count() AS signals\nFROM prediction_core.strategy_signals\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY edge_bucket\nORDER BY edge_bucket",
+          "refId": "A"
+        }
+      ],
+      "title": "Distribution de l’edge des signaux",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' exposure') AS series,\n  sum(exposure_usdc) AS value\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nUNION ALL\nSELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' net pnl') AS series,\n  sum(net_pnl_usdc) AS value\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "Exposition vs PnL net",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "xField": "strategy_profile"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS strategy_profile,\n  sum(costs_usdc) AS costs_usdc,\n  sum(gross_pnl_usdc) AS gross_pnl_usdc,\n  sum(net_pnl_usdc) AS net_pnl_usdc\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_profile\nORDER BY costs_usdc DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Coûts",
+      "type": "barchart"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": [
     "prediction-core",
-    "clickhouse"
+    "clickhouse",
+    "strategy"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT strategy_id FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at) ORDER BY strategy_id",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "name": "strategy",
+        "options": [],
+        "query": "SELECT DISTINCT strategy_id FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at) ORDER BY strategy_id",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query",
+        "label": "Stratégie"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT profile_id FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at) ORDER BY profile_id",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "name": "profile",
+        "options": [],
+        "query": "SELECT DISTINCT profile_id FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at) ORDER BY profile_id",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query",
+        "label": "Profil"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT mode FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at) ORDER BY mode",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "name": "mode",
+        "options": [],
+        "query": "SELECT DISTINCT mode FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at) ORDER BY mode",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query",
+        "label": "Mode"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -169,8 +871,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Strategy vs Profile",
+  "title": "Comparaison stratégies / profils",
   "uid": "prediction-core-strategy-vs-profile",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

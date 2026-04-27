@@ -34,11 +34,29 @@ def test_grafana_dashboard_provider_is_provisioned() -> None:
 
 def test_strategy_vs_profile_dashboard_has_required_panels() -> None:
     dashboard = json.loads(STRATEGY_VS_PROFILE.read_text())
-    text = json.dumps(dashboard)
-    for label in ["Strategy vs Profile", "Net PnL", "Trade Count", "Skip Count", "Average Edge"]:
+    text = json.dumps(dashboard, ensure_ascii=False)
+    for label in [
+        "Comparaison stratégies / profils",
+        "PnL net",
+        "Trades / skips",
+        "Edge moyen",
+        "Classement",
+        "ROI moyen",
+        "Taux de skip",
+        "Raisons de skip",
+        "Distribution de l’edge des signaux",
+        "Exposition",
+        "Coûts",
+    ]:
         assert label in text
-    assert "profile_metrics" in text
-    assert "strategy_metrics" in text
+    for source in [
+        "profile_metrics",
+        "strategy_metrics",
+        "debug_decisions",
+        "strategy_signals",
+        "paper_pnl_snapshots",
+    ]:
+        assert source in text
     assert "prediction-core-clickhouse" in text
 
 
