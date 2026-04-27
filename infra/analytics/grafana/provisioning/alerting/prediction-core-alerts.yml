@@ -7,7 +7,7 @@ groups:
     interval: 1m
     rules:
       - uid: prediction-core-analytics-data-stale
-        title: Analytics data stale
+        title: Données analytics obsolètes
         condition: C
         data:
           - refId: A
@@ -21,10 +21,10 @@ groups:
                 uid: prediction-core-clickhouse
               queryType: sql
               rawSql: |
-                SELECT max(age_minutes) AS value
+                SELECT max(âge_minutes) AS value
                 FROM
                 (
-                  SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) AS age_minutes FROM prediction_core.profile_decisions
+                  SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) AS âge_minutes FROM prediction_core.profile_decisions
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.debug_decisions
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.strategy_signals
                   UNION ALL SELECT dateDiff('minute', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), now()) FROM prediction_core.paper_orders
@@ -53,11 +53,11 @@ groups:
         execErrState: Error
         for: 5m
         annotations:
-          summary: Analytics data stale
+          summary: Données analytics obsolètes
         labels:
           severity: warning
       - uid: prediction-core-no-recent-decisions
-        title: No recent decisions
+        title: Aucune décision récente
         condition: C
         data:
           - refId: A
@@ -94,11 +94,11 @@ groups:
         execErrState: Error
         for: 5m
         annotations:
-          summary: No recent decisions
+          summary: Aucune décision récente
         labels:
           severity: warning
       - uid: prediction-core-high-skip-rate
-        title: High skip rate
+        title: Taux de skip élevé
         condition: C
         data:
           - refId: A
@@ -138,11 +138,11 @@ groups:
         execErrState: Error
         for: 5m
         annotations:
-          summary: High skip rate
+          summary: Taux de skip élevé
         labels:
           severity: warning
       - uid: prediction-core-live-event-seen
-        title: Live event seen
+        title: Événement live détecté
         condition: C
         data:
           - refId: A
@@ -179,6 +179,6 @@ groups:
         execErrState: Error
         for: 0m
         annotations:
-          summary: Live event seen
+          summary: Événement live détecté
         labels:
           severity: info

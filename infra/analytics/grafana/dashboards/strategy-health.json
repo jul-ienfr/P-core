@@ -13,8 +13,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Overview stratégies",
-      "tooltip": "Retour overview",
+      "title": "Vue d’ensemble des stratégies",
+      "tooltip": "Retour à la vue d’ensemble",
       "type": "dashboard",
       "uid": "prediction-core-strategy-overview"
     },
@@ -25,7 +25,7 @@
       "tags": [],
       "targetBlank": false,
       "title": "Détail stratégie",
-      "tooltip": "Ouvrir détail",
+      "tooltip": "Ouvrir le détail",
       "type": "dashboard",
       "uid": "prediction-core-strategy-detail"
     }
@@ -76,11 +76,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "WITH decisions AS\n(\n  SELECT strategy_id, max(observed_at) AS last_observed_at, dateDiff('minute', max(observed_at), now()) AS age_minutes, count() AS decisions, avg(source_ok) AS source_ok_rate, avg(orderbook_ok) AS orderbook_ok_rate, avg(risk_ok) AS risk_ok_rate, countIf(blocker != '' OR skip_reason != '') AS blockers\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  GROUP BY strategy_id\n), signals AS\n(\n  SELECT strategy_id, count() AS signals, max(live_order_allowed OR mode = 'live') AS live_allowed\n  FROM prediction_core.strategy_signals\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), metrics AS\n(\n  SELECT strategy_id, sum(trade_count) AS trades, sum(skip_count) AS skips, sum(decision_count) AS metric_decisions, sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate, sum(net_pnl_usdc) AS net_pnl_usdc, avg(roi) AS roi, sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  GROUP BY strategy_id\n)\nSELECT\n  decisions.strategy_id AS `Stratégie`,\n  decisions.last_observed_at AS `Dernier observed_at`,\n  decisions.age_minutes AS `Âge minutes`,\n  ifNull(signals.signals, 0) AS `Signaux`,\n  decisions.decisions AS `Décisions`,\n  ifNull(metrics.trades, 0) AS `Trades`,\n  ifNull(metrics.skip_rate, 0) AS `Taux de skip`,\n  decisions.source_ok_rate AS `Source OK rate`,\n  decisions.orderbook_ok_rate AS `Orderbook OK rate`,\n  decisions.risk_ok_rate AS `Risk OK rate`,\n  decisions.blockers AS `Blockers`,\n  ifNull(signals.live_allowed, 0) AS `Live readiness`,\n  ifNull(metrics.net_pnl_usdc, 0) AS `PnL net`,\n  ifNull(metrics.roi, 0) AS `ROI`,\n  ifNull(metrics.exposure_usdc, 0) AS `Exposition`,\n  multiIf(decisions.age_minutes > 60, 'STALE', ifNull(signals.signals, 0) = 0, 'NO_RECENT_SIGNALS', decisions.risk_ok_rate < 0.8, 'RISK_BLOCKED', decisions.source_ok_rate < 0.8, 'SOURCE_BLOCKED', decisions.orderbook_ok_rate < 0.8, 'ORDERBOOK_BLOCKED', decisions.blockers > 0, 'BLOCKED', ifNull(signals.live_allowed, 0), 'LIVE_ACTIVE', ifNull(metrics.trades, 0) = 0 AND ifNull(signals.signals, 0) > 0, 'PAPER_ONLY', 'OK') AS `Statut attentes`\nFROM decisions\nLEFT JOIN signals ON decisions.strategy_id = signals.strategy_id\nLEFT JOIN metrics ON decisions.strategy_id = metrics.strategy_id\nORDER BY `Statut attentes`, `Âge minutes` DESC",
+          "rawSql": "WITH decisions AS\n(\n  SELECT strategy_id, max(observed_at) AS last_observed_at, dateDiff('minute', max(observed_at), now()) AS âge_minutes, count() AS decisions, avg(source_ok) AS source_ok_rate, avg(orderbook_ok) AS orderbook_ok_rate, avg(risk_ok) AS risk_ok_rate, countIf(blocker != '' OR skip_reason != '') AS blockers\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  GROUP BY strategy_id\n), signals AS\n(\n  SELECT strategy_id, count() AS signals, max(live_order_allowed OR mode = 'live') AS live_allowed\n  FROM prediction_core.strategy_signals\n  WHERE $__timeFilter(observed_at)\n  GROUP BY strategy_id\n), metrics AS\n(\n  SELECT strategy_id, sum(trade_count) AS trades, sum(skip_count) AS skips, sum(decision_count) AS metric_decisions, sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate, sum(net_pnl_usdc) AS net_pnl_usdc, avg(roi) AS roi, sum(exposure_usdc) AS exposure_usdc\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  )\n  GROUP BY strategy_id\n)\nSELECT\n  decisions.strategy_id AS `Stratégie`,\n  decisions.last_observed_at AS `Dernier observed_at`,\n  decisions.âge_minutes AS `Âge minutes`,\n  ifNull(signals.signals, 0) AS `Signaux`,\n  decisions.decisions AS `Décisions`,\n  ifNull(metrics.trades, 0) AS `Trades`,\n  ifNull(metrics.skip_rate, 0) AS `Taux de skip`,\n  decisions.source_ok_rate AS `Taux source OK`,\n  decisions.orderbook_ok_rate AS `Taux carnet OK`,\n  decisions.risk_ok_rate AS `Taux risque OK`,\n  decisions.blockers AS `Blockers`,\n  ifNull(signals.live_allowed, 0) AS `Préparation live`,\n  ifNull(metrics.net_pnl_usdc, 0) AS `PnL net`,\n  ifNull(metrics.roi, 0) AS `ROI`,\n  ifNull(metrics.exposure_usdc, 0) AS `Exposition`,\n  multiIf(decisions.âge_minutes > 60, 'DONNEES_OBSOLETES', ifNull(signals.signals, 0) = 0, 'AUCUN_SIGNAL_RECENT', decisions.risk_ok_rate < 0.8, 'RISQUE_BLOQUE', decisions.source_ok_rate < 0.8, 'SOURCE_BLOQUEE', decisions.orderbook_ok_rate < 0.8, 'CARNET_BLOQUE', decisions.blockers > 0, 'BLOQUE', ifNull(signals.live_allowed, 0), 'LIVE_ACTIF', ifNull(metrics.trades, 0) = 0 AND ifNull(signals.signals, 0) > 0, 'PAPER_SEUL', 'OK') AS `Statut attentes`\nFROM decisions\nLEFT JOIN signals ON decisions.strategy_id = signals.strategy_id\nLEFT JOIN metrics ON decisions.strategy_id = metrics.strategy_id\nORDER BY `Statut attentes`, `Âge minutes` DESC",
           "refId": "A"
         }
       ],
-      "title": "Health matrix stratégies",
+      "title": "Matrice santé des stratégies",
       "type": "table"
     },
     {
@@ -182,7 +182,7 @@
           "refId": "A"
         }
       ],
-      "title": "Stratégies bloquées par source/orderbook/risk",
+      "title": "Stratégies bloquées par source / carnet / risque",
       "type": "table"
     },
     {
@@ -229,11 +229,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT m.strategy_id AS `Stratégie`, sum(m.decision_count) AS `Décisions attendues/observées`, ifNull(s.signals, 0) AS `Signaux`, multiIf(ifNull(s.signals, 0) = 0, 'NO_RECENT_SIGNALS', sum(m.decision_count) = 0, 'NO_DATA', 'OK') AS `Écart attentes vs activité` FROM prediction_core.profile_metrics m LEFT JOIN (SELECT strategy_id, count() AS signals FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at) GROUP BY strategy_id) s ON m.strategy_id = s.strategy_id WHERE $__timeFilter(m.observed_at) GROUP BY m.strategy_id, s.signals ORDER BY `Écart attentes vs activité`",
+          "rawSql": "SELECT m.strategy_id AS `Stratégie`, sum(m.decision_count) AS `Décisions attendues/observées`, ifNull(s.signals, 0) AS `Signaux`, multiIf(ifNull(s.signals, 0) = 0, 'AUCUN_SIGNAL_RECENT', sum(m.decision_count) = 0, 'PAS_DE_DONNEES', 'OK') AS `Écart attentes / activité` FROM prediction_core.profile_metrics m LEFT JOIN (SELECT strategy_id, count() AS signals FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at) GROUP BY strategy_id) s ON m.strategy_id = s.strategy_id WHERE $__timeFilter(m.observed_at) GROUP BY m.strategy_id, s.signals ORDER BY `Écart attentes / activité`",
           "refId": "A"
         }
       ],
-      "title": "Écart attentes vs activité",
+      "title": "Écart attentes / activité",
       "type": "table"
     },
     {
@@ -280,11 +280,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT strategy_id AS `Stratégie`, max(live_order_allowed) AS `Live allowed`, countIf(mode = 'live') AS `Événements live`, max(observed_at) AS `Dernier observed_at` FROM prediction_core.execution_events WHERE $__timeFilter(observed_at) GROUP BY strategy_id ORDER BY `Événements live` DESC",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, max(live_order_allowed) AS `Live autorisé`, countIf(mode = 'live') AS `Événements live`, max(observed_at) AS `Dernier observed_at` FROM prediction_core.execution_events WHERE $__timeFilter(observed_at) GROUP BY strategy_id ORDER BY `Événements live` DESC",
           "refId": "A"
         }
       ],
-      "title": "Live readiness",
+      "title": "Préparation live",
       "type": "table"
     },
     {
@@ -331,11 +331,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT strategy_id AS `Stratégie`, avg(risk_ok) AS `Risk OK rate`, countIf(NOT risk_ok) AS `Risk blocked`, anyLast(raw) AS `Dernier raw` FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at) GROUP BY strategy_id ORDER BY `Risk blocked` DESC",
+          "rawSql": "SELECT strategy_id AS `Stratégie`, avg(risk_ok) AS `Taux risque OK`, countIf(NOT risk_ok) AS `Blocages risque`, anyLast(raw) AS `Dernier brut` FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at) GROUP BY strategy_id ORDER BY `Blocages risque` DESC",
           "refId": "A"
         }
       ],
-      "title": "Risk expectations",
+      "title": "Attentes risque",
       "type": "table"
     }
   ],
@@ -488,7 +488,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Strategy Health / Expectations",
+  "title": "Santé et attentes des stratégies",
   "uid": "prediction-core-strategy-health",
   "version": 1,
   "weekStart": ""

@@ -13,8 +13,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Overview stratégies",
-      "tooltip": "Retour overview",
+      "title": "Vue d’ensemble des stratégies",
+      "tooltip": "Retour à la vue d’ensemble",
       "type": "dashboard",
       "uid": "prediction-core-strategy-overview"
     },
@@ -24,8 +24,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Health stratégies",
-      "tooltip": "Voir santé",
+      "title": "Santé stratégies",
+      "tooltip": "Voir la santé",
       "type": "dashboard",
       "uid": "prediction-core-strategy-health"
     }
@@ -202,11 +202,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT toStartOfInterval(observed_at, INTERVAL 5 minute) AS time, concat(strategy_id, ' trades') AS series, sum(trade_count) AS value FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  ) GROUP BY time, series UNION ALL SELECT toStartOfInterval(observed_at, INTERVAL 5 minute) AS time, concat(strategy_id, ' skips') AS series, sum(skip_count) AS value FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  ) GROUP BY time, series ORDER BY time",
+          "rawSql": "SELECT toStartOfInterval(observed_at, INTERVAL 5 minute) AS time, concat(strategy_id, ' trades') AS series, sum(trade_count) AS value FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  ) GROUP BY time, series UNION ALL SELECT toStartOfInterval(observed_at, INTERVAL 5 minute) AS time, concat(strategy_id, ' blocages') AS series, sum(skip_count) AS value FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(observed_at) BETWEEN 13 AND 21)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(observed_at) BETWEEN 13 AND 21))\n  ) GROUP BY time, series ORDER BY time",
           "refId": "A"
         }
       ],
-      "title": "Trades / skips dans le temps",
+      "title": "Trades / blocages dans le temps",
       "type": "timeseries"
     },
     {
@@ -461,7 +461,7 @@
           "refId": "A"
         }
       ],
-      "title": "Paper vs live pour cette stratégie",
+      "title": "Comparaison paper / live pour cette stratégie",
       "type": "table"
     },
     {
@@ -563,7 +563,7 @@
           "refId": "A"
         }
       ],
-      "title": "Diagnostic raw",
+      "title": "Diagnostic brut",
       "type": "table"
     }
   ],
@@ -741,7 +741,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Strategy Detail",
+  "title": "Détail stratégie",
   "uid": "prediction-core-strategy-detail",
   "version": 1,
   "weekStart": ""

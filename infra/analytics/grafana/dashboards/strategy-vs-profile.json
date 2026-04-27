@@ -35,8 +35,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Strategy Overview",
-      "tooltip": "Strategy Overview",
+      "title": "Vue d’ensemble des stratégies",
+      "tooltip": "Vue d’ensemble des stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-overview"
     },
@@ -46,8 +46,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Strategy Detail",
-      "tooltip": "Strategy Detail",
+      "title": "Détail stratégie",
+      "tooltip": "Détail stratégie",
       "type": "dashboard",
       "uid": "prediction-core-strategy-detail"
     },

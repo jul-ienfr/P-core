@@ -13,8 +13,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Strategy Overview",
-      "tooltip": "Strategy Overview",
+      "title": "Vue d’ensemble des stratégies",
+      "tooltip": "Vue d’ensemble des stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-overview"
     },
@@ -24,8 +24,8 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Strategy Detail",
-      "tooltip": "Strategy Detail",
+      "title": "Détail stratégie",
+      "tooltip": "Détail stratégie",
       "type": "dashboard",
       "uid": "prediction-core-strategy-detail"
     },
@@ -87,7 +87,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  table,\n  max_observed_at,\n  dateDiff('minute', max_observed_at, now()) AS age_minutes,\n  rows\nFROM\n(\n  SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at, count() AS rows FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'profile_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_positions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_positions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_pnl_snapshots', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_pnl_snapshots WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\n)\nORDER BY age_minutes DESC",
+          "rawSql": "SELECT\n  table,\n  max_observed_at,\n  dateDiff('minute', max_observed_at, now()) AS âge_minutes,\n  rows\nFROM\n(\n  SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at, count() AS rows FROM prediction_core.profile_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.debug_decisions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_signals WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'profile_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.profile_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'strategy_metrics', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.strategy_metrics WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_orders WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_positions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_positions WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'paper_pnl_snapshots', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.paper_pnl_snapshots WHERE $__timeFilter(observed_at)\n  UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), count() FROM prediction_core.execution_events WHERE $__timeFilter(observed_at)\n)\nORDER BY âge_minutes DESC",
           "refId": "A"
         }
       ],
@@ -193,7 +193,7 @@
           "refId": "A"
         }
       ],
-      "title": "Rows dans la fenêtre sélectionnée",
+      "title": "Lignes dans la fenêtre sélectionnée",
       "type": "table"
     },
     {
@@ -240,11 +240,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT * FROM\n(\n  SELECT table, max_observed_at, dateDiff('minute', max_observed_at, now()) AS age_minutes\n  FROM\n  (\n    SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at FROM prediction_core.profile_decisions\n    UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.debug_decisions\n    UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.strategy_signals\n    UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.paper_orders\n    UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.execution_events\n  )\n)\nWHERE age_minutes > 60 OR max_observed_at IS NULL\nORDER BY age_minutes DESC",
+          "rawSql": "SELECT * FROM\n(\n  SELECT table, max_observed_at, dateDiff('minute', max_observed_at, now()) AS âge_minutes\n  FROM\n  (\n    SELECT 'profile_decisions' AS table, nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS max_observed_at FROM prediction_core.profile_decisions\n    UNION ALL SELECT 'debug_decisions', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.debug_decisions\n    UNION ALL SELECT 'strategy_signals', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.strategy_signals\n    UNION ALL SELECT 'paper_orders', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.paper_orders\n    UNION ALL SELECT 'execution_events', nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) FROM prediction_core.execution_events\n  )\n)\nWHERE âge_minutes > 60 OR max_observed_at IS NULL\nORDER BY âge_minutes DESC",
           "refId": "A"
         }
       ],
-      "title": "Sources stale",
+      "title": "Sources obsolètes",
       "type": "table"
     }
   ],
@@ -264,7 +264,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Data Freshness",
+  "title": "Fraîcheur des données",
   "uid": "prediction-core-data-freshness",
   "version": 2,
   "weekStart": ""

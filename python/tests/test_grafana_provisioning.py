@@ -88,7 +88,7 @@ def test_paper_ledger_dashboard_has_required_panels() -> None:
 def test_data_freshness_dashboard_is_provisioned() -> None:
     dashboard = json.loads(DATA_FRESHNESS.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Data Freshness", "Fraîcheur des données par table", "Dernière run par stratégie/profil", "Rows dans la fenêtre sélectionnée", "Sources stale", "age_minutes"]:
+    for label in ["Fraîcheur des données", "Fraîcheur des données par table", "Dernière run par stratégie/profil", "Lignes dans la fenêtre sélectionnée", "Sources obsolètes", "âge_minutes"]:
         assert label in text
     for source in ["profile_decisions", "debug_decisions", "strategy_signals", "profile_metrics", "strategy_metrics", "paper_orders", "paper_positions", "paper_pnl_snapshots", "execution_events"]:
         assert source in text
@@ -98,9 +98,9 @@ def test_data_freshness_dashboard_is_provisioned() -> None:
 def test_strategy_overview_dashboard_is_provisioned() -> None:
     dashboard = json.loads(STRATEGY_OVERVIEW.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Strategy Overview", "Vue d’ensemble stratégies", "Stratégies actives", "Stratégies live", "Stratégies paper", "Stratégies stale", "Classement score / PnL / ROI", "Répartition paper vs live", "Top blockers par stratégie"]:
+    for label in ["Vue d’ensemble des stratégies", "Stratégies actives", "Stratégies en live", "Stratégies en paper", "Stratégies stale", "Classement score / PnL / ROI", "Répartition paper / live", "Principaux blocages par stratégie"]:
         assert label in text
-    for label in ["strategy", "profile", "run_id", "mode", "business_time", "Statut santé"]:
+    for label in ["strategy", "profile", "run_id", "mode", "business_time", "Statut de santé"]:
         assert label in text
     for source in ["profile_metrics", "debug_decisions", "strategy_signals", "profile_decisions", "execution_events"]:
         assert source in text
@@ -111,7 +111,7 @@ def test_strategy_overview_dashboard_is_provisioned() -> None:
 def test_strategy_detail_dashboard_is_provisioned() -> None:
     dashboard = json.loads(STRATEGY_DETAIL.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Strategy Detail", "Résumé stratégie", "PnL net dans le temps", "ROI dans le temps", "Décisions récentes", "Marchés actifs", "Ordres paper récents", "Événements live récents", "Paper vs live pour cette stratégie", "Diagnostic raw"]:
+    for label in ["Détail stratégie", "Résumé stratégie", "PnL net dans le temps", "ROI dans le temps", "Décisions récentes", "Marchés actifs", "Ordres paper récents", "Événements live récents", "Comparaison paper / live pour cette stratégie", "Diagnostic brut"]:
         assert label in text
     for source in ["profile_metrics", "debug_decisions", "paper_orders", "execution_events"]:
         assert source in text
@@ -122,9 +122,9 @@ def test_strategy_detail_dashboard_is_provisioned() -> None:
 def test_strategy_health_dashboard_is_provisioned() -> None:
     dashboard = json.loads(STRATEGY_HEALTH.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Strategy Health / Expectations", "Health matrix stratégies", "Stratégies sans données récentes", "Stratégies bloquées par source/orderbook/risk", "Écart attentes vs activité", "Live readiness", "Risk expectations"]:
+    for label in ["Santé et attentes des stratégies", "Matrice santé des stratégies", "Stratégies sans données récentes", "Stratégies bloquées par source / carnet / risque", "Écart attentes / activité", "Préparation live", "Attentes risque"]:
         assert label in text
-    for status in ["OK", "PAPER_ONLY", "LIVE_ACTIVE", "STALE", "BLOCKED", "RISK_BLOCKED", "SOURCE_BLOCKED", "ORDERBOOK_BLOCKED", "NO_RECENT_SIGNALS"]:
+    for status in ["OK", "PAPER_SEUL", "LIVE_ACTIF", "DONNEES_OBSOLETES", "BLOQUE", "RISQUE_BLOQUE", "SOURCE_BLOQUEE", "CARNET_BLOQUE", "AUCUN_SIGNAL_RECENT"]:
         assert status in text
     for source in ["profile_metrics", "debug_decisions", "strategy_signals", "execution_events"]:
         assert source in text
@@ -141,5 +141,5 @@ def test_existing_dashboards_link_to_strategy_console() -> None:
 
 
     text = ALERTS.read_text()
-    for label in ["prediction-core-clickhouse", "Analytics data stale", "No recent decisions", "High skip rate", "Live event seen", "execution_events"]:
+    for label in ["prediction-core-clickhouse", "Données analytics obsolètes", "Aucune décision récente", "Taux de skip élevé", "Événement live détecté", "execution_events"]:
         assert label in text
