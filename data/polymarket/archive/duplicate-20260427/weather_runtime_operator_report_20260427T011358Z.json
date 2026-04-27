@@ -1,0 +1,8 @@
+{
+  "error": "Traceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nModuleNotFoundError: No module named 'weather_pm'\n",
+  "ok": false,
+  "paper_only": true,
+  "stage": "live_probe",
+  "stdout": "",
+  "timestamp": "20260427T011358Z"
+}

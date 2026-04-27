@@ -1,0 +1,11 @@
+rank,handle,wallet,weather_pnl,weather_volume,pnl_over_volume_pct,style,recent_weather_trades,active_weather_positions,active_weather_value,recent_trade_avg_usdc,recent_trade_max_usdc,profile
+1,gopfan2,0xf2f6af4f27ec2dcf4072095ab804016e14cd5817,344908.99,4571404.83,7.54,weather-heavy signal/generalist,1,21,10768.45,33.1,33.1,https://polymarket.com/profile/0xf2f6af4f27ec2dcf4072095ab804016e14cd5817
+2,aenews2,0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1,277050.19,9972308.56,2.78,weather-profitable generalist (current/recent flow mostly non-weather),3,0,0,357.04,942.15,https://polymarket.com/profile/0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1
+3,ColdMath,0x594edb9112f526fa6a80b8f858a6379c8a2c1c11,123799.94,8940156.46,1.38,breadth/grid surface trader,451,414,29406.36,162.81,6631.81,https://polymarket.com/profile/0x594edb9112f526fa6a80b8f858a6379c8a2c1c11
+4,gopfan,0x6af75d4e4aaf700450efbac3708cce1665810ff1,118426.47,739900.98,16.01,sparse/large-ticket conviction trader,30,0,0,576.96,7646.2,https://polymarket.com/profile/0x6af75d4e4aaf700450efbac3708cce1665810ff1
+5,bama124,0xe5c8026239919339b988fdb150a7ef4ea196d3e7,86600.55,410556.07,21.09,weather-profitable generalist (current/recent flow mostly non-weather),0,0,0,0,0,https://polymarket.com/profile/0xe5c8026239919339b988fdb150a7ef4ea196d3e7
+6,Hans323,0x0f37cb80dee49d55b5f6d9e595d52591d6371410,80872.37,6971546.61,1.16,breadth/grid surface trader,293,0,0,695.45,22909.19,https://polymarket.com/profile/0x0f37cb80dee49d55b5f6d9e595d52591d6371410
+7,Handsanitizer23,0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641,71174.4,953274.81,7.47,sparse/large-ticket conviction trader,27,15,0.0,14325.7,76142.4,https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641
+8,automatedAItradingbot,0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11,64279.03,2363702.37,2.72,weather-heavy signal/generalist,0,5,10.12,0,0,https://polymarket.com/profile/0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11
+9,BeefSlayer,0x331bf91c132af9d921e1908ca0979363fc47193f,63514.16,1429670.68,4.44,breadth/grid surface trader,500,7,217.04,117.65,10098.41,https://polymarket.com/profile/0x331bf91c132af9d921e1908ca0979363fc47193f
+10,BigMike11,0xecdbd79566a25693b9971c48d7de84bc05f7da79,62776.72,850755.65,7.38,sparse/large-ticket conviction trader,48,0,0,789.91,3543.58,https://polymarket.com/profile/0xecdbd79566a25693b9971c48d7de84bc05f7da79

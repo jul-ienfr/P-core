@@ -1,0 +1,354 @@
+{
+  "generated_at": "2026-04-27T12:01:51Z",
+  "items": [
+    {
+      "path": "/home/jul/P-core",
+      "exists": true,
+      "du": "249M",
+      "git_top": "/home/jul/P-core",
+      "branch": "main",
+      "head": "b94e2c4",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 503,
+      "status_sample": [
+        "D  .hermes/plans/2026-04-26_213441-polymarket-dynamic-position-sizing.md",
+        "M  README.md",
+        "R  data/polymarket/weather_profitable_accounts_classified.csv -> data/polymarket/account-analysis/weather_profitable_accounts_classified.csv",
+        "R  data/polymarket/weather_profitable_accounts_operator_summary.json -> data/polymarket/account-analysis/weather_profitable_accounts_operator_summary.json",
+        "D  data/polymarket/hko_weather_check_20260425.json",
+        "D  data/polymarket/kdal_weather_check_20260425.json",
+        "R  data/polymarket/weather_strategy_operator_report_live_latest.json -> data/polymarket/latest/weather_strategy_operator_report_live_latest.json",
+        "R  data/polymarket/weather_strategy_shortlist_live_latest.json -> data/polymarket/latest/weather_strategy_shortlist_live_latest.json",
+        "D  data/polymarket/meteo_analyse_continuation_20260426T141337.md",
+        "D  data/polymarket/weather_2065028_decision_ticket_20260425T2158.json",
+        "D  data/polymarket/weather_2065028_decision_ticket_20260425T2158.md",
+        "D  data/polymarket/weather_2065028_decision_ticket_20260425T2202.json",
+        "D  data/polymarket/weather_2065028_decision_ticket_20260425T2202.md",
+        "D  data/polymarket/weather_2065032_decision_gate_20260425T2249.json",
+        "D  data/polymarket/weather_2065032_decision_gate_20260425T2249.md",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224508.json",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224508.md",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224602.json",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224602.md",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224843.json",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224843.md",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224920.json",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T224920.md",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T225132.json",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T225132.md",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T225210.json",
+        "D  data/polymarket/weather_2065032_operator_refresh_20260425T225210.md",
+        "D  data/polymarket/weather_2065032_wunderground_source_check_20260425T2244.json",
+        "D  data/polymarket/weather_2065032_wunderground_source_check_20260425T2244.md",
+        "D  data/polymarket/weather_2065032_zspd_historical_api_probe_20260425T2248.json"
+      ],
+      "top_level": [
+        ".claude",
+        ".hermes",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "legacy",
+        "migrations",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    },
+    {
+      "path": "/home/jul/prediction_core",
+      "exists": true,
+      "du": "744M",
+      "git_top": "/home/jul/prediction_core",
+      "branch": "main",
+      "head": "80d9345",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 54,
+      "status_sample": [
+        " M python/src/prediction_core/strategies/cli.py",
+        " M python/src/weather_pm/paper_watchlist.py",
+        " M python/src/weather_pm/strategy_shortlist.py",
+        " M python/tests/test_paper_watchlist.py",
+        " M python/tests/test_strategy_cli.py",
+        " M python/tests/test_weather_strategy_shortlist.py",
+        " M scripts/weather_cron_monitor_refresh.py",
+        "?? data/polymarket/local-notes/",
+        "?? data/polymarket/weather_operator_shortlist_bookmaker_live_20260427T011501Z.json",
+        "?? data/polymarket/weather_paper_cron_monitor_20260427T090718Z.csv",
+        "?? data/polymarket/weather_paper_cron_monitor_20260427T090718Z.json",
+        "?? data/polymarket/weather_paper_cron_monitor_20260427T090718Z.md",
+        "?? data/polymarket/weather_paper_cron_monitor_20260427T091921Z.csv",
+        "?? data/polymarket/weather_paper_cron_monitor_20260427T091921Z.json",
+        "?? data/polymarket/weather_paper_cron_monitor_20260427T091921Z.md",
+        "?? data/polymarket/weather_profitable_accounts_operator_summary_bookmaker_live_20260427T011501Z.json",
+        "?? data/polymarket/weather_runtime_dryrun_20260427T010818Z.json",
+        "?? data/polymarket/weather_runtime_dryrun_20260427T011537Z.json",
+        "?? data/polymarket/weather_runtime_dryrun_20260427T041624Z.json",
+        "?? data/polymarket/weather_runtime_dryrun_20260427T071636Z.json",
+        "?? data/polymarket/weather_runtime_dryrun_20260427T101657Z.json",
+        "?? data/polymarket/weather_runtime_live_events_20260427T010818Z.jsonl",
+        "?? data/polymarket/weather_runtime_live_events_20260427T011537Z.jsonl",
+        "?? data/polymarket/weather_runtime_live_events_20260427T041624Z.jsonl",
+        "?? data/polymarket/weather_runtime_live_events_20260427T071636Z.jsonl",
+        "?? data/polymarket/weather_runtime_live_events_20260427T101657Z.jsonl",
+        "?? data/polymarket/weather_runtime_live_markets_20260427T010818Z.json",
+        "?? data/polymarket/weather_runtime_live_markets_20260427T011537Z.json",
+        "?? data/polymarket/weather_runtime_live_markets_20260427T041624Z.json",
+        "?? data/polymarket/weather_runtime_live_markets_20260427T071636Z.json"
+      ],
+      "top_level": [
+        ".hermes",
+        ".pytest_cache",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "migrations",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    },
+    {
+      "path": "/home/jul/swarm/subprojects/prediction",
+      "exists": true,
+      "du": "7,2M",
+      "git_top": "/home/jul/swarm",
+      "branch": "main",
+      "head": "7d554fa",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/Swarm.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/Swarm.git (push)"
+      ],
+      "status_count": 9,
+      "status_sample": [
+        " M dashboard/index.html",
+        " M package.json",
+        " M scripts/prediction-ops.cjs",
+        " M src/lib/__tests__/prediction-markets-dashboard-route.test.ts",
+        " M src/lib/__tests__/prediction-markets-ops-script.test.ts",
+        "?? src/app/api/v1/prediction-markets/panoptique/",
+        "?? src/lib/__tests__/prediction-markets-panoptique-read-models.test.ts",
+        "?? src/lib/__tests__/prediction-markets-panoptique-route.test.ts",
+        "?? src/lib/prediction-markets/panoptique-read-models.ts"
+      ],
+      "top_level": [
+        "CRYPTO_TEST_MATRIX.md",
+        "dashboard",
+        "dashboard-ui",
+        "dashboard-vendor",
+        "docs",
+        "node_modules",
+        "package.json",
+        "README.md",
+        "scripts",
+        "src",
+        "tsconfig.autonomous.json",
+        "tsconfig.json",
+        "tsconfig.meteo.json",
+        "vitest.config.ts"
+      ]
+    },
+    {
+      "path": "/home/jul/swarm/prediction_core",
+      "exists": true,
+      "du": "660K",
+      "git_top": "/home/jul/swarm",
+      "branch": "main",
+      "head": "7d554fa",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/Swarm.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/Swarm.git (push)"
+      ],
+      "status_count": 9,
+      "status_sample": [
+        " M ../subprojects/prediction/dashboard/index.html",
+        " M ../subprojects/prediction/package.json",
+        " M ../subprojects/prediction/scripts/prediction-ops.cjs",
+        " M ../subprojects/prediction/src/lib/__tests__/prediction-markets-dashboard-route.test.ts",
+        " M ../subprojects/prediction/src/lib/__tests__/prediction-markets-ops-script.test.ts",
+        "?? ../subprojects/prediction/src/app/api/v1/prediction-markets/panoptique/",
+        "?? ../subprojects/prediction/src/lib/__tests__/prediction-markets-panoptique-read-models.test.ts",
+        "?? ../subprojects/prediction/src/lib/__tests__/prediction-markets-panoptique-route.test.ts",
+        "?? ../subprojects/prediction/src/lib/prediction-markets/panoptique-read-models.ts"
+      ],
+      "top_level": [
+        "python"
+      ]
+    },
+    {
+      "path": "/home/jul/P-core/.claude/worktrees/profile-integration",
+      "exists": true,
+      "du": "56M",
+      "git_top": "/home/jul/P-core/.claude/worktrees/profile-integration",
+      "branch": "claude/profile-integration",
+      "head": "925bf6f",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 0,
+      "status_sample": [],
+      "top_level": [
+        ".hermes",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "migrations",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    },
+    {
+      "path": "/home/jul/P-core/.claude/worktrees/profile-ledger",
+      "exists": true,
+      "du": "53M",
+      "git_top": "/home/jul/P-core/.claude/worktrees/profile-ledger",
+      "branch": "claude/profile-ledger",
+      "head": "9382d47",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 1,
+      "status_sample": [
+        "?? MULTI_PROFILE_BRIEF.md"
+      ],
+      "top_level": [
+        ".hermes",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "migrations",
+        "MULTI_PROFILE_BRIEF.md",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    },
+    {
+      "path": "/home/jul/P-core/.claude/worktrees/profile-models",
+      "exists": true,
+      "du": "52M",
+      "git_top": "/home/jul/P-core/.claude/worktrees/profile-models",
+      "branch": "claude/profile-models",
+      "head": "775289c",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 1,
+      "status_sample": [
+        "?? MULTI_PROFILE_BRIEF.md"
+      ],
+      "top_level": [
+        ".hermes",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "migrations",
+        "MULTI_PROFILE_BRIEF.md",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    },
+    {
+      "path": "/home/jul/P-core/.claude/worktrees/profile-runner",
+      "exists": true,
+      "du": "52M",
+      "git_top": "/home/jul/P-core/.claude/worktrees/profile-runner",
+      "branch": "claude/profile-runner",
+      "head": "f3d2f66",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 1,
+      "status_sample": [
+        "?? MULTI_PROFILE_BRIEF.md"
+      ],
+      "top_level": [
+        ".hermes",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "migrations",
+        "MULTI_PROFILE_BRIEF.md",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    },
+    {
+      "path": "/tmp/P-core-clickhouse-grafana",
+      "exists": true,
+      "du": "54M",
+      "git_top": "/tmp/P-core-clickhouse-grafana",
+      "branch": "feat/clickhouse-grafana-cockpit",
+      "head": "e547e99",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 0,
+      "status_sample": [],
+      "top_level": [
+        ".hermes",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "migrations",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    },
+    {
+      "path": "/tmp/pcore-paper-push-WQoiJe",
+      "exists": true,
+      "du": "56M",
+      "git_top": "/tmp/pcore-paper-push-WQoiJe",
+      "branch": "paper-ledger-all-in-costs",
+      "head": "b94e2c4",
+      "remotes": [
+        "origin\tgit@github.com:jul-ienfr/P-core.git (fetch)",
+        "origin\tgit@github.com:jul-ienfr/P-core.git (push)"
+      ],
+      "status_count": 0,
+      "status_sample": [],
+      "top_level": [
+        ".hermes",
+        "contracts",
+        "data",
+        "docs",
+        "infra",
+        "migrations",
+        "python",
+        "README.md",
+        "rust",
+        "scripts"
+      ]
+    }
+  ]
+}

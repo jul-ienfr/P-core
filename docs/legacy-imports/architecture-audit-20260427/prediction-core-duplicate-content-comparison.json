@@ -1,0 +1,413 @@
+{
+  "generated_at": "2026-04-27T12:05:05Z",
+  "comparison": [
+    {
+      "rel": "python/src/prediction_core/strategies/weather_bookmaker.py",
+      "p_core_exists": false,
+      "pred_exists": true,
+      "p_core_sha": null,
+      "pred_sha": "cafdf6472b5c5dc8",
+      "same": false
+    },
+    {
+      "rel": "python/src/prediction_core/strategies/cli.py",
+      "p_core_exists": false,
+      "pred_exists": true,
+      "p_core_sha": null,
+      "pred_sha": "751711df5ddbe434",
+      "same": false
+    },
+    {
+      "rel": "python/src/weather_pm/paper_report.py",
+      "p_core_exists": false,
+      "pred_exists": true,
+      "p_core_sha": null,
+      "pred_sha": "5e27a0a193c28659",
+      "same": false
+    },
+    {
+      "rel": "python/src/weather_pm/polymarket_settlement.py",
+      "p_core_exists": false,
+      "pred_exists": true,
+      "p_core_sha": null,
+      "pred_sha": "83caffae669be869",
+      "same": false
+    },
+    {
+      "rel": "python/src/weather_pm/paper_watchlist.py",
+      "p_core_exists": true,
+      "pred_exists": true,
+      "p_core_sha": "e7dda1b60deb917d",
+      "pred_sha": "4dc2b735dac37f5b",
+      "same": false,
+      "diff_head": "--- /home/jul/P-core/python/src/weather_pm/paper_watchlist.py\t2026-04-26 10:15:52.989971788 +0200\n+++ /home/jul/prediction_core/python/src/weather_pm/paper_watchlist.py\t2026-04-27 10:23:24.909382254 +0200\n@@ -2,37 +2,60 @@\n \n import csv\n from collections import Counter\n+from datetime import date\n from pathlib import Path\n from typing import Any\n \n+from weather_pm.dynamic_position_sizing import SizingInput, SizingPolicy, calculate_dynamic_position_size\n+\n \n def build_paper_watchlist_report(payload: dict[str, Any]) -> dict[str, Any]:\n     positions = payload.get(\"positions\") if isinstance(payload, dict) else None\n     if not isinstance(positions, list):\n         raise ValueError(\"paper monitor JSON must contain a positions list\")\n+    as_of = _parse_iso_date(payload.get(\"as_of_date\") or payload.get(\"market_date\") or payload.get(\"generated_at\"))\n+    normalized_positions = [\n+        _normalize_paper_monitor_position(position)\n+        for position in positions\n+        if isinstance(position, dict)\n+    ]\n+    exposure_index = _build_paper_watchlist_exposure_index(normalized_positions)\n     watchlist = []\n-    for position in positions:\n-        if not isinstance(position, dict):\n-            continue\n+    for position in normalized_positions:\n         p_side = position.get(\"p_side_now\", position.get(\"base_p_side\"))\n         if p_side is None:\n             raise ValueError(\"paper position must contain p_side_now or base_p_side\")\n-        watchlist.append(\n-            build_paper_watch_row(\n-                _normalize_paper_monitor_position(position),\n-                p_side=float(p_side),\n-                best_bid=position.get(\"best_bid_now\", position.get(\"live_best_bid_now\", position.get(\"best_bid\"))),\n-                best_ask=position.get(\"best_ask_now\", position.get(\"live_best_ask_now\", position.get(\"best_ask\"))),\n-                forecast_c=position.get(\"current_forecast_max_c\", position.get(\"station_forecast_max_c_now\", position.get(\"station_forecast_max_c\"))),\n-            )\n+        enriched_position = dict(position)\n+        market_key = _paper_market_key(enriched_position)\n+        surface_key = _paper_surface_key(enriched_position)\n+        enriched_position.setdefault(\"current_market_exposure_usdc\", exposure_index[\"by_market\"].get(market_key, 0.0))\n+        enriched_position.setdefault(\"current_surface_exposure_usdc\", exposure_index[\"by_surface\"].get(surface_key, 0.0))\n+        enriched_position.setdefault(\"current_total_weather_exposure_usdc\", exposure_index[\"total_weather\"])\n+        row = build_paper_watch_row(\n+            enriched_position,\n+            p_side=float(p_side),\n+            best_bid=position.get(\"best_bid_now\", position.get(\"live_best_bid_now\", position.get(\"best_bid\"))),\n+            best_ask=position.get(\"best_ask_now\", position.get(\"live_best_ask_now\", position.get(\"best_ask\"))),\n+            forecast_c=position.get(\"current_forecast_max_c\", position.get(\"station_forecast_max_c_now\", position.get(\"station_forecast_max_c\"))),\n         )\n+        if _market_date_elapsed(enriched_position, as_of=as_of) and row[\"operator_action\"] not in {\"EXIT_PAPER\", \"RESOLUTION_REVIEW\"}:\n+            row[\"operator_action\"] = \"RESOLUTION_REVIEW\"\n+            row[\"reason\"] = \"market date elapsed; verify official resolution before final PnL\"\n+            row[\"add_allowed\"] = False\n+            row[\"max_add_usdc\"] = 0\n+        watchlist.append(row)\n+    action_counts = dict(Counter(row[\"operator_action\"] for row in watchlist))\n     return {\n         \"summary\": {\n             \"positions\": len(watchlist),\n+            \"active_positions\": sum(1 for row in watchlist if row[\"operator_action\"] not in {\"EXIT_PAPER\", \"RESOLUTION_REVIEW\"}),\n+            \"resolution_review_positions\": action_counts.get(\"RESOLUTION_REVIEW\", 0),\n+            \"exit_paper_positions\": action_counts.get(\"EXIT_PAPER\", 0),\n             \"total_spend\": round(sum(float(row[\"spend_usdc\"]) for row in watchlist), 4),\n             \"total_ev_now\": round(sum(float(row[\"paper_ev_now_usdc\"]) for row in watchlist), 2),\n             \"total_mtm_bid\": round(sum(float(row[\"paper_mtm_bid_usdc\"] or 0.0) for row in watchlist), 2),\n-            \"action_counts\": dict(Counter(row[\"operator_action\"] for row in watchlist)),\n+            \"total_mtm_bid_value\": round(sum(float(row[\"paper_mtm_bid_value_usdc\"] or 0.0) for row in watchlist), 2),\n+            \"action_counts\": action_counts,\n             \"paper_only\": True,\n         },\n         \"watchlist\": watchlist,\n@@ -272,15 +295,14 @@\n     forecast_c: float | None,\n ) -> dict[str, Any]:\n     \"\"\"Build a deterministic operator watch row for a paper weather position.\"\"\"\n-    entry_avg = float(position[\"entry_avg\"])"
+    },
+    {
+      "rel": "python/src/weather_pm/strategy_shortlist.py",
+      "p_core_exists": true,
+      "pred_exists": true,
+      "p_core_sha": "84c5fc4529364710",
+      "pred_sha": "9863a34341036a9a",
+      "same": false,
+      "diff_head": "--- /home/jul/P-core/python/src/weather_pm/strategy_shortlist.py\t2026-04-27 12:22:42.614456454 +0200\n+++ /home/jul/prediction_core/python/src/weather_pm/strategy_shortlist.py\t2026-04-27 10:14:03.945828140 +0200\n@@ -5,11 +5,9 @@\n from typing import Any\n \n from prediction_core.decision import EntryPolicy, evaluate_entry\n+from prediction_core.strategies.weather_bookmaker import build_weather_bookmaker_signal\n+from weather_pm.dynamic_position_sizing import SizingInput, SizingPolicy, calculate_dynamic_position_size\n from weather_pm.edge_sizing import calculate_edge_sizing\n-from weather_pm.orderbook_simulator import simulate_orderbook_fill, simulate_spend_sizes\n-from weather_pm.portfolio_risk import apply_portfolio_risk_to_candidates\n-from weather_pm.strategy_profiles import classify_candidate_row\n-from weather_pm.threshold_watcher import evaluate_threshold_watch\n \n \n def build_strategy_shortlist(\n@@ -35,26 +33,18 @@\n         rows.append(row)\n \n     ranked = sorted(rows, key=_shortlist_sort_key)[: max(int(limit), 0)]\n-    ranked = apply_portfolio_risk_to_candidates(ranked)\n     for index, row in enumerate(ranked, start=1):\n         row[\"rank\"] = index\n \n-    summary = {\n-        \"input_opportunities\": len(opportunities),\n-        \"strategy_accounts\": len(accounts),\n-        \"surface_events\": len(surface_events),\n-        \"shortlisted\": len(ranked),\n-        \"action_counts\": _counts(row.get(\"action\") for row in ranked),\n-        \"execution_blocker_counts\": _counts(row.get(\"execution_blocker\") for row in ranked),\n-    }\n-    threshold_counts = _counts((row.get(\"threshold_watch\") or {}).get(\"recommendation\") for row in ranked if _actionable_threshold_watch(row.get(\"threshold_watch\")))\n-    if threshold_counts:\n-        summary[\"threshold_watch_counts\"] = threshold_counts\n-    profile_counts = _counts(row.get(\"strategy_profile_id\") for row in ranked)\n-    if profile_counts:\n-        summary[\"strategy_profile_counts\"] = profile_counts\n     return {\n-        \"summary\": summary,\n+        \"summary\": {\n+            \"input_opportunities\": len(opportunities),\n+            \"strategy_accounts\": len(accounts),\n+            \"surface_events\": len(surface_events),\n+            \"shortlisted\": len(ranked),\n+            \"action_counts\": _counts(row.get(\"action\") for row in ranked),\n+            \"execution_blocker_counts\": _counts(row.get(\"execution_blocker\") for row in ranked),\n+        },\n         \"shortlist\": ranked,\n     }\n \n@@ -64,27 +54,18 @@\n     action_counts = _dict_counts(payload.get(\"summary\", {}).get(\"action_counts\", {}))\n     blocker_counts = _dict_counts(payload.get(\"summary\", {}).get(\"execution_blocker_counts\", {}))\n     artifacts = payload.get(\"artifacts\", {}) if isinstance(payload.get(\"artifacts\"), dict) else {}\n-    summary = {\n-        \"shortlisted\": int(payload.get(\"summary\", {}).get(\"shortlisted\") or len(shortlist)),\n-        \"tradeable_count\": sum(1 for row in shortlist if row.get(\"decision_status\") in {\"trade\", \"trade_small\"}),\n-        \"direct_source_count\": sum(1 for row in shortlist if row.get(\"source_direct\")),\n-        \"surface_anomaly_count\": sum(1 for row in shortlist if int(row.get(\"surface_inconsistency_count\") or 0) > 0),\n-        \"blocked_count\": sum(1 for row in shortlist if row.get(\"execution_blocker\")),\n-        \"top_actions\": list(action_counts),\n-        \"top_blockers\": list(blocker_counts),\n-    }\n-    threshold_watch_count = sum(1 for row in shortlist if isinstance(row.get(\"threshold_watch\"), dict))\n-    if threshold_watch_count:\n-        summary[\"threshold_watch_count\"] = threshold_watch_count\n-    profile_counts = _dict_counts(payload.get(\"summary\", {}).get(\"strategy_profile_counts\", {}))\n-    if not profile_counts:\n-        profile_counts = _counts(row.get(\"strategy_profile_id\") for row in shortlist)\n-    if profile_counts:\n-        summary[\"strategy_profile_counts\"] = profile_counts\n     return {\n         \"run_id\": payload.get(\"run_id\"),\n         \"source\": payload.get(\"source\"),\n-        \"summary\": summary,\n+        \"summary\": {\n+            \"shortlisted\": int(payload.get(\"summary\", {}).get(\"shortlisted\") or len(shortlist)),\n+            \"tradeable_count\": sum(1 for row in shortlist if row.get(\"decision_status\") in {\"trade\", \"trade_small\"}),\n+            \"direct_source_count\": sum(1 for row in shortlist if row.get(\"source_direct\")),"
+    },
+    {
+      "rel": "scripts/weather_cron_monitor_refresh.py",
+      "p_core_exists": true,
+      "pred_exists": true,
+      "p_core_sha": "7134da6c6f67e73c",
+      "pred_sha": "2311cd997af0a2a0",
+      "same": false,
+      "diff_head": "--- /home/jul/P-core/scripts/weather_cron_monitor_refresh.py\t2026-04-26 10:15:52.990971786 +0200\n+++ /home/jul/prediction_core/scripts/weather_cron_monitor_refresh.py\t2026-04-27 11:19:08.414620380 +0200\n@@ -7,6 +7,14 @@\n from urllib.request import Request, urlopen\n from urllib.error import URLError, HTTPError\n \n+sys.path.insert(0, '/home/jul/prediction_core/python/src')\n+from weather_pm.paper_report import build_paper_portfolio_report  # noqa: E402\n+from weather_pm.polymarket_settlement import (  # noqa: E402\n+    enrich_exited_position_with_official_outcome,\n+    resolution_check_schedule_from_gamma_event,\n+    resolve_position_from_gamma_event,\n+)\n+\n BASE = Path('/home/jul/prediction_core/data/polymarket')\n SOURCE_BASE = BASE / 'weather_paper_micro_after_karachi_add_20260425.json'\n PREFS = [\n@@ -147,7 +155,16 @@\n def extract_resolution_source(pos):\n     slug=market_slug_from_url(pos.get('url'))\n     prev=pos.get('official_resolution_source') or pos.get('resolutionSource') or pos.get('resolution_source')\n-    result={'official_resolution_source':prev,'official_resolution_source_status':'available' if prev else 'missing','resolution_source_newly_available':False,'market_fetch_error':None}\n+    result={\n+        'official_resolution_source':prev,\n+        'official_resolution_source_status':'available' if prev else 'missing',\n+        'resolution_source_newly_available':False,\n+        'market_fetch_error':None,\n+        'polymarket_event':None,\n+        'resolution_scheduled_at':pos.get('resolution_scheduled_at'),\n+        'auto_check_at':pos.get('auto_check_at'),\n+        'auto_check_after_seconds':pos.get('auto_check_after_seconds'),\n+    }\n     if not slug: return result\n     # Try Gamma event slug. If unavailable, keep prior; do not block monitor.\n     urls=[f'https://gamma-api.polymarket.com/events?slug={quote(slug)}', f'https://gamma-api.polymarket.com/markets?slug={quote(slug)}']\n@@ -159,6 +176,8 @@\n             if not items: continue\n             # event or market fields\n             for item in items:\n+                result['polymarket_event']=item\n+                result.update(resolution_check_schedule_from_gamma_event(item, check_delay_seconds=60))\n                 cand=item.get('resolutionSource') or item.get('resolution_source')\n                 if not cand:\n                     for m in item.get('markets') or []:\n@@ -184,12 +203,31 @@\n     if tp is None: tp=round(min(0.99, entry+0.12),4)\n     return float(hard), float(trim), float(tp)\n \n+def enrich_closed_position(pos):\n+    p=deepcopy(pos)\n+    rs=extract_resolution_source(p)\n+    event=rs.pop('polymarket_event', None)\n+    p.update(rs)\n+    if p.get('action') == 'EXIT_PAPER' and isinstance(event, dict):\n+        p=enrich_exited_position_with_official_outcome(p, event)\n+    return p\n+\n+\n def refresh_position(pos, dtiso):\n     p=deepcopy(pos)\n     book=best_book(p.get('token_id')) if p.get('token_id') else {'book_fetch_error':'missing token_id'}\n     fc=fetch_forecast(p)\n     rs=extract_resolution_source(p)\n+    event=rs.pop('polymarket_event', None)\n     p.update(book); p.update(fc); p.update(rs)\n+    settlement=resolve_position_from_gamma_event(p, event) if isinstance(event, dict) else {'settlement_status':'UNSETTLED'}\n+    p.update(settlement)\n+    if p.get('settlement_status') in ('SETTLED_WON','SETTLED_LOST'):\n+        p['action']=p['settlement_status']\n+        p['reason']=f\"official Polymarket final outcome: {p.get('winning_outcome')}\"\n+        p['refreshed_at']=dtiso\n+        p['max_add_usdc']=0; p['add_allowed']=False\n+        return p\n     old_p=p.get('p_side_now') or p.get('base_p_side')\n     p['p_side_previous']=old_p\n     p_now=p_side_from_forecast(p, fc)\n@@ -224,10 +262,12 @@\n     src_path, src_doc = latest_structural()\n     active, closed = active_closed_from(src_doc)\n     refreshed=[refresh_position(p, dtiso) for p in active]"
+    },
+    {
+      "rel": "python/tests/test_strategy_weather_bookmaker.py",
+      "p_core_exists": false,
+      "pred_exists": true,
+      "p_core_sha": null,
+      "pred_sha": "044e9127975dfdf8",
+      "same": false
+    },
+    {
+      "rel": "python/tests/test_weather_paper_report.py",
+      "p_core_exists": false,
+      "pred_exists": true,
+      "p_core_sha": null,
+      "pred_sha": "e4e2b57a05b519b1",
+      "same": false
+    },
+    {
+      "rel": "python/tests/test_polymarket_settlement_resolver.py",
+      "p_core_exists": false,
+      "pred_exists": true,
+      "p_core_sha": null,
+      "pred_sha": "0146e2876008267a",
+      "same": false
+    }
+  ],
+  "prediction_untracked_files_sample": [
+    {
+      "rel": "data/polymarket/weather_operator_shortlist_bookmaker_live_20260427T011501Z.json",
+      "size": 32269,
+      "p_core_same_path": false,
+      "sha": "7077132aa80d2055",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_paper_cron_monitor_20260427T090718Z.csv",
+      "size": 2233,
+      "p_core_same_path": false,
+      "sha": "ae1212d1ccec4410",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_paper_cron_monitor_20260427T090718Z.json",
+      "size": 29113,
+      "p_core_same_path": false,
+      "sha": "a14b183fe99e4048",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_paper_cron_monitor_20260427T090718Z.md",
+      "size": 2026,
+      "p_core_same_path": false,
+      "sha": "67552e3e9f3b3a17",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_paper_cron_monitor_20260427T091921Z.csv",
+      "size": 3428,
+      "p_core_same_path": false,
+      "sha": "3f62b976ca10be5f",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_paper_cron_monitor_20260427T091921Z.json",
+      "size": 31324,
+      "p_core_same_path": false,
+      "sha": "f49df1e5cdb14f65",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_paper_cron_monitor_20260427T091921Z.md",
+      "size": 2776,
+      "p_core_same_path": false,
+      "sha": "13921a3798f4ef4d",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_profitable_accounts_operator_summary_bookmaker_live_20260427T011501Z.json",
+      "size": 104584,
+      "p_core_same_path": false,
+      "sha": "905ef6fe70766bf4",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_dryrun_20260427T010818Z.json",
+      "size": 3699,
+      "p_core_same_path": false,
+      "sha": "b72df4a5ab8c110c",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_dryrun_20260427T011537Z.json",
+      "size": 3699,
+      "p_core_same_path": false,
+      "sha": "86a70490177a7974",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_dryrun_20260427T041624Z.json",
+      "size": 3710,
+      "p_core_same_path": false,
+      "sha": "2e327565c52c2f97",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_dryrun_20260427T071636Z.json",
+      "size": 3681,
+      "p_core_same_path": false,
+      "sha": "c8b80d07b69a1c4b",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_dryrun_20260427T101657Z.json",
+      "size": 3712,
+      "p_core_same_path": false,
+      "sha": "b6ba2c257e23557c",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_events_20260427T010818Z.jsonl",
+      "size": 1861,
+      "p_core_same_path": false,
+      "sha": "732abbbce2183057",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_events_20260427T011537Z.jsonl",
+      "size": 1863,
+      "p_core_same_path": false,
+      "sha": "c59c92c389ba0213",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_events_20260427T041624Z.jsonl",
+      "size": 1792,
+      "p_core_same_path": false,
+      "sha": "bffa9a54e010927f",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_events_20260427T071636Z.jsonl",
+      "size": 1797,
+      "p_core_same_path": false,
+      "sha": "d91a143b3648f8d9",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_events_20260427T101657Z.jsonl",
+      "size": 1932,
+      "p_core_same_path": false,
+      "sha": "1e573cd94677ecc8",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_markets_20260427T010818Z.json",
+      "size": 1007,
+      "p_core_same_path": false,
+      "sha": "c71202e317d4e4a7",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_markets_20260427T011537Z.json",
+      "size": 1007,
+      "p_core_same_path": false,
+      "sha": "c71202e317d4e4a7",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_markets_20260427T041624Z.json",
+      "size": 1007,
+      "p_core_same_path": false,
+      "sha": "426fff2f5547a652",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_markets_20260427T071636Z.json",
+      "size": 1008,
+      "p_core_same_path": false,
+      "sha": "8caf7119072a559e",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_markets_20260427T101657Z.json",
+      "size": 1007,
+      "p_core_same_path": false,
+      "sha": "0888b17fe238d202",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_probabilities_20260427T010818Z.json",
+      "size": 272,
+      "p_core_same_path": false,
+      "sha": "a6c0fc26b185c4b2",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_probabilities_20260427T011537Z.json",
+      "size": 272,
+      "p_core_same_path": false,
+      "sha": "a6c0fc26b185c4b2",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_probabilities_20260427T041624Z.json",
+      "size": 272,
+      "p_core_same_path": false,
+      "sha": "62043199625f6a57",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_probabilities_20260427T071636Z.json",
+      "size": 271,
+      "p_core_same_path": false,
+      "sha": "a6f391392626aa04",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_live_probabilities_20260427T101657Z.json",
+      "size": 271,
+      "p_core_same_path": false,
+      "sha": "5c096c0e4672e996",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T010818Z.json",
+      "size": 2310,
+      "p_core_same_path": false,
+      "sha": "876aef105da117b9",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T010818Z.md",
+      "size": 1407,
+      "p_core_same_path": false,
+      "sha": "1949e1b628c0936c",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T011358Z.json",
+      "size": 259,
+      "p_core_same_path": false,
+      "sha": "7f07206352532eb1",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T011537Z.json",
+      "size": 2511,
+      "p_core_same_path": false,
+      "sha": "dce644b7a1182128",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T011537Z.md",
+      "size": 1685,
+      "p_core_same_path": false,
+      "sha": "641103bcb639a20f",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T041624Z.json",
+      "size": 2513,
+      "p_core_same_path": false,
+      "sha": "153856e294a6c364",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T041624Z.md",
+      "size": 1687,
+      "p_core_same_path": false,
+      "sha": "702e9738106cb4ef",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T071636Z.json",
+      "size": 2511,
+      "p_core_same_path": false,
+      "sha": "7728988ad813f6db",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T071636Z.md",
+      "size": 1685,
+      "p_core_same_path": false,
+      "sha": "ee9a3a3c6fc82214",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T101657Z.json",
+      "size": 2510,
+      "p_core_same_path": false,
+      "sha": "6d7a67f1fc021ee2",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_runtime_operator_report_20260427T101657Z.md",
+      "size": 1684,
+      "p_core_same_path": false,
+      "sha": "dc232d00963674cf",
+      "p_core_sha": null
+    },
+    {
+      "rel": "data/polymarket/weather_strategy_shortlist_bookmaker_live_20260427T011501Z.json",
+      "size": 630247,
+      "p_core_same_path": false,
+      "sha": "3382117a4be54be7",
+      "p_core_sha": null
+    },
+    {
+      "rel": "python/src/prediction_core/strategies/weather_bookmaker.py",
+      "size": 6916,
+      "p_core_same_path": false,
+      "sha": "cafdf6472b5c5dc8",
+      "p_core_sha": null
+    },
+    {
+      "rel": "python/src/weather_pm/paper_report.py",
+      "size": 3116,
+      "p_core_same_path": false,
+      "sha": "5e27a0a193c28659",
+      "p_core_sha": null
+    },
+    {
+      "rel": "python/src/weather_pm/polymarket_settlement.py",
+      "size": 6193,
+      "p_core_same_path": false,
+      "sha": "83caffae669be869",
+      "p_core_sha": null
+    },
+    {
+      "rel": "python/tests/test_polymarket_settlement_resolver.py",
+      "size": 4086,
+      "p_core_same_path": false,
+      "sha": "0146e2876008267a",
+      "p_core_sha": null
+    },
+    {
+      "rel": "python/tests/test_strategy_weather_bookmaker.py",
+      "size": 3556,
+      "p_core_same_path": false,
+      "sha": "044e9127975dfdf8",
+      "p_core_sha": null
+    },
+    {
+      "rel": "python/tests/test_weather_paper_report.py",
+      "size": 1737,
+      "p_core_same_path": false,
+      "sha": "e4e2b57a05b519b1",
+      "p_core_sha": null
+    }
+  ],
+  "prediction_untracked_count": 46
+}

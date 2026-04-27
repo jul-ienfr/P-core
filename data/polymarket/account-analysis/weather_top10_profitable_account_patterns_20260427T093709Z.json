@@ -1,0 +1,1600 @@
+{
+  "fetched_at_utc": "20260427T093709Z",
+  "source": "data-api.polymarket.com live weather leaderboard + public trades/positions",
+  "leaderboard_positive_count_fetched": 10050,
+  "selection_rule": "top 10 current weather/all/profit leaderboard by PnL",
+  "accounts": [
+    {
+      "rank": "1",
+      "handle": "gopfan2",
+      "xUsername": "r_gopfan",
+      "wallet": "0xf2f6af4f27ec2dcf4072095ab804016e14cd5817",
+      "profile": "https://polymarket.com/profile/0xf2f6af4f27ec2dcf4072095ab804016e14cd5817",
+      "weather_pnl": 344908.99,
+      "weather_volume": 4571404.83,
+      "pnl_over_volume_pct": 7.54,
+      "style": "weather-heavy signal/generalist",
+      "recent_weather_trades": 1,
+      "recent_nonweather_trades": 226,
+      "active_weather_positions": 21,
+      "active_nonweather_positions": 146,
+      "active_weather_value": 10768.45,
+      "active_total_value": 685146.88,
+      "recent_weather_usdc": 33.1,
+      "recent_trade_avg_usdc": 33.1,
+      "recent_trade_max_usdc": 33.1,
+      "kind_counts": {
+        "weather_general": 1
+      },
+      "active_kind_counts": {
+        "weather_general": 21
+      },
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 1
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "Will global temperature increase by less than 1.10ºC in April 2026?",
+          "side": "BUY",
+          "price": 0.3993967181467181,
+          "size": 82.88,
+          "usdc": 33.1,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [
+        {
+          "title": "Zelenskyy out as Ukraine president by end of 2026?",
+          "value": 5625.54,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.6082,
+          "curPrice": 0.845
+        },
+        {
+          "title": "Will a hurricane form by May 31?",
+          "value": 4497.08,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9234,
+          "curPrice": 0.9685
+        },
+        {
+          "title": "Ukraine signs peace deal with Russia before 2027?",
+          "value": 261.68,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.7,
+          "curPrice": 0.28
+        },
+        {
+          "title": "Will any Category 4 hurricane make landfall in the US in before 2027?",
+          "value": 176.57,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.5,
+          "curPrice": 0.685
+        },
+        {
+          "title": "Named storm forms before hurricane season?",
+          "value": 127.36,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.4189,
+          "curPrice": 0.17
+        },
+        {
+          "title": "Will global temperature increase by less than 1.10ºC in April 2026?",
+          "value": 80.23,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.3993,
+          "curPrice": 0.968
+        },
+        {
+          "title": "Will less than 12 named storms occur in the 2025 Atlantic hurricane season?",
+          "value": 0.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.1178,
+          "curPrice": null
+        },
+        {
+          "title": "Will it Snow in Boston this December?",
+          "value": 0.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.0838,
+          "curPrice": null
+        },
+        {
+          "title": "Rangers vs. Hurricanes",
+          "value": 0.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.32,
+          "curPrice": null
+        },
+        {
+          "title": "Will a hurricane form by August 31?",
+          "value": 0.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.7919,
+          "curPrice": null
+        },
+        {
+          "title": "Will global temperature increase by between 1.20ºC and 1.24ºC in November 2025?",
+          "value": 0.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.3714,
+          "curPrice": null
+        },
+        {
+          "title": "Will Ukraine win on 2025-09-05?",
+          "value": 0.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.11,
+          "curPrice": null
+        }
+      ],
+      "pattern_notes": [
+        "unit sizing plutôt petit: approche probe/multi-lignes plus copiable",
+        "activité publique récente mixte/non-weather: utile comme signal, pas pur spécialiste météo"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "2",
+      "handle": "aenews2",
+      "xUsername": "aenews",
+      "wallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+      "profile": "https://polymarket.com/profile/0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+      "weather_pnl": 277050.19,
+      "weather_volume": 9972308.56,
+      "pnl_over_volume_pct": 2.78,
+      "style": "weather-profitable generalist (current/recent flow mostly non-weather)",
+      "recent_weather_trades": 3,
+      "recent_nonweather_trades": 202,
+      "active_weather_positions": 0,
+      "active_nonweather_positions": 9,
+      "active_weather_value": 0,
+      "active_total_value": 172092.85,
+      "recent_weather_usdc": 1071.11,
+      "recent_trade_avg_usdc": 357.04,
+      "recent_trade_max_usdc": 942.15,
+      "kind_counts": {
+        "threshold": 2,
+        "exact_bin_or_temp_surface": 1
+      },
+      "active_kind_counts": {},
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 3
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "Will 150 or more tornadoes occur in the United States in March 2026?",
+          "side": "BUY",
+          "price": 0.9055311214486179,
+          "size": 1040.44,
+          "usdc": 942.15,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Chicago be between 46-47°F on March 11?",
+          "side": "BUY",
+          "price": 0.82,
+          "size": 154.39,
+          "usdc": 126.6,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Chicago be 54°F or higher on March 11?",
+          "side": "BUY",
+          "price": 0.098,
+          "size": 24.04,
+          "usdc": 2.36,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [],
+      "pattern_notes": [
+        "présence forte de thresholds: harvest de contrats 'or higher/below', souvent proche résolution",
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date",
+        "activité publique récente mixte/non-weather: utile comme signal, pas pur spécialiste météo"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "3",
+      "handle": "ColdMath",
+      "xUsername": "",
+      "wallet": "0x594edb9112f526fa6a80b8f858a6379c8a2c1c11",
+      "profile": "https://polymarket.com/profile/0x594edb9112f526fa6a80b8f858a6379c8a2c1c11",
+      "weather_pnl": 123799.94,
+      "weather_volume": 8940156.46,
+      "pnl_over_volume_pct": 1.38,
+      "style": "breadth/grid surface trader",
+      "recent_weather_trades": 451,
+      "recent_nonweather_trades": 0,
+      "active_weather_positions": 414,
+      "active_nonweather_positions": 6,
+      "active_weather_value": 29406.36,
+      "active_total_value": 34247.36,
+      "recent_weather_usdc": 73428.27,
+      "recent_trade_avg_usdc": 162.81,
+      "recent_trade_max_usdc": 6631.81,
+      "kind_counts": {
+        "exact_bin_or_temp_surface": 351,
+        "threshold": 100
+      },
+      "active_kind_counts": {
+        "exact_bin_or_temp_surface": 321,
+        "threshold": 93
+      },
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 451
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "Will the highest temperature in Jeddah be 35°C on April 29?",
+          "side": "BUY",
+          "price": 0.8772005689900427,
+          "size": 13.97368,
+          "usdc": 12.26,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 39°C or below on April 28?",
+          "side": "BUY",
+          "price": 0.9,
+          "size": 4.975,
+          "usdc": 4.48,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 39°C or below on April 28?",
+          "side": "BUY",
+          "price": 0.8984517221908527,
+          "size": 17.62008,
+          "usdc": 15.83,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 43°C on April 28?",
+          "side": "BUY",
+          "price": 0.9743054108871537,
+          "size": 1344.26077,
+          "usdc": 1309.72,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 39°C or below on April 28?",
+          "side": "BUY",
+          "price": 0.9,
+          "size": 4.975,
+          "usdc": 4.48,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 39°C or below on April 28?",
+          "side": "BUY",
+          "price": 0.897,
+          "size": 9.46103,
+          "usdc": 8.49,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 39°C or below on April 28?",
+          "side": "BUY",
+          "price": 0.1,
+          "size": 9.932,
+          "usdc": 0.99,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 39°C or below on April 28?",
+          "side": "BUY",
+          "price": 0.916,
+          "size": 19.916,
+          "usdc": 18.24,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 39°C or below on April 28?",
+          "side": "BUY",
+          "price": 0.917,
+          "size": 18.184230000000003,
+          "usdc": 16.67,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lagos be 37°C on April 29?",
+          "side": "BUY",
+          "price": 0.99,
+          "size": 104.9475,
+          "usdc": 103.9,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lagos be 36°C on April 28?",
+          "side": "BUY",
+          "price": 0.9839677419354839,
+          "size": 306.65398999999996,
+          "usdc": 301.74,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lagos be 37°C or higher on April 28?",
+          "side": "BUY",
+          "price": 0.9878901098901098,
+          "size": 272.83471,
+          "usdc": 269.53,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [
+        {
+          "title": "Will the lowest temperature in London be 4°C on April 28?",
+          "value": 2803.95,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9839,
+          "curPrice": 0.9995
+        },
+        {
+          "title": "Will the lowest temperature in New York City be 35°F or below on April 26?",
+          "value": 2423.81,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9513,
+          "curPrice": 1
+        },
+        {
+          "title": "Will the lowest temperature in New York City be 37°F or below on April 27?",
+          "value": 1617.4,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9517,
+          "curPrice": 0.996
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 43°C on April 28?",
+          "value": 1331.49,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9743,
+          "curPrice": 0.9905
+        },
+        {
+          "title": "Will the highest temperature in Seoul be 20°C on April 27?",
+          "value": 1242.58,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.995,
+          "curPrice": 0.9995
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 41°C on April 29?",
+          "value": 1063.92,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9713,
+          "curPrice": 0.9815
+        },
+        {
+          "title": "Will the lowest temperature in Tokyo be 11°C on April 29?",
+          "value": 889.14,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9868,
+          "curPrice": 0.994
+        },
+        {
+          "title": "Will the highest temperature in Mexico City be 23°C or higher on April 27?",
+          "value": 850.26,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9899,
+          "curPrice": 0.995
+        },
+        {
+          "title": "Will the highest temperature in Denver be 64°F or higher on April 26?",
+          "value": 761.75,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9465,
+          "curPrice": 0.9995
+        },
+        {
+          "title": "Will the lowest temperature in London be 8°C on April 27?",
+          "value": 736.57,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9755,
+          "curPrice": 0.9915
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 44°C on April 27?",
+          "value": 713.29,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9849,
+          "curPrice": 0.995
+        },
+        {
+          "title": "Will the highest temperature in Denver be between 62-63°F on April 26?",
+          "value": 630.45,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.9876,
+          "curPrice": 0.9995
+        }
+      ],
+      "pattern_notes": [
+        "grand nombre de lignes: process/automatisation probable, diversification par surfaces",
+        "présence forte de thresholds: harvest de contrats 'or higher/below', souvent proche résolution",
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date",
+        "tickets max élevés: conviction/banque significative, pas copiable tel quel"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "4",
+      "handle": "gopfan",
+      "xUsername": "",
+      "wallet": "0x6af75d4e4aaf700450efbac3708cce1665810ff1",
+      "profile": "https://polymarket.com/profile/0x6af75d4e4aaf700450efbac3708cce1665810ff1",
+      "weather_pnl": 118426.47,
+      "weather_volume": 739900.98,
+      "pnl_over_volume_pct": 16.01,
+      "style": "sparse/large-ticket conviction trader",
+      "recent_weather_trades": 30,
+      "recent_nonweather_trades": 167,
+      "active_weather_positions": 0,
+      "active_nonweather_positions": 0,
+      "active_weather_value": 0,
+      "active_total_value": 0,
+      "recent_weather_usdc": 17308.82,
+      "recent_trade_avg_usdc": 576.96,
+      "recent_trade_max_usdc": 7646.2,
+      "kind_counts": {
+        "exact_bin_or_temp_surface": 21,
+        "weather_general": 9
+      },
+      "active_kind_counts": {},
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 23,
+        "SELL": 7
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.31,
+          "size": 201.77,
+          "usdc": 62.55,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase by between 1.20-1.24°C?",
+          "side": "SELL",
+          "price": 0.29,
+          "size": 1000.0,
+          "usdc": 290.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.3,
+          "size": 100.0,
+          "usdc": 30.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.29,
+          "size": 287.1,
+          "usdc": 83.26,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.27,
+          "size": 1699.0,
+          "usdc": 458.73,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.35,
+          "size": 500.0,
+          "usdc": 175.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.34,
+          "size": 361.1,
+          "usdc": 122.77,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.33,
+          "size": 211.0,
+          "usdc": 69.63,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.32952335557673973,
+          "size": 1049.0,
+          "usdc": 345.67,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.31301131364700924,
+          "size": 806.99,
+          "usdc": 252.6,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase greater than 1.29°C?",
+          "side": "BUY",
+          "price": 0.2670083462325277,
+          "size": 1285.61,
+          "usdc": 343.27,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will there be more than 25 named storms during Atlantic Hurricane Season?",
+          "side": "SELL",
+          "price": 0.13495785820525533,
+          "size": 2158.19,
+          "usdc": 291.26,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [],
+      "pattern_notes": [
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date",
+        "tickets max élevés: conviction/banque significative, pas copiable tel quel",
+        "activité publique récente mixte/non-weather: utile comme signal, pas pur spécialiste météo"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "5",
+      "handle": "bama124",
+      "xUsername": "",
+      "wallet": "0xe5c8026239919339b988fdb150a7ef4ea196d3e7",
+      "profile": "https://polymarket.com/profile/0xe5c8026239919339b988fdb150a7ef4ea196d3e7",
+      "weather_pnl": 86600.55,
+      "weather_volume": 410556.07,
+      "pnl_over_volume_pct": 21.09,
+      "style": "weather-profitable generalist (current/recent flow mostly non-weather)",
+      "recent_weather_trades": 0,
+      "recent_nonweather_trades": 158,
+      "active_weather_positions": 0,
+      "active_nonweather_positions": 0,
+      "active_weather_value": 0,
+      "active_total_value": 2.08,
+      "recent_weather_usdc": 0,
+      "recent_trade_avg_usdc": 0,
+      "recent_trade_max_usdc": 0,
+      "kind_counts": {},
+      "active_kind_counts": {},
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {},
+      "top_recent_weather_trades": [],
+      "top_active_weather_positions": [],
+      "pattern_notes": [
+        "activité publique récente mixte/non-weather: utile comme signal, pas pur spécialiste météo"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "6",
+      "handle": "Hans323",
+      "xUsername": "Hans323",
+      "wallet": "0x0f37cb80dee49d55b5f6d9e595d52591d6371410",
+      "profile": "https://polymarket.com/profile/0x0f37cb80dee49d55b5f6d9e595d52591d6371410",
+      "weather_pnl": 80872.37,
+      "weather_volume": 6971546.61,
+      "pnl_over_volume_pct": 1.16,
+      "style": "breadth/grid surface trader",
+      "recent_weather_trades": 293,
+      "recent_nonweather_trades": 53,
+      "active_weather_positions": 0,
+      "active_nonweather_positions": 0,
+      "active_weather_value": 0,
+      "active_total_value": 40327.39,
+      "recent_weather_usdc": 203765.5,
+      "recent_trade_avg_usdc": 695.45,
+      "recent_trade_max_usdc": 22909.19,
+      "kind_counts": {
+        "exact_bin_or_temp_surface": 216,
+        "threshold": 68,
+        "weather_general": 9
+      },
+      "active_kind_counts": {},
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 214,
+        "SELL": 79
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "Will the highest temperature in New York City be between 50-51°F on April 21?",
+          "side": "BUY",
+          "price": 0.999,
+          "size": 10737.783089999999,
+          "usdc": 10727.05,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Manila be 33°C on April 15?",
+          "side": "BUY",
+          "price": 0.9987998502730315,
+          "size": 454.13275000000004,
+          "usdc": 453.59,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Manila be 34°C on April 15?",
+          "side": "BUY",
+          "price": 0.9988435368995302,
+          "size": 527.8894799999999,
+          "usdc": 527.28,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Guangzhou be 30°C or below on April 15?",
+          "side": "BUY",
+          "price": 0.9989356300201804,
+          "size": 1253.62329,
+          "usdc": 1252.29,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Seoul be 12°C on April 15?",
+          "side": "BUY",
+          "price": 0.9983139222436812,
+          "size": 238.15993,
+          "usdc": 237.76,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Seoul be 11°C on April 15?",
+          "side": "BUY",
+          "price": 0.9988775778850373,
+          "size": 91.15489,
+          "usdc": 91.05,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Tokyo be 17°C on April 15?",
+          "side": "BUY",
+          "price": 0.999,
+          "size": 1999.9,
+          "usdc": 1997.9,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Tokyo be 17°C on April 15?",
+          "side": "BUY",
+          "price": 0.9953052241875772,
+          "size": 243.04294,
+          "usdc": 241.9,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Tokyo be 20°C or higher on April 15?",
+          "side": "BUY",
+          "price": 0.9989897690534328,
+          "size": 2932.13189,
+          "usdc": 2929.17,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Tokyo be 19°C on April 15?",
+          "side": "BUY",
+          "price": 0.999,
+          "size": 754.2822900000001,
+          "usdc": 753.53,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in London be 17°C on April 7?",
+          "side": "BUY",
+          "price": 0.999,
+          "size": 6838.518059999999,
+          "usdc": 6831.68,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Madrid be 25°C on April 6?",
+          "side": "BUY",
+          "price": 0.999,
+          "size": 2127.50362,
+          "usdc": 2125.38,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [],
+      "pattern_notes": [
+        "grand nombre de lignes: process/automatisation probable, diversification par surfaces",
+        "présence forte de thresholds: harvest de contrats 'or higher/below', souvent proche résolution",
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date",
+        "tickets max élevés: conviction/banque significative, pas copiable tel quel"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "7",
+      "handle": "Handsanitizer23",
+      "xUsername": "",
+      "wallet": "0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+      "profile": "https://polymarket.com/profile/0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+      "weather_pnl": 71174.4,
+      "weather_volume": 953274.81,
+      "pnl_over_volume_pct": 7.47,
+      "style": "sparse/large-ticket conviction trader",
+      "recent_weather_trades": 27,
+      "recent_nonweather_trades": 4,
+      "active_weather_positions": 15,
+      "active_nonweather_positions": 4,
+      "active_weather_value": 0.0,
+      "active_total_value": 0.0,
+      "recent_weather_usdc": 386794.0,
+      "recent_trade_avg_usdc": 14325.7,
+      "recent_trade_max_usdc": 76142.4,
+      "kind_counts": {
+        "exact_bin_or_temp_surface": 20,
+        "threshold": 7
+      },
+      "active_kind_counts": {
+        "exact_bin_or_temp_surface": 13,
+        "threshold": 2
+      },
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 27
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "Will the highest temperature in Guangzhou be 31°C on April 16?",
+          "side": "BUY",
+          "price": 0.002,
+          "size": 53395.62,
+          "usdc": 106.79,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Hong Kong be 26°C on April 5?",
+          "side": "BUY",
+          "price": 0.09138788846935812,
+          "size": 65.73165,
+          "usdc": 6.01,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Hong Kong be 26°C on April 5?",
+          "side": "BUY",
+          "price": 0.0699864,
+          "size": 524.42463,
+          "usdc": 36.7,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Miami be between 78-79°F on March 29?",
+          "side": "BUY",
+          "price": 0.38,
+          "size": 250.0,
+          "usdc": 95.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Munich be 7°C on March 27?",
+          "side": "BUY",
+          "price": 0.9699668789808917,
+          "size": 78500.0,
+          "usdc": 76142.4,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 31°C or below on March 23?",
+          "side": "BUY",
+          "price": 0.995,
+          "size": 71900.0,
+          "usdc": 71540.5,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Munich be 15°C on March 23?",
+          "side": "BUY",
+          "price": 0.9979893333333333,
+          "size": 4500.0,
+          "usdc": 4490.95,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Shenzhen be 28°C on March 22?",
+          "side": "BUY",
+          "price": 0.025,
+          "size": 31500.0,
+          "usdc": 787.5,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Shenzhen be 27°C on March 22?",
+          "side": "BUY",
+          "price": 0.993,
+          "size": 76000.0,
+          "usdc": 75468.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Shanghai be 14°C on March 20?",
+          "side": "BUY",
+          "price": 0.998,
+          "size": 29200.0,
+          "usdc": 29141.6,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Atlanta be between 74-75°F on March 20?",
+          "side": "BUY",
+          "price": 0.7849122807017543,
+          "size": 114.0,
+          "usdc": 89.48,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Tokyo be 13°C on March 20?",
+          "side": "BUY",
+          "price": 0.99193,
+          "size": 2000.0,
+          "usdc": 1983.86,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [
+        {
+          "title": "Will the highest temperature in Dallas be between 84-85°F on March 19?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.26,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Dallas be between 72-73°F on March 4?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.011,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Shenzhen be 28°C on March 22?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.0249,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Guangzhou be 31°C on April 16?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.002,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Wellington be 21°C on February 24?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.004,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Toronto be 3°C on March 12?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.12,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Hong Kong be 26°C on April 5?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.0723,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Hong Kong be 27°C on April 5?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.009,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in London be 18°C or higher on March 2?",
+          "value": 0.0,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.02,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Atlanta be between 66-67°F on February 21?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.59,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 35°C on March 6?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.0249,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Lucknow be 36°C or below on March 9?",
+          "value": 0.0,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.006,
+          "curPrice": null
+        }
+      ],
+      "pattern_notes": [
+        "présence forte de thresholds: harvest de contrats 'or higher/below', souvent proche résolution",
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date",
+        "tickets max élevés: conviction/banque significative, pas copiable tel quel"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "8",
+      "handle": "automatedAItradingbot",
+      "xUsername": "",
+      "wallet": "0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11",
+      "profile": "https://polymarket.com/profile/0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11",
+      "weather_pnl": 64279.03,
+      "weather_volume": 2363702.37,
+      "pnl_over_volume_pct": 2.72,
+      "style": "weather-heavy signal/generalist",
+      "recent_weather_trades": 0,
+      "recent_nonweather_trades": 0,
+      "active_weather_positions": 5,
+      "active_nonweather_positions": 1,
+      "active_weather_value": 10.12,
+      "active_total_value": 32.2,
+      "recent_weather_usdc": 0,
+      "recent_trade_avg_usdc": 0,
+      "recent_trade_max_usdc": 0,
+      "kind_counts": {},
+      "active_kind_counts": {
+        "exact_bin_or_temp_surface": 4,
+        "threshold": 1
+      },
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {},
+      "top_recent_weather_trades": [],
+      "top_active_weather_positions": [
+        {
+          "title": "Will the highest temperature in Panama City be 31°C on April 26?",
+          "value": 10.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.5,
+          "curPrice": 1
+        },
+        {
+          "title": "Will the highest temperature in Seoul be 22°C on April 27?",
+          "value": 0.09,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.053,
+          "curPrice": 0.0015
+        },
+        {
+          "title": "Will the highest temperature in Tokyo be 20°C on April 27?",
+          "value": 0.03,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.02,
+          "curPrice": 0.0005
+        },
+        {
+          "title": "Will the highest temperature in Taipei be 31°C on April 27?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.4442,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Panama City be 32°C or higher on April 26?",
+          "value": 0.0,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.0499,
+          "curPrice": null
+        }
+      ],
+      "pattern_notes": [
+        "présence forte de thresholds: harvest de contrats 'or higher/below', souvent proche résolution",
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "9",
+      "handle": "BeefSlayer",
+      "xUsername": "BeefSlayer_",
+      "wallet": "0x331bf91c132af9d921e1908ca0979363fc47193f",
+      "profile": "https://polymarket.com/profile/0x331bf91c132af9d921e1908ca0979363fc47193f",
+      "weather_pnl": 63514.16,
+      "weather_volume": 1429670.68,
+      "pnl_over_volume_pct": 4.44,
+      "style": "breadth/grid surface trader",
+      "recent_weather_trades": 500,
+      "recent_nonweather_trades": 0,
+      "active_weather_positions": 7,
+      "active_nonweather_positions": 1,
+      "active_weather_value": 216.93,
+      "active_total_value": 411.33,
+      "recent_weather_usdc": 58823.62,
+      "recent_trade_avg_usdc": 117.65,
+      "recent_trade_max_usdc": 10098.41,
+      "kind_counts": {
+        "exact_bin_or_temp_surface": 445,
+        "threshold": 55
+      },
+      "active_kind_counts": {
+        "exact_bin_or_temp_surface": 5,
+        "threshold": 2
+      },
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 310,
+        "SELL": 190
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "Will the highest temperature in Seoul be 19°C on April 27?",
+          "side": "BUY",
+          "price": 0.7446511627906977,
+          "size": 212.25501,
+          "usdc": 158.06,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Houston be between 82-83°F on April 26?",
+          "side": "SELL",
+          "price": 0.15,
+          "size": 144.4,
+          "usdc": 21.66,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Houston be between 82-83°F on April 26?",
+          "side": "BUY",
+          "price": 0.09890080677159106,
+          "size": 144.40679,
+          "usdc": 14.28,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Seoul be 8°C or below on April 26?",
+          "side": "SELL",
+          "price": 0.02224565416285453,
+          "size": 480.92,
+          "usdc": 10.7,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Seoul be 9°C on April 26?",
+          "side": "SELL",
+          "price": 0.014648308141119143,
+          "size": 2495.48,
+          "usdc": 36.55,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Seoul be 8°C or below on April 26?",
+          "side": "BUY",
+          "price": 0.008988142292490118,
+          "size": 480.9274,
+          "usdc": 4.32,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the lowest temperature in Seoul be 9°C on April 26?",
+          "side": "BUY",
+          "price": 0.01,
+          "size": 2495.48072,
+          "usdc": 24.95,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Atlanta be 71°F or below on April 25?",
+          "side": "SELL",
+          "price": 0.06,
+          "size": 557.67,
+          "usdc": 33.46,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Atlanta be 71°F or below on April 25?",
+          "side": "SELL",
+          "price": 0.08028113164383213,
+          "size": 393.41,
+          "usdc": 31.58,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Atlanta be 71°F or below on April 25?",
+          "side": "BUY",
+          "price": 0.043059850516346206,
+          "size": 834.4192800000001,
+          "usdc": 35.93,
+          "kind": "threshold",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Miami be between 86-87°F on April 25?",
+          "side": "BUY",
+          "price": 0.11,
+          "size": 96.14241,
+          "usdc": 10.58,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will the highest temperature in Seoul be 20°C on April 25?",
+          "side": "BUY",
+          "price": 0.12,
+          "size": 859.7403599999999,
+          "usdc": 103.17,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [
+        {
+          "title": "Will the highest temperature in Seoul be 19°C on April 27?",
+          "value": 216.93,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.7447,
+          "curPrice": 0.9985
+        },
+        {
+          "title": "Will the highest temperature in Austin be 86°F or higher on April 26?",
+          "value": 0.0,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.04,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Miami be between 86-87°F on April 25?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.11,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Atlanta be between 76-77°F on April 25?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.024,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in Atlanta be 71°F or below on April 25?",
+          "value": 0.0,
+          "kind": "threshold",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.0128,
+          "curPrice": null
+        },
+        {
+          "title": "Will the highest temperature in New York City be between 62-63°F on April 24?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.5063,
+          "curPrice": null
+        },
+        {
+          "title": "Will the lowest temperature in New York City be between 38-39°F on April 25?",
+          "value": 0.0,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null,
+          "avgPrice": 0.003,
+          "curPrice": null
+        }
+      ],
+      "pattern_notes": [
+        "grand nombre de lignes: process/automatisation probable, diversification par surfaces",
+        "présence forte de thresholds: harvest de contrats 'or higher/below', souvent proche résolution",
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date",
+        "tickets max élevés: conviction/banque significative, pas copiable tel quel"
+      ],
+      "api_errors": {}
+    },
+    {
+      "rank": "10",
+      "handle": "BigMike11",
+      "xUsername": "",
+      "wallet": "0xecdbd79566a25693b9971c48d7de84bc05f7da79",
+      "profile": "https://polymarket.com/profile/0xecdbd79566a25693b9971c48d7de84bc05f7da79",
+      "weather_pnl": 62776.72,
+      "weather_volume": 850755.65,
+      "pnl_over_volume_pct": 7.38,
+      "style": "sparse/large-ticket conviction trader",
+      "recent_weather_trades": 48,
+      "recent_nonweather_trades": 299,
+      "active_weather_positions": 0,
+      "active_nonweather_positions": 0,
+      "active_weather_value": 0,
+      "active_total_value": 10906.0,
+      "recent_weather_usdc": 37915.82,
+      "recent_trade_avg_usdc": 789.91,
+      "recent_trade_max_usdc": 3543.58,
+      "kind_counts": {
+        "weather_general": 18,
+        "exact_bin_or_temp_surface": 30
+      },
+      "active_kind_counts": {},
+      "top_cities_recent": [],
+      "top_cities_active": [],
+      "side_counts_recent": {
+        "BUY": 41,
+        "SELL": 7
+      },
+      "top_recent_weather_trades": [
+        {
+          "title": "Russia x Ukraine ceasefire in 2025?",
+          "side": "BUY",
+          "price": 0.97,
+          "size": 1000.0,
+          "usdc": 970.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Russia x Ukraine ceasefire in 2025?",
+          "side": "BUY",
+          "price": 0.87,
+          "size": 9.0,
+          "usdc": 7.83,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will Belarus invade Ukraine before October?",
+          "side": "BUY",
+          "price": 0.999,
+          "size": 192.0,
+          "usdc": 191.81,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will Belarus invade Ukraine before October?",
+          "side": "BUY",
+          "price": 0.994,
+          "size": 938.45,
+          "usdc": 932.82,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will Belarus invade Ukraine before October?",
+          "side": "BUY",
+          "price": 0.991,
+          "size": 300.0,
+          "usdc": 297.3,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will Belarus invade Ukraine before October?",
+          "side": "BUY",
+          "price": 0.99,
+          "size": 269.69,
+          "usdc": 266.99,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will Belarus invade Ukraine before October?",
+          "side": "BUY",
+          "price": 0.96,
+          "size": 486.46,
+          "usdc": 467.0,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Will Belarus invade Ukraine before October?",
+          "side": "BUY",
+          "price": 0.958,
+          "size": 150.47,
+          "usdc": 144.15,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Zelensky remains President of Ukraine through September?",
+          "side": "BUY",
+          "price": 0.975,
+          "size": 2239.92,
+          "usdc": 2183.92,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Zelensky remains President of Ukraine through September?",
+          "side": "BUY",
+          "price": 0.984,
+          "size": 873.0,
+          "usdc": 859.03,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "Zelensky remains President of Ukraine through September?",
+          "side": "BUY",
+          "price": 0.9828144164280226,
+          "size": 715.85,
+          "usdc": 703.55,
+          "kind": "weather_general",
+          "city": null,
+          "date": null
+        },
+        {
+          "title": "August temperature increase by between 1.15-1.19°C?",
+          "side": "SELL",
+          "price": 0.0034,
+          "size": 1000.0,
+          "usdc": 3.4,
+          "kind": "exact_bin_or_temp_surface",
+          "city": null,
+          "date": null
+        }
+      ],
+      "top_active_weather_positions": [],
+      "pattern_notes": [
+        "présence d'exact bins/temp surfaces: chasse aux anomalies de grille ville/date",
+        "tickets max élevés: conviction/banque significative, pas copiable tel quel",
+        "activité publique récente mixte/non-weather: utile comme signal, pas pur spécialiste météo"
+      ],
+      "api_errors": {}
+    }
+  ]
+}

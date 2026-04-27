@@ -1,0 +1,919 @@
+{
+  "artifacts": {
+    "output_json": "../data/polymarket/weather_operator_shortlist_bookmaker_live_20260427T011501Z.json",
+    "source_shortlist_json": "../data/polymarket/weather_strategy_shortlist_bookmaker_live_20260427T011501Z.json"
+  },
+  "operator_focus": [
+    "paper_trade_watch_direct_station: 3",
+    "extreme_price: 3",
+    "missing_tradeable_quote: 4"
+  ],
+  "run_id": "live-bookmaker-20260427T011501Z",
+  "source": "live",
+  "summary": {
+    "blocked_count": 7,
+    "direct_source_count": 7,
+    "shortlisted": 7,
+    "surface_anomaly_count": 0,
+    "top_actions": [
+      "paper_trade_watch_direct_station",
+      "watch_only"
+    ],
+    "top_blockers": [
+      "extreme_price",
+      "missing_tradeable_quote"
+    ],
+    "tradeable_count": 3
+  },
+  "watchlist": [
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "extreme_price",
+      "blocker_detail": {
+        "kind": "market_state",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "polling_focus": "station_history_page",
+        "severity": "caution",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "city": "Dallas",
+      "date": "April 27",
+      "decision_status": "trade_small",
+      "depth_usd": 0.0,
+      "direct_source": "wunderground:KDAL",
+      "edge": 0.15,
+      "entry_policy": {
+        "max_position_usd": 10.0,
+        "max_spread": 0.08,
+        "min_confidence": 0.75,
+        "min_depth_usd": 50.0,
+        "min_edge": 0.07,
+        "name": "weather_station",
+        "q_max": 0.92,
+        "q_min": 0.08
+      },
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "executable_extreme_price",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2074350",
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "David32534",
+        "Junhoo2"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "operator_entry_summary": {
+        "action": null,
+        "blocked_by": [],
+        "edge_net_all_in": null,
+        "enter": null,
+        "market_price": null,
+        "model_probability": null,
+        "price_window": [
+          0.08,
+          0.92
+        ],
+        "side": null,
+        "size_hint_usd": null
+      },
+      "polling_focus": "station_history_page",
+      "rank": 1,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": "pending",
+        "date": "2026-04-27",
+        "latency": {
+          "latest": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": "station_history_page",
+            "provider": "wunderground",
+            "source_lag_seconds": null,
+            "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+            "station_code": "KDAL",
+            "tier": "unsupported",
+            "unit": null
+          },
+          "official": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": "station_history_page",
+            "provider": "wunderground",
+            "source_lag_seconds": null,
+            "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+            "station_code": "KDAL",
+            "tier": "unsupported",
+            "unit": null
+          }
+        },
+        "latest_direct": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": "station_history_page",
+          "source_lag_seconds": null,
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": "station_history_page",
+          "source_lag_seconds": null,
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": null,
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-27",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    },
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "extreme_price",
+      "blocker_detail": {
+        "kind": "market_state",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "polling_focus": "hko_current_weather_and_daily_extract",
+        "severity": "caution",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "city": "Hong Kong",
+      "date": "April 27",
+      "decision_status": "trade_small",
+      "depth_usd": 0.0,
+      "direct_source": "hong_kong_observatory:HKO",
+      "edge": 0.15,
+      "entry_policy": {
+        "max_position_usd": 10.0,
+        "max_spread": 0.08,
+        "min_confidence": 0.75,
+        "min_depth_usd": 50.0,
+        "min_edge": 0.07,
+        "name": "weather_station",
+        "q_max": 0.92,
+        "q_min": 0.08
+      },
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "executable_extreme_price",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2074460",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "operator_entry_summary": {
+        "action": null,
+        "blocked_by": [],
+        "edge_net_all_in": null,
+        "enter": null,
+        "market_price": null,
+        "model_probability": null,
+        "price_window": [
+          0.08,
+          0.92
+        ],
+        "side": null,
+        "size_hint_usd": null
+      },
+      "polling_focus": "hko_current_weather_and_daily_extract",
+      "rank": 2,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": "pending",
+        "date": "2026-04-27",
+        "latency": {
+          "latest": {
+            "direct": true,
+            "expected_lag_seconds": null,
+            "latest_timestamp": "2026-04-27T09:02:00+08:00",
+            "latest_value": 25.0,
+            "point_count": 1,
+            "polling_focus": "hko_current_weather_api",
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": 804,
+            "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+            "station_code": "HKO",
+            "tier": "direct_latest",
+            "unit": "c"
+          },
+          "official": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": null,
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": null,
+            "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+            "station_code": null,
+            "tier": "unsupported",
+            "unit": null
+          }
+        },
+        "latest_direct": {
+          "available": true,
+          "expected_lag_seconds": null,
+          "latency_tier": "direct_latest",
+          "polling_focus": "hko_current_weather_api",
+          "source_lag_seconds": 804,
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "timestamp": "2026-04-27T09:02:00+08:00",
+          "value": 25.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": null,
+          "source_lag_seconds": null,
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": null,
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    {
+      "action": "paper_trade_watch_direct_station",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "extreme_price",
+      "blocker_detail": {
+        "kind": "market_state",
+        "operator_action": "paper_micro_order_with_strict_limit_and_fill_tracking",
+        "polling_focus": "hko_current_weather_and_daily_extract",
+        "severity": "caution",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "city": "Hong Kong",
+      "date": "April 28",
+      "decision_status": "trade_small",
+      "depth_usd": 0.0,
+      "direct_source": "hong_kong_observatory:HKO",
+      "edge": 0.15,
+      "entry_policy": {
+        "max_position_usd": 10.0,
+        "max_spread": 0.08,
+        "min_confidence": 0.75,
+        "min_depth_usd": 50.0,
+        "min_edge": 0.07,
+        "name": "weather_station",
+        "q_max": 0.92,
+        "q_min": 0.08
+      },
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "executable_extreme_price",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2082488",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "paper_micro_order_with_strict_limit_and_fill_tracking"
+      ],
+      "operator_entry_summary": {
+        "action": null,
+        "blocked_by": [],
+        "edge_net_all_in": null,
+        "enter": null,
+        "market_price": null,
+        "model_probability": null,
+        "price_window": [
+          0.08,
+          0.92
+        ],
+        "side": null,
+        "size_hint_usd": null
+      },
+      "polling_focus": "hko_current_weather_and_daily_extract",
+      "rank": 3,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": "pending",
+        "date": "2026-04-28",
+        "latency": {
+          "latest": {
+            "direct": true,
+            "expected_lag_seconds": null,
+            "latest_timestamp": "2026-04-27T09:02:00+08:00",
+            "latest_value": 25.0,
+            "point_count": 1,
+            "polling_focus": "hko_current_weather_api",
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": 805,
+            "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+            "station_code": "HKO",
+            "tier": "direct_latest",
+            "unit": "c"
+          },
+          "official": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": null,
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": null,
+            "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+            "station_code": null,
+            "tier": "unsupported",
+            "unit": null
+          }
+        },
+        "latest_direct": {
+          "available": true,
+          "expected_lag_seconds": null,
+          "latency_tier": "direct_latest",
+          "polling_focus": "hko_current_weather_api",
+          "source_lag_seconds": 805,
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "timestamp": "2026-04-27T09:02:00+08:00",
+          "value": 25.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": null,
+          "source_lag_seconds": null,
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": null,
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "station_history_page",
+        "severity": "blocking",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "city": "Dallas",
+      "date": "April 28",
+      "decision_status": "skip",
+      "depth_usd": 14.75,
+      "direct_source": "wunderground:KDAL",
+      "edge": 0.82,
+      "entry_policy": {
+        "max_position_usd": 10.0,
+        "max_spread": 0.08,
+        "min_confidence": 0.75,
+        "min_depth_usd": 50.0,
+        "min_edge": 0.07,
+        "name": "weather_station",
+        "q_max": 0.92,
+        "q_min": 0.08
+      },
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2082388",
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "David32534",
+        "Junhoo2"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_entry_summary": {
+        "action": null,
+        "blocked_by": [],
+        "edge_net_all_in": null,
+        "enter": null,
+        "market_price": null,
+        "model_probability": null,
+        "price_window": [
+          0.08,
+          0.92
+        ],
+        "side": null,
+        "size_hint_usd": null
+      },
+      "polling_focus": "station_history_page",
+      "rank": 4,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": "pending",
+        "date": "2026-04-28",
+        "latency": {
+          "latest": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": "station_history_page",
+            "provider": "wunderground",
+            "source_lag_seconds": null,
+            "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+            "station_code": "KDAL",
+            "tier": "unsupported",
+            "unit": null
+          },
+          "official": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": "station_history_page",
+            "provider": "wunderground",
+            "source_lag_seconds": null,
+            "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+            "station_code": "KDAL",
+            "tier": "unsupported",
+            "unit": null
+          }
+        },
+        "latest_direct": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": "station_history_page",
+          "source_lag_seconds": null,
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": "station_history_page",
+          "source_lag_seconds": null,
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": null,
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-28",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-28",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "hko_current_weather_and_daily_extract",
+        "severity": "blocking",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "city": "Hong Kong",
+      "date": "April 28",
+      "decision_status": "skip",
+      "depth_usd": 11.5,
+      "direct_source": "hong_kong_observatory:HKO",
+      "edge": 0.14,
+      "entry_policy": {
+        "max_position_usd": 10.0,
+        "max_spread": 0.08,
+        "min_confidence": 0.75,
+        "min_depth_usd": 50.0,
+        "min_edge": 0.07,
+        "name": "weather_station",
+        "q_max": 0.92,
+        "q_min": 0.08
+      },
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2082498",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_entry_summary": {
+        "action": null,
+        "blocked_by": [],
+        "edge_net_all_in": null,
+        "enter": null,
+        "market_price": null,
+        "model_probability": null,
+        "price_window": [
+          0.08,
+          0.92
+        ],
+        "side": null,
+        "size_hint_usd": null
+      },
+      "polling_focus": "hko_current_weather_and_daily_extract",
+      "rank": 5,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": "pending",
+        "date": "2026-04-28",
+        "latency": {
+          "latest": {
+            "direct": true,
+            "expected_lag_seconds": null,
+            "latest_timestamp": "2026-04-27T09:02:00+08:00",
+            "latest_value": 25.0,
+            "point_count": 1,
+            "polling_focus": "hko_current_weather_api",
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": 807,
+            "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+            "station_code": "HKO",
+            "tier": "direct_latest",
+            "unit": "c"
+          },
+          "official": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": null,
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": null,
+            "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+            "station_code": null,
+            "tier": "unsupported",
+            "unit": null
+          }
+        },
+        "latest_direct": {
+          "available": true,
+          "expected_lag_seconds": null,
+          "latency_tier": "direct_latest",
+          "polling_focus": "hko_current_weather_api",
+          "source_lag_seconds": 807,
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "timestamp": "2026-04-27T09:02:00+08:00",
+          "value": 25.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": null,
+          "source_lag_seconds": null,
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": null,
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "station_history_page",
+        "severity": "blocking",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "city": "Dallas",
+      "date": "April 28",
+      "decision_status": "skip",
+      "depth_usd": 10.78,
+      "direct_source": "wunderground:KDAL",
+      "edge": 0.14,
+      "entry_policy": {
+        "max_position_usd": 10.0,
+        "max_spread": 0.08,
+        "min_confidence": 0.75,
+        "min_depth_usd": 50.0,
+        "min_edge": 0.07,
+        "name": "weather_station",
+        "q_max": 0.92,
+        "q_min": 0.08
+      },
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2082378",
+      "matched_traders": [
+        "Handsanitizer23",
+        "Shoemaker34",
+        "khalidakup",
+        "David32534",
+        "Junhoo2"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_entry_summary": {
+        "action": null,
+        "blocked_by": [],
+        "edge_net_all_in": null,
+        "enter": null,
+        "market_price": null,
+        "model_probability": null,
+        "price_window": [
+          0.08,
+          0.92
+        ],
+        "side": null,
+        "size_hint_usd": null
+      },
+      "polling_focus": "station_history_page",
+      "rank": 6,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": "pending",
+        "date": "2026-04-28",
+        "latency": {
+          "latest": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": "station_history_page",
+            "provider": "wunderground",
+            "source_lag_seconds": null,
+            "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+            "station_code": "KDAL",
+            "tier": "unsupported",
+            "unit": null
+          },
+          "official": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": "station_history_page",
+            "provider": "wunderground",
+            "source_lag_seconds": null,
+            "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+            "station_code": "KDAL",
+            "tier": "unsupported",
+            "unit": null
+          }
+        },
+        "latest_direct": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": "station_history_page",
+          "source_lag_seconds": null,
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "timestamp": null,
+          "value": null
+        },
+        "official_daily_extract": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": "station_history_page",
+          "source_lag_seconds": null,
+          "source_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": null,
+        "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-28",
+        "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+      },
+      "source_history_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL/date/2026-04-28",
+      "source_latest_url": "https://www.wunderground.com/history/daily/us/tx/dallas/KDAL"
+    },
+    {
+      "action": "watch_only",
+      "all_in_cost_bps": 0.0,
+      "anomalies": [],
+      "blocker": "missing_tradeable_quote",
+      "blocker_detail": {
+        "kind": "quote_missing",
+        "operator_action": "wait_for_executable_depth",
+        "polling_focus": "hko_current_weather_and_daily_extract",
+        "severity": "blocking",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "city": "Hong Kong",
+      "date": "April 27",
+      "decision_status": "skip",
+      "depth_usd": 4.79,
+      "direct_source": "hong_kong_observatory:HKO",
+      "edge": 0.14,
+      "entry_policy": {
+        "max_position_usd": 10.0,
+        "max_spread": 0.08,
+        "min_confidence": 0.75,
+        "min_depth_usd": 50.0,
+        "min_edge": 0.07,
+        "name": "weather_station",
+        "q_max": 0.92,
+        "q_min": 0.08
+      },
+      "execution_diagnostic": {
+        "grade": null,
+        "hours_to_resolution": null,
+        "liquidity_state": "missing_quote",
+        "score": null,
+        "spread": null,
+        "timing_state": "unknown"
+      },
+      "latency_priority": null,
+      "latency_tier": "direct_latest",
+      "market_id": "2074470",
+      "matched_traders": [
+        "Poligarch",
+        "Maskache2",
+        "HenryTheAtmoPhD",
+        "JoeTheMeteorologist",
+        "protrade3"
+      ],
+      "next": [
+        "poll_direct_resolution_source",
+        "wait_for_executable_depth"
+      ],
+      "operator_entry_summary": {
+        "action": null,
+        "blocked_by": [],
+        "edge_net_all_in": null,
+        "enter": null,
+        "market_price": null,
+        "model_probability": null,
+        "price_window": [
+          0.08,
+          0.92
+        ],
+        "side": null,
+        "size_hint_usd": null
+      },
+      "polling_focus": "hko_current_weather_and_daily_extract",
+      "rank": 7,
+      "resolution_status": {
+        "action_operator": "monitor_until_official_daily_extract",
+        "confirmed_outcome": "pending",
+        "date": "2026-04-27",
+        "latency": {
+          "latest": {
+            "direct": true,
+            "expected_lag_seconds": null,
+            "latest_timestamp": "2026-04-27T09:02:00+08:00",
+            "latest_value": 25.0,
+            "point_count": 1,
+            "polling_focus": "hko_current_weather_api",
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": 809,
+            "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+            "station_code": "HKO",
+            "tier": "direct_latest",
+            "unit": "c"
+          },
+          "official": {
+            "direct": false,
+            "expected_lag_seconds": null,
+            "latest_timestamp": null,
+            "latest_value": null,
+            "point_count": 0,
+            "polling_focus": null,
+            "provider": "hong_kong_observatory",
+            "source_lag_seconds": null,
+            "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+            "station_code": null,
+            "tier": "unsupported",
+            "unit": null
+          }
+        },
+        "latest_direct": {
+          "available": true,
+          "expected_lag_seconds": null,
+          "latency_tier": "direct_latest",
+          "polling_focus": "hko_current_weather_api",
+          "source_lag_seconds": 809,
+          "source_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en",
+          "timestamp": "2026-04-27T09:02:00+08:00",
+          "value": 25.0
+        },
+        "official_daily_extract": {
+          "available": false,
+          "expected_lag_seconds": null,
+          "latency_tier": "unsupported",
+          "polling_focus": null,
+          "source_lag_seconds": null,
+          "source_url": "https://www.weather.gov.hk/en/cis/climat.htm",
+          "timestamp": null,
+          "value": null
+        },
+        "provisional_outcome": null,
+        "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+        "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+      },
+      "source_history_url": "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4",
+      "source_latest_url": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "artifacts": {
+    "audit_jsonl": "/home/jul/prediction_core/data/polymarket/runtime_audit/weather_runtime_audit_20260427T041624Z.jsonl",
+    "events_jsonl": "/home/jul/prediction_core/data/polymarket/weather_runtime_live_events_20260427T041624Z.jsonl",
+    "markets_json": "/home/jul/prediction_core/data/polymarket/weather_runtime_live_markets_20260427T041624Z.json",
+    "operator_report_json": "/home/jul/prediction_core/data/polymarket/weather_runtime_operator_report_20260427T041624Z.json",
+    "operator_report_md": "/home/jul/prediction_core/data/polymarket/weather_runtime_operator_report_20260427T041624Z.md",
+    "probabilities_json": "/home/jul/prediction_core/data/polymarket/weather_runtime_live_probabilities_20260427T041624Z.json",
+    "runtime_json": "/home/jul/prediction_core/data/polymarket/weather_runtime_dryrun_20260427T041624Z.json"
+  },
+  "no_real_orders": true,
+  "ok": true,
+  "operator_verdict": {
+    "next_actions": [
+      "monitor_live_books",
+      "rerun_when_model_probability_or_price_moves"
+    ],
+    "reason": "aucun candidat ne franchit min_edge=0.02; pas d\u2019ajout",
+    "status": "HOLD"
+  },
+  "paper_only": true,
+  "run_id": "20260427T041624Z",
+  "source": "live Gamma/CLOB snapshot converted to bounded local dry-run events",
+  "summary": {
+    "dry_run_order_attempts": 0,
+    "hold_count": 3,
+    "missing_snapshot_count": 0,
+    "orders_submitted": 0,
+    "paper_signal_count": 0,
+    "processed_events": 3,
+    "subscriptions": 3
+  },
+  "watchlist": [
+    {
+      "action": "HOLD",
+      "best_ask": 0.92,
+      "best_bid": null,
+      "edge_vs_ask": -0.869,
+      "execution_enabled": false,
+      "market_id": "2082488",
+      "model_probability": 0.051,
+      "outcome": "Yes",
+      "question": "Will the highest temperature in Hong Kong be 21\u00b0C or below on April 28?"
+    },
+    {
+      "action": "HOLD",
+      "best_ask": 0.92,
+      "best_bid": 0.008,
+      "edge_vs_ask": -0.861,
+      "execution_enabled": false,
+      "market_id": "2082498",
+      "model_probability": 0.059,
+      "outcome": "Yes",
+      "question": "Will the highest temperature in Hong Kong be 31\u00b0C or higher on April 28?"
+    },
+    {
+      "action": "HOLD",
+      "best_ask": 0.94,
+      "best_bid": 0.001,
+      "edge_vs_ask": -0.888,
+      "execution_enabled": false,
+      "market_id": "2074460",
+      "model_probability": 0.052,
+      "outcome": "Yes",
+      "question": "Will the highest temperature in Hong Kong be 20\u00b0C or below on April 27?"
+    }
+  ]
+}

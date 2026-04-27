@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shlex
+import tempfile
 import time
 from datetime import date as date_type
 from datetime import datetime, timezone
@@ -37,6 +39,7 @@ from weather_pm.source_routing import build_resolution_source_route
 from weather_pm.station_binding import build_station_binding
 from weather_pm.source_selection import select_best_station_sources
 from weather_pm.strategy_extractor import extract_weather_strategy_rules
+from weather_pm.strategy_profiles import compact_strategy_profile_report, strategy_profiles_markdown
 from weather_pm.strategy_shortlist import build_operator_shortlist_report, build_strategy_shortlist
 from weather_pm.traders import WeatherTrader, build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
 from weather_pm.wallet_intel import fetch_trader_strategy_profile
@@ -113,6 +116,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     strategy_report = subparsers.add_parser("strategy-report", help="Extract reusable weather strategy rules from a reverse-engineering report")
     strategy_report.add_argument("--reverse-engineering-json", required=True, help="Reverse-engineering JSON produced by import-weather-traders")
+
+    strategy_profiles = subparsers.add_parser("strategy-profiles", help="List compact weather strategy profiles")
+    strategy_profiles.add_argument("--output-md", required=False, help="Optional path to write a Markdown strategy profile matrix")
 
     strategy_shortlist = subparsers.add_parser("strategy-shortlist", help="Rank paper-cycle opportunities using profitable weather trader strategies and event-surface anomalies")
     strategy_shortlist.add_argument("--strategy-report-json", required=True, help="Strategy report JSON produced by strategy-report")
@@ -239,10 +245,6 @@ def _add_paper_cycle_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--max-impact-bps", required=False, type=float, help="Override max executable price impact in bps")
 
 
-def trader_profile(wallet: str, *, page_size: int = 50) -> dict[str, Any]:
-    return fetch_trader_strategy_profile(wallet, page_size=page_size).to_dict()
-
-
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -330,6 +332,16 @@ def main() -> int:
 
     if args.command == "strategy-report":
         print(json.dumps(strategy_report(args.reverse_engineering_json)))
+        return 0
+
+    if args.command == "strategy-profiles":
+        report = compact_strategy_profile_report()
+        if args.output_md:
+            output_path = Path(args.output_md)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(strategy_profiles_markdown(), encoding="utf-8")
+            report.setdefault("artifacts", {})["output_md"] = str(output_path)
+        print(json.dumps(report))
         return 0
 
     if args.command == "event-surface":
@@ -473,14 +485,20 @@ def main() -> int:
     if args.command == "paper-watchlist":
         report = write_paper_watchlist_report(args.input_json, output_json=args.output_json)
         report_source = args.output_json or args.input_json
+        tmp_path: Path | None = None
         if (args.output_md or args.output_csv) and not args.output_json:
-            tmp_path = Path(args.output_md or args.output_csv).with_suffix(".json")
-            tmp_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+            with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as handle:
+                tmp_path = Path(handle.name)
+                json.dump(report, handle, indent=2, sort_keys=True)
             report_source = str(tmp_path)
-        if args.output_csv:
-            write_paper_watchlist_csv(report_source, args.output_csv)
-        if args.output_md:
-            write_paper_watchlist_markdown(report_source, args.output_md)
+        try:
+            if args.output_csv:
+                write_paper_watchlist_csv(report_source, args.output_csv)
+            if args.output_md:
+                write_paper_watchlist_markdown(report_source, args.output_md)
+        finally:
+            if tmp_path:
+                tmp_path.unlink(missing_ok=True)
         if args.compact:
             print(
                 json.dumps(
@@ -500,8 +518,7 @@ def main() -> int:
         candidate = load_candidate(args.candidate_json)
         ledger = load_paper_ledger(args.ledger_json) if Path(args.ledger_json).exists() else {"orders": []}
         payload = paper_ledger_place(candidate, ledger=ledger)
-        Path(args.ledger_json).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.ledger_json).write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        _write_json_atomic(Path(args.ledger_json), payload)
         artifact = write_paper_ledger_artifacts(payload, output_dir=args.output_dir)
         print(json.dumps(artifact))
         return 0
@@ -510,7 +527,7 @@ def main() -> int:
         ledger = load_paper_ledger(args.ledger_json)
         refreshes, settlements = load_refresh_payload(args.refresh_json) if args.refresh_json else ({}, {})
         payload = paper_ledger_refresh(ledger, refreshes=refreshes, settlements=settlements, max_position_usdc=args.max_position_usdc)
-        Path(args.ledger_json).write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        _write_json_atomic(Path(args.ledger_json), payload)
         artifact = write_paper_ledger_artifacts(payload, output_dir=args.output_dir)
         print(json.dumps(artifact))
         return 0
@@ -726,6 +743,21 @@ def _build_miroshark_ask_recipe(files: Sequence[str], simulation_requirement: st
         "payload": payload,
         "curl_command": " ".join(shlex.quote(part) for part in curl_parts),
     }
+
+
+def _write_json_atomic(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        Path(tmp_name).replace(path)
+    except Exception:
+        Path(tmp_name).unlink(missing_ok=True)
+        raise
 
 
 def import_weather_traders(
@@ -1399,75 +1431,6 @@ def _paper_cycle_payload_from_args(args: argparse.Namespace) -> dict[str, Any]:
     }
     return {key: value for key, value in payload.items() if value is not None}
 
-
-def station_history_for_market_id(
-    market_id: str,
-    *,
-    source: str = "live",
-    start_date: str,
-    end_date: str,
-    client: Any | None = None,
-) -> dict[str, Any]:
-    if source not in _VALID_SOURCES:
-        raise ValueError("source must be 'fixture' or 'live'")
-    raw_market = dict(get_market_by_id(market_id, source=source))
-    structure = parse_market_question(str(raw_market["question"]))
-    resolution = parse_resolution_metadata(
-        resolution_source=raw_market.get("resolution_source"),
-        description=raw_market.get("description"),
-        rules=raw_market.get("rules"),
-    )
-    history = build_station_history_bundle(
-        structure,
-        resolution,
-        start_date=start_date,
-        end_date=end_date,
-        client=client,
-    )
-    route = build_resolution_source_route(structure, resolution, start_date=start_date, end_date=end_date)
-    return {
-        "market_id": market_id,
-        "source": source,
-        "market": structure.to_dict(),
-        "resolution": resolution.to_dict(),
-        "source_route": route.to_dict(),
-        "history": history.to_dict(),
-        "latency": history.latency_diagnostics(),
-    }
-
-
-def station_latest_for_market_id(
-    market_id: str,
-    *,
-    source: str = "live",
-    client: Any | None = None,
-) -> dict[str, Any]:
-    if source not in _VALID_SOURCES:
-        raise ValueError("source must be 'fixture' or 'live'")
-    raw_market = dict(get_market_by_id(market_id, source=source))
-    structure = parse_market_question(str(raw_market["question"]))
-    resolution = parse_resolution_metadata(
-        resolution_source=raw_market.get("resolution_source"),
-        description=raw_market.get("description"),
-        rules=raw_market.get("rules"),
-    )
-    latest_client = client or StationHistoryClient()
-    try:
-        bundle = latest_client.fetch_latest_bundle(structure, resolution)
-    except Exception:
-        bundle = build_station_history_bundle(structure, resolution, start_date="", end_date="", client=latest_client)
-    latest = bundle.latest()
-    route = build_resolution_source_route(structure, resolution)
-    return {
-        "market_id": market_id,
-        "source": source,
-        "market": structure.to_dict(),
-        "resolution": resolution.to_dict(),
-        "source_route": route.to_dict(),
-        "latest": latest.to_dict() if latest else None,
-        "history": bundle.to_dict(),
-        "latency": bundle.latency_diagnostics(),
-    }
 
 
 def station_history_for_market_id(

@@ -1,0 +1,661 @@
+{
+  "schema_version": 1,
+  "report_type": "polymarket_weather_production_operator",
+  "summary": {
+    "candidate_count": 5,
+    "implemented_layers": 6,
+    "guarded_layers": 1,
+    "missing_layers": 3,
+    "live_ready": false,
+    "paper_only": true,
+    "blocker_count": 3
+  },
+  "production_layers": [
+    {
+      "layer": "source_first_event_surface",
+      "status": "implemented",
+      "detail": "surface source status: source_confirmed_fixture"
+    },
+    {
+      "layer": "cross_market_inconsistency_engine",
+      "status": "implemented",
+      "detail": "candidate inconsistency flags included"
+    },
+    {
+      "layer": "orderbook_strict_limit_simulation",
+      "status": "implemented",
+      "detail": "strict-limit fill metrics included"
+    },
+    {
+      "layer": "near_resolution_threshold_watcher",
+      "status": "implemented",
+      "detail": "threshold recommendations included"
+    },
+    {
+      "layer": "continuous_consensus_tracker",
+      "status": "implemented",
+      "detail": "account consensus summary available"
+    },
+    {
+      "layer": "historical_replay_backtest",
+      "status": "missing",
+      "detail": "backtest/replay readiness gate"
+    },
+    {
+      "layer": "strict_limit_paper_execution_ledger",
+      "status": "missing",
+      "detail": "paper ledger health gate"
+    },
+    {
+      "layer": "portfolio_sizing_risk_caps",
+      "status": "implemented",
+      "detail": "portfolio caps applied to candidates"
+    },
+    {
+      "layer": "guarded_live_execution",
+      "status": "guarded",
+      "detail": "live execution refused unless all readiness checks pass"
+    },
+    {
+      "layer": "real_money_live_execution",
+      "status": "missing",
+      "detail": "intentionally disabled until explicit operator approval"
+    }
+  ],
+  "top_current_candidates": [
+    {
+      "market_id": "chicago-high-72f-or-higher-20260430",
+      "question": "Will the highest temperature in Chicago be 72\u00b0F or higher on April 30?",
+      "city": "Chicago",
+      "date": "2026-04-30",
+      "measurement_kind": "high",
+      "unit": "f",
+      "source_provider": "noaa",
+      "source_station_code": "KMDW",
+      "source_status": "source_confirmed_fixture",
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "source_direct": true,
+      "candidate_side": "YES",
+      "side": "YES",
+      "strict_limit": 0.5,
+      "probability_edge": 0.14,
+      "threshold": 72.0,
+      "forecast_value": 73.0,
+      "sigma": 1.0,
+      "error_width": 1.0,
+      "primary_archetype": "threshold_harvester",
+      "correlated_surface_id": "Chicago|2026-04-30|high|f",
+      "execution": {
+        "side": "YES",
+        "requested_spend": 5.0,
+        "top_ask": 0.48,
+        "avg_fill_price": 0.48,
+        "fillable_spend": 5.0,
+        "levels_used": 1,
+        "slippage_from_top_ask": 0.0,
+        "edge_after_fill": 0.14,
+        "execution_blocker": null,
+        "fill_status": "filled"
+      },
+      "execution_blocker": null,
+      "threshold_watch": {
+        "market_id": "chicago-high-72f-or-higher-20260430",
+        "question": "Will the highest temperature in Chicago be 72\u00b0F or higher on April 30?",
+        "eligible": true,
+        "threshold_kind": "threshold_high",
+        "threshold_direction": "higher",
+        "threshold": 72.0,
+        "hours_to_resolution": 2.0,
+        "source_status": "source_confirmed",
+        "source_confirmed": true,
+        "source_value": 73.0,
+        "source_margin": 1.0,
+        "favored_side": "YES",
+        "candidate_side": "YES",
+        "top_ask": 0.48,
+        "strict_limit": null,
+        "recommendation": "paper_micro_strict_limit",
+        "blocker": null,
+        "reason": "near_resolution_threshold_source_edge"
+      },
+      "inconsistency_flags": [],
+      "account_consensus": {
+        "unique_accounts": 3,
+        "signal_count": 4,
+        "dominant_side": "YES"
+      },
+      "portfolio_risk": {
+        "requested_size_usdc": 5.0,
+        "approved_size_usdc": 5.0,
+        "cap_status": "approved",
+        "binding_caps": [],
+        "remaining_capacity_usdc": {
+          "total_paper": 97.0,
+          "city_date": 22.0,
+          "station_source": 22.0,
+          "archetype": 30.0,
+          "side": 38.0,
+          "correlated_surface": 17.0
+        },
+        "mode": "paper",
+        "live_order_allowed": false,
+        "robustness_label": "medium",
+        "stress_test": {
+          "label": "medium",
+          "min_stressed_margin": -2.0,
+          "scenario_count": 18,
+          "failed_scenarios": 11,
+          "scenario_margins": [
+            0.0,
+            -1.0,
+            -0.5,
+            -1.5,
+            -1.0,
+            -2.0,
+            1.0,
+            0.0,
+            0.5,
+            -0.5,
+            0.0,
+            -1.0,
+            2.0,
+            1.0,
+            1.5,
+            0.5,
+            1.0,
+            0.0
+          ],
+          "reason": "some_stress_scenarios_preserve_edge"
+        },
+        "recommendation": "paper_small_capped",
+        "paper_only": true
+      },
+      "paper_notional_usdc": 5.0,
+      "paper_size_label": "small",
+      "live_order_allowed": false,
+      "strict_next_action": "paper_limit_only_after_source_recheck"
+    },
+    {
+      "market_id": "chicago-high-70f-exact-20260430",
+      "question": "Will the highest temperature in Chicago be exactly 70\u00b0F on April 30?",
+      "city": "Chicago",
+      "date": "2026-04-30",
+      "measurement_kind": "high",
+      "unit": "f",
+      "source_provider": "noaa",
+      "source_station_code": "KMDW",
+      "source_status": "source_confirmed_fixture",
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "source_direct": true,
+      "candidate_side": "NO",
+      "side": "NO",
+      "strict_limit": 0.24,
+      "probability_edge": 0.05,
+      "threshold": null,
+      "forecast_value": 73.0,
+      "sigma": 1.0,
+      "error_width": 1.0,
+      "primary_archetype": "event_surface_grid_specialist",
+      "correlated_surface_id": "Chicago|2026-04-30|high|f",
+      "execution": {
+        "side": "NO",
+        "requested_spend": 5.0,
+        "top_ask": 0.22,
+        "avg_fill_price": 0.22,
+        "fillable_spend": 5.0,
+        "levels_used": 1,
+        "slippage_from_top_ask": 0.0,
+        "edge_after_fill": 0.05,
+        "execution_blocker": null,
+        "fill_status": "filled"
+      },
+      "execution_blocker": null,
+      "threshold_watch": {},
+      "inconsistency_flags": [],
+      "account_consensus": {
+        "unique_accounts": 2,
+        "signal_count": 3,
+        "dominant_side": "NO"
+      },
+      "portfolio_risk": {
+        "requested_size_usdc": 1.0,
+        "approved_size_usdc": 1.0,
+        "cap_status": "approved",
+        "binding_caps": [],
+        "remaining_capacity_usdc": {
+          "total_paper": 100.0,
+          "city_date": 25.0,
+          "station_source": 25.0,
+          "archetype": 30.0,
+          "side": 40.0,
+          "correlated_surface": 20.0
+        },
+        "mode": "paper",
+        "live_order_allowed": false,
+        "robustness_label": "fragile",
+        "stress_test": {
+          "label": "fragile",
+          "min_stressed_margin": null,
+          "scenario_count": 0,
+          "failed_scenarios": 0,
+          "reason": "missing_forecast_or_threshold"
+        },
+        "recommendation": "paper_micro_only",
+        "paper_only": true
+      },
+      "paper_notional_usdc": 1.0,
+      "paper_size_label": "micro",
+      "live_order_allowed": false,
+      "strict_next_action": "paper_limit_only_after_source_recheck"
+    },
+    {
+      "market_id": "chicago-high-71f-exact-20260430",
+      "question": "Will the highest temperature in Chicago be exactly 71\u00b0F on April 30?",
+      "city": "Chicago",
+      "date": "2026-04-30",
+      "measurement_kind": "high",
+      "unit": "f",
+      "source_provider": "noaa",
+      "source_station_code": "KMDW",
+      "source_status": "source_confirmed_fixture",
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "source_direct": true,
+      "candidate_side": "YES",
+      "side": "YES",
+      "strict_limit": 0.33,
+      "probability_edge": 0.05,
+      "threshold": null,
+      "forecast_value": 73.0,
+      "sigma": 1.0,
+      "error_width": 1.0,
+      "primary_archetype": "event_surface_grid_specialist",
+      "correlated_surface_id": "Chicago|2026-04-30|high|f",
+      "execution": {
+        "side": "YES",
+        "requested_spend": 5.0,
+        "top_ask": 0.31,
+        "avg_fill_price": 0.31,
+        "fillable_spend": 5.0,
+        "levels_used": 1,
+        "slippage_from_top_ask": 0.0,
+        "edge_after_fill": 0.05,
+        "execution_blocker": null,
+        "fill_status": "filled"
+      },
+      "execution_blocker": null,
+      "threshold_watch": {},
+      "inconsistency_flags": [],
+      "account_consensus": {
+        "unique_accounts": 4,
+        "signal_count": 6,
+        "dominant_side": "YES"
+      },
+      "portfolio_risk": {
+        "requested_size_usdc": 1.0,
+        "approved_size_usdc": 1.0,
+        "cap_status": "approved",
+        "binding_caps": [],
+        "remaining_capacity_usdc": {
+          "total_paper": 99.0,
+          "city_date": 24.0,
+          "station_source": 24.0,
+          "archetype": 29.0,
+          "side": 40.0,
+          "correlated_surface": 19.0
+        },
+        "mode": "paper",
+        "live_order_allowed": false,
+        "robustness_label": "fragile",
+        "stress_test": {
+          "label": "fragile",
+          "min_stressed_margin": null,
+          "scenario_count": 0,
+          "failed_scenarios": 0,
+          "reason": "missing_forecast_or_threshold"
+        },
+        "recommendation": "paper_micro_only",
+        "paper_only": true
+      },
+      "paper_notional_usdc": 1.0,
+      "paper_size_label": "micro",
+      "live_order_allowed": false,
+      "strict_next_action": "paper_limit_only_after_source_recheck"
+    },
+    {
+      "market_id": "chicago-high-72f-exact-20260430",
+      "question": "Will the highest temperature in Chicago be exactly 72\u00b0F on April 30?",
+      "city": "Chicago",
+      "date": "2026-04-30",
+      "measurement_kind": "high",
+      "unit": "f",
+      "source_provider": "noaa",
+      "source_station_code": "KMDW",
+      "source_status": "source_confirmed_fixture",
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "source_direct": true,
+      "candidate_side": "YES",
+      "side": "YES",
+      "strict_limit": 0.27,
+      "probability_edge": 0.05,
+      "threshold": null,
+      "forecast_value": 73.0,
+      "sigma": 1.0,
+      "error_width": 1.0,
+      "primary_archetype": "event_surface_grid_specialist",
+      "correlated_surface_id": "Chicago|2026-04-30|high|f",
+      "execution": {
+        "side": "YES",
+        "requested_spend": 5.0,
+        "top_ask": 0.25,
+        "avg_fill_price": 0.25,
+        "fillable_spend": 5.0,
+        "levels_used": 1,
+        "slippage_from_top_ask": 0.0,
+        "edge_after_fill": 0.05,
+        "execution_blocker": null,
+        "fill_status": "filled"
+      },
+      "execution_blocker": null,
+      "threshold_watch": {},
+      "inconsistency_flags": [],
+      "account_consensus": {
+        "unique_accounts": 3,
+        "signal_count": 5,
+        "dominant_side": "YES"
+      },
+      "portfolio_risk": {
+        "requested_size_usdc": 1.0,
+        "approved_size_usdc": 1.0,
+        "cap_status": "approved",
+        "binding_caps": [],
+        "remaining_capacity_usdc": {
+          "total_paper": 98.0,
+          "city_date": 23.0,
+          "station_source": 23.0,
+          "archetype": 28.0,
+          "side": 39.0,
+          "correlated_surface": 18.0
+        },
+        "mode": "paper",
+        "live_order_allowed": false,
+        "robustness_label": "fragile",
+        "stress_test": {
+          "label": "fragile",
+          "min_stressed_margin": null,
+          "scenario_count": 0,
+          "failed_scenarios": 0,
+          "reason": "missing_forecast_or_threshold"
+        },
+        "recommendation": "paper_micro_only",
+        "paper_only": true
+      },
+      "paper_notional_usdc": 1.0,
+      "paper_size_label": "micro",
+      "live_order_allowed": false,
+      "strict_next_action": "paper_limit_only_after_source_recheck"
+    },
+    {
+      "market_id": "chicago-high-70f-or-below-20260430",
+      "question": "Will the highest temperature in Chicago be 70\u00b0F or below on April 30?",
+      "city": "Chicago",
+      "date": "2026-04-30",
+      "measurement_kind": "high",
+      "unit": "f",
+      "source_provider": "noaa",
+      "source_station_code": "KMDW",
+      "source_status": "source_confirmed_fixture",
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "source_direct": true,
+      "candidate_side": "NO",
+      "side": "NO",
+      "strict_limit": 0.4,
+      "probability_edge": 0.14,
+      "threshold": 70.0,
+      "forecast_value": 73.0,
+      "sigma": 1.0,
+      "error_width": 1.0,
+      "primary_archetype": "threshold_harvester",
+      "correlated_surface_id": "Chicago|2026-04-30|high|f",
+      "execution": {
+        "side": "NO",
+        "requested_spend": 5.0,
+        "top_ask": 0.38,
+        "avg_fill_price": 0.38,
+        "fillable_spend": 5.0,
+        "levels_used": 1,
+        "slippage_from_top_ask": 0.0,
+        "edge_after_fill": 0.14,
+        "execution_blocker": null,
+        "fill_status": "filled"
+      },
+      "execution_blocker": null,
+      "threshold_watch": {
+        "market_id": "chicago-high-70f-or-below-20260430",
+        "question": "Will the highest temperature in Chicago be 70\u00b0F or below on April 30?",
+        "eligible": true,
+        "threshold_kind": "threshold_low",
+        "threshold_direction": "below",
+        "threshold": 70.0,
+        "hours_to_resolution": 2.0,
+        "source_status": "source_confirmed",
+        "source_confirmed": true,
+        "source_value": 73.0,
+        "source_margin": 3.0,
+        "favored_side": "NO",
+        "candidate_side": "NO",
+        "top_ask": 0.38,
+        "strict_limit": null,
+        "recommendation": "paper_micro_strict_limit",
+        "blocker": null,
+        "reason": "near_resolution_threshold_source_edge"
+      },
+      "inconsistency_flags": [],
+      "account_consensus": {
+        "unique_accounts": 1,
+        "signal_count": 2,
+        "dominant_side": "NO"
+      },
+      "portfolio_risk": {
+        "requested_size_usdc": 0.0,
+        "approved_size_usdc": 0.0,
+        "cap_status": "approved",
+        "binding_caps": [],
+        "remaining_capacity_usdc": {
+          "total_paper": 92.0,
+          "city_date": 17.0,
+          "station_source": 17.0,
+          "archetype": 25.0,
+          "side": 39.0,
+          "correlated_surface": 12.0
+        },
+        "mode": "paper",
+        "live_order_allowed": false,
+        "robustness_label": "avoid",
+        "stress_test": {
+          "label": "avoid",
+          "min_stressed_margin": -5.0,
+          "scenario_count": 18,
+          "failed_scenarios": 18,
+          "scenario_margins": [
+            -2.0,
+            -3.0,
+            -1.5,
+            -2.5,
+            -1.0,
+            -2.0,
+            -3.0,
+            -4.0,
+            -2.5,
+            -3.5,
+            -2.0,
+            -3.0,
+            -4.0,
+            -5.0,
+            -3.5,
+            -4.5,
+            -3.0,
+            -4.0
+          ],
+          "reason": "negative_or_breaks_under_stress"
+        },
+        "recommendation": "avoid",
+        "paper_only": true
+      },
+      "paper_notional_usdc": 0.0,
+      "paper_size_label": "none",
+      "live_order_allowed": false,
+      "strict_next_action": "avoid_or_wait_for_cap_capacity"
+    }
+  ],
+  "blockers": [
+    "live_readiness:paper_ledger_healthy",
+    "live_readiness:backtest_replay_available",
+    "live_readiness:explicit_live_mode_enabled"
+  ],
+  "strict_next_actions": [
+    "refresh profitable weather accounts and consensus signals",
+    "confirm official source/station before any paper add",
+    "simulate strict-limit fills from a fresh orderbook before placement",
+    "place paper limits only within portfolio caps",
+    "monitor paper ledger and postmortem every filled/settled order",
+    "enable live mode only after explicit operator approval"
+  ],
+  "live_readiness": {
+    "ready": false,
+    "status": "refuse_live_execution",
+    "checks": {
+      "source_confirmed": {
+        "pass": true,
+        "required": true,
+        "detail": "official source/station confirmed"
+      },
+      "book_fresh": {
+        "pass": true,
+        "required": true,
+        "detail": "orderbook/fill simulation available"
+      },
+      "paper_ledger_healthy": {
+        "pass": false,
+        "required": true,
+        "detail": "paper ledger exists and has no red source flags"
+      },
+      "backtest_replay_available": {
+        "pass": false,
+        "required": true,
+        "detail": "historical replay/backtest artifact available"
+      },
+      "risk_caps_satisfied": {
+        "pass": true,
+        "required": true,
+        "detail": "portfolio caps not blocking candidates"
+      },
+      "explicit_live_mode_enabled": {
+        "pass": false,
+        "required": true,
+        "detail": "operator explicitly enabled live mode"
+      }
+    },
+    "blockers": [
+      "paper_ledger_healthy",
+      "backtest_replay_available",
+      "explicit_live_mode_enabled"
+    ],
+    "live_order_allowed": false
+  },
+  "components": {
+    "surface": {
+      "identity": {
+        "city": "Chicago",
+        "date": "2026-04-30",
+        "measurement_kind": "high",
+        "unit": "f"
+      },
+      "source": {
+        "provider": "noaa",
+        "station_code": "KMDW",
+        "station_name": "Chicago Midway International Airport",
+        "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+        "status": "source_confirmed_fixture"
+      },
+      "market_count": 5
+    },
+    "threshold_watcher": {
+      "summary": {
+        "input_markets": 5,
+        "threshold_markets": 2,
+        "near_resolution_thresholds": 2,
+        "recommendation_counts": {
+          "paper_micro_strict_limit": 2
+        }
+      },
+      "threshold_watch": [
+        {
+          "market_id": "chicago-high-70f-or-below-20260430",
+          "question": "Will the highest temperature in Chicago be 70\u00b0F or below on April 30?",
+          "eligible": true,
+          "threshold_kind": "threshold_low",
+          "threshold_direction": "below",
+          "threshold": 70.0,
+          "hours_to_resolution": 2.0,
+          "source_status": "source_confirmed",
+          "source_confirmed": true,
+          "source_value": 73.0,
+          "source_margin": 3.0,
+          "favored_side": "NO",
+          "candidate_side": "NO",
+          "top_ask": 0.38,
+          "strict_limit": null,
+          "recommendation": "paper_micro_strict_limit",
+          "blocker": null,
+          "reason": "near_resolution_threshold_source_edge"
+        },
+        {
+          "market_id": "chicago-high-72f-or-higher-20260430",
+          "question": "Will the highest temperature in Chicago be 72\u00b0F or higher on April 30?",
+          "eligible": true,
+          "threshold_kind": "threshold_high",
+          "threshold_direction": "higher",
+          "threshold": 72.0,
+          "hours_to_resolution": 2.0,
+          "source_status": "source_confirmed",
+          "source_confirmed": true,
+          "source_value": 73.0,
+          "source_margin": 1.0,
+          "favored_side": "YES",
+          "candidate_side": "YES",
+          "top_ask": 0.48,
+          "strict_limit": null,
+          "recommendation": "paper_micro_strict_limit",
+          "blocker": null,
+          "reason": "near_resolution_threshold_source_edge"
+        }
+      ]
+    },
+    "paper_ledger": {
+      "orders": 0,
+      "status_counts": {},
+      "action_counts": {},
+      "filled_usdc": 0,
+      "mtm_usdc": 0,
+      "pnl_usdc": 0,
+      "paper_only": true,
+      "live_order_allowed": false
+    },
+    "backtest": {},
+    "consensus": {
+      "unique_accounts": 4,
+      "signal_count": 11,
+      "dominant_side": "YES",
+      "top_handles": [
+        "LakeWx",
+        "GridSharp",
+        "ThresholdCat"
+      ]
+    }
+  },
+  "artifacts": {
+    "json_path": "../data/polymarket/weather_production_operator_report_latest.json",
+    "md_path": "../data/polymarket/weather_production_operator_report_latest.md",
+    "generated_at": "2026-04-26T12:46:42+00:00"
+  }
+}

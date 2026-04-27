@@ -9,7 +9,7 @@ _THRESHOLD_RE = re.compile(
     re.IGNORECASE,
 )
 _BIN_RE = re.compile(
-    r"Will the (?P<measurement>highest|lowest) temperature in (?P<city>.+?) be between (?P<low>-?\d+(?:\.\d+)?)(?P<unit>[CF]) and (?P<high>-?\d+(?:\.\d+)?)(?P=unit)\?",
+    r"Will the (?P<measurement>highest|lowest) temperature in (?P<city>.+?) be between (?P<low>-?\d+(?:\.\d+)?)(?:°)?(?P<unit>[CF]) and (?P<high>-?\d+(?:\.\d+)?)(?:°)?(?P=unit)(?: on (?P<date>.+?))?\?",
     re.IGNORECASE,
 )
 _EXACT_VALUE_RE = re.compile(
@@ -72,7 +72,7 @@ def parse_market_question(question: str) -> MarketStructure:
             range_low=float(bin_match.group("low")),
             range_high=float(bin_match.group("high")),
             threshold_direction=None,
-            date_local=None,
+            date_local=bin_match.group("date"),
         )
 
     exact_value_match = _EXACT_VALUE_RE.fullmatch(question.strip())

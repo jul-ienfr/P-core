@@ -74,6 +74,30 @@ def test_build_weather_event_surface_flags_exact_bin_mass_overround() -> None:
     ]
 
 
+def test_build_weather_event_surface_keeps_between_bins_with_dates_and_requires_source_identity() -> None:
+    markets = [
+        {"id": "chi-70-71", "question": "Will the highest temperature in Chicago be between 70°F and 71°F on April 30?", "yes_price": 0.44, "resolution": {}},
+        {"id": "chi-72-73", "question": "Will the highest temperature in Chicago be between 72°F and 73°F on April 30?", "yes_price": 0.62, "resolution": {"provider": "noaa"}},
+    ]
+
+    surface = build_weather_event_surface(markets)
+
+    chicago = surface["events"][0]
+    assert chicago["event_key"] == "Chicago|high|f|April 30"
+    assert chicago["exact_bin_count"] == 2
+    assert chicago["source"]["status"] == "source_confirmed"
+
+
+def test_build_weather_event_surface_does_not_confirm_empty_resolution_objects() -> None:
+    surface = build_weather_event_surface([
+        {"id": "chi-70", "question": "Will the highest temperature in Chicago be exactly 70°F on April 30?", "yes_price": 0.25, "resolution": {}}
+    ])
+
+    event = surface["events"][0]
+    assert event["source"]["status"] == "source_missing"
+    assert event["execution_status"] == "source_missing_do_not_trade"
+
+
 def test_cli_event_surface_reads_market_json_and_outputs_grouped_surface(tmp_path: Path) -> None:
     markets_path = tmp_path / "markets.json"
     markets_path.write_text(

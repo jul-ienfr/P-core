@@ -1,0 +1,130 @@
+{
+  "account_universe": {
+    "classification_counts": {
+      "not enough public recent data to classify": 71,
+      "profitable in weather but currently/recently generalist": 81,
+      "weather specialist / weather-heavy": 301,
+      "weather-heavy mixed": 47
+    },
+    "strategy_account_count": 500,
+    "total_profitable_accounts": 500
+  },
+  "artifacts": {
+    "output_json": "data/polymarket/weather_winning_patterns_operator_report_latest.json",
+    "output_md": "data/polymarket/weather_winning_patterns_operator_report_latest.md"
+  },
+  "copyability": {
+    "recommended_use": "extract_rules_and_features_not_blind_copy",
+    "why": [
+      "public fills are delayed and incomplete",
+      "fill quality, slippage, and bankroll diversification do not transfer directly",
+      "small accounts should copy the pattern map, not the raw sizing"
+    ]
+  },
+  "how_they_win": [
+    {
+      "description": "Use exact resolution stations/sources instead of generic city weather.",
+      "edge": "forecast/source edge"
+    },
+    {
+      "description": "Compare neighboring bins, thresholds, and surface probability mass.",
+      "edge": "market-structure edge"
+    },
+    {
+      "description": "Enter only at strict prices, slice orders, avoid chasing wide books.",
+      "edge": "execution edge"
+    },
+    {
+      "description": "Use profitable accounts as a market map and confidence signal.",
+      "edge": "consensus edge"
+    }
+  ],
+  "input_artifacts": {
+    "classified_summary_json": "data/polymarket/weather_profitable_accounts_operator_summary.json",
+    "continued_summary_json": null,
+    "future_consensus_json": null,
+    "orderbook_bridge_json": null,
+    "strategy_patterns_json": null,
+    "strategy_patterns_loaded": false,
+    "strategy_report_json": "data/polymarket/weather_strategy_report_latest.json"
+  },
+  "operator_rules": [
+    {
+      "meaning": "Validate the market's exact resolution source/station before trusting an apparent price edge.",
+      "rule": "source_first_before_price"
+    },
+    {
+      "meaning": "Score all bins and thresholds for a city/date together before choosing YES/NO on one market.",
+      "rule": "surface_before_ticket"
+    },
+    {
+      "meaning": "Winning-account patterns are copied as rules/signals only; execution remains strict-limit and paper-first.",
+      "rule": "strict_limit_no_market_buy"
+    }
+  ],
+  "pattern_archetypes": [
+    {
+      "archetype": "event_surface_grid_specialist",
+      "count": 297,
+      "project_capability": "event_surface_builder",
+      "winning_method": "Groups many bins/thresholds on the same city/date surface and prices the whole surface, not isolated tickets."
+    },
+    {
+      "archetype": "weather_signal_generalist",
+      "count": 147,
+      "project_capability": "copy_trader_signal_features",
+      "winning_method": "Adds weak account-consensus signal but is not treated as a pure reusable weather system."
+    },
+    {
+      "archetype": "exact_bin_anomaly_hunter",
+      "count": 34,
+      "project_capability": "cross_market_inconsistency_engine",
+      "winning_method": "Buys low-priced exact bins/ranges where neighboring prices or forecast mass look misordered."
+    },
+    {
+      "archetype": "threshold_harvester",
+      "count": 22,
+      "project_capability": "near_resolution_threshold_watcher",
+      "winning_method": "Harvests near-resolution or source-backed threshold contracts with strict price discipline."
+    }
+  ],
+  "project_integration": {
+    "already_integrated": [
+      "trader_activity_import",
+      "strategy_archetype_extraction",
+      "event_surface_builder",
+      "strategy_shortlist_bridge",
+      "operator_summary_bridge"
+    ],
+    "implementation_priorities": [
+      "event_surface_builder",
+      "near_resolution_threshold_watcher",
+      "trader_activity_history_import",
+      "strategy_backtest_replay",
+      "paper_then_live_execution_loop"
+    ],
+    "missing_next_layers": [
+      "full_historical_trade_replay",
+      "archetype_backtest_pnl_drawdown_fillability",
+      "continuous_consensus_tracker",
+      "strict_limit_paper_execution_ledger"
+    ]
+  },
+  "source_orderbook_bridge": {
+    "consensus_cluster_count": 0,
+    "orderbook_row_count": 0,
+    "purpose": "bridge account consensus to source/orderbook checks; not a blind trade trigger"
+  },
+  "top_cities": [
+    "London",
+    "New York City",
+    "Seoul",
+    "Hong Kong",
+    "Paris",
+    "Singapore",
+    "Guangzhou",
+    "Ankara",
+    "Atlanta",
+    "Miami"
+  ]
+}

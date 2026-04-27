@@ -46,6 +46,18 @@ def test_parse_exact_bin_low_question() -> None:
     assert result.range_high == 47.0
 
 
+def test_parse_exact_bin_question_supports_date_and_degree_symbols() -> None:
+    result = parse_market_question("Will the highest temperature in Chicago be between 70°F and 71°F on April 30?")
+
+    assert result.city == "Chicago"
+    assert result.measurement_kind == "high"
+    assert result.unit == "f"
+    assert result.is_exact_bin is True
+    assert result.range_low == 70.0
+    assert result.range_high == 71.0
+    assert result.date_local == "April 30"
+
+
 def test_parse_exact_value_question_supports_exactly_format() -> None:
     result = parse_market_question("Will the highest temperature in Denver be exactly 64F on April 23?")
 

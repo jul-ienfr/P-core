@@ -40,12 +40,15 @@ def _build_event(event_key: str, markets: list[dict[str, Any]], *, exact_mass_to
                 "severity": round(exact_mass - exact_mass_tolerance, 2),
             }
         )
+    source = _source_payload(markets)
     return {
         "event_key": event_key,
         "market_count": len(markets),
         "exact_bin_count": len(exact_bins),
         "threshold_count": len(thresholds),
         "exact_bin_price_mass": exact_mass,
+        "source": source,
+        "execution_status": _execution_status_for_source(source),
         "inconsistencies": inconsistencies,
         "markets": [_market_payload(market) for market in markets],
     }
@@ -100,6 +103,27 @@ def _event_key(structure: Any) -> str:
 
 def _price(market: dict[str, Any]) -> float:
     return round(float(market.get("yes_price") or 0.0), 2)
+
+
+def _source_payload(markets: list[dict[str, Any]]) -> dict[str, Any]:
+    sources = [market.get("resolution") for market in markets if isinstance(market.get("resolution"), dict)]
+    if not sources:
+        return {"status": "source_missing"}
+    station_codes = {str(source.get("station_code") or "").strip() for source in sources if source.get("station_code")}
+    providers = {str(source.get("provider") or "").strip() for source in sources if source.get("provider")}
+    source_urls = {str(source.get("source_url") or "").strip() for source in sources if source.get("source_url")}
+    source = dict(sources[0])
+    if len(station_codes) > 1 or len(providers) > 1 or len(source_urls) > 1:
+        source["status"] = "source_conflict"
+    elif station_codes or providers or source_urls:
+        source["status"] = "source_confirmed"
+    else:
+        source["status"] = "source_missing"
+    return source
+
+
+def _execution_status_for_source(source: dict[str, Any]) -> str:
+    return "source_confirmed_candidate" if source.get("status") == "source_confirmed" else "source_missing_do_not_trade"
 
 
 def _market_payload(market: dict[str, Any]) -> dict[str, Any]:

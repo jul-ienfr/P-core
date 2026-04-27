@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-04-27T12:06:34Z",
+  "items": [
+    {
+      "action": "bundle_old_prediction_core",
+      "path": "/home/jul/P-core/legacy_imports/archive/prediction_core_git_bundle_20260427.bundle",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "action": "rename_old_prediction_core",
+      "from": "/home/jul/prediction_core",
+      "to": "/home/jul/_archive_prediction_core_duplicate_20260427"
+    },
+    {
+      "action": "git_worktree_remove_tmp_paper",
+      "path": "/tmp/pcore-paper-push-WQoiJe",
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "surface_identity": {
+    "city": "Chicago",
+    "date": "2026-04-30",
+    "measurement_kind": "high",
+    "unit": "f"
+  },
+  "source": {
+    "provider": "noaa",
+    "station_code": "KMDW",
+    "station_name": "Chicago Midway International Airport",
+    "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+    "status": "source_confirmed_fixture"
+  },
+  "account_consensus": {
+    "unique_accounts": 4,
+    "signal_count": 11,
+    "dominant_side": "YES",
+    "top_handles": [
+      "LakeWx",
+      "GridSharp",
+      "ThresholdCat"
+    ]
+  },
+  "markets": [
+    {
+      "market_id": "chicago-high-70f-exact-20260430",
+      "question": "Will the highest temperature in Chicago be exactly 70°F on April 30?",
+      "contract_kind": "exact_bin",
+      "side_tokens": {
+        "yes": "1000000000000000000000000000000000000000000000000000000000000701",
+        "no": "1000000000000000000000000000000000000000000000000000000000000702"
+      },
+      "orderbook": {
+        "best_bid": 0.18,
+        "best_ask": 0.22,
+        "spread": 0.04
+      },
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "account_consensus_hint": {
+        "unique_accounts": 2,
+        "signal_count": 3,
+        "dominant_side": "NO"
+      }
+    },
+    {
+      "market_id": "chicago-high-71f-exact-20260430",
+      "question": "Will the highest temperature in Chicago be exactly 71°F on April 30?",
+      "contract_kind": "exact_bin",
+      "side_tokens": {
+        "yes": "1000000000000000000000000000000000000000000000000000000000000711",
+        "no": "1000000000000000000000000000000000000000000000000000000000000712"
+      },
+      "orderbook": {
+        "best_bid": 0.26,
+        "best_ask": 0.31,
+        "spread": 0.05
+      },
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "account_consensus_hint": {
+        "unique_accounts": 4,
+        "signal_count": 6,
+        "dominant_side": "YES"
+      }
+    },
+    {
+      "market_id": "chicago-high-72f-exact-20260430",
+      "question": "Will the highest temperature in Chicago be exactly 72°F on April 30?",
+      "contract_kind": "exact_bin",
+      "side_tokens": {
+        "yes": "1000000000000000000000000000000000000000000000000000000000000721",
+        "no": "1000000000000000000000000000000000000000000000000000000000000722"
+      },
+      "orderbook": {
+        "best_bid": 0.21,
+        "best_ask": 0.25,
+        "spread": 0.04
+      },
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "account_consensus_hint": {
+        "unique_accounts": 3,
+        "signal_count": 5,
+        "dominant_side": "YES"
+      }
+    },
+    {
+      "market_id": "chicago-high-72f-or-higher-20260430",
+      "question": "Will the highest temperature in Chicago be 72°F or higher on April 30?",
+      "contract_kind": "threshold_high",
+      "side_tokens": {
+        "yes": "1000000000000000000000000000000000000000000000000000000000001721",
+        "no": "1000000000000000000000000000000000000000000000000000000000001722"
+      },
+      "orderbook": {
+        "best_bid": 0.44,
+        "best_ask": 0.48,
+        "spread": 0.04
+      },
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "account_consensus_hint": {
+        "unique_accounts": 3,
+        "signal_count": 4,
+        "dominant_side": "YES"
+      }
+    },
+    {
+      "market_id": "chicago-high-70f-or-below-20260430",
+      "question": "Will the highest temperature in Chicago be 70°F or below on April 30?",
+      "contract_kind": "threshold_low",
+      "side_tokens": {
+        "yes": "1000000000000000000000000000000000000000000000000000000000002701",
+        "no": "1000000000000000000000000000000000000000000000000000000000002702"
+      },
+      "orderbook": {
+        "best_bid": 0.33,
+        "best_ask": 0.38,
+        "spread": 0.05
+      },
+      "source_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=KMDW&startDate=2026-04-30&endDate=2026-04-30&format=json&units=standard&includeAttributes=false",
+      "account_consensus_hint": {
+        "unique_accounts": 1,
+        "signal_count": 2,
+        "dominant_side": "NO"
+      }
+    }
+  ]
+}
