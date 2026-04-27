@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Mapping, Protocol
+from typing import Any, Callable, Mapping, Protocol
 
 
 class ExecutionMode(str, Enum):
@@ -604,31 +604,265 @@ class LiveExecutionUnavailableError(RuntimeError):
     pass
 
 
+class LiveExecutionGuardrailError(RuntimeError):
+    pass
+
+
+LIVE_ACK_PHRASE = "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS"
+DEFAULT_CLOB_HOST = "https://clob.polymarket.com"
+
+
+@dataclass(frozen=True, kw_only=True)
+class ClobRestExecutorConfig:
+    private_key: str
+    funder_address: str
+    chain_id: int
+    host: str = DEFAULT_CLOB_HOST
+    signature_type: int | None = None
+    live_enabled: bool = False
+    live_ack: str = ""
+    allow_order_submission: bool = False
+    max_order_notional_usdc: float = 0.0
+    min_order_size: float = 0.01
+    size_tick: float = 0.01
+    allowed_chain_ids: tuple[int, ...] = (137,)
+
+    def __post_init__(self) -> None:
+        if not str(self.private_key).strip() or not str(self.funder_address).strip():
+            raise ExecutionCredentialsError("Polymarket CLOB REST credentials are required")
+        chain_id = int(self.chain_id)
+        if chain_id not in self.allowed_chain_ids:
+            raise LiveExecutionGuardrailError("Polymarket CLOB chain id is not allowed")
+        host = str(self.host).strip().rstrip("/")
+        if host != DEFAULT_CLOB_HOST:
+            raise LiveExecutionGuardrailError("Polymarket CLOB host is not allowed")
+        max_order_notional = float(self.max_order_notional_usdc)
+        if not math.isfinite(max_order_notional) or max_order_notional <= 0.0:
+            raise LiveExecutionGuardrailError("POLYMARKET_MAX_ORDER_NOTIONAL_USDC must be finite and positive")
+        min_order_size = float(self.min_order_size)
+        size_tick = float(self.size_tick)
+        if not math.isfinite(min_order_size) or min_order_size <= 0.0:
+            raise LiveExecutionGuardrailError("min_order_size must be finite and positive")
+        if not math.isfinite(size_tick) or size_tick <= 0.0:
+            raise LiveExecutionGuardrailError("size_tick must be finite and positive")
+        if self.live_enabled is not True:
+            raise LiveExecutionGuardrailError("POLYMARKET_LIVE_ENABLED=1 is required")
+        if self.live_ack != LIVE_ACK_PHRASE:
+            raise LiveExecutionGuardrailError("POLYMARKET_LIVE_ACK confirmation is required")
+        object.__setattr__(self, "chain_id", chain_id)
+        object.__setattr__(self, "host", host)
+        object.__setattr__(self, "max_order_notional_usdc", max_order_notional)
+        object.__setattr__(self, "min_order_size", min_order_size)
+        object.__setattr__(self, "size_tick", size_tick)
+
+
 class ClobRestPolymarketExecutor:
     REQUIRED_ENV = (
         "POLYMARKET_PRIVATE_KEY",
         "POLYMARKET_FUNDER_ADDRESS",
         "POLYMARKET_CHAIN_ID",
     )
+    OPTIONAL_ENV = (
+        "POLYMARKET_CLOB_HOST",
+        "POLYMARKET_SIGNATURE_TYPE",
+        "POLYMARKET_LIVE_ENABLED",
+        "POLYMARKET_LIVE_ACK",
+        "POLYMARKET_MAX_ORDER_NOTIONAL_USDC",
+    )
 
-    def __init__(self, *, private_key: str, funder_address: str, chain_id: str) -> None:
-        self._private_key = private_key
-        self.funder_address = funder_address
-        self.chain_id = chain_id
+    def __init__(
+        self,
+        *,
+        private_key: str | None = None,
+        funder_address: str | None = None,
+        chain_id: str | int | None = None,
+        config: ClobRestExecutorConfig | None = None,
+        client: Any | None = None,
+        client_factory: Callable[[ClobRestExecutorConfig], Any] | None = None,
+    ) -> None:
+        if config is None:
+            if private_key is None or funder_address is None or chain_id is None:
+                raise ExecutionCredentialsError("Polymarket CLOB REST credentials are required")
+            config = ClobRestExecutorConfig(
+                private_key=str(private_key),
+                funder_address=str(funder_address),
+                chain_id=int(chain_id),
+                live_enabled=True,
+                live_ack=LIVE_ACK_PHRASE,
+                allow_order_submission=False,
+                max_order_notional_usdc=1_000_000_000_000.0,
+            )
+        self.config = config
+        self.funder_address = config.funder_address
+        self.chain_id = str(config.chain_id)
+        self._client = client
+        self._client_factory = client_factory
 
     @classmethod
-    def from_env(cls, env: Mapping[str, str] | None = None) -> "ClobRestPolymarketExecutor":
+    def from_env(
+        cls,
+        env: Mapping[str, str] | None = None,
+        *,
+        client: Any | None = None,
+        client_factory: Callable[[ClobRestExecutorConfig], Any] | None = None,
+    ) -> "ClobRestPolymarketExecutor":
         source = os.environ if env is None else env
+        if str(source.get("PREDICTION_CORE_DISABLE_LIVE_EXECUTION", "")).strip() == "1":
+            raise LiveExecutionGuardrailError("live Polymarket execution is disabled by kill switch")
         missing = [name for name in cls.REQUIRED_ENV if not str(source.get(name, "")).strip()]
         if missing:
             raise ExecutionCredentialsError("Polymarket CLOB REST credentials are required")
-        raise LiveExecutionUnavailableError("real CLOB REST submission is not wired yet")
+        try:
+            chain_id = int(str(source["POLYMARKET_CHAIN_ID"]))
+            max_order_notional = float(str(source.get("POLYMARKET_MAX_ORDER_NOTIONAL_USDC", "")))
+        except (TypeError, ValueError) as exc:
+            raise LiveExecutionGuardrailError("Polymarket live numeric environment values are invalid") from exc
+        config = ClobRestExecutorConfig(
+            private_key=str(source["POLYMARKET_PRIVATE_KEY"]),
+            funder_address=str(source["POLYMARKET_FUNDER_ADDRESS"]),
+            chain_id=chain_id,
+            host=str(source.get("POLYMARKET_CLOB_HOST") or DEFAULT_CLOB_HOST),
+            signature_type=_optional_int(source.get("POLYMARKET_SIGNATURE_TYPE")),
+            live_enabled=str(source.get("POLYMARKET_LIVE_ENABLED", "")).strip() == "1",
+            live_ack=str(source.get("POLYMARKET_LIVE_ACK", "")),
+            allow_order_submission=True,
+            max_order_notional_usdc=max_order_notional,
+        )
+        executor = cls(config=config, client=client, client_factory=client_factory)
+        if executor._client is None and executor._client_factory is None:
+            executor._client = _build_default_clob_client(config)
+        return executor
+
+    @property
+    def live_submission_available(self) -> bool:
+        return self.config.allow_order_submission and (self._client is not None or self._client_factory is not None)
 
     def submit_order(self, order: OrderRequest) -> OrderResult:
-        raise LiveExecutionUnavailableError("real CLOB REST submission is not wired yet")
+        if not self.config.allow_order_submission:
+            raise LiveExecutionGuardrailError("live Polymarket order submission requires explicit permission")
+        if order.order_type is not OrderType.LIMIT:
+            raise LiveExecutionGuardrailError("live Polymarket execution only supports limit orders")
+        if order.side is not OrderSide.BUY:
+            raise LiveExecutionGuardrailError("live Polymarket execution only supports buy orders in this release")
+        if order.notional_usdc > self.config.max_order_notional_usdc:
+            raise LiveExecutionGuardrailError("order exceeds POLYMARKET_MAX_ORDER_NOTIONAL_USDC")
+        size = self._order_size(order)
+        client = self._resolve_client()
+        payload = {
+            "token_id": order.token_id,
+            "price": order.limit_price,
+            "size": size,
+            "side": order.side.value.upper(),
+            "order_type": order.order_type.value.upper(),
+        }
+        response = _call_first_available(client, ("submit_order", "place_order", "post_order", "create_order"), payload)
+        normalized = _normalize_live_order_response(response)
+        return OrderResult(
+            accepted=normalized["accepted"],
+            status=normalized["status"],
+            exchange_order_id=normalized.get("exchange_order_id"),
+            idempotency_key=order.idempotency_key,
+            raw_response={"live": True, "request": {k: payload[k] for k in ("token_id", "price", "size", "side", "order_type")}, "response": _sanitize_payload(response)},
+        )
 
     def list_open_orders(self) -> list[dict[str, Any]]:
-        raise LiveExecutionUnavailableError("real CLOB REST open-order listing is not wired yet")
+        client = self._resolve_client()
+        response = _call_first_available(client, ("list_open_orders", "get_open_orders", "get_orders"))
+        if response is None:
+            return []
+        rows = response.get("orders", response) if isinstance(response, Mapping) else response
+        if not isinstance(rows, list):
+            raise LiveExecutionUnavailableError("Polymarket CLOB open-order response is not a list")
+        return [_sanitize_payload(row) for row in rows if isinstance(row, Mapping)]
 
     def cancel_order(self, exchange_order_id: str) -> OrderResult:
-        raise LiveExecutionUnavailableError("real CLOB REST cancel is not wired and must not be called from this scaffold")
+        raise LiveExecutionUnavailableError("real CLOB REST cancel requires a separate explicit guardrail and is not enabled")
+
+    def _resolve_client(self) -> Any:
+        if self._client is None:
+            if self._client_factory is None:
+                self._client = _build_default_clob_client(self.config)
+            else:
+                self._client = self._client_factory(self.config)
+        return self._client
+
+    def _order_size(self, order: OrderRequest) -> float:
+        raw_size = order.notional_usdc / order.limit_price
+        tick = self.config.size_tick
+        size = math.floor(raw_size / tick) * tick
+        size = round(size, 8)
+        if not math.isfinite(size) or size < self.config.min_order_size:
+            raise LiveExecutionGuardrailError("computed Polymarket order size is below minimum")
+        effective_notional = size * order.limit_price
+        if effective_notional <= 0.0 or effective_notional > order.notional_usdc:
+            raise LiveExecutionGuardrailError("computed Polymarket order notional is invalid")
+        if (order.notional_usdc - effective_notional) / order.notional_usdc > 0.05:
+            raise LiveExecutionGuardrailError("computed Polymarket order size is too far below requested notional")
+        return size
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None or not str(value).strip():
+        return None
+    return int(str(value))
+
+
+def _build_default_clob_client(config: ClobRestExecutorConfig) -> Any:
+    try:
+        from py_clob_client.client import ClobClient
+    except ImportError as exc:
+        raise LiveExecutionUnavailableError("py-clob-client is required for live Polymarket execution") from exc
+    kwargs: dict[str, Any] = {
+        "host": config.host,
+        "key": config.private_key,
+        "chain_id": config.chain_id,
+        "funder": config.funder_address,
+    }
+    if config.signature_type is not None:
+        kwargs["signature_type"] = config.signature_type
+    client = ClobClient(**kwargs)
+    derive = getattr(client, "derive_api_key", None) or getattr(client, "create_or_derive_api_creds", None)
+    if callable(derive):
+        derive()
+    return client
+
+
+def _call_first_available(client: Any, method_names: tuple[str, ...], payload: dict[str, Any] | None = None) -> Any:
+    for method_name in method_names:
+        method = getattr(client, method_name, None)
+        if callable(method):
+            if payload is None:
+                return method()
+            try:
+                return method(payload)
+            except TypeError:
+                return method(**payload)
+    raise LiveExecutionUnavailableError(f"Polymarket CLOB client does not expose any of: {', '.join(method_names)}")
+
+
+def _normalize_live_order_response(response: Any) -> dict[str, Any]:
+    if isinstance(response, Mapping):
+        status = str(response.get("status") or response.get("state") or "submitted")
+        accepted_raw = response.get("accepted")
+        accepted = bool(accepted_raw) if accepted_raw is not None else status.lower() not in {"rejected", "failed", "error"}
+        order_id = response.get("id") or response.get("order_id") or response.get("exchange_order_id")
+        return {"accepted": accepted, "status": status, "exchange_order_id": str(order_id) if order_id else None}
+    order_id = getattr(response, "id", None) or getattr(response, "order_id", None)
+    status = str(getattr(response, "status", "submitted"))
+    return {"accepted": status.lower() not in {"rejected", "failed", "error"}, "status": status, "exchange_order_id": str(order_id) if order_id else None}
+
+
+def _sanitize_payload(value: Any) -> Any:
+    secret_markers = ("key", "secret", "passphrase", "signature", "auth", "private")
+    if isinstance(value, Mapping):
+        sanitized: dict[str, Any] = {}
+        for key, item in value.items():
+            text_key = str(key)
+            if any(marker in text_key.lower() for marker in secret_markers):
+                sanitized[text_key] = "[redacted]"
+            else:
+                sanitized[text_key] = _sanitize_payload(item)
+        return sanitized
+    if isinstance(value, list):
+        return [_sanitize_payload(item) for item in value]
+    return value

@@ -9,6 +9,7 @@ import pytest
 
 from prediction_core.polymarket_runtime import (
     ExecutionDisabledError,
+    LiveExecutionPermit,
     build_polymarket_runtime_scaffold,
     evaluate_cached_market_decisions,
     plan_disabled_execution_actions,
@@ -17,6 +18,8 @@ from prediction_core.polymarket_runtime import (
 )
 from prediction_core.polymarket_execution import (
     DryRunPolymarketExecutor,
+    ClobRestExecutorConfig,
+    ClobRestPolymarketExecutor,
     ExecutionRiskLimits,
     ExecutionRiskState,
     JsonlExecutionAuditLog,
@@ -73,6 +76,9 @@ def test_live_preflight_reports_ready_without_secret_values():
             "POLYMARKET_PRIVATE_KEY": "secret-key",
             "POLYMARKET_FUNDER_ADDRESS": "0xabc",
             "POLYMARKET_CHAIN_ID": "137",
+            "POLYMARKET_LIVE_ENABLED": "1",
+            "POLYMARKET_LIVE_ACK": "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+            "POLYMARKET_MAX_ORDER_NOTIONAL_USDC": "10",
         }
     )
 
@@ -94,6 +100,9 @@ def test_live_preflight_blocks_when_open_orders_source_reports_orders():
             "POLYMARKET_PRIVATE_KEY": "secret-key",
             "POLYMARKET_FUNDER_ADDRESS": "0xabc",
             "POLYMARKET_CHAIN_ID": "137",
+            "POLYMARKET_LIVE_ENABLED": "1",
+            "POLYMARKET_LIVE_ACK": "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+            "POLYMARKET_MAX_ORDER_NOTIONAL_USDC": "10",
         },
         order_management=executor,
         local_orders=[],
@@ -115,6 +124,9 @@ def test_live_preflight_can_confirm_empty_read_only_sources_but_still_blocks_sub
             "POLYMARKET_PRIVATE_KEY": "secret-key",
             "POLYMARKET_FUNDER_ADDRESS": "0xabc",
             "POLYMARKET_CHAIN_ID": "137",
+            "POLYMARKET_LIVE_ENABLED": "1",
+            "POLYMARKET_LIVE_ACK": "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+            "POLYMARKET_MAX_ORDER_NOTIONAL_USDC": "10",
         },
         order_management=DryRunPolymarketExecutor(),
         positions_confirmed=True,
@@ -125,6 +137,39 @@ def test_live_preflight_can_confirm_empty_read_only_sources_but_still_blocks_sub
     assert result["positions_confirmed"] is True
     assert result["checks"]["reconciliation"]["status"] == "ok"
     assert result["readiness_blockers"] == ["live_submission_unavailable"]
+
+
+def test_live_preflight_can_be_ready_with_live_executor_and_clean_read_only_sources():
+    executor = ClobRestPolymarketExecutor(
+        config=ClobRestExecutorConfig(
+            private_key="secret-key",
+            funder_address="0xabc",
+            chain_id=137,
+            live_enabled=True,
+            live_ack="I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+            allow_order_submission=True,
+            max_order_notional_usdc=10,
+        ),
+        client=DryRunPolymarketExecutor(),
+    )
+
+    result = preflight_polymarket_live_readiness(
+        env={
+            "POLYMARKET_PRIVATE_KEY": "secret-key",
+            "POLYMARKET_FUNDER_ADDRESS": "0xabc",
+            "POLYMARKET_CHAIN_ID": "137",
+            "POLYMARKET_LIVE_ENABLED": "1",
+            "POLYMARKET_LIVE_ACK": "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+            "POLYMARKET_MAX_ORDER_NOTIONAL_USDC": "10",
+        },
+        order_management=executor,
+        positions_confirmed=True,
+    )
+
+    assert result["ready"] is True
+    assert result["execution_available"] is True
+    assert result["readiness_blockers"] == []
+    assert "secret-key" not in json.dumps(result)
 
 
 def test_runtime_scaffold_declares_all_workers_and_execution_disabled():
@@ -272,6 +317,9 @@ def test_live_preflight_catches_and_sanitizes_open_order_errors():
             "POLYMARKET_PRIVATE_KEY": "secret-key",
             "POLYMARKET_FUNDER_ADDRESS": "0xabc",
             "POLYMARKET_CHAIN_ID": "137",
+            "POLYMARKET_LIVE_ENABLED": "1",
+            "POLYMARKET_LIVE_ACK": "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+            "POLYMARKET_MAX_ORDER_NOTIONAL_USDC": "10",
         },
         order_management=ExplodingOrderManagement(),
         positions_confirmed=True,
@@ -297,11 +345,11 @@ def test_execution_mode_live_is_blocked_without_executor():
         }
     ]
 
-    with pytest.raises(ExecutionDisabledError, match="live Polymarket submission is unavailable"):
+    with pytest.raises(ExecutionDisabledError, match="explicit executor"):
         plan_disabled_execution_actions(decisions, execution_mode="live")
 
 
-def test_execution_mode_live_refuses_even_injected_executor(tmp_path):
+def test_execution_mode_live_refuses_injected_executor_without_permit(tmp_path):
     decisions = [
         {
             "market_id": "m1",
@@ -314,7 +362,7 @@ def test_execution_mode_live_refuses_even_injected_executor(tmp_path):
     ]
     executor = DryRunPolymarketExecutor()
 
-    with pytest.raises(ExecutionDisabledError, match="live Polymarket submission is unavailable"):
+    with pytest.raises(ExecutionDisabledError, match="ready preflight permit"):
         plan_disabled_execution_actions(
             decisions,
             notional_usdc=7.5,
@@ -327,6 +375,28 @@ def test_execution_mode_live_refuses_even_injected_executor(tmp_path):
         )
 
     assert executor.orders == []
+
+
+def test_execution_mode_live_submits_with_fake_executor_and_permit(tmp_path):
+    decisions = [{"market_id": "m1", "token_id": "yes-token", "outcome": "Yes", "action": "PAPER_SIGNAL_ONLY", "best_ask": 0.44, "spread": 0.03}]
+    executor = DryRunPolymarketExecutor()
+
+    plan = plan_disabled_execution_actions(
+        decisions,
+        notional_usdc=7.5,
+        execution_mode="live",
+        order_executor=executor,
+        risk_limits=ExecutionRiskLimits(max_order_notional_usdc=10, max_total_exposure_usdc=100, max_daily_loss_usdc=25, max_spread=0.05),
+        risk_state=ExecutionRiskState(),
+        idempotency_store=JsonlIdempotencyStore(tmp_path / "ids.jsonl"),
+        audit_log=JsonlExecutionAuditLog(tmp_path / "audit.jsonl"),
+        live_permit=LiveExecutionPermit(preflight_ready=True, operator_ack="I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS", positions_confirmed=True),
+        max_orders_per_cycle=1,
+    )
+
+    assert len(plan["orders_submitted"]) == 1
+    assert executor.orders[0].token_id == "yes-token"
+    assert plan["summary"]["submitted_count"] == 1
 
 
 def test_execution_mode_live_requires_risk_idempotency_and_audit(tmp_path):
@@ -732,7 +802,7 @@ def test_runtime_cycle_cli_keeps_jsonl_only_when_postgres_wiring_fails(monkeypat
     assert captured["audit_log"].path == audit_path
 
 
-def test_runtime_cycle_cli_does_not_offer_live_execution_mode():
+def test_runtime_cycle_cli_offers_live_execution_mode_with_guardrails():
     result = subprocess.run(
         [str(SCRIPT), "polymarket-runtime-cycle", "--help"],
         capture_output=True,
@@ -741,8 +811,8 @@ def test_runtime_cycle_cli_does_not_offer_live_execution_mode():
     )
 
     assert result.returncode == 0
-    assert "--execution-mode {paper,dry_run}" in result.stdout
-    assert "--execution-mode {paper,dry_run,live}" not in result.stdout
+    assert "--execution-mode {paper,dry_run,live}" in result.stdout
+    assert "--i-understand-live-orders" in result.stdout
 
 
 def test_runtime_cycle_cli_rejects_live_execution_mode(tmp_path):
@@ -761,7 +831,7 @@ def test_runtime_cycle_cli_rejects_live_execution_mode(tmp_path):
     )
 
     assert result.returncode == 2
-    assert "invalid choice: 'live'" in result.stderr
+    assert "--execution-mode live requires --i-understand-live-orders" in result.stderr
 
 
 def test_runtime_cycle_cli_rejects_non_finite_paper_notional(tmp_path):

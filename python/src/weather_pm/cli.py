@@ -20,6 +20,7 @@ from weather_pm.analytics_adapter import (
     paper_pnl_snapshot_events_from_ledger,
     paper_position_events_from_ledger,
     profile_decision_events_from_shortlist,
+    strategy_signal_events_from_shortlist,
 )
 from weather_pm.decision import build_decision
 from weather_pm.event_surface import build_weather_event_surface
@@ -404,6 +405,7 @@ def main() -> int:
             "debug_decisions": [],
             "profile_metrics": [],
             "strategy_metrics": [],
+            "strategy_signals": [],
             "paper_orders": [],
             "paper_positions": [],
             "paper_pnl_snapshots": [],
@@ -412,9 +414,11 @@ def main() -> int:
             payload = json.loads(Path(args.shortlist_json).read_text())
             events = profile_decision_events_from_shortlist(payload)
             debug_events = debug_decision_events_from_shortlist(payload)
+            signal_events = strategy_signal_events_from_shortlist(payload)
             metric_events = [*build_profile_metric_events(events), *build_strategy_metric_events(events)]
             rows_by_table["profile_decisions"] = [serialize_event(event) for event in events]
             rows_by_table["debug_decisions"] = [serialize_event(event) for event in debug_events]
+            rows_by_table["strategy_signals"] = [serialize_event(event) for event in signal_events]
             rows_by_table["profile_metrics"] = [serialize_event(event) for event in metric_events if event.table == "profile_metrics"]
             rows_by_table["strategy_metrics"] = [serialize_event(event) for event in metric_events if event.table == "strategy_metrics"]
         if args.paper_ledger_json:

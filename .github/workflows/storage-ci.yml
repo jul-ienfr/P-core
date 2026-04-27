@@ -1,0 +1,91 @@
+name: Storage CI
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/storage-ci.yml"
+      - ".gitignore"
+      - "docs/panoptique/storage-architecture.md"
+      - "infra/storage/**"
+      - "infra/panoptique/**"
+      - "migrations/panoptique/**"
+      - "python/**"
+      - "rust/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/storage-ci.yml"
+      - ".gitignore"
+      - "docs/panoptique/storage-architecture.md"
+      - "infra/storage/**"
+      - "infra/panoptique/**"
+      - "migrations/panoptique/**"
+      - "python/**"
+      - "rust/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  storage-python:
+    name: Python storage tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python storage package
+        working-directory: python
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[storage]" pytest
+
+      - name: Validate storage compose config
+        working-directory: infra/storage
+        run: docker compose --env-file .env.example config >/tmp/storage-compose.yml
+
+      - name: Run storage-focused Python tests
+        working-directory: python
+        run: |
+          pytest \
+            tests/test_storage_config.py \
+            tests/test_panoptique_storage_exports.py \
+            tests/test_panoptique_infra.py \
+            tests/test_panoptique_migration_sql.py \
+            tests/contracts/test_prediction_core_rust_storage_sql_contract.py
+
+  storage-rust:
+    name: Rust storage unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run pm_storage tests without live services
+        working-directory: rust
+        run: cargo test -p pm_storage --lib
+
+  storage-runtime-smoke:
+    name: Rust storage runtime smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PM_STORAGE_TEST_DB: pm_storage_runtime
+      POSTGRES_PASSWORD: postgres
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run containerized runtime storage smoke
+        working-directory: rust
+        run: ./scripts/check_pm_storage_runtime.sh

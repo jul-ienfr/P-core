@@ -17,3 +17,27 @@ target/
 build/
 dist/
 *.egg-info/
+
+# Local environment and secret-bearing files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.pgpass
+
+# Local data and generated storage artifacts
+/data/*
+!/data/.gitkeep
+!/data/panoptique/
+/data/panoptique/*
+!/data/panoptique/.gitkeep
+!/data/panoptique/paper_strategies/
+/data/panoptique/paper_strategies/*
+!/data/panoptique/paper_strategies/.gitkeep
+*.dump
+*.sql.gz
+*.parquet
+*.jsonl

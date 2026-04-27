@@ -9,6 +9,7 @@ from prediction_core.analytics.events import (
     PaperPnlSnapshotEvent,
     PaperPositionEvent,
     ProfileDecisionEvent,
+    StrategySignalEvent,
 )
 
 
@@ -131,6 +132,94 @@ def debug_decision_events_from_shortlist(
     ]
 
 
+def strategy_signal_events_from_shortlist(
+    payload: dict[str, Any], *, default_observed_at: datetime | None = None
+) -> list[StrategySignalEvent]:
+    if not isinstance(payload, dict):
+        raise ValueError("shortlist payload must be an object")
+
+    payload_observed_at = _parse_observed_at(payload, default_observed_at)
+    run_id = payload.get("run_id") or payload.get("report_id") or payload_observed_at.strftime("weather-%Y%m%dT%H%M%SZ")
+    mode = str(payload.get("mode") or "paper")
+
+    events: list[StrategySignalEvent] = []
+    for index, row in enumerate(_rows_from_payload(payload), start=1):
+        observed_at = _parse_datetime(row.get("observed_at")) or _parse_datetime(row.get("generated_at")) or payload_observed_at
+        profile_id = row.get("strategy_profile_id") or row.get("profile_id") or row.get("profile") or "default"
+        strategy_id = row.get("strategy_id") or row.get("strategy") or "weather_pm"
+        market_id = str(row.get("market_id") or row.get("condition_id") or "")
+        token_id = str(row.get("token_id") or "")
+        signal_id = str(row.get("signal_id") or f"{run_id}:{strategy_id}:{profile_id}:{market_id}:{token_id}:{index}")
+        events.append(
+            StrategySignalEvent(
+                run_id=str(run_id),
+                strategy_id=str(strategy_id),
+                profile_id=str(profile_id),
+                market_id=market_id,
+                token_id=token_id,
+                observed_at=observed_at,
+                mode=mode,
+                signal_id=signal_id,
+                signal_type=str(row.get("signal_type") or row.get("decision_status") or row.get("operator_action") or row.get("action") or "decision"),
+                side=str(row.get("side") or row.get("trade_side") or row.get("paper_side") or row.get("outcome") or "unknown"),
+                probability=_optional_float(row.get("probability") if row.get("probability") is not None else row.get("model_probability")),
+                market_price=_optional_float(row.get("market_price") if row.get("market_price") is not None else row.get("yes_price")),
+                edge=_optional_float(row.get("edge") if row.get("edge") is not None else row.get("probability_edge")),
+                confidence=_optional_float(row.get("confidence")),
+                paper_only=bool(row.get("paper_only", True)),
+                live_order_allowed=bool(row.get("live_order_allowed", False)),
+                raw=row,
+            )
+        )
+    return events
+
+
+def _orders_from_ledger(ledger: dict[str, Any], observed_default: datetime) -> list[dict[str, Any]]:
+    if isinstance(ledger.get("orders"), list):
+        return [order for order in ledger["orders"] if isinstance(order, dict)]
+
+    candidates = ledger.get("top_current_candidates")
+    if not isinstance(candidates, list):
+        return []
+
+    generated_at = str(ledger.get("generated_at") or ledger.get("report_generated_at") or observed_default.isoformat())
+    orders: list[dict[str, Any]] = []
+    for index, candidate in enumerate([row for row in candidates if isinstance(row, dict)], start=1):
+        execution = candidate.get("execution") if isinstance(candidate.get("execution"), dict) else {}
+        market_id = str(candidate.get("market_id") or "")
+        side = str(candidate.get("side") or candidate.get("candidate_side") or execution.get("side") or "")
+        avg_fill_price = _optional_float(execution.get("avg_fill_price") if execution.get("avg_fill_price") is not None else candidate.get("strict_limit"))
+        filled_usdc = _optional_float(execution.get("fillable_spend") if execution.get("fill_status") == "filled" else 0.0)
+        shares = round(filled_usdc / avg_fill_price, 8) if filled_usdc and avg_fill_price else 0.0
+        orders.append(
+            {
+                "order_id": f"operator-report-{market_id or index}-{side or 'unknown'}",
+                "created_at": generated_at,
+                "updated_at": generated_at,
+                "market_id": market_id,
+                "token_id": str(candidate.get("token_id") or ""),
+                "side": side,
+                "status": str(execution.get("fill_status") or "planned"),
+                "strict_limit": candidate.get("strict_limit"),
+                "avg_fill_price": avg_fill_price,
+                "filled_usdc": filled_usdc,
+                "spend_usdc": filled_usdc,
+                "shares": shares,
+                "pnl_usdc": 0.0,
+                "net_pnl_after_all_costs": 0.0,
+                "opening_fee_usdc": 0.0,
+                "estimated_exit_fee_usdc": 0.0,
+                "strategy_id": str(candidate.get("strategy_id") or ledger.get("strategy_id") or "weather_bookmaker_v1"),
+                "profile_id": str(candidate.get("profile_id") or ledger.get("profile_id") or "surface_grid_trader"),
+                "paper_only": True,
+                "live_order_allowed": bool(candidate.get("live_order_allowed", False)),
+                "source_status": candidate.get("source_status"),
+                "primary_archetype": candidate.get("primary_archetype"),
+            }
+        )
+    return orders
+
+
 def paper_order_events_from_ledger(
     ledger: dict[str, Any], *, default_observed_at: datetime | None = None
 ) -> list[PaperOrderEvent]:
@@ -140,7 +229,7 @@ def paper_order_events_from_ledger(
     run_id = str(ledger.get("run_id") or ledger.get("report_id") or "weather-paper-ledger")
     mode = str(ledger.get("mode") or "paper")
     observed_default = _parse_observed_at(ledger, default_observed_at)
-    orders = ledger.get("orders") if isinstance(ledger.get("orders"), list) else []
+    orders = _orders_from_ledger(ledger, observed_default)
     events: list[PaperOrderEvent] = []
     for order in orders:
         if not isinstance(order, dict):
@@ -181,7 +270,7 @@ def paper_position_events_from_ledger(
     run_id = str(ledger.get("run_id") or ledger.get("report_id") or "weather-paper-ledger")
     mode = str(ledger.get("mode") or "paper")
     observed_default = _parse_observed_at(ledger, default_observed_at)
-    orders = ledger.get("orders") if isinstance(ledger.get("orders"), list) else []
+    orders = _orders_from_ledger(ledger, observed_default)
     events: list[PaperPositionEvent] = []
     for order in orders:
         if not isinstance(order, dict):
@@ -223,7 +312,9 @@ def paper_pnl_snapshot_events_from_ledger(
     mode = str(ledger.get("mode") or "paper")
     observed_at = _parse_observed_at(ledger, default_observed_at)
     summary = ledger.get("summary") if isinstance(ledger.get("summary"), dict) else {}
-    orders = [order for order in ledger.get("orders", []) if isinstance(order, dict)] if isinstance(ledger.get("orders"), list) else []
+    if isinstance(ledger.get("components"), dict) and isinstance(ledger["components"].get("paper_ledger"), dict):
+        summary = {**summary, **ledger["components"]["paper_ledger"]}
+    orders = _orders_from_ledger(ledger, observed_at)
 
     groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for order in orders:

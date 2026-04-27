@@ -3,8 +3,10 @@ import pytest
 from prediction_core.polymarket_execution import (
     ClobRestPolymarketExecutor,
     DryRunPolymarketExecutor,
+    ClobRestExecutorConfig,
     ExecutionCredentialsError,
     ExecutionMode,
+    LiveExecutionGuardrailError,
     LiveExecutionUnavailableError,
     OrderRequest,
     OrderResult,
@@ -120,21 +122,93 @@ def test_clob_rest_executor_requires_credentials():
         ClobRestPolymarketExecutor.from_env(env={})
 
 
-def test_clob_rest_executor_fails_closed_even_with_credentials_until_submit_is_wired():
-    with pytest.raises(LiveExecutionUnavailableError, match="not wired yet"):
+def test_clob_rest_executor_requires_operator_guardrails_even_with_credentials():
+    with pytest.raises(LiveExecutionGuardrailError, match="POLYMARKET_LIVE_ENABLED=1"):
         ClobRestPolymarketExecutor.from_env(
             env={
                 "POLYMARKET_PRIVATE_KEY": "secret",
                 "POLYMARKET_FUNDER_ADDRESS": "0xabc",
                 "POLYMARKET_CHAIN_ID": "137",
-            }
+                "POLYMARKET_MAX_ORDER_NOTIONAL_USDC": "10",
+            },
+            client=object(),
         )
 
 
-def test_clob_rest_order_management_fails_closed_without_cancel_network_call():
-    executor = ClobRestPolymarketExecutor(private_key="secret", funder_address="0xabc", chain_id="137")
+def test_clob_rest_executor_respects_kill_switch():
+    with pytest.raises(LiveExecutionGuardrailError, match="kill switch"):
+        ClobRestPolymarketExecutor.from_env(
+            env={
+                "POLYMARKET_PRIVATE_KEY": "secret",
+                "POLYMARKET_FUNDER_ADDRESS": "0xabc",
+                "POLYMARKET_CHAIN_ID": "137",
+                "POLYMARKET_LIVE_ENABLED": "1",
+                "POLYMARKET_LIVE_ACK": "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+                "POLYMARKET_MAX_ORDER_NOTIONAL_USDC": "10",
+                "PREDICTION_CORE_DISABLE_LIVE_EXECUTION": "1",
+            },
+            client=object(),
+        )
 
-    with pytest.raises(LiveExecutionUnavailableError, match="open-order listing is not wired"):
-        executor.list_open_orders()
-    with pytest.raises(LiveExecutionUnavailableError, match="cancel is not wired"):
+
+class FakeClobClient:
+    def __init__(self):
+        self.submitted = []
+
+    def submit_order(self, payload):
+        self.submitted.append(payload)
+        return {"accepted": True, "status": "submitted", "order_id": "ord-1", "api_key": "must-redact"}
+
+    def list_open_orders(self):
+        return [{"id": "ord-open", "status": "open", "asset_id": "yes-token", "signature": "must-redact"}]
+
+
+def _live_config():
+    return ClobRestExecutorConfig(
+        private_key="secret",
+        funder_address="0xabc",
+        chain_id=137,
+        live_enabled=True,
+        live_ack="I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+        allow_order_submission=True,
+        max_order_notional_usdc=10,
+    )
+
+
+def test_clob_rest_executor_submits_limit_buy_with_injected_client_and_sanitizes_response():
+    client = FakeClobClient()
+    executor = ClobRestPolymarketExecutor(config=_live_config(), client=client)
+    order = OrderRequest(market_id="m1", token_id="yes-token", outcome="Yes", side="buy", order_type="limit", limit_price=0.5, notional_usdc=5, idempotency_key="k1")
+
+    result = executor.submit_order(order)
+
+    assert result.accepted is True
+    assert result.status == "submitted"
+    assert result.exchange_order_id == "ord-1"
+    assert client.submitted == [{"token_id": "yes-token", "price": 0.5, "size": 10.0, "side": "BUY", "order_type": "LIMIT"}]
+    assert result.raw_response["response"]["api_key"] == "[redacted]"
+    assert "secret" not in str(result.raw_response)
+
+
+def test_clob_rest_executor_lists_open_orders_read_only_and_redacts_sensitive_fields():
+    executor = ClobRestPolymarketExecutor(config=_live_config(), client=FakeClobClient())
+
+    assert executor.list_open_orders() == [{"id": "ord-open", "status": "open", "asset_id": "yes-token", "signature": "[redacted]"}]
+
+
+def test_clob_rest_executor_rejects_unsupported_live_order_shapes():
+    executor = ClobRestPolymarketExecutor(config=_live_config(), client=FakeClobClient())
+    sell_order = OrderRequest(market_id="m1", token_id="yes-token", outcome="Yes", side="sell", order_type="limit", limit_price=0.5, notional_usdc=5, idempotency_key="k1")
+    oversized = OrderRequest(market_id="m1", token_id="yes-token", outcome="Yes", side="buy", order_type="limit", limit_price=0.5, notional_usdc=11, idempotency_key="k2")
+
+    with pytest.raises(LiveExecutionGuardrailError, match="only supports buy"):
+        executor.submit_order(sell_order)
+    with pytest.raises(LiveExecutionGuardrailError, match="exceeds"):
+        executor.submit_order(oversized)
+
+
+def test_clob_rest_order_management_keeps_cancel_fail_closed():
+    executor = ClobRestPolymarketExecutor(config=_live_config(), client=FakeClobClient())
+
+    with pytest.raises(LiveExecutionUnavailableError, match="cancel requires"):
         executor.cancel_order("ord-1")

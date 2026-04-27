@@ -112,3 +112,5 @@ Rollback only in local/staging or after taking a fresh backup. For production-li
 ### Never-store-secrets rule
 
 Do not store wallet private keys, API tokens, bearer headers, seed phrases, exchange credentials, or database passwords in Panoptique tables, raw archives, Parquet exports, or operator reports. Export tooling redacts obvious secret-bearing JSON keys, but redaction is a safety net rather than permission to ingest secrets.
+
+Keep local `.env` files, `.pgpass`, database dumps, Parquet/JSONL exports, and key material out of git. The checked-in compose examples bind services to `127.0.0.1`; do not expose PostgreSQL, Redis, NATS, MinIO, ClickHouse, or Grafana on public interfaces without an explicit operator approval and a credential rotation plan. Storage CI/smoke jobs must use disposable local credentials and must not depend on production services.

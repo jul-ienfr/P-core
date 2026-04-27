@@ -19,6 +19,7 @@ from prediction_core.polymarket_execution import (
     ExecutionRiskState,
     JsonlExecutionAuditLog,
     JsonlIdempotencyStore,
+    LiveExecutionGuardrailError,
     LiveExecutionUnavailableError,
     PostgresExecutionAuditLog,
     PostgresIdempotencyStore,
@@ -29,7 +30,7 @@ from prediction_core.polymarket_marketdata import (
     replay_clob_ws_events,
     run_clob_marketdata_stream,
 )
-from prediction_core.polymarket_runtime import build_polymarket_runtime_scaffold, preflight_polymarket_live_readiness, run_polymarket_runtime_cycle
+from prediction_core.polymarket_runtime import ExecutionDisabledError, LiveExecutionPermit, build_polymarket_runtime_scaffold, preflight_polymarket_live_readiness, run_polymarket_runtime_cycle
 from prediction_core.polymarket_stack import recommended_polymarket_stack, stack_decision_table
 
 
@@ -226,7 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_cycle.add_argument("--min-edge", type=float, default=0.0, help="Minimum probability minus ask edge for paper signal")
     runtime_cycle.add_argument("--max-snapshot-age-seconds", type=float, help="Maximum CLOB snapshot age allowed for decisions")
     runtime_cycle.add_argument("--paper-notional-usdc", type=float, default=5.0, help="Paper intent notional for disabled execution planner")
-    runtime_cycle.add_argument("--execution-mode", choices=("paper", "dry_run"), default="paper", help="Execution mode; paper remains the safe default; live submission is not available")
+    runtime_cycle.add_argument("--execution-mode", choices=("paper", "dry_run", "live"), default="paper", help="Execution mode; paper remains the safe default; live requires explicit operator guardrails")
     runtime_cycle.add_argument("--idempotency-jsonl", help="JSONL idempotency store path required for dry_run execution")
     runtime_cycle.add_argument("--audit-jsonl", help="JSONL audit log path required for dry_run execution")
     runtime_cycle.add_argument("--max-order-notional-usdc", type=float, help="Per-order risk cap required for dry_run execution")
@@ -235,6 +236,9 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_cycle.add_argument("--max-spread", type=float, help="Maximum allowed bid/ask spread required for dry_run execution")
     runtime_cycle.add_argument("--total-exposure-usdc", type=float, default=0.0, help="Current total exposure for risk checks")
     runtime_cycle.add_argument("--daily-realized-pnl-usdc", type=float, default=0.0, help="Current daily realized PnL for risk checks")
+    runtime_cycle.add_argument("--i-understand-live-orders", action="store_true", help="Required with --execution-mode live; acknowledges real Polymarket orders may be submitted")
+    runtime_cycle.add_argument("--positions-confirmed", action="store_true", help="Required with --execution-mode live after operator position reconciliation")
+    runtime_cycle.add_argument("--max-orders-per-cycle", type=int, default=1, help="Maximum live orders per bounded cycle; currently must be 1")
     del runtime_plan
 
     return parser
@@ -413,10 +417,16 @@ def main() -> int:
         risk_state = None
         idempotency_store = None
         audit_log = None
+        live_permit = None
         if args.paper_notional_usdc is None or not math.isfinite(float(args.paper_notional_usdc)) or float(args.paper_notional_usdc) <= 0.0:
             parser.error("--paper-notional-usdc must be finite and positive")
         if args.execution_mode == "live":
-            parser.error("--execution-mode live is unavailable: real Polymarket CLOB REST submission is not wired; use paper or dry_run")
+            if not args.i_understand_live_orders:
+                parser.error("--execution-mode live requires --i-understand-live-orders")
+            if not args.positions_confirmed:
+                parser.error("--execution-mode live requires --positions-confirmed")
+            if int(args.max_orders_per_cycle) != 1:
+                parser.error("--execution-mode live currently requires --max-orders-per-cycle 1")
         if args.execution_mode in {"dry_run", "live"}:
             required_risk_values = [args.max_order_notional_usdc, args.max_total_exposure_usdc, args.max_daily_loss_usdc, args.max_spread]
             if not args.idempotency_jsonl or not args.audit_jsonl or any(value is None for value in required_risk_values):
@@ -448,10 +458,23 @@ def main() -> int:
                 )
             if args.execution_mode == "dry_run":
                 order_executor = DryRunPolymarketExecutor()
+                live_permit = None
             else:
                 try:
                     order_executor = ClobRestPolymarketExecutor.from_env()
-                except (ExecutionCredentialsError, LiveExecutionUnavailableError) as exc:
+                    preflight = preflight_polymarket_live_readiness(
+                        order_management=order_executor,
+                        positions_confirmed=args.positions_confirmed,
+                    )
+                    if not preflight["ready"]:
+                        parser.error("live preflight failed: " + ",".join(preflight["readiness_blockers"]))
+                    live_permit = LiveExecutionPermit(
+                        preflight_ready=True,
+                        operator_ack="I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
+                        positions_confirmed=args.positions_confirmed,
+                        max_orders_per_cycle=args.max_orders_per_cycle,
+                    )
+                except (ExecutionCredentialsError, LiveExecutionUnavailableError, LiveExecutionGuardrailError, ExecutionDisabledError) as exc:
                     parser.error(str(exc))
         result = asyncio.run(
             run_polymarket_runtime_cycle(
@@ -469,6 +492,8 @@ def main() -> int:
                 risk_state=risk_state,
                 idempotency_store=idempotency_store,
                 audit_log=audit_log,
+                live_permit=live_permit,
+                max_orders_per_cycle=args.max_orders_per_cycle,
             )
         )
         print(json.dumps(result))

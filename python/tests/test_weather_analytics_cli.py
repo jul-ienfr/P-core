@@ -55,6 +55,7 @@ def test_weather_analytics_export_dry_run(tmp_path: Path) -> None:
         "analytics.profile_decisions.rows=1",
         "analytics.profile_metrics.rows=1",
         "analytics.strategy_metrics.rows=1",
+        "analytics.strategy_signals.rows=1",
         "analytics.enabled=false",
     ]
 
@@ -89,6 +90,7 @@ def test_weather_analytics_smoke_fixture_dry_runs() -> None:
         "analytics.profile_decisions.rows=1",
         "analytics.profile_metrics.rows=1",
         "analytics.strategy_metrics.rows=1",
+        "analytics.strategy_signals.rows=1",
         "analytics.enabled=false",
     ]
 
@@ -153,6 +155,56 @@ def test_weather_analytics_export_paper_ledger_dry_run(tmp_path: Path) -> None:
         "analytics.profile_decisions.rows=0",
         "analytics.profile_metrics.rows=0",
         "analytics.strategy_metrics.rows=0",
+        "analytics.strategy_signals.rows=0",
+        "analytics.enabled=false",
+    ]
+
+
+def test_weather_analytics_export_operator_report_as_paper_ledger_dry_run(tmp_path: Path) -> None:
+    ledger_path = tmp_path / "operator-report.json"
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "report_type": "polymarket_weather_production_operator",
+                "artifacts": {"generated_at": "2026-04-27T12:00:00+00:00"},
+                "top_current_candidates": [
+                    {
+                        "market_id": "m1",
+                        "side": "YES",
+                        "strict_limit": 0.5,
+                        "execution": {"fill_status": "filled", "avg_fill_price": 0.5, "fillable_spend": 5.0},
+                    }
+                ],
+            }
+        )
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "export-analytics-clickhouse",
+            "--paper-ledger-json",
+            str(ledger_path),
+            "--dry-run",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        env={**os.environ, "PYTHONPATH": "src"},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    assert result.stdout.strip().splitlines() == [
+        "analytics.debug_decisions.rows=0",
+        "analytics.paper_orders.rows=1",
+        "analytics.paper_pnl_snapshots.rows=1",
+        "analytics.paper_positions.rows=1",
+        "analytics.profile_decisions.rows=0",
+        "analytics.profile_metrics.rows=0",
+        "analytics.strategy_metrics.rows=0",
+        "analytics.strategy_signals.rows=0",
         "analytics.enabled=false",
     ]
 
@@ -202,6 +254,7 @@ def test_weather_analytics_export_without_clickhouse_config_is_noop(tmp_path: Pa
         "analytics.profile_decisions.rows=0",
         "analytics.profile_metrics.rows=0",
         "analytics.strategy_metrics.rows=0",
+        "analytics.strategy_signals.rows=0",
         "analytics.enabled=false",
     ]
 
@@ -249,11 +302,15 @@ def test_weather_analytics_export_inserts_with_env_writer(monkeypatch, tmp_path:
         "analytics.profile_decisions.rows=1",
         "analytics.profile_metrics.rows=1",
         "analytics.strategy_metrics.rows=1",
+        "analytics.strategy_signals.rows=1",
         "analytics.enabled=true",
     ]
     assert inserted["profile_decisions"][0]["run_id"] == "run-1"
     assert inserted["profile_decisions"][0]["profile_id"] == "strict_micro"
     assert inserted["profile_decisions"][0]["market_id"] == "m1"
     assert inserted["debug_decisions"][0]["run_id"] == "run-1"
+    assert inserted["strategy_signals"][0]["run_id"] == "run-1"
+    assert inserted["strategy_signals"][0]["strategy_id"] == "weather_bookmaker_v1"
+    assert inserted["strategy_signals"][0]["profile_id"] == "strict_micro"
     assert inserted["profile_metrics"][0]["decision_count"] == 1
     assert inserted["strategy_metrics"][0]["signal_count"] == 1

@@ -67,7 +67,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  sum(net_pnl_usdc) AS total_net_pnl_usdc\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  sum(net_pnl_usdc) AS `PnL net total`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -132,7 +132,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  avg(roi) AS average_roi\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  avg(roi) AS `ROI moyen`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -184,7 +184,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  sum(trade_count) AS trades\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  sum(trade_count) AS `Trades`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -253,7 +253,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
+          "rawSql": "SELECT\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')",
           "refId": "A"
         }
       ],
@@ -300,7 +300,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  sum(net_pnl_usdc) AS net_pnl_usdc\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  sum(net_pnl_usdc) AS `PnL net`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
           "refId": "A"
         }
       ],
@@ -347,7 +347,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  avg(roi) AS roi\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id) AS series,\n  avg(roi) AS `ROI`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
           "refId": "A"
         }
       ],
@@ -373,7 +373,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "net_pnl_usdc"
+              "options": "PnL net"
             },
             "properties": [
               {
@@ -392,7 +392,7 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "avg_roi|skip_rate"
+              "options": "ROI moyen|Taux de skip"
             },
             "properties": [
               {
@@ -404,7 +404,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "latest_exposure_usdc"
+              "options": "Exposition récente"
             },
             "properties": [
               {
@@ -436,7 +436,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "net_pnl_usdc"
+            "displayName": "PnL net"
           }
         ]
       },
@@ -448,7 +448,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id,\n  profile_id,\n  sum(decision_count) AS decisions,\n  sum(trade_count) AS trades,\n  sum(skip_count) AS skips,\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate,\n  sum(net_pnl_usdc) AS net_pnl_usdc,\n  avg(roi) AS avg_roi,\n  anyLast(exposure_usdc) AS latest_exposure_usdc\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY net_pnl_usdc DESC",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(decision_count) AS `Décisions`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  sum(skip_count) / nullIf(sum(decision_count), 0) AS `Taux de skip`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  avg(roi) AS `ROI moyen`,\n  anyLast(exposure_usdc) AS `Exposition récente`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY `PnL net` DESC",
           "refId": "A"
         }
       ],
@@ -474,7 +474,7 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "gross_pnl_usdc|net_pnl_usdc|latest_exposure_usdc"
+              "options": "PnL brut|PnL net|Exposition récente"
             },
             "properties": [
               {
@@ -512,7 +512,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id,\n  profile_id,\n  sum(signal_count) AS signals,\n  sum(trade_count) AS trades,\n  sum(skip_count) AS skips,\n  avg(avg_edge) AS avg_edge,\n  sum(gross_pnl_usdc) AS gross_pnl_usdc,\n  sum(net_pnl_usdc) AS net_pnl_usdc,\n  anyLast(exposure_usdc) AS latest_exposure_usdc\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY net_pnl_usdc DESC",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  sum(signal_count) AS `Signaux`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`,\n  avg(avg_edge) AS `Edge moyen`,\n  sum(gross_pnl_usdc) AS `PnL brut`,\n  sum(net_pnl_usdc) AS `PnL net`,\n  anyLast(exposure_usdc) AS `Exposition récente`\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_id, profile_id\nORDER BY `PnL net` DESC",
           "refId": "A"
         }
       ],
@@ -544,7 +544,7 @@
         "orientation": "auto",
         "showValue": "auto",
         "stacking": "normal",
-        "xField": "strategy_profile"
+        "xField": "Stratégie / profil"
       },
       "targets": [
         {
@@ -554,7 +554,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS strategy_profile,\n  sum(trade_count) AS trades,\n  sum(skip_count) AS skips\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_profile\nORDER BY trades DESC",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  sum(trade_count) AS `Trades`,\n  sum(skip_count) AS `Skips`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Trades` DESC",
           "refId": "A"
         }
       ],
@@ -586,7 +586,7 @@
         "orientation": "auto",
         "showValue": "auto",
         "stacking": "none",
-        "xField": "skip_reason"
+        "xField": "Raison"
       },
       "targets": [
         {
@@ -596,7 +596,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  if(skip_reason = '', 'unknown', skip_reason) AS skip_reason,\n  count() AS count\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND decision_status NOT IN ('trade', 'trade_small')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY skip_reason\nORDER BY count DESC\nLIMIT 20",
+          "rawSql": "SELECT\n  if(skip_reason = '', 'inconnue', skip_reason) AS `Raison`,\n  count() AS `Nombre`\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND decision_status NOT IN ('trade', 'trade_small')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Raison`\nORDER BY `Nombre` DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
@@ -628,7 +628,7 @@
         "orientation": "auto",
         "showValue": "auto",
         "stacking": "none",
-        "xField": "strategy_profile"
+        "xField": "Stratégie / profil"
       },
       "targets": [
         {
@@ -638,7 +638,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS strategy_profile,\n  avg(avg_edge) AS avg_edge\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_profile\nORDER BY avg_edge DESC",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  avg(avg_edge) AS `Edge moyen`\nFROM prediction_core.strategy_metrics\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Edge moyen` DESC",
           "refId": "A"
         }
       ],
@@ -670,7 +670,7 @@
         "orientation": "auto",
         "showValue": "auto",
         "stacking": "none",
-        "xField": "edge_bucket"
+        "xField": "Bucket d’edge"
       },
       "targets": [
         {
@@ -680,7 +680,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  round(edge, 2) AS edge_bucket,\n  count() AS signals\nFROM prediction_core.strategy_signals\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY edge_bucket\nORDER BY edge_bucket",
+          "rawSql": "SELECT\n  round(edge, 2) AS `Bucket d’edge`,\n  count() AS `Signaux`\nFROM prediction_core.strategy_signals\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Bucket d’edge`\nORDER BY `Bucket d’edge`",
           "refId": "A"
         }
       ],
@@ -727,7 +727,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' exposure') AS series,\n  sum(exposure_usdc) AS value\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nUNION ALL\nSELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' net pnl') AS series,\n  sum(net_pnl_usdc) AS value\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
+          "rawSql": "SELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' exposition') AS series,\n  sum(exposure_usdc) AS `Valeur`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nUNION ALL\nSELECT\n  toStartOfInterval(observed_at, INTERVAL 5 minute) AS time,\n  concat(strategy_id, ' / ', profile_id, ' PnL net') AS series,\n  sum(net_pnl_usdc) AS `Valeur`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY time, series\nORDER BY time",
           "refId": "A"
         }
       ],
@@ -761,7 +761,7 @@
         "orientation": "auto",
         "showValue": "auto",
         "stacking": "none",
-        "xField": "strategy_profile"
+        "xField": "Stratégie / profil"
       },
       "targets": [
         {
@@ -771,7 +771,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS strategy_profile,\n  sum(costs_usdc) AS costs_usdc,\n  sum(gross_pnl_usdc) AS gross_pnl_usdc,\n  sum(net_pnl_usdc) AS net_pnl_usdc\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY strategy_profile\nORDER BY costs_usdc DESC",
+          "rawSql": "SELECT\n  concat(strategy_id, ' / ', profile_id) AS `Stratégie / profil`,\n  sum(costs_usdc) AS `Coûts`,\n  sum(gross_pnl_usdc) AS `PnL brut`,\n  sum(net_pnl_usdc) AS `PnL net`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(mode, '${mode:regex}')\nGROUP BY `Stratégie / profil`\nORDER BY `Coûts` DESC",
           "refId": "A"
         }
       ],
@@ -873,6 +873,6 @@
   "timezone": "browser",
   "title": "Comparaison stratégies / profils",
   "uid": "prediction-core-strategy-vs-profile",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }

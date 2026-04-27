@@ -1,5 +1,5 @@
 from prediction_core.storage.config import load_storage_stack_config, mask_url
-from prediction_core.storage.health import _nats_health
+from prediction_core.storage.health import _nats_health, storage_health_summary
 
 
 def test_load_storage_stack_config_prefers_prediction_core_env(monkeypatch):
@@ -117,3 +117,19 @@ def test_nats_health_reports_unconfigured_or_errors(monkeypatch):
     result = _nats_health("nats://localhost:4222")
 
     assert result == {"configured": True, "ok": False, "error": "TimeoutError"}
+
+
+def test_storage_health_summary_requires_postgres_primary():
+    checks = {
+        "postgres": {"configured": True, "ok": False},
+        "redis": {"configured": True, "ok": True},
+        "nats": {"configured": True, "ok": True},
+    }
+
+    summary = storage_health_summary(checks)
+
+    assert summary["configured_count"] == 3
+    assert summary["healthy_count"] == 2
+    assert summary["unhealthy"] == ["postgres"]
+    assert summary["ready"] is False
+    assert summary["missing_required_primary"] == ["postgres"]

@@ -43,6 +43,31 @@ class ProfileDecisionEvent:
 
 
 @dataclass(frozen=True)
+class StrategySignalEvent:
+    run_id: str
+    strategy_id: str
+    profile_id: str
+    market_id: str
+    observed_at: datetime
+    mode: str
+    signal_id: str
+    signal_type: str
+    side: str
+    token_id: str = ""
+    probability: float | None = None
+    market_price: float | None = None
+    edge: float | None = None
+    confidence: float | None = None
+    paper_only: bool = True
+    live_order_allowed: bool = False
+    raw: dict[str, Any] | None = None
+
+    @property
+    def table(self) -> str:
+        return "strategy_signals"
+
+
+@dataclass(frozen=True)
 class DebugDecisionEvent:
     run_id: str
     strategy_id: str

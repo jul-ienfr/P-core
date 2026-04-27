@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -27,6 +28,7 @@ def preflight_polymarket_live_readiness(
     order_management: OrderManagementExecutor | None = None,
     local_orders: list[dict[str, Any]] | None = None,
     positions_confirmed: bool = False,
+    live_submission_wired: bool | None = None,
 ) -> dict[str, Any]:
     """Check live CLOB environment without constructing a live executor or submitting/canceling orders."""
     source = env if env is not None else __import__("os").environ
@@ -34,8 +36,12 @@ def preflight_polymarket_live_readiness(
     missing = [name for name in required if not str(source.get(name, "")).strip()]
     configured = [name for name in required if name not in missing]
     credentials_ready = not missing
-    live_submission_wired = False
-    execution_available = False
+    live_ack_ready = str(source.get("POLYMARKET_LIVE_ACK", "")) == "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS"
+    live_enabled = str(source.get("POLYMARKET_LIVE_ENABLED", "")).strip() == "1"
+    kill_switch_active = str(source.get("PREDICTION_CORE_DISABLE_LIVE_EXECUTION", "")).strip() == "1"
+    if live_submission_wired is None:
+        live_submission_wired = bool(getattr(order_management, "live_submission_available", False))
+    execution_available = bool(live_submission_wired and live_enabled and live_ack_ready and not kill_switch_active)
     exchange_orders: list[dict[str, Any]] | None = None
     reconciliation: dict[str, Any] | None = None
     open_orders_confirmed = False
@@ -52,6 +58,12 @@ def preflight_polymarket_live_readiness(
     readiness_blockers = []
     if not credentials_ready:
         readiness_blockers.append("missing_clob_credentials")
+    if not live_enabled:
+        readiness_blockers.append("live_not_enabled")
+    if not live_ack_ready:
+        readiness_blockers.append("live_ack_not_confirmed")
+    if kill_switch_active:
+        readiness_blockers.append("live_kill_switch_active")
     if not live_submission_wired:
         readiness_blockers.append("live_submission_unavailable")
     if order_management is None:
@@ -82,7 +94,10 @@ def preflight_polymarket_live_readiness(
             },
             "live_submission_wired": live_submission_wired,
             "execution_available": execution_available,
-            "executor_constructed": False,
+            "live_enabled": live_enabled,
+            "live_ack_ready": live_ack_ready,
+            "kill_switch_active": kill_switch_active,
+            "executor_constructed": order_management is not None,
             "orders_submitted": 0,
             "cancel_submitted": False,
             "open_orders": {
@@ -106,6 +121,24 @@ from prediction_core.polymarket_marketdata import (
 
 class ExecutionDisabledError(RuntimeError):
     """Raised when a caller attempts to enable real order execution in this scaffold."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class LiveExecutionPermit:
+    preflight_ready: bool
+    operator_ack: str
+    positions_confirmed: bool
+    max_orders_per_cycle: int = 1
+
+    def __post_init__(self) -> None:
+        if self.preflight_ready is not True:
+            raise ExecutionDisabledError("live execution requires a ready preflight")
+        if self.operator_ack != "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS":
+            raise ExecutionDisabledError("live execution requires operator acknowledgement")
+        if self.positions_confirmed is not True:
+            raise ExecutionDisabledError("live execution requires confirmed positions")
+        if int(self.max_orders_per_cycle) != 1:
+            raise ExecutionDisabledError("live execution is limited to one order per cycle")
 
 
 def build_polymarket_runtime_scaffold() -> dict[str, Any]:
@@ -249,6 +282,8 @@ def plan_disabled_execution_actions(
     risk_state: ExecutionRiskState | None = None,
     idempotency_store: JsonlIdempotencyStore | None = None,
     audit_log: JsonlExecutionAuditLog | None = None,
+    live_permit: LiveExecutionPermit | None = None,
+    max_orders_per_cycle: int | None = None,
 ) -> dict[str, Any]:
     if execution_enabled and execution_mode == "paper":
         raise ExecutionDisabledError("real Polymarket execution is disabled in this scaffold")
@@ -260,7 +295,14 @@ def plan_disabled_execution_actions(
         elif type(order_executor) is not DryRunPolymarketExecutor:
             raise ExecutionDisabledError("dry-run Polymarket execution only accepts the built-in DryRunPolymarketExecutor")
     if execution_mode == "live":
-        raise ExecutionDisabledError("live Polymarket submission is unavailable from this library; use dry_run with a safe executor")
+        if order_executor is None:
+            raise ExecutionDisabledError("live Polymarket execution requires an explicit executor")
+        if live_permit is None:
+            raise ExecutionDisabledError("live Polymarket execution requires a ready preflight permit")
+        if max_orders_per_cycle is None:
+            max_orders_per_cycle = live_permit.max_orders_per_cycle
+        if int(max_orders_per_cycle) != 1:
+            raise ExecutionDisabledError("live execution is limited to one order per cycle")
     if execution_mode in {"dry_run", "live"} and (risk_limits is None or risk_state is None):
         raise ExecutionDisabledError("live/dry-run execution requires risk limits and risk state")
     if execution_mode in {"dry_run", "live"} and (idempotency_store is None or audit_log is None):
@@ -323,11 +365,19 @@ def plan_disabled_execution_actions(
                 summary["duplicate_skipped_count"] += 1
                 audit_log.append("execution_order_blocked", attempt)
                 continue
+            if execution_mode == "live" and summary["submitted_count"] >= int(max_orders_per_cycle or 1):
+                attempt = {"status": "max_orders_per_cycle_blocked", "idempotency_key": order.idempotency_key, "order": order.to_dict(), "risk": risk.to_dict()}
+                order_attempts.append(attempt)
+                summary["rejected_count"] += 1
+                idempotency_store.mark_rejected(order.idempotency_key, metadata={"market_id": order.market_id, "token_id": order.token_id, "status": "max_orders_per_cycle_blocked", "mode": execution_mode})
+                audit_log.append("execution_order_blocked", attempt)
+                continue
             summary["pending_count"] += 1
             try:
                 executor_result = order_executor.submit_order(order)  # type: ignore[union-attr]
             except Exception as exc:
-                attempt = {"status": "executor_failed", "idempotency_key": order.idempotency_key, "order": order.to_dict(), "error": str(exc)}
+                attempt_status = "execution_order_unknown" if execution_mode == "live" else "executor_failed"
+                attempt = {"status": attempt_status, "idempotency_key": order.idempotency_key, "order": order.to_dict(), "error": str(exc)}
                 order_attempts.append(attempt)
                 summary["executor_failed_count"] += 1
                 audit_log.append("execution_order_failed", attempt)
@@ -385,6 +435,8 @@ async def run_polymarket_runtime_cycle(
     risk_state: ExecutionRiskState | None = None,
     idempotency_store: JsonlIdempotencyStore | None = None,
     audit_log: JsonlExecutionAuditLog | None = None,
+    live_permit: LiveExecutionPermit | None = None,
+    max_orders_per_cycle: int | None = None,
 ) -> dict[str, Any]:
     subscriptions = select_hot_path_subscriptions(markets, min_liquidity=min_liquidity)
     token_ids = [subscription["token_id"] for subscription in subscriptions]
@@ -438,6 +490,8 @@ async def run_polymarket_runtime_cycle(
         risk_state=risk_state,
         idempotency_store=idempotency_store,
         audit_log=audit_log,
+        live_permit=live_permit,
+        max_orders_per_cycle=max_orders_per_cycle,
     )
     scaffold = build_polymarket_runtime_scaffold()
     return {

@@ -7,6 +7,8 @@ from uuid import uuid4
 
 from panoptique.db import create_sync_engine, get_sync_database_url
 
+from prediction_core.storage.events import build_event_payload
+
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
@@ -269,6 +271,45 @@ class OperationalStateRepository:
             """,
             {"job_id": job_id, "status": status, "output": output or {}, "error": error},
         )
+
+    def job_observability_summary(self) -> dict[str, Any]:
+        return {
+            "source_of_truth": "postgres",
+            "ephemeral_transports": ["redis", "nats"],
+            "tables": {"job_runs": "primary"},
+            "metrics": {
+                "status_counts": "job_runs grouped by status",
+                "expired_leases": "running job_runs with lease_expires_at before now()",
+                "stale_running": "running job_runs without a lease owner",
+            },
+        }
+
+    def audit_observability_summary(self) -> dict[str, Any]:
+        return {
+            "source_of_truth": "postgres",
+            "tables": {"execution_audit_events": "primary", "execution_idempotency_keys": "primary"},
+            "paper_only": True,
+            "live_order_allowed": False,
+            "metrics": {
+                "event_type_counts": "execution_audit_events grouped by event_type",
+                "recent_event_watermark": "max(recorded_at)",
+                "idempotency_claims": "execution_idempotency_keys count by mode and paper_only",
+            },
+        }
+
+    def postgres_primary_migration_plan(self) -> dict[str, Any]:
+        return {
+            "source_of_truth": "postgres",
+            "safe_to_migrate": ["job_runs", "execution_audit_events", "execution_idempotency_keys", "storage_artifacts"],
+            "not_source_of_truth": ["redis", "nats"],
+            "guards": {"paper_only": True, "live_order_allowed": False, "jsonb_driver_casts": True},
+        }
+
+    def build_job_event(self, *, event_type: str, job_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        return build_event_payload(event_type=event_type, data={"job_id": job_id, **(payload or {})}, source="prediction_core.storage.jobs")
+
+    def build_audit_event(self, *, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return build_event_payload(event_type=event_type, data=payload, source="prediction_core.storage.audit")
 
     def _execute(self, sql: str, params: dict[str, Any]) -> Any:
         try:

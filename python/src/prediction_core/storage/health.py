@@ -13,14 +13,44 @@ ROOT = Path(__file__).resolve().parents[4]
 
 def storage_health() -> dict[str, Any]:
     config = load_storage_stack_config()
-    return {
-        "config": config.to_redacted_dict(),
+    checks = {
         "postgres": _postgres_health(config.postgres.sync_database_url),
         "clickhouse": _clickhouse_health(config.clickhouse.url),
         "redis": _redis_health(config.redis.url),
         "nats": _nats_health(config.nats.url, monitor_url=config.nats.monitor_url, monitor_port=config.nats.monitor_port),
+        "nats_events": _nats_event_schema_health(),
         "s3": _s3_health(config.s3.endpoint_url, config.s3.bucket),
         "grafana": _grafana_provisioning_health(),
+    }
+    return {
+        "config": config.to_redacted_dict(),
+        **checks,
+        "summary": storage_health_summary(checks),
+        "source_of_truth": _storage_source_of_truth_summary(),
+    }
+
+
+def storage_health_summary(checks: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    configured = [name for name, check in checks.items() if check.get("configured")]
+    healthy = [name for name, check in checks.items() if check.get("ok")]
+    unhealthy = [name for name in configured if name not in healthy]
+    required_primary = ["postgres"]
+    missing_required_primary = [name for name in required_primary if name not in healthy]
+    return {
+        "configured_count": len(configured),
+        "healthy_count": len(healthy),
+        "unhealthy": unhealthy,
+        "ready": not missing_required_primary,
+        "missing_required_primary": missing_required_primary,
+    }
+
+
+def _storage_source_of_truth_summary() -> dict[str, Any]:
+    return {
+        "primary": "postgres",
+        "ephemeral": ["redis", "nats"],
+        "durable_event_transports": [],
+        "live_trading_enabled": False,
     }
 
 
@@ -92,6 +122,19 @@ def _nats_health(url: str | None, *, monitor_url: str | None = None, monitor_por
         }
     except Exception as exc:
         return {"configured": True, "ok": False, "error": type(exc).__name__}
+
+
+def _nats_event_schema_health() -> dict[str, Any]:
+    from prediction_core.storage.events import EVENT_SCHEMA_VERSION, EVENT_SUBJECTS, REQUIRED_EVENT_FIELDS
+
+    return {
+        "configured": True,
+        "ok": True,
+        "schema_version": EVENT_SCHEMA_VERSION,
+        "subjects": EVENT_SUBJECTS,
+        "required_fields": list(REQUIRED_EVENT_FIELDS),
+        "durable_source_of_truth": False,
+    }
 
 
 def _s3_health(endpoint_url: str | None, bucket: str | None) -> dict[str, Any]:
