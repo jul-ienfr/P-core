@@ -88,7 +88,7 @@ def test_paper_ledger_dashboard_has_required_panels() -> None:
 def test_data_freshness_dashboard_is_provisioned() -> None:
     dashboard = json.loads(DATA_FRESHNESS.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Fraîcheur des données", "Fraîcheur des données par table", "Dernière run par stratégie/profil", "Lignes dans la fenêtre sélectionnée", "Sources obsolètes", "âge_minutes"]:
+    for label in ["Fraîcheur des données", "Fraîcheur des données par table", "Dernière run par stratégie/profil", "Dernière run (Paris)", "Dernier observed_at (Paris)", "Lignes dans la fenêtre sélectionnée", "Sources obsolètes", "âge_minutes"]:
         assert label in text
     for source in ["profile_decisions", "debug_decisions", "strategy_signals", "profile_metrics", "strategy_metrics", "paper_orders", "paper_positions", "paper_pnl_snapshots", "execution_events", "strategy_configs"]:
         assert source in text

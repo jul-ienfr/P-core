@@ -138,7 +138,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  anyLast(run_id) AS `Dernière run`,\n  nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')) AS `Dernier observed_at`,\n  count() AS `Rows`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id\nORDER BY `Dernier observed_at` DESC",
+          "rawSql": "SELECT\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  formatDateTime(toTimeZone(parseDateTimeBestEffortOrNull(argMax(run_id, observed_at)), 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernière run (Paris)`,\n  formatDateTime(toTimeZone(nullIf(max(observed_at), toDateTime64(0, 3, 'UTC')), 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Dernier observed_at (Paris)`,\n  count() AS `Lignes`\nFROM prediction_core.profile_metrics\nWHERE $__timeFilter(observed_at)\nGROUP BY strategy_id, profile_id\nORDER BY max(observed_at) DESC",
           "refId": "A"
         }
       ],
