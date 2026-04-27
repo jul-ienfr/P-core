@@ -50,10 +50,70 @@
       "tooltip": "Santé et attentes des stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-health"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Pilotage paper/live",
+      "tooltip": "Ouvrir la console d’action paper/live",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-control"
     }
   ],
   "liveNow": false,
   "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  count() AS `Lignes paper dans la fenêtre`\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )",
+          "refId": "A"
+        }
+      ],
+      "title": "Lignes paper dans la fenêtre",
+      "type": "stat"
+    },
     {
       "datasource": {
         "type": "grafana-clickhouse-datasource",
@@ -67,7 +127,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "id": 1,
       "options": {
@@ -120,7 +180,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 13
       },
       "id": 2,
       "options": {
@@ -171,7 +231,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 22
       },
       "id": 3,
       "options": {
@@ -214,7 +274,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 31
       },
       "id": 4,
       "options": {
@@ -264,7 +324,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 39
       },
       "id": 5,
       "options": {
@@ -464,13 +524,13 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-48h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "Europe/Paris",
   "title": "Ledger paper",
   "uid": "prediction-core-paper-ledger",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }

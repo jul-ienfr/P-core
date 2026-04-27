@@ -208,6 +208,8 @@ def evaluate_cached_market_decisions(
         token_ids = _coerce_list(market.get("clobTokenIds") or market.get("clob_token_ids"))
         outcomes = _coerce_list(market.get("outcomes")) or [f"outcome_{index}" for index in range(len(token_ids))]
         question = market.get("question") or market.get("title") or ""
+        strategy_id = market.get("strategy_id")
+        profile_id = market.get("profile_id")
 
         for index, token_id in enumerate(token_ids):
             outcome = str(outcomes[index]) if index < len(outcomes) else f"outcome_{index}"
@@ -230,6 +232,8 @@ def evaluate_cached_market_decisions(
                         "action": "WAIT_MARKETDATA",
                         "execution_enabled": False,
                         "wait_reason": wait_reason,
+                        "strategy_id": strategy_id,
+                        "profile_id": profile_id,
                     }
                 )
                 continue
@@ -261,6 +265,8 @@ def evaluate_cached_market_decisions(
                     "edge_vs_ask": edge,
                     "action": action,
                     "execution_enabled": False,
+                    "strategy_id": strategy_id,
+                    "profile_id": profile_id,
                 }
             )
 
@@ -572,6 +578,11 @@ def _build_order_dict(decision: dict[str, Any], *, notional_usdc: float) -> dict
     notional = float(notional_usdc)
     if notional <= 0.0 or notional != notional or notional in (float("inf"), float("-inf")):
         raise ValueError("notional_usdc must be finite and positive")
+    strategy_id = decision.get("strategy_id")
+    profile_id = decision.get("profile_id")
+    idempotency_key = f"{market_id}:{token_id}:BUY:{limit_price}:{notional}"
+    if strategy_id or profile_id:
+        idempotency_key = f"{idempotency_key}:{strategy_id or ''}:{profile_id or ''}"
     return {
         "market_id": market_id,
         "token_id": token_id,
@@ -579,7 +590,9 @@ def _build_order_dict(decision: dict[str, Any], *, notional_usdc: float) -> dict
         "side": "BUY",
         "limit_price": limit_price,
         "notional_usdc": notional,
-        "idempotency_key": f"{market_id}:{token_id}:BUY:{limit_price}:{notional}",
+        "strategy_id": strategy_id,
+        "profile_id": profile_id,
+        "idempotency_key": idempotency_key,
     }
 
 

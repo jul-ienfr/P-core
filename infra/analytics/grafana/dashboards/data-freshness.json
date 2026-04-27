@@ -39,6 +39,17 @@
       "tooltip": "Santé et attentes des stratégies",
       "type": "dashboard",
       "uid": "prediction-core-strategy-health"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Pilotage paper/live",
+      "tooltip": "Ouvrir la console d’action paper/live",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-control"
     }
   ],
   "liveNow": false,

@@ -12,8 +12,19 @@ DATA_FRESHNESS = DASHBOARDS / "data-freshness.json"
 STRATEGY_OVERVIEW = DASHBOARDS / "strategy-overview.json"
 STRATEGY_DETAIL = DASHBOARDS / "strategy-detail.json"
 STRATEGY_HEALTH = DASHBOARDS / "strategy-health.json"
+STRATEGY_CONTROL = DASHBOARDS / "strategy-control.json"
 ALERTS = ROOT / "infra" / "analytics" / "grafana" / "provisioning" / "alerting" / "prediction-core-alerts.yml"
 COMPOSE = ROOT / "infra" / "analytics" / "docker-compose.yml"
+ALL_DASHBOARDS = [
+    STRATEGY_VS_PROFILE,
+    DECISION_DEBUG,
+    PAPER_LEDGER,
+    DATA_FRESHNESS,
+    STRATEGY_OVERVIEW,
+    STRATEGY_DETAIL,
+    STRATEGY_HEALTH,
+    STRATEGY_CONTROL,
+]
 
 
 def test_grafana_clickhouse_datasource_is_provisioned() -> None:
@@ -35,6 +46,29 @@ def test_grafana_dashboard_provider_is_provisioned() -> None:
     text = DASHBOARD_PROVIDER.read_text()
     assert "Prediction Core" in text
     assert "/var/lib/grafana/dashboards" in text
+
+
+def test_all_dashboards_are_french_paris_and_provisionable() -> None:
+    expected_uids = {
+        "prediction-core-strategy-vs-profile",
+        "prediction-core-decision-debug",
+        "prediction-core-paper-ledger",
+        "prediction-core-data-freshness",
+        "prediction-core-strategy-overview",
+        "prediction-core-strategy-detail",
+        "prediction-core-strategy-health",
+        "prediction-core-strategy-control",
+    }
+    dashboards = [json.loads(path.read_text()) for path in ALL_DASHBOARDS]
+    assert {dashboard["uid"] for dashboard in dashboards} == expected_uids
+    for dashboard in dashboards:
+        assert dashboard["timezone"] == "Europe/Paris"
+        assert dashboard["title"]
+        assert dashboard["panels"]
+        text = json.dumps(dashboard, ensure_ascii=False)
+        assert "prediction-core-clickhouse" in text
+        assert "countLignes" not in text
+        assert "âge_minutes" not in text
 
 
 def test_strategy_vs_profile_dashboard_has_required_panels() -> None:
@@ -80,8 +114,9 @@ def test_decision_debug_dashboard_has_required_panels() -> None:
 def test_paper_ledger_dashboard_has_required_panels() -> None:
     dashboard = json.loads(PAPER_LEDGER.read_text())
     text = json.dumps(dashboard, ensure_ascii=False)
-    for label in ["Ledger paper", "paper_pnl_snapshots", "paper_positions", "paper_orders", "Ordres paper", "Statut des ordres paper", "PnL net USDC", "Comparaison paper / live", "Observation paper (Paris)", "Observation live (Paris)", "execution_events", "run_id", "market", "business_time"]:
+    for label in ["Ledger paper", "paper_pnl_snapshots", "paper_positions", "paper_orders", "Lignes paper dans la fenêtre", "Ordres paper", "Statut des ordres paper", "PnL net USDC", "Comparaison paper / live", "Observation paper (Paris)", "Observation live (Paris)", "execution_events", "run_id", "market", "business_time"]:
         assert label in text
+    assert dashboard["time"]["from"] == "now-48h"
     assert "prediction-core-clickhouse" in text
 
 
@@ -132,12 +167,42 @@ def test_strategy_health_dashboard_is_provisioned() -> None:
     assert "prediction-core-clickhouse" in text
 
 
+def test_strategy_control_dashboard_is_provisioned() -> None:
+    dashboard = json.loads(STRATEGY_CONTROL.read_text())
+    text = json.dumps(dashboard, ensure_ascii=False)
+    for label in ["Pilotage paper/live", "Actions à faire maintenant", "Stratégies candidates au live", "Stratégies à surveiller ou désactiver", "Écart configuration / activité", "Dernières décisions actionnables", "Action recommandée", "Candidate live à examiner", "Rien à faire", "Comparaison stratégies / profils", "Fraîcheur des données", "Debug des décisions", "Ledger paper"]:
+        assert label in text
+    for label in ["strategy", "profile", "market", "mode", "business_time", "Configurer stratégie", "Live autorisé", "Mode configuré"]:
+        assert label in text
+    for source in ["strategy_configs", "debug_decisions", "strategy_signals", "profile_metrics", "execution_events"]:
+        assert source in text
+    assert dashboard["uid"] == "prediction-core-strategy-control"
+    assert dashboard["timezone"] == "Europe/Paris"
+    assert "prediction-core-clickhouse" in text
+
+
 def test_existing_dashboards_link_to_strategy_console() -> None:
+    for path in [STRATEGY_VS_PROFILE, DECISION_DEBUG, PAPER_LEDGER, DATA_FRESHNESS, STRATEGY_OVERVIEW, STRATEGY_DETAIL, STRATEGY_HEALTH]:
+        text = path.read_text()
+        assert "prediction-core-strategy-control" in text
+
     for path in [STRATEGY_VS_PROFILE, DECISION_DEBUG, PAPER_LEDGER, DATA_FRESHNESS]:
         text = path.read_text()
         assert "prediction-core-strategy-overview" in text
         assert "prediction-core-strategy-detail" in text
         assert "prediction-core-strategy-health" in text
+
+    control_text = STRATEGY_CONTROL.read_text()
+    for uid in [
+        "prediction-core-strategy-overview",
+        "prediction-core-strategy-detail",
+        "prediction-core-strategy-health",
+        "prediction-core-strategy-vs-profile",
+        "prediction-core-data-freshness",
+        "prediction-core-decision-debug",
+        "prediction-core-paper-ledger",
+    ]:
+        assert uid in control_text
 
 
     text = ALERTS.read_text()

@@ -10,7 +10,10 @@ from prediction_core.strategies.config_store import StrategyConfigStore, default
 from prediction_core.strategies.paper_bridge import PaperBridgeContext, paper_decision_from_signal
 from prediction_core.strategies.weather_profile_strategies import WeatherProfileStrategy
 
+from .consensus_tracker import build_weather_consensus_tracker
+from .event_surface import build_weather_event_surface
 from .strategy_profiles import list_strategy_profiles, strategy_id_for_profile
+from .threshold_watcher import build_threshold_watch_report
 
 
 def _number(value: Any, default: float | None = None) -> float | None:
@@ -56,7 +59,31 @@ def _price_context(market: Mapping[str, Any], probability: float | None) -> dict
     return {"market_price": float(market_price), "best_bid": best_bid, "best_ask": best_ask, "spread": round(spread, 6)}
 
 
-def _profile_payload_features(profile_id: str, market: Mapping[str, Any], probability: float | None, price: Mapping[str, Any]) -> dict[str, Any]:
+def _feature_reports(markets: list[Mapping[str, Any]]) -> dict[str, Any]:
+    normalized = []
+    for market in markets:
+        yes_price = _number(market.get("yes_price") or market.get("best_ask") or market.get("bestAsk"))
+        normalized.append({**dict(market), "yes_price": yes_price})
+    reports: dict[str, Any] = {}
+    try:
+        reports["event_surface"] = build_weather_event_surface(normalized)
+    except Exception as exc:
+        reports["event_surface_error"] = repr(exc)
+    try:
+        reports["threshold_watch"] = build_threshold_watch_report({"markets": normalized})
+    except Exception as exc:
+        reports["threshold_watch_error"] = repr(exc)
+    try:
+        reports["consensus"] = build_weather_consensus_tracker([
+            {"question": market.get("question"), "side": "YES", "handle": "runtime_model", "notional": market.get("liquidity") or 0}
+            for market in normalized
+        ])
+    except Exception as exc:
+        reports["consensus_error"] = repr(exc)
+    return reports
+
+
+def _profile_payload_features(profile_id: str, market: Mapping[str, Any], probability: float | None, price: Mapping[str, Any], reports: Mapping[str, Any]) -> dict[str, Any]:
     question = str(market.get("question") or "")
     liquidity = _liquidity_for_market(market)
     market_price = float(price["market_price"])
@@ -73,13 +100,16 @@ def _profile_payload_features(profile_id: str, market: Mapping[str, Any], probab
         "edge": edge,
     }
     if profile_id == "surface_grid_trader":
-        return {**base, "feature_family": "event_surface", "surface": {"probability_yes": probability, "market_price": market_price, "edge": edge}}
+        return {**base, "feature_family": "event_surface", "surface": reports.get("event_surface") or {"probability_yes": probability, "market_price": market_price, "edge": edge}}
     if profile_id == "exact_bin_anomaly_hunter":
-        return {**base, "feature_family": "surface_inconsistency", "anomaly": {"edge": edge, "question": question}}
+        surface = reports.get("event_surface") if isinstance(reports.get("event_surface"), Mapping) else {}
+        events = surface.get("events") if isinstance(surface.get("events"), list) else []
+        inconsistencies = [item for event in events if isinstance(event, Mapping) for item in event.get("inconsistencies", []) if isinstance(item, Mapping)]
+        return {**base, "feature_family": "surface_inconsistency", "anomaly": {"edge": edge, "question": question, "inconsistencies": inconsistencies}}
     if profile_id == "threshold_resolution_harvester":
-        return {**base, "feature_family": "threshold_watcher", "resolution": {"source_status": market.get("resolution_source_status") or "unknown"}}
+        return {**base, "feature_family": "threshold_watcher", "threshold_watch": reports.get("threshold_watch") or {}, "resolution": {"source_status": market.get("resolution_source_status") or "unknown"}}
     if profile_id == "profitable_consensus_radar":
-        return {**base, "feature_family": "consensus_tracker", "consensus": {"probability_yes": probability, "market_price": market_price}}
+        return {**base, "feature_family": "consensus_tracker", "consensus": reports.get("consensus") or {"probability_yes": probability, "market_price": market_price}}
     if profile_id == "conviction_signal_follower":
         return {**base, "feature_family": "strategy_shortlist", "conviction": {"score": 0.65 if edge is not None and edge > 0 else 0.0}}
     if profile_id == "macro_weather_event_trader":
@@ -125,12 +155,12 @@ def _satisfied_gates_for_payload(profile: Mapping[str, Any], features: Mapping[s
     return [str(gate) for gate in profile.get("entry_gates") or [] if gates.get(str(gate), False)]
 
 
-def _payload_for_profile(profile: Mapping[str, Any], *, markets: list[Mapping[str, Any]], probabilities: Mapping[str, Any], artifacts: Mapping[str, Any]) -> dict[str, Any]:
+def _payload_for_profile(profile: Mapping[str, Any], *, markets: list[Mapping[str, Any]], probabilities: Mapping[str, Any], artifacts: Mapping[str, Any], reports: Mapping[str, Any]) -> dict[str, Any]:
     market = _first_market(markets)
     profile_id = str(profile["id"])
     probability = _probability_for_market(market, probabilities)
     price = _price_context(market, probability)
-    features = _profile_payload_features(profile_id, market, probability, price)
+    features = _profile_payload_features(profile_id, market, probability, price, reports)
     blockers = [] if probability is not None else ["missing_probability"]
     if float(features.get("liquidity_usd") or 0.0) <= 0.0:
         blockers.append("missing_liquidity")
@@ -266,10 +296,11 @@ def build_runtime_weather_profile_summary(
     runtime_result = runtime_result or {}
     artifacts = artifacts or {}
     profiles = list_strategy_profiles()
+    feature_reports = _feature_reports(markets)
     enabled_profile_ids, config_by_strategy_id, default_enabled_all = _configured_profile_ids(profiles, config_path)
     profiles_by_id = {str(profile["id"]): profile for profile in profiles}
     payloads_by_profile = {
-        profile_id: [_payload_for_profile(profiles_by_id[profile_id], markets=markets, probabilities=probabilities, artifacts=artifacts)]
+        profile_id: [_payload_for_profile(profiles_by_id[profile_id], markets=markets, probabilities=probabilities, artifacts=artifacts, reports=feature_reports)]
         for profile_id in enabled_profile_ids
     }
     strategies = [
@@ -311,6 +342,7 @@ def build_runtime_weather_profile_summary(
         "skip_count": sum(1 for decision in decisions if decision.get("decision") == "skip"),
         "profile_ids": profile_ids,
         "strategy_ids": strategy_ids,
+        "feature_reports": feature_reports,
         "payloads_by_profile": payloads_by_profile,
         "signals": signals,
         "decisions": decisions,

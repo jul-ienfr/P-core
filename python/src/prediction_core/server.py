@@ -207,6 +207,7 @@ def strategy_config_mutation_request(path: str, payload: dict[str, Any]) -> dict
     return {"strategy": strategy_config_payload(config)}
 
 
+def fetch_markets_request(payload: dict[str, Any]) -> list[dict[str, Any]]:
     source = _coerce_source(payload.get("source", "fixture"))
     limit_value = _coerce_limit(payload.get("limit", 100))
     return _normalized_weather_markets(source=source, limit=limit_value)

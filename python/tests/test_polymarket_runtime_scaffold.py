@@ -45,6 +45,8 @@ def sample_markets():
             "clobTokenIds": json.dumps(["yes-token", "no-token"]),
             "outcomes": json.dumps(["Yes", "No"]),
             "liquidity": 2500,
+            "strategy_id": "weather_profile_surface_grid_trader_v1",
+            "profile_id": "surface_grid_trader",
             "closed": False,
         },
         {
@@ -206,6 +208,8 @@ def test_evaluate_cached_market_decisions_scores_edges_without_execution(sample_
     assert yes_decision["edge_vs_ask"] == pytest.approx(0.08)
     assert yes_decision["action"] == "PAPER_SIGNAL_ONLY"
     assert yes_decision["execution_enabled"] is False
+    assert yes_decision["strategy_id"] == "weather_profile_surface_grid_trader_v1"
+    assert yes_decision["profile_id"] == "surface_grid_trader"
     assert result["summary"]["paper_signal_count"] == 1
     assert result["summary"]["missing_snapshot_count"] == 0
 
@@ -264,6 +268,8 @@ def test_disabled_execution_planner_returns_audit_records_not_orders():
             "best_ask": 0.44,
             "model_probability": 0.52,
             "edge_vs_ask": 0.08,
+            "strategy_id": "weather_profile_surface_grid_trader_v1",
+            "profile_id": "surface_grid_trader",
         }
     ]
 
@@ -279,6 +285,8 @@ def test_disabled_execution_planner_returns_audit_records_not_orders():
             "side": "BUY",
             "limit_price": 0.44,
             "notional_usdc": 7.5,
+            "strategy_id": "weather_profile_surface_grid_trader_v1",
+            "profile_id": "surface_grid_trader",
             "reason": "execution disabled; paper intent only",
         }
     ]

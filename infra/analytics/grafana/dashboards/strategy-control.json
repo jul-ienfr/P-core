@@ -1,0 +1,692 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Vue d’ensemble des stratégies",
+      "tooltip": "Retour à la vue d’ensemble",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-overview"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Détail stratégie",
+      "tooltip": "Ouvrir le détail",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-detail"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Santé stratégies",
+      "tooltip": "Ouvrir la matrice santé",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-health"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Comparaison stratégies / profils",
+      "tooltip": "Comparer les performances",
+      "type": "dashboard",
+      "uid": "prediction-core-strategy-vs-profile"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Fraîcheur des données",
+      "tooltip": "Vérifier l’alimentation",
+      "type": "dashboard",
+      "uid": "prediction-core-data-freshness"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Debug des décisions",
+      "tooltip": "Analyser les décisions",
+      "type": "dashboard",
+      "uid": "prediction-core-decision-debug"
+    },
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Ledger paper",
+      "tooltip": "Contrôler le paper trading",
+      "type": "dashboard",
+      "uid": "prediction-core-paper-ledger"
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT countDistinct(strategy_id) AS `Stratégies activées`\nFROM\n(\n  SELECT strategy_id, argMax(enabled, observed_at) AS enabled\n  FROM prediction_core.strategy_configs\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n)\nWHERE enabled",
+          "refId": "A"
+        }
+      ],
+      "title": "Stratégies activées",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT countDistinct(strategy_id) AS `Stratégies en paper`\nFROM\n(\n  SELECT strategy_id, argMax(mode, observed_at) AS configured_mode\n  FROM prediction_core.strategy_configs\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n)\nWHERE configured_mode = 'paper_only'",
+          "refId": "A"
+        }
+      ],
+      "title": "Stratégies en paper",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT countDistinct(strategy_id) AS `Stratégies live autorisées`\nFROM\n(\n  SELECT strategy_id, argMax(allow_live, observed_at) AS allow_live, argMax(mode, observed_at) AS configured_mode\n  FROM prediction_core.strategy_configs\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n)\nWHERE allow_live OR configured_mode = 'live_allowed'",
+          "refId": "A"
+        }
+      ],
+      "title": "Stratégies live autorisées",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "WITH health AS\n(\n  SELECT strategy_id, dateDiff('minute', max(observed_at), now()) AS age_minutes, countIf(blocker != '' OR skip_reason != '' OR NOT risk_ok OR NOT source_ok OR NOT orderbook_ok) AS blockers\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n)\nSELECT count() AS `Actions prioritaires`\nFROM health\nWHERE age_minutes > 60 OR blockers > 0",
+          "refId": "A"
+        }
+      ],
+      "title": "Actions prioritaires",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "WITH configs AS\n(\n  SELECT strategy_id, argMax(enabled, observed_at) AS enabled, argMax(mode, observed_at) AS configured_mode, argMax(allow_live, observed_at) AS allow_live, max(observed_at) AS config_observed_at\n  FROM prediction_core.strategy_configs\n  WHERE match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n), decisions AS\n(\n  SELECT strategy_id, max(observed_at) AS last_decision_at, dateDiff('minute', max(observed_at), now()) AS age_minutes, count() AS decisions, countIf(blocker != '' OR skip_reason != '' OR NOT risk_ok OR NOT source_ok OR NOT orderbook_ok) AS blockers, avg(risk_ok) AS risk_ok_rate, avg(source_ok) AS source_ok_rate, avg(orderbook_ok) AS orderbook_ok_rate\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n), signals AS\n(\n  SELECT strategy_id, count() AS signals, max(live_order_allowed OR mode = 'live') AS live_seen\n  FROM prediction_core.strategy_signals\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n)\nSELECT\n  configs.strategy_id AS `Stratégie`,\n  if(configs.enabled, 'Activée', 'Désactivée') AS `État configuré`,\n  configs.configured_mode AS `Mode configuré`,\n  if(configs.allow_live, 'Oui', 'Non') AS `Live autorisé`,\n  ifNull(signals.signals, 0) AS `Signaux`,\n  ifNull(decisions.decisions, 0) AS `Décisions`,\n  ifNull(decisions.blockers, 0) AS `Blocages`,\n  if(isNull(decisions.last_decision_at), '', formatDateTime(toTimeZone(decisions.last_decision_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S')) AS `Dernière décision (Paris)`,\n  ifNull(decisions.age_minutes, 999999) AS `Âge minutes`,\n  multiIf(NOT configs.enabled, 'Vérifier si elle doit rester désactivée', isNull(decisions.last_decision_at), 'Alimenter les données / vérifier le runtime', decisions.age_minutes > 60, 'Relancer ou diagnostiquer les données obsolètes', ifNull(decisions.risk_ok_rate, 1) < 0.8, 'Corriger les règles risque', ifNull(decisions.source_ok_rate, 1) < 0.8, 'Corriger la source météo', ifNull(decisions.orderbook_ok_rate, 1) < 0.8, 'Corriger le carnet / liquidité', ifNull(decisions.blockers, 0) > 0, 'Lire les raisons de blocage', configs.configured_mode = 'live_allowed' AND NOT configs.allow_live, 'Live incohérent : guardrail à vérifier', ifNull(signals.signals, 0) > 0 AND configs.configured_mode = 'paper_only', 'Candidate à revue paper', 'Rien à faire') AS `Action recommandée`,\n  concat('/strategies/config/', configs.strategy_id) AS `Configurer stratégie`\nFROM configs\nLEFT JOIN decisions ON configs.strategy_id = decisions.strategy_id\nLEFT JOIN signals ON configs.strategy_id = signals.strategy_id\nORDER BY `Action recommandée`, `Âge minutes` DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Actions à faire maintenant",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "WITH metrics AS\n(\n  SELECT strategy_id, sum(trade_count) AS trades, sum(skip_count) AS skips, sum(decision_count) AS decisions, sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate, sum(net_pnl_usdc) AS net_pnl_usdc, avg(roi) AS roi\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n), health AS\n(\n  SELECT strategy_id, countIf(blocker != '' OR skip_reason != '' OR NOT risk_ok OR NOT source_ok OR NOT orderbook_ok) AS blockers, avg(risk_ok) AS risk_ok_rate, avg(source_ok) AS source_ok_rate, avg(orderbook_ok) AS orderbook_ok_rate\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n), configs AS\n(\n  SELECT strategy_id, argMax(enabled, observed_at) AS enabled, argMax(mode, observed_at) AS configured_mode, argMax(allow_live, observed_at) AS allow_live\n  FROM prediction_core.strategy_configs\n  GROUP BY strategy_id\n)\nSELECT\n  metrics.strategy_id AS `Stratégie`,\n  ifNull(configs.configured_mode, 'non_configurée') AS `Mode configuré`,\n  metrics.trades AS `Trades`,\n  metrics.skip_rate AS `Taux de skip`,\n  metrics.net_pnl_usdc AS `PnL net`,\n  metrics.roi AS `ROI`,\n  ifNull(health.blockers, 0) AS `Blocages`,\n  multiIf(NOT ifNull(configs.enabled, 0), 'Désactivée', ifNull(health.blockers, 0) > 0, 'Pas prête : blocages', metrics.trades = 0, 'Pas assez de trades paper', metrics.skip_rate > 0.8, 'Trop de skips', metrics.net_pnl_usdc >= 0 AND metrics.roi >= 0, 'Candidate live à examiner', 'Continuer paper') AS `Avis`\nFROM metrics\nLEFT JOIN health ON metrics.strategy_id = health.strategy_id\nLEFT JOIN configs ON metrics.strategy_id = configs.strategy_id\nORDER BY `Avis`, `PnL net` DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Stratégies candidates au live",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "WITH metrics AS\n(\n  SELECT strategy_id, sum(decision_count) AS decisions, sum(skip_count) AS skips, sum(skip_count) / nullIf(sum(decision_count), 0) AS skip_rate, sum(net_pnl_usdc) AS net_pnl_usdc, avg(roi) AS roi, dateDiff('minute', max(observed_at), now()) AS age_minutes\n  FROM prediction_core.profile_metrics\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n), blockers AS\n(\n  SELECT strategy_id, countIf(blocker != '' OR skip_reason != '') AS blockers\n  FROM prediction_core.debug_decisions\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n)\nSELECT\n  metrics.strategy_id AS `Stratégie`,\n  metrics.age_minutes AS `Âge minutes`,\n  metrics.decisions AS `Décisions`,\n  metrics.skip_rate AS `Taux de skip`,\n  metrics.net_pnl_usdc AS `PnL net`,\n  metrics.roi AS `ROI`,\n  ifNull(blockers.blockers, 0) AS `Blocages`,\n  multiIf(metrics.age_minutes > 60, 'Données obsolètes', ifNull(blockers.blockers, 0) > 0, 'Blocages fréquents', metrics.decisions > 0 AND metrics.skip_rate > 0.9, 'Trop de skips', metrics.net_pnl_usdc < 0 AND metrics.roi < 0, 'Performance négative', 'Surveillance normale') AS `Raison`\nFROM metrics\nLEFT JOIN blockers ON metrics.strategy_id = blockers.strategy_id\nWHERE metrics.age_minutes > 60 OR ifNull(blockers.blockers, 0) > 0 OR metrics.skip_rate > 0.9 OR (metrics.net_pnl_usdc < 0 AND metrics.roi < 0)\nORDER BY `Raison`, `Âge minutes` DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Stratégies à surveiller ou désactiver",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "WITH configs AS\n(\n  SELECT strategy_id, argMax(enabled, observed_at) AS enabled, argMax(mode, observed_at) AS configured_mode, argMax(allow_live, observed_at) AS allow_live, argMax(settings, observed_at) AS settings\n  FROM prediction_core.strategy_configs\n  WHERE match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n), activity AS\n(\n  SELECT strategy_id, max(live_order_allowed OR mode = 'live') AS live_seen, countIf(mode = 'paper' OR mode = 'paper_only') AS paper_events, count() AS events, max(observed_at) AS last_event_at\n  FROM prediction_core.execution_events\n  WHERE $__timeFilter(observed_at)\n    AND match(strategy_id, '${strategy:regex}')\n  GROUP BY strategy_id\n)\nSELECT\n  configs.strategy_id AS `Stratégie`,\n  if(configs.enabled, 'Activée', 'Désactivée') AS `État configuré`,\n  configs.configured_mode AS `Mode configuré`,\n  if(configs.allow_live, 'Oui', 'Non') AS `Live autorisé config`,\n  ifNull(activity.live_seen, 0) AS `Live vu`,\n  ifNull(activity.paper_events, 0) AS `Événements paper`,\n  if(isNull(activity.last_event_at), '', formatDateTime(toTimeZone(activity.last_event_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S')) AS `Dernier événement (Paris)`,\n  multiIf(configs.configured_mode = 'live_allowed' AND NOT configs.allow_live, 'Config live incohérente', NOT configs.enabled AND ifNull(activity.events, 0) > 0, 'Activité alors que désactivée', configs.allow_live AND ifNull(activity.live_seen, 0) = 0, 'Live autorisé mais jamais vu', configs.configured_mode = 'paper_only' AND ifNull(activity.live_seen, 0), 'Live vu malgré paper', 'Cohérent') AS `Diagnostic`,\n  configs.settings AS `Paramètres`\nFROM configs\nLEFT JOIN activity ON configs.strategy_id = activity.strategy_id\nORDER BY `Diagnostic`, `Stratégie`",
+          "refId": "A"
+        }
+      ],
+      "title": "Écart configuration / activité",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  formatDateTime(toTimeZone(observed_at, 'Europe/Paris'), '%d/%m/%Y %H:%i:%S') AS `Observation (Paris)`,\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  market_id AS `Marché`,\n  mode AS `Mode`,\n  decision_status AS `Décision`,\n  edge AS `Edge`,\n  limit_price AS `Prix limite`,\n  skip_reason AS `Raison de skip`,\n  blocker AS `Blocage`,\n  risk_ok AS `Risque OK`,\n  source_ok AS `Source OK`,\n  orderbook_ok AS `Carnet OK`\nFROM prediction_core.debug_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (\n    '${business_time}' = 'all'\n    OR ('${business_time}' = 'business_hours' AND toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22)\n    OR ('${business_time}' = 'off_hours' AND NOT (toHour(toTimeZone(observed_at, 'Europe/Paris')) BETWEEN 14 AND 22))\n  )\nORDER BY observed_at DESC\nLIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Dernières décisions actionnables",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "prediction-core",
+    "strategy",
+    "control",
+    "paper-live"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT strategy_id FROM prediction_core.strategy_configs ORDER BY strategy_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Stratégie",
+        "multi": true,
+        "name": "strategy",
+        "options": [],
+        "query": "SELECT DISTINCT strategy_id FROM prediction_core.strategy_configs ORDER BY strategy_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT profile_id FROM prediction_core.profile_metrics ORDER BY profile_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Profil",
+        "multi": true,
+        "name": "profile",
+        "options": [],
+        "query": "SELECT DISTINCT profile_id FROM prediction_core.profile_metrics ORDER BY profile_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT market_id FROM prediction_core.debug_decisions ORDER BY market_id",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Marché",
+        "multi": true,
+        "name": "market",
+        "options": [],
+        "query": "SELECT DISTINCT market_id FROM prediction_core.debug_decisions ORDER BY market_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "prediction-core-clickhouse"
+        },
+        "definition": "SELECT DISTINCT mode FROM prediction_core.debug_decisions ORDER BY mode",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Mode",
+        "multi": true,
+        "name": "mode",
+        "options": [],
+        "query": "SELECT DISTINCT mode FROM prediction_core.debug_decisions ORDER BY mode",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "Toutes heures",
+          "value": "all"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Heures",
+        "multi": false,
+        "name": "business_time",
+        "options": [
+          {
+            "selected": true,
+            "text": "Toutes heures",
+            "value": "all"
+          },
+          {
+            "selected": false,
+            "text": "Heures de marché Paris",
+            "value": "business_hours"
+          },
+          {
+            "selected": false,
+            "text": "Hors heures de marché Paris",
+            "value": "off_hours"
+          }
+        ],
+        "query": "all,business_hours,off_hours",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "Europe/Paris",
+  "title": "Pilotage paper/live",
+  "uid": "prediction-core-strategy-control",
+  "version": 1,
+  "weekStart": ""
+}

@@ -13,7 +13,7 @@ PREDICTION_CORE = REPO / 'python' / 'scripts' / 'prediction-core'
 PYTHON = sys.executable or 'python3'
 sys.path.insert(0, str(PYTHON_SRC))
 from prediction_core.analytics.clickhouse_writer import create_clickhouse_writer_from_env  # noqa: E402
-from prediction_core.analytics.events import serialize_event  # noqa: E402
+from prediction_core.analytics.events import PaperOrderEvent, PaperPnlSnapshotEvent, PaperPositionEvent, serialize_event  # noqa: E402
 from weather_pm.analytics_adapter import (  # noqa: E402
     debug_decision_events_from_shortlist,
     execution_events_from_payload,
@@ -244,24 +244,83 @@ def ch_time(value):
     return parsed.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
 
+def _num(value, default=0.0):
+    try:
+        if value is None: return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _paper_market_id(position):
+    return str(position.get('market_id') or position.get('slug') or position.get('question') or position.get('token_id') or '')
+
+
+def _paper_strategy_id(position):
+    return str(position.get('strategy_id') or 'weather_manual_paper_basket_v1')
+
+
+def _paper_profile_id(position):
+    return str(position.get('profile_id') or 'weather_manual_basket')
+
+
+def _paper_status(position):
+    return str(position.get('settlement_status') or position.get('action') or 'OPEN')
+
+
+def build_paper_basket_analytics_rows(report, stamp):
+    observed_at=ch_time(stamp)
+    observed_dt=datetime.strptime(observed_at, '%Y-%m-%d %H:%M:%S.%f').replace(tzinfo=timezone.utc)
+    run_id=str(report.get('run_id') or stamp)
+    mode=str(report.get('runtime_execution_mode') or 'paper')
+    positions=[row for row in report.get('positions') or [] if isinstance(row, dict)]
+    closed=[row for row in report.get('closed_positions') or [] if isinstance(row, dict)]
+    all_positions=positions+closed
+    order_events=[]; position_events=[]
+    for index, position in enumerate(all_positions, start=1):
+        market_id=_paper_market_id(position); token_id=str(position.get('token_id') or '')
+        strategy_id=_paper_strategy_id(position); profile_id=_paper_profile_id(position)
+        quantity=_num(position.get('shares'))
+        exposure=_num(position.get('filled_usdc'))
+        avg_price=_num(position.get('entry_avg'), None)
+        status=_paper_status(position)
+        raw={**position, 'portfolio_source':'weather_cron_monitor'}
+        order_events.append(PaperOrderEvent(run_id=run_id,strategy_id=strategy_id,profile_id=profile_id,market_id=market_id,token_id=token_id,observed_at=observed_dt,mode=mode,paper_order_id=str(position.get('order_id') or position.get('paper_order_id') or f'{run_id}:{index}:{token_id or market_id}'),side=str(position.get('side') or ''),price=avg_price,size=quantity,spend_usdc=exposure,status=status,opening_fee_usdc=_num(position.get('opening_fee_usdc'), 0.0),opening_slippage_usdc=_num(position.get('opening_slippage_usdc'), 0.0),estimated_exit_cost_usdc=_num(position.get('estimated_exit_cost_usdc'), 0.0),paper_only=True,live_order_allowed=False,raw=raw))
+        if quantity > 0:
+            mtm=position.get('paper_mtm_bid_usdc')
+            if mtm is None and position.get('paper_settlement_value_usdc') is not None:
+                mtm=_num(position.get('paper_settlement_value_usdc'))-_num(position.get('filled_usdc'))
+            position_events.append(PaperPositionEvent(run_id=run_id,strategy_id=strategy_id,profile_id=profile_id,market_id=market_id,token_id=token_id,observed_at=observed_dt,mode=mode,paper_position_id=str(position.get('position_id') or f'{token_id or market_id}:{position.get("side") or ""}'),quantity=quantity,avg_price=avg_price,exposure_usdc=exposure,mtm_bid_usdc=_num(mtm, None),status=status,raw=raw))
+    portfolio=report.get('summary',{}).get('portfolio_report') if isinstance(report.get('summary'), dict) else {}
+    pnl=portfolio.get('pnl_usdc') if isinstance(portfolio, dict) and isinstance(portfolio.get('pnl_usdc'), dict) else {}
+    spend=portfolio.get('spend_usdc') if isinstance(portfolio, dict) and isinstance(portfolio.get('spend_usdc'), dict) else {}
+    counts=portfolio.get('counts') if isinstance(portfolio, dict) and isinstance(portfolio.get('counts'), dict) else {}
+    exposure=_num(spend.get('total_displayed'), sum(_num(row.get('filled_usdc')) for row in all_positions))
+    net=_num(pnl.get('realized_plus_open_mtm'), _num(pnl.get('realized_total'))+sum(_num(row.get('paper_mtm_bid_usdc')) for row in positions))
+    gross=_num(pnl.get('realized_total'), net)
+    pnl_event=PaperPnlSnapshotEvent(run_id=run_id,strategy_id='weather_manual_paper_basket_v1',profile_id='weather_manual_basket',market_id='',observed_at=observed_dt,mode=mode,gross_pnl_usdc=gross,net_pnl_usdc=net,costs_usdc=0.0,exposure_usdc=exposure,roi=round(net/exposure, 6) if exposure else None,winrate=(float(counts.get('settled') or 0)/float(counts.get('total') or 1)) if counts else None,raw={'portfolio_report': portfolio, 'positions': all_positions})
+    return {'paper_orders':[serialize_event(event) for event in order_events],'paper_positions':[serialize_event(event) for event in position_events],'paper_pnl_snapshots':[serialize_event(pnl_event)]}
+
+
 def build_runtime_analytics_rows(report, stamp):
     observed_at=ch_time(stamp)
     observed_dt=datetime.strptime(observed_at, '%Y-%m-%d %H:%M:%S.%f').replace(tzinfo=timezone.utc)
-    weather_profiles=report.get('weather_profiles') if isinstance(report.get('weather_profiles'), dict) else {}
+    runtime_report=report.get('runtime_strategies') if isinstance(report.get('runtime_strategies'), dict) else report
+    weather_profiles=runtime_report.get('weather_profiles') if isinstance(runtime_report.get('weather_profiles'), dict) else {}
     decisions=weather_profiles.get('decisions') if isinstance(weather_profiles.get('decisions'), list) else []
-    mode=str(report.get('runtime_execution_mode') or 'dry_run')
-    run_id=str(report.get('run_id') or stamp)
+    mode=str(report.get('runtime_execution_mode') or runtime_report.get('runtime_execution_mode') or 'dry_run')
+    run_id=str(report.get('run_id') or runtime_report.get('run_id') or stamp)
     prediction_runs=[{
         'run_id':run_id,'strategy_id':'','profile_id':'','market_id':'','observed_at':observed_at,'completed_at':observed_at,
-        'source':'weather_cron_monitor_refresh','mode':mode,'status':str(report.get('operator_verdict',{}).get('status') or 'unknown'),
+        'source':'weather_cron_monitor_refresh','mode':mode,'status':str(runtime_report.get('operator_verdict',{}).get('status') or 'unknown'),
         'strategy_count':int(weather_profiles.get('strategy_count') or 0),'profile_count':int(weather_profiles.get('profile_count') or 0),
-        'market_count':len(report.get('runtime_watchlist') or []),'raw':json.dumps(report, sort_keys=True)
+        'market_count':len(runtime_report.get('runtime_watchlist') or []),'raw':json.dumps(report, sort_keys=True)
     }]
     shortlist_payload={'run_id':run_id,'mode':mode,'observed_at':observed_dt.isoformat(),'rows':decisions}
     profile_decisions=[serialize_event(event) for event in profile_decision_events_from_shortlist(shortlist_payload, default_observed_at=observed_dt)]
     debug_decisions=[serialize_event(event) for event in debug_decision_events_from_shortlist(shortlist_payload, default_observed_at=observed_dt)]
     strategy_signals=[serialize_event(event) for event in strategy_signal_events_from_shortlist(shortlist_payload, default_observed_at=observed_dt)]
-    execution_payload={'run_id':run_id,'mode':mode,'observed_at':observed_dt.isoformat(),'events':report.get('execution_events') or []}
+    execution_payload={'run_id':run_id,'mode':mode,'observed_at':observed_dt.isoformat(),'events':runtime_report.get('execution_events') or []}
     execution_events=[serialize_event(event) for event in execution_events_from_payload(execution_payload, default_observed_at=observed_dt)]
     profile_metrics=[]
     for decision in decisions:
@@ -279,8 +338,11 @@ def build_runtime_analytics_rows(report, stamp):
             'signal_count':0,'trade_count':0,'skip_count':0,'avg_edge':None,'gross_pnl_usdc':0.0,'net_pnl_usdc':0.0,'exposure_usdc':0.0,'raw':'{}'
         })
         aggregate['signal_count']+=1; aggregate['trade_count']+=int(row['trade_count']); aggregate['skip_count']+=int(row['skip_count']); aggregate['exposure_usdc']+=float(row['exposure_usdc'] or 0.0)
-    for strategy_id, row in strategy_metrics_by_id.items(): row['raw']=json.dumps({'strategy_id':strategy_id,'runtime_summary':report.get('runtime_summary')}, sort_keys=True)
-    return {'prediction_runs':prediction_runs,'strategy_signals':strategy_signals,'profile_decisions':profile_decisions,'debug_decisions':debug_decisions,'execution_events':execution_events,'profile_metrics':profile_metrics,'strategy_metrics':list(strategy_metrics_by_id.values())}
+    for strategy_id, row in strategy_metrics_by_id.items(): row['raw']=json.dumps({'strategy_id':strategy_id,'runtime_summary':runtime_report.get('runtime_summary')}, sort_keys=True)
+    rows={'prediction_runs':prediction_runs,'strategy_signals':strategy_signals,'profile_decisions':profile_decisions,'debug_decisions':debug_decisions,'execution_events':execution_events,'profile_metrics':profile_metrics,'strategy_metrics':list(strategy_metrics_by_id.values())}
+    paper_rows=build_paper_basket_analytics_rows(report, stamp)
+    rows.update(paper_rows)
+    return rows
 
 
 def export_runtime_analytics(report, stamp):
@@ -328,7 +390,7 @@ for m in selected:
     yes_ask=float(m.get('best_ask') or 0) or None
     yes_bid=float(m.get('best_bid') or 0)
     probs[tid]=round(min(0.99, max(0.0, (yes_ask or 0.01) + 0.05)), 6)
-    markets_for_runtime.append({{'id':str(m.get('id')),'question':m.get('question'),'clob_token_id':tid,'clobTokenIds':[tid],'outcomes':['Yes'],'best_bid':yes_bid,'best_ask':yes_ask,'liquidity':float(m.get('volume') or m.get('ask_depth_usd') or 1000),'closed':False}})
+    markets_for_runtime.append({{'id':str(m.get('id')),'question':m.get('question'),'clob_token_id':tid,'clobTokenIds':[tid],'outcomes':['Yes'],'best_bid':yes_bid,'best_ask':yes_ask,'liquidity':float(m.get('volume') or m.get('ask_depth_usd') or 1000),'strategy_id':'weather_runtime_cycle_v1','profile_id':'runtime_cycle','closed':False}})
     bids=m.get('bids') or []; asks=m.get('asks') or []
     event={{'event_type':'book','asset_id':tid,'bids':bids[:10],'asks':asks[:10],'source_market_id':str(m.get('id')),'source':'live_gamma_clob_snapshot'}}
     if not event['asks'] and yes_ask: event['asks']=[{{'price':yes_ask,'size':float(m.get('best_ask_size') or 1)}}]
@@ -369,8 +431,8 @@ print(json.dumps({{'selected':len(selected),'market_ids':[m.get('id') for m in s
             if isinstance(intent, dict):
                 execution_events.append({**intent,'event_type':intent.get('status') or 'paper_intent','execution_event_id':intent.get('intent_id') or f'{stamp}:intent:{index}','paper_only':True,'live_order_allowed':False})
     status='ADD_REVIEW' if signal_count > 0 or weather_profiles.get('enter_count', 0) > 0 else 'HOLD'
-    report={'ok':True,'run_id':stamp,'paper_only':True,'no_real_orders':True,'runtime_execution_mode':runtime_execution_mode,'runtime_summary':{'processed_events':dry.get('marketdata',{}).get('processed_events') if isinstance(dry.get('marketdata'), dict) else None,'paper_signal_count':signal_count,'hold_count':runtime_summary.get('hold_count'),'orders_submitted':len(execution.get('orders_submitted',[])) if isinstance(execution, dict) else 0,'paper_intent_count':len(execution.get('paper_intents',[])) if isinstance(execution, dict) else 0,'weather_profile_count':weather_profiles['profile_count'],'weather_profile_strategy_count':weather_profiles['strategy_count'],'weather_profile_signal_count':weather_profiles['signal_count'],'weather_profile_decision_count':weather_profiles.get('decision_count',0),'weather_profile_enter_count':weather_profiles.get('enter_count',0),'weather_profile_skip_count':weather_profiles.get('skip_count',0)},'weather_profiles':weather_profiles,'execution_events':execution_events,'operator_verdict':{'status':status,'reason':'runtime dry-run strategy refresh'},'runtime_watchlist':rows,'artifacts':artifacts}
-    report['analytics']=export_runtime_analytics(report, stamp)
+    live_readiness={'ready_for_live':False,'status':'paper_evaluation_required','remaining_conditions':['accumulate_24_48h_paper_runs','verify_profile_pnl_and_blockers_in_grafana','confirm_order_attribution_for_submitted_dry_run_orders','operator_live_ack_required','clob_credentials_and_kill_switch_preflight_required'],'live_order_allowed':False}
+    report={'ok':True,'run_id':stamp,'paper_only':True,'no_real_orders':True,'runtime_execution_mode':runtime_execution_mode,'runtime_summary':{'processed_events':dry.get('marketdata',{}).get('processed_events') if isinstance(dry.get('marketdata'), dict) else None,'paper_signal_count':signal_count,'hold_count':runtime_summary.get('hold_count'),'orders_submitted':len(execution.get('orders_submitted',[])) if isinstance(execution, dict) else 0,'paper_intent_count':len(execution.get('paper_intents',[])) if isinstance(execution, dict) else 0,'weather_profile_count':weather_profiles['profile_count'],'weather_profile_strategy_count':weather_profiles['strategy_count'],'weather_profile_signal_count':weather_profiles['signal_count'],'weather_profile_decision_count':weather_profiles.get('decision_count',0),'weather_profile_enter_count':weather_profiles.get('enter_count',0),'weather_profile_skip_count':weather_profiles.get('skip_count',0)},'weather_profiles':weather_profiles,'execution_events':execution_events,'live_readiness':live_readiness,'operator_verdict':{'status':status,'reason':'runtime dry-run strategy refresh'},'runtime_watchlist':rows,'artifacts':artifacts}
     return report
 
 
@@ -453,7 +515,10 @@ def main():
         'analytics_inserted':runtime_report.get('analytics',{}).get('inserted') if isinstance(runtime_report.get('analytics'), dict) else False,
         'rules':'paper only; dry-run simulated paper orders allowed; no real orders; Seoul Apr26 NO20 and Karachi Apr27 NO36 capped no-add'
     }
-    out={'summary':summary,'positions':refreshed,'alerts':alerts,'verify_forecast_source':[p.get('question') for p in verify],'closed_positions':closed,'runtime_strategies':runtime_report}
+    out={'run_id':stamp,'runtime_execution_mode':runtime_report.get('runtime_execution_mode'),'summary':summary,'positions':refreshed,'alerts':alerts,'verify_forecast_source':[p.get('question') for p in verify],'closed_positions':closed,'runtime_strategies':runtime_report}
+    out['analytics']=export_runtime_analytics(out, stamp)
+    summary['analytics_inserted']=out['analytics'].get('inserted') if isinstance(out.get('analytics'), dict) else False
+    summary['analytics_rows']=out['analytics'].get('rows') if isinstance(out.get('analytics'), dict) else {}
     json_path=BASE/f'weather_paper_cron_monitor_{stamp}.json'
     md_path=BASE/f'weather_paper_cron_monitor_{stamp}.md'
     csv_path=BASE/f'weather_paper_cron_monitor_{stamp}.csv'
@@ -478,6 +543,8 @@ def main():
         lines.append(f"- Profils météo: {wp.get('profile_count')} ; stratégies: {wp.get('strategy_count')} ; signaux: {wp.get('signal_count')} ; décisions: {wp.get('decision_count')} ; enter={wp.get('enter_count')} ; skip={wp.get('skip_count')}")
         lines.append(f"- Runtime: processed_events={rp.get('processed_events')}, paper_signal_count={rp.get('paper_signal_count')}, simulated_orders={rp.get('orders_submitted')}")
         lines.append(f"- Grafana/ClickHouse: inserted={an.get('inserted')}, rows={an.get('rows')}")
+        lr=runtime_report.get('live_readiness') if isinstance(runtime_report.get('live_readiness'), dict) else {}
+        lines.append(f"- Live readiness: ready={lr.get('ready_for_live')} ; status={lr.get('status')} ; remaining={lr.get('remaining_conditions')}")
         decisions=wp.get('decisions') if isinstance(wp.get('decisions'), list) else []
         if decisions:
             lines.append("")
