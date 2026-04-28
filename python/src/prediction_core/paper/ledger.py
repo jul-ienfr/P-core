@@ -17,6 +17,7 @@ from prediction_core.paper._rust_ledger import (
     settlement_pnl_with_optional_rust,
 )
 from prediction_core.paper.exit_policy import annotate_order_with_exit_policy
+from prediction_core.storage.events import build_trading_event_envelope
 
 PAPER_LEDGER_STATUSES = {
     "planned",
@@ -127,6 +128,9 @@ def paper_ledger_refresh(
         if not isinstance(raw, dict):
             continue
         order = dict(raw)
+        if order.get("status") in {"settled_win", "settled_loss"}:
+            refreshed_orders.append(order)
+            continue
         token = str(order.get("token_id") or "")
         market = str(order.get("market_id") or "")
         refresh = refreshes.get(token) or refreshes.get(market) or {}
@@ -149,6 +153,57 @@ def summarize_paper_ledger(ledger: dict[str, Any]) -> dict[str, Any]:
     return with_paper_ledger_summary(_copy_ledger(ledger))["summary"]
 
 
+def paper_order_events_from_ledger(
+    ledger: dict[str, Any],
+    *,
+    run_id: str = "paper-ledger",
+    source: str = "prediction_core.paper.ledger",
+) -> list[dict[str, Any]]:
+    orders = ledger.get("orders") if isinstance(ledger.get("orders"), list) else []
+    stream_id = str(ledger.get("run_id") or run_id)
+    previous_hash = None
+    events = []
+    for index, order in enumerate(orders):
+        if not isinstance(order, dict):
+            continue
+        event = build_trading_event_envelope(
+            stream_id=stream_id,
+            event_seq=index,
+            event_type=_paper_order_event_type(str(order.get("status") or "")),
+            payload=_paper_order_event_payload(order),
+            source=source,
+            market_id=str(order.get("market_id")) if order.get("market_id") is not None else None,
+            correlation_id=run_id,
+            causation_id=_paper_order_causation_id(order),
+            previous_hash=previous_hash,
+            occurred_at=str(order.get("updated_at") or order.get("created_at") or "1970-01-01T00:00:00+00:00"),
+        )
+        events.append(event)
+        previous_hash = event["event_id"]
+    return events
+
+
+def paper_ledger_summary_event(
+    ledger: dict[str, Any],
+    *,
+    run_id: str = "paper-ledger",
+    event_seq: int | None = None,
+    previous_hash: str | None = None,
+    source: str = "prediction_core.paper.ledger",
+) -> dict[str, Any]:
+    summary = ledger.get("summary") if isinstance(ledger.get("summary"), dict) else summarize_paper_ledger(ledger)
+    return build_trading_event_envelope(
+        stream_id=str(ledger.get("run_id") or run_id),
+        event_seq=event_seq if event_seq is not None else len(ledger.get("orders") or []),
+        event_type="paper_ledger_summary",
+        payload={**dict(summary), "paper_only": True, "live_order_allowed": False},
+        source=source,
+        correlation_id=run_id,
+        previous_hash=previous_hash,
+        occurred_at=str(ledger.get("updated_at") or "1970-01-01T00:00:00+00:00"),
+    )
+
+
 def with_paper_ledger_summary(ledger: dict[str, Any]) -> dict[str, Any]:
     orders = [order for order in ledger.get("orders", []) if isinstance(order, dict)] if isinstance(ledger.get("orders"), list) else []
     ledger["orders"] = orders
@@ -167,6 +222,41 @@ def with_paper_ledger_summary(ledger: dict[str, Any]) -> dict[str, Any]:
         "live_order_allowed": False,
     }
     return ledger
+
+
+def _paper_order_event_type(status: str) -> str:
+    status = status.lower()
+    if status == "filled":
+        return "paper_order_filled"
+    if status == "partial":
+        return "paper_order_partial"
+    if status in {"planned", "pending", "pending_limit", "open"}:
+        return "paper_order_intent"
+    if status in {"settled_win", "settled_loss"}:
+        return "paper_position_settled"
+    return "paper_order_skipped"
+
+
+def _paper_order_event_payload(order: dict[str, Any]) -> dict[str, Any]:
+    payload = {"paper_only": True, "live_order_allowed": False}
+    for key in (
+        "status",
+        "market_id",
+        "token_id",
+        "side",
+        "filled_usdc",
+        "shares",
+        "pnl_usdc",
+        "net_pnl_after_all_costs",
+    ):
+        if key in order:
+            payload[key] = order[key]
+    return payload
+
+
+def _paper_order_causation_id(order: dict[str, Any]) -> str | None:
+    value = order.get("token_id") or order.get("order_id") or order.get("id")
+    return str(value) if value is not None else None
 
 
 def _apply_refresh(order: dict[str, Any], refresh: dict[str, Any], *, max_position_usdc: float) -> None:

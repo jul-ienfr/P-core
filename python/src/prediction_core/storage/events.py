@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import hashlib
 import json
 import os
 from typing import Any, Awaitable, Callable, Final
@@ -22,6 +23,24 @@ EVENT_SUBJECTS: Final = {
     "storage_health": SUBJECT_STORAGE_HEALTH,
 }
 REQUIRED_EVENT_FIELDS: Final = ("schema_version", "event_type", "source", "occurred_at", "data")
+REQUIRED_TRADING_EVENT_FIELDS: Final = (
+    "schema_version",
+    "event_id",
+    "stream_id",
+    "event_seq",
+    "event_type",
+    "occurred_at",
+    "recorded_at",
+    "source",
+    "market_id",
+    "correlation_id",
+    "causation_id",
+    "previous_hash",
+    "payload_hash",
+    "payload",
+    "paper_only",
+    "live_order_allowed",
+)
 
 
 def nats_url_from_env() -> str | None:
@@ -39,6 +58,20 @@ async def create_nats_client_from_env() -> Any | None:
     return await nats.connect(url)
 
 
+def _iso_datetime(value: datetime | str | None) -> str:
+    if isinstance(value, datetime):
+        return value.astimezone(UTC).isoformat()
+    return value or datetime.now(UTC).isoformat()
+
+
+def trading_event_canonical_json(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def stable_payload_hash(payload: dict[str, Any]) -> str:
+    return hashlib.sha256(trading_event_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
 def build_event_payload(
     *,
     event_type: str,
@@ -51,10 +84,7 @@ def build_event_payload(
         raise ValueError("event_type is required")
     if not source.strip():
         raise ValueError("source is required")
-    if isinstance(occurred_at, datetime):
-        occurred_at_value = occurred_at.astimezone(UTC).isoformat()
-    else:
-        occurred_at_value = occurred_at or datetime.now(UTC).isoformat()
+    occurred_at_value = _iso_datetime(occurred_at)
     return {
         **DEFAULT_PAPER_FLAGS,
         "schema_version": schema_version,
@@ -63,6 +93,88 @@ def build_event_payload(
         "occurred_at": occurred_at_value,
         "data": data,
     }
+
+
+def build_trading_event_envelope(
+    *,
+    stream_id: str,
+    event_seq: int,
+    event_type: str,
+    payload: dict[str, Any],
+    source: str,
+    market_id: str | None = None,
+    correlation_id: str | None = None,
+    causation_id: str | None = None,
+    previous_hash: str | None = None,
+    occurred_at: datetime | str | None = None,
+    recorded_at: datetime | str | None = None,
+    event_id: str | None = None,
+    schema_version: str = EVENT_SCHEMA_VERSION,
+    paper_only: bool = True,
+    live_order_allowed: bool = False,
+) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ValueError("trading event payload must be an object")
+    occurred_at_value = _iso_datetime(occurred_at)
+    envelope = {
+        "schema_version": schema_version,
+        "event_id": event_id or "",
+        "stream_id": stream_id,
+        "event_seq": event_seq,
+        "event_type": event_type,
+        "occurred_at": occurred_at_value,
+        "recorded_at": _iso_datetime(recorded_at) if recorded_at is not None else occurred_at_value,
+        "source": source,
+        "market_id": market_id,
+        "correlation_id": correlation_id,
+        "causation_id": causation_id,
+        "previous_hash": previous_hash,
+        "payload_hash": stable_payload_hash(payload),
+        "payload": payload,
+        "paper_only": paper_only,
+        "live_order_allowed": live_order_allowed,
+    }
+    if not event_id:
+        envelope["event_id"] = stable_payload_hash({**envelope, "event_id": None})
+    return validate_trading_event_envelope(envelope)
+
+
+def _expected_trading_event_id(payload: dict[str, Any]) -> str:
+    return stable_payload_hash({**payload, "event_id": None})
+
+
+def validate_trading_event_envelope_strict_event_id(payload: dict[str, Any]) -> dict[str, Any]:
+    validated = validate_trading_event_envelope(payload)
+    if validated["event_id"] != _expected_trading_event_id(validated):
+        raise ValueError("event_id does not match envelope")
+    return validated
+
+
+def validate_trading_event_envelope(payload: dict[str, Any]) -> dict[str, Any]:
+    missing = [field for field in REQUIRED_TRADING_EVENT_FIELDS if field not in payload]
+    if missing:
+        raise ValueError(f"trading event envelope missing required fields: {', '.join(missing)}")
+    for field in ("event_type", "source", "stream_id"):
+        value = payload.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field} is required")
+    if not isinstance(payload.get("event_id"), str) or not payload["event_id"].strip():
+        raise ValueError("event_id is required")
+    if (
+        not isinstance(payload.get("event_seq"), int)
+        or isinstance(payload.get("event_seq"), bool)
+        or payload["event_seq"] < 0
+    ):
+        raise ValueError("event_seq must be a non-negative integer")
+    if payload.get("live_order_allowed") is not False:
+        raise ValueError("trading events must not enable live orders")
+    if payload.get("paper_only") is not True:
+        raise ValueError("trading events must remain paper_only")
+    if not isinstance(payload.get("payload"), dict):
+        raise ValueError("trading event payload must be an object")
+    if payload.get("payload_hash") != stable_payload_hash(payload["payload"]):
+        raise ValueError("payload_hash does not match payload")
+    return payload
 
 
 def validate_event_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -82,7 +194,7 @@ async def publish_event(client: Any, subject: str, payload: dict[str, Any]) -> N
     event_payload = {**DEFAULT_PAPER_FLAGS, **payload}
     if all(field in event_payload for field in REQUIRED_EVENT_FIELDS):
         validate_event_payload(event_payload)
-    await client.publish(subject, json.dumps(event_payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+    await client.publish(subject, trading_event_canonical_json(event_payload).encode("utf-8"))
 
 
 class NatsEventPublisher:

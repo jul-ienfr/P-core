@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
 from prediction_core.storage.config import redact_mapping
+from prediction_core.storage.events import build_trading_event_envelope
 
 
 class ExecutionMode(str, Enum):
@@ -239,9 +240,83 @@ def evaluate_execution_risk(
         else:
             if not math.isfinite(spread_value):
                 blocked.append("invalid_spread")
+            elif spread_value < 0.0:
+                blocked.append("spread_invalid")
             elif spread_value > float(limits.max_spread):
                 blocked.append("max_spread")
+    best_bid = _optional_finite_float(market_snapshot.get("best_bid"))
+    best_ask = _optional_finite_float(market_snapshot.get("best_ask"))
+    if best_bid is not None and best_ask is not None and best_bid >= best_ask:
+        blocked.append("book_crossed")
+    max_snapshot_age_seconds = _dynamic_finite_float(limits, "max_snapshot_age_seconds")
+    if max_snapshot_age_seconds is None:
+        max_snapshot_age_seconds = _dynamic_finite_float(market_snapshot, "max_snapshot_age_seconds")
+    if max_snapshot_age_seconds is not None:
+        observed_at = market_snapshot.get("received_at") or market_snapshot.get("observed_at")
+        observed = _optional_datetime(observed_at)
+        if observed is not None and (datetime.now(timezone.utc) - observed).total_seconds() > max_snapshot_age_seconds:
+            blocked.append("snapshot_stale")
+    min_depth_usdc = _dynamic_finite_float(limits, "min_depth_usdc")
+    depth_usdc = _optional_finite_float(market_snapshot.get("available_depth_usdc"))
+    if depth_usdc is None:
+        depth_usdc = _optional_finite_float(market_snapshot.get("depth_usd"))
+    if min_depth_usdc is not None and depth_usdc is not None and depth_usdc < min_depth_usdc:
+        blocked.append("depth_insufficient")
     return ExecutionRiskDecision(allowed=not blocked, blocked_by=blocked)
+
+
+def _optional_finite_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _dynamic_finite_float(source: Any, key: str) -> float | None:
+    value = source.get(key) if isinstance(source, Mapping) else getattr(source, key, None)
+    number = _optional_finite_float(value)
+    return number if number is not None and number >= 0.0 else None
+
+
+def _optional_datetime(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc)
+    if value is None:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def build_risk_rejection_event(
+    decision: ExecutionRiskDecision,
+    *,
+    metadata: dict[str, Any] | None = None,
+    stream_id: str | None = None,
+    event_seq: int = 0,
+    source: str = "prediction_core.polymarket_execution",
+) -> dict[str, Any]:
+    event_metadata = dict(metadata or {})
+    payload = {"decision": decision.to_dict(), "metadata": event_metadata}
+    return build_trading_event_envelope(
+        stream_id=stream_id or str(event_metadata.get("stream_id") or event_metadata.get("market_id") or "risk_rejection"),
+        event_seq=event_seq,
+        event_type="risk_rejection",
+        payload=payload,
+        source=source,
+        market_id=_optional_str(event_metadata.get("market_id")),
+        correlation_id=_optional_str(event_metadata.get("correlation_id")),
+        causation_id=_optional_str(event_metadata.get("causation_id")),
+        paper_only=True,
+        live_order_allowed=False,
+    )
 
 
 def _evaluate_execution_risk_with_rust(
@@ -298,6 +373,7 @@ class JsonlIdempotencyStore:
             if key in self._records:
                 return False
             fd = os.open(self.path, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
+            os.chmod(self.path, 0o600)
         with os.fdopen(fd, "a", encoding="utf-8") as handle:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             self._reload()
@@ -321,7 +397,9 @@ class JsonlIdempotencyStore:
             return False
         row = {"key": key, timestamp_field: _utc_now_iso(), "status": status, "metadata": metadata or {}}
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8") as handle:
+        fd = os.open(self.path, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
+        os.chmod(self.path, 0o600)
+        with os.fdopen(fd, "a", encoding="utf-8") as handle:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             handle.write(json.dumps(row, sort_keys=True) + "\n")
             handle.flush()
@@ -357,8 +435,13 @@ class JsonlExecutionAuditLog:
             raise ValueError("event_type is required")
         row = {"recorded_at": _utc_now_iso(), "event_type": str(event_type), "payload": payload}
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8") as handle:
+        fd = os.open(self.path, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
+        os.chmod(self.path, 0o600)
+        with os.fdopen(fd, "a", encoding="utf-8") as handle:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             handle.write(json.dumps(row, sort_keys=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
         return row
 
 
@@ -929,7 +1012,10 @@ def _normalize_live_order_response(response: Any) -> dict[str, Any]:
     if isinstance(response, Mapping):
         status = str(response.get("status") or response.get("state") or "submitted")
         accepted_raw = response.get("accepted")
-        accepted = bool(accepted_raw) if accepted_raw is not None else status.lower() not in {"rejected", "failed", "error"}
+        if isinstance(accepted_raw, str):
+            accepted = accepted_raw.strip().lower() not in {"false", "0", "no", ""}
+        else:
+            accepted = bool(accepted_raw) if accepted_raw is not None else status.lower() not in {"rejected", "failed", "error"}
         order_id = response.get("id") or response.get("order_id") or response.get("exchange_order_id")
         return {"accepted": accepted, "status": status, "exchange_order_id": str(order_id) if order_id else None}
     order_id = getattr(response, "id", None) or getattr(response, "order_id", None)

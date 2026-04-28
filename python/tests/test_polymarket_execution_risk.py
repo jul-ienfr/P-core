@@ -2,9 +2,11 @@ import sys
 import types
 
 from prediction_core.polymarket_execution import (
+    ExecutionRiskDecision,
     ExecutionRiskLimits,
     ExecutionRiskState,
     OrderRequest,
+    build_risk_rejection_event,
     evaluate_execution_risk,
 )
 
@@ -152,6 +154,52 @@ def test_risk_blocks_invalid_or_non_finite_spread_fail_closed():
 
         assert result.allowed is False
         assert "invalid_spread" in result.blocked_by
+
+
+def test_risk_blocks_negative_spread_fail_closed():
+    result = evaluate_execution_risk(
+        _order(),
+        limits=ExecutionRiskLimits(
+            max_order_notional_usdc=10,
+            max_total_exposure_usdc=100,
+            max_daily_loss_usdc=25,
+            max_spread=0.05,
+        ),
+        state=ExecutionRiskState(total_exposure_usdc=20, daily_realized_pnl_usdc=0),
+        market_snapshot={"spread": -0.01, "sequence": 10},
+    )
+
+    assert result.allowed is False
+    assert "spread_invalid" in result.blocked_by
+
+
+def test_risk_blocks_crossed_book_fail_closed():
+    result = evaluate_execution_risk(
+        _order(),
+        limits=ExecutionRiskLimits(
+            max_order_notional_usdc=10,
+            max_total_exposure_usdc=100,
+            max_daily_loss_usdc=25,
+            max_spread=0.05,
+        ),
+        state=ExecutionRiskState(total_exposure_usdc=20, daily_realized_pnl_usdc=0),
+        market_snapshot={"spread": 0.03, "best_bid": 0.45, "best_ask": 0.45, "sequence": 10},
+    )
+
+    assert result.allowed is False
+    assert "book_crossed" in result.blocked_by
+
+
+def test_build_risk_rejection_event_is_paper_only():
+    event = build_risk_rejection_event(
+        ExecutionRiskDecision(allowed=False, blocked_by=["spread_invalid"]),
+        metadata={"market_id": "m1", "correlation_id": "c1"},
+    )
+
+    assert event["event_type"] == "risk_rejection"
+    assert event["paper_only"] is True
+    assert event["live_order_allowed"] is False
+    assert event["payload"]["decision"]["blocked_by"] == ["spread_invalid"]
 
 
 def test_risk_limits_reject_non_finite_values_fail_closed():

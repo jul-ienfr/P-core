@@ -13,7 +13,7 @@ from prediction_core.paper import (
     paper_ledger_refresh,
     summarize_paper_ledger,
 )
-from prediction_core.paper.ledger import simulate_orderbook_fill
+from prediction_core.paper.ledger import paper_ledger_summary_event, paper_order_events_from_ledger, simulate_orderbook_fill
 
 FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "orderbook_fill_parity.json"
 
@@ -244,6 +244,108 @@ def test_paper_ledger_refresh_marks_to_market_and_settles_orders() -> None:
     assert by_token["loser"]["status"] == "settled_loss"
     assert by_token["loser"]["pnl_usdc"] == -5.0
     assert summarize_paper_ledger(refreshed)["orders"] == 3
+
+
+def test_paper_ledger_refresh_does_not_update_already_settled_orders() -> None:
+    order = paper_ledger_place(_candidate(token_id="settled", market_id="m1"))["orders"][0]
+    order.update({"status": "settled_win", "mtm_usdc": 12.0, "pnl_usdc": 7.0, "net_pnl_after_all_costs": 7.0, "updated_at": "final"})
+
+    refreshed = paper_ledger_refresh(
+        {"orders": [order]},
+        refreshes={"settled": {"best_bid": 0.0, "actual_refresh_price": 0.0}},
+        settlements={"settled": "loss"},
+    )
+
+    assert refreshed["orders"][0] == order
+    assert refreshed["summary"]["pnl_usdc"] == 7.0
+
+
+def test_paper_order_events_are_deterministic_paper_only_and_chained() -> None:
+    ledger = {
+        "run_id": "ledger-run",
+        "orders": [
+            {
+                "order_id": "o1",
+                "updated_at": "2026-01-01T00:00:00+00:00",
+                "status": "filled",
+                "market_id": "m1",
+                "token_id": "t1",
+                "side": "YES",
+                "filled_usdc": 5.0,
+                "shares": 10.0,
+                "pnl_usdc": 1.0,
+                "net_pnl_after_all_costs": 0.9,
+                "api_key": "secret",
+            },
+            {
+                "order_id": "o2",
+                "updated_at": "2026-01-01T00:00:01+00:00",
+                "status": "planned",
+                "market_id": "m2",
+                "token_id": "t2",
+                "side": "NO",
+            },
+        ],
+    }
+
+    events = paper_order_events_from_ledger(ledger, run_id="test-run")
+    repeat = paper_order_events_from_ledger(ledger, run_id="test-run")
+
+    assert events == repeat
+    assert [event["event_type"] for event in events] == ["paper_order_filled", "paper_order_intent"]
+    assert all(event["paper_only"] is True for event in events)
+    assert all(event["live_order_allowed"] is False for event in events)
+    assert all(event["payload"]["paper_only"] is True for event in events)
+    assert all(event["payload"]["live_order_allowed"] is False for event in events)
+    assert "api_key" not in events[0]["payload"]
+    assert events[1]["previous_hash"] == events[0]["event_id"]
+    assert events[0]["stream_id"] == "ledger-run"
+    assert events[0]["correlation_id"] == "test-run"
+    assert events[0]["causation_id"] == "t1"
+
+
+def test_paper_order_event_statuses_map_to_stable_event_types() -> None:
+    ledger = {
+        "orders": [
+            {"status": "filled", "updated_at": "2026-01-01T00:00:00+00:00"},
+            {"status": "partial", "updated_at": "2026-01-01T00:00:00+00:00"},
+            {"status": "pending", "updated_at": "2026-01-01T00:00:00+00:00"},
+            {"status": "settled_win", "updated_at": "2026-01-01T00:00:00+00:00"},
+            {"status": "settled_loss", "updated_at": "2026-01-01T00:00:00+00:00"},
+            {"status": "skipped_price_moved", "updated_at": "2026-01-01T00:00:00+00:00"},
+            {"status": "cancelled", "updated_at": "2026-01-01T00:00:00+00:00"},
+        ],
+    }
+
+    assert [event["event_type"] for event in paper_order_events_from_ledger(ledger)] == [
+        "paper_order_filled",
+        "paper_order_partial",
+        "paper_order_intent",
+        "paper_position_settled",
+        "paper_position_settled",
+        "paper_order_skipped",
+        "paper_order_skipped",
+    ]
+
+
+def test_paper_ledger_summary_event_includes_summary_payload() -> None:
+    ledger = {
+        "summary": {
+            "filled_usdc": 5.0,
+            "net_pnl_after_all_costs": 1.25,
+            "paper_only": True,
+            "live_order_allowed": False,
+        }
+    }
+
+    event = paper_ledger_summary_event(ledger, run_id="summary-run", previous_hash="previous-event")
+
+    assert event["event_type"] == "paper_ledger_summary"
+    assert event["previous_hash"] == "previous-event"
+    assert event["payload"]["filled_usdc"] == 5.0
+    assert event["payload"]["net_pnl_after_all_costs"] == 1.25
+    assert event["paper_only"] is True
+    assert event["live_order_allowed"] is False
 
 
 def test_paper_ledger_refresh_uses_rust_pnl_when_enabled(monkeypatch) -> None:

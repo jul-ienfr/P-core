@@ -1,3 +1,5 @@
+import os
+import stat
 import sys
 import types
 
@@ -15,6 +17,8 @@ from prediction_core.polymarket_execution import (
     OrderResult,
     OrderSide,
     OrderType,
+    JsonlExecutionAuditLog,
+    JsonlIdempotencyStore,
 )
 
 
@@ -191,6 +195,52 @@ def test_clob_rest_executor_submits_limit_buy_with_injected_client_and_sanitizes
     assert client.submitted == [{"token_id": "yes-token", "price": 0.5, "size": 10.0, "side": "BUY", "order_type": "LIMIT"}]
     assert result.raw_response["response"]["api_key"] == "[redacted]"
     assert "secret" not in str(result.raw_response)
+
+
+def test_clob_rest_executor_treats_string_false_accepted_as_rejected():
+    class RejectingClient(FakeClobClient):
+        def submit_order(self, payload):
+            self.submitted.append(payload)
+            return {"accepted": "false", "status": "submitted", "order_id": "ord-1"}
+
+    executor = ClobRestPolymarketExecutor(config=_live_config(), client=RejectingClient())
+    order = OrderRequest(market_id="m1", token_id="yes-token", outcome="Yes", side="buy", order_type="limit", limit_price=0.5, notional_usdc=5, idempotency_key="k1")
+
+    result = executor.submit_order(order)
+
+    assert result.accepted is False
+
+
+@pytest.mark.parametrize("accepted", ["0", "no"])
+def test_clob_rest_executor_treats_other_string_false_values_as_rejected(accepted):
+    class RejectingClient(FakeClobClient):
+        def submit_order(self, payload):
+            self.submitted.append(payload)
+            return {"accepted": accepted, "status": "submitted", "order_id": "ord-1"}
+
+    executor = ClobRestPolymarketExecutor(config=_live_config(), client=RejectingClient())
+    order = OrderRequest(market_id="m1", token_id="yes-token", outcome="Yes", side="buy", order_type="limit", limit_price=0.5, notional_usdc=5, idempotency_key="k1")
+
+    assert executor.submit_order(order).accepted is False
+
+
+def test_jsonl_execution_audit_log_creates_file_0600(tmp_path):
+    path = tmp_path / "audit.jsonl"
+
+    JsonlExecutionAuditLog(path).append("submitted", {"market_id": "m1"})
+
+    assert stat.S_IMODE(os.stat(path).st_mode) == 0o600
+
+
+def test_jsonl_idempotency_terminal_update_creates_file_0600(tmp_path):
+    path = tmp_path / "idempotency.jsonl"
+    store = JsonlIdempotencyStore(path)
+
+    assert store.claim("k1") is True
+    path.unlink()
+    assert store.mark_submitted("k1") is True
+
+    assert stat.S_IMODE(os.stat(path).st_mode) == 0o600
 
 
 def test_clob_rest_executor_uses_rust_order_size_when_enabled(monkeypatch):
