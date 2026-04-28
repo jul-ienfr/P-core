@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import importlib
+import os
 from typing import Any
+
+RUST_ENTRY_POLICY_ENV = "PREDICTION_CORE_RUST_ORDERBOOK"
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +42,89 @@ class EntryDecision:
 
 
 def evaluate_entry(
+    *,
+    policy: EntryPolicy,
+    market_price: float,
+    model_probability: float,
+    confidence: float,
+    spread: float,
+    depth_usd: float,
+    execution_cost_bps: float = 0.0,
+    side: str = "yes",
+) -> EntryDecision:
+    if os.getenv(RUST_ENTRY_POLICY_ENV) == "1":
+        try:
+            return _evaluate_entry_with_rust(
+                policy=policy,
+                market_price=market_price,
+                model_probability=model_probability,
+                confidence=confidence,
+                spread=spread,
+                depth_usd=depth_usd,
+                execution_cost_bps=execution_cost_bps,
+                side=side,
+            )
+        except (ImportError, AttributeError):
+            pass
+    return _evaluate_entry_python(
+        policy=policy,
+        market_price=market_price,
+        model_probability=model_probability,
+        confidence=confidence,
+        spread=spread,
+        depth_usd=depth_usd,
+        execution_cost_bps=execution_cost_bps,
+        side=side,
+    )
+
+
+def _evaluate_entry_with_rust(
+    *,
+    policy: EntryPolicy,
+    market_price: float,
+    model_probability: float,
+    confidence: float,
+    spread: float,
+    depth_usd: float,
+    execution_cost_bps: float,
+    side: str,
+) -> EntryDecision:
+    backend = importlib.import_module("prediction_core._rust_orderbook")
+    payload = backend.evaluate_entry(
+        policy_name=policy.name,
+        q_min=policy.q_min,
+        q_max=policy.q_max,
+        min_edge=policy.min_edge,
+        min_confidence=policy.min_confidence,
+        max_spread=policy.max_spread,
+        min_depth_usd=policy.min_depth_usd,
+        max_position_usd=policy.max_position_usd,
+        market_price=market_price,
+        model_probability=model_probability,
+        confidence=confidence,
+        spread=spread,
+        depth_usd=depth_usd,
+        execution_cost_bps=execution_cost_bps,
+        side=side,
+    )
+    if not isinstance(payload, dict):
+        raise ValueError("rust entry decision payload must be an object")
+    return EntryDecision(
+        policy=str(payload["policy"]),
+        enter=bool(payload["enter"]),
+        action=str(payload["action"]),
+        side=str(payload["side"]),
+        market_price=float(payload["market_price"]),
+        model_probability=float(payload["model_probability"]),
+        confidence=float(payload["confidence"]),
+        edge_gross=float(payload["edge_gross"]),
+        edge_net_all_in=float(payload["edge_net_all_in"]),
+        blocked_by=[str(reason) for reason in payload["blocked_by"]],
+        size_hint_usd=float(payload["size_hint_usd"]),
+    )
+
+
+def _evaluate_entry_python(
     *,
     policy: EntryPolicy,
     market_price: float,

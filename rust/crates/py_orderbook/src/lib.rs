@@ -5,7 +5,9 @@ use pm_ledger::{
     refresh_pnl as rust_paper_refresh_pnl, settlement_pnl as rust_paper_settlement_pnl,
 };
 use pm_risk::evaluate_execution_risk as rust_evaluate_execution_risk;
-use pm_signal::calculate_edge_sizing as rust_calculate_edge_sizing;
+use pm_signal::{
+    calculate_edge_sizing as rust_calculate_edge_sizing, evaluate_entry as rust_evaluate_entry,
+};
 use pm_types::{BookLevel, BookSide, OrderBookSnapshot};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -68,6 +70,60 @@ fn calculate_edge_sizing<'py>(
     result.set_item("kelly_fraction", sizing.kelly_fraction)?;
     result.set_item("suggested_fraction", sizing.suggested_fraction)?;
     result.set_item("recommendation", sizing.recommendation)?;
+    Ok(result)
+}
+
+#[pyfunction]
+#[pyo3(signature = (policy_name, q_min, q_max, min_edge, min_confidence, max_spread, min_depth_usd, max_position_usd, market_price, model_probability, confidence, spread, depth_usd, execution_cost_bps=0.0, side="yes"))]
+#[allow(clippy::too_many_arguments)]
+fn evaluate_entry<'py>(
+    py: Python<'py>,
+    policy_name: &str,
+    q_min: f64,
+    q_max: f64,
+    min_edge: f64,
+    min_confidence: f64,
+    max_spread: f64,
+    min_depth_usd: f64,
+    max_position_usd: f64,
+    market_price: f64,
+    model_probability: f64,
+    confidence: f64,
+    spread: f64,
+    depth_usd: f64,
+    execution_cost_bps: f64,
+    side: &str,
+) -> PyResult<Bound<'py, PyDict>> {
+    let decision = rust_evaluate_entry(
+        policy_name,
+        q_min,
+        q_max,
+        min_edge,
+        min_confidence,
+        max_spread,
+        min_depth_usd,
+        max_position_usd,
+        market_price,
+        model_probability,
+        confidence,
+        spread,
+        depth_usd,
+        execution_cost_bps,
+        side,
+    )
+    .map_err(PyValueError::new_err)?;
+    let result = PyDict::new_bound(py);
+    result.set_item("policy", decision.policy)?;
+    result.set_item("enter", decision.enter)?;
+    result.set_item("action", decision.action)?;
+    result.set_item("side", decision.side)?;
+    result.set_item("market_price", decision.market_price)?;
+    result.set_item("model_probability", decision.model_probability)?;
+    result.set_item("confidence", decision.confidence)?;
+    result.set_item("edge_gross", decision.edge_gross)?;
+    result.set_item("edge_net_all_in", decision.edge_net_all_in)?;
+    result.set_item("blocked_by", decision.blocked_by)?;
+    result.set_item("size_hint_usd", decision.size_hint_usd)?;
     Ok(result)
 }
 
@@ -203,6 +259,7 @@ fn paper_settlement_pnl<'py>(
 fn _rust_orderbook(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(estimate_fill_from_book, module)?)?;
     module.add_function(wrap_pyfunction!(calculate_edge_sizing, module)?)?;
+    module.add_function(wrap_pyfunction!(evaluate_entry, module)?)?;
     module.add_function(wrap_pyfunction!(evaluate_execution_risk, module)?)?;
     module.add_function(wrap_pyfunction!(compute_order_size, module)?)?;
     module.add_function(wrap_pyfunction!(paper_fee_amount, module)?)?;

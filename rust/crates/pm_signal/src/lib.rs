@@ -16,6 +16,21 @@ pub struct EdgeSizing {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct EntryDecision {
+    pub policy: String,
+    pub enter: bool,
+    pub action: String,
+    pub side: String,
+    pub market_price: f64,
+    pub model_probability: f64,
+    pub confidence: f64,
+    pub edge_gross: f64,
+    pub edge_net_all_in: f64,
+    pub blocked_by: Vec<String>,
+    pub size_hint_usd: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct SignalEvent {
     pub venue: Venue,
     pub market_id: String,
@@ -93,6 +108,78 @@ pub fn calculate_edge_sizing(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn evaluate_entry(
+    policy_name: &str,
+    q_min: f64,
+    q_max: f64,
+    min_edge: f64,
+    min_confidence: f64,
+    max_spread: f64,
+    min_depth_usd: f64,
+    max_position_usd: f64,
+    market_price: f64,
+    model_probability: f64,
+    confidence: f64,
+    spread: f64,
+    depth_usd: f64,
+    execution_cost_bps: f64,
+    side: &str,
+) -> Result<EntryDecision, String> {
+    let price = validate_probability("market_price", market_price)?;
+    let probability = validate_probability("model_probability", model_probability)?;
+    let resolved_confidence = validate_probability("confidence", confidence)?;
+    validate_finite("q_min", q_min)?;
+    validate_finite("q_max", q_max)?;
+    validate_finite("min_edge", min_edge)?;
+    validate_finite("min_confidence", min_confidence)?;
+    validate_finite("max_spread", max_spread)?;
+    validate_finite("min_depth_usd", min_depth_usd)?;
+    validate_finite("max_position_usd", max_position_usd)?;
+    let resolved_spread = validate_finite("spread", spread)?;
+    let resolved_depth_usd = validate_finite("depth_usd", depth_usd)?;
+    let resolved_cost_bps = validate_finite("execution_cost_bps", execution_cost_bps)?;
+    let resolved_side = validate_entry_side(side)?;
+    let gross_edge = entry_edge(probability, price, &resolved_side);
+    let cost = resolved_cost_bps.max(0.0) / 10_000.0;
+    let net_edge = round4(gross_edge - cost);
+
+    let mut blocked_by = Vec::new();
+    if price < q_min || price > q_max {
+        blocked_by.push("price_outside_window".to_string());
+    }
+    if gross_edge < min_edge {
+        blocked_by.push("edge_below_threshold".to_string());
+    }
+    if resolved_confidence < min_confidence {
+        blocked_by.push("confidence_below_threshold".to_string());
+    }
+    if resolved_spread > max_spread {
+        blocked_by.push("spread_too_wide".to_string());
+    }
+    if resolved_depth_usd < min_depth_usd {
+        blocked_by.push("depth_insufficient".to_string());
+    }
+    if net_edge <= 0.0 || net_edge < min_edge {
+        blocked_by.push("execution_cost_exceeds_edge".to_string());
+    }
+
+    let enter = blocked_by.is_empty();
+    Ok(EntryDecision {
+        policy: policy_name.to_string(),
+        enter,
+        action: if enter { "paper_trade_small" } else { "skip" }.to_string(),
+        side: resolved_side,
+        market_price: round4(price),
+        model_probability: round4(probability),
+        confidence: round4(resolved_confidence),
+        edge_gross: round4(gross_edge),
+        edge_net_all_in: round4(net_edge),
+        blocked_by,
+        size_hint_usd: if enter { round4(max_position_usd) } else { 0.0 },
+    })
+}
+
 pub fn compute_edge_bps(side_fair_value: f64, observed_price: f64) -> Option<f64> {
     if !valid_price(side_fair_value) || !valid_price(observed_price) || observed_price <= 0.0 {
         return None;
@@ -135,6 +222,28 @@ fn validate_finite(name: &str, value: f64) -> Result<f64, String> {
         return Err(format!("{name} must be finite"));
     }
     Ok(value)
+}
+
+fn entry_edge(probability: f64, price: f64, side: &str) -> f64 {
+    if side == "yes" {
+        round4(probability - price)
+    } else {
+        round4(price - probability)
+    }
+}
+
+fn validate_entry_side(side: &str) -> Result<String, String> {
+    let resolved = side.trim().to_lowercase();
+    let resolved = if resolved.is_empty() {
+        "yes".to_string()
+    } else {
+        resolved
+    };
+    match resolved.as_str() {
+        "buy" | "y" | "yes" => Ok("yes".to_string()),
+        "n" | "no" => Ok("no".to_string()),
+        _ => Err("side must be 'yes' or 'no'".to_string()),
+    }
 }
 
 fn validate_side(side: &str) -> Result<String, String> {
@@ -222,6 +331,100 @@ mod tests {
             calculate_edge_sizing(1.2, 0.5, "buy", 0.0, 0.25, 0.02, 0.015),
             Err("prediction_probability must be between 0 and 1".to_string())
         );
+    }
+
+    #[test]
+    fn evaluate_entry_allows_trade_inside_policy() {
+        let decision = evaluate_entry(
+            "weather_station",
+            0.08,
+            0.92,
+            0.07,
+            0.75,
+            0.08,
+            50.0,
+            10.0,
+            0.55,
+            0.67,
+            0.81,
+            0.03,
+            240.0,
+            120.0,
+            "yes",
+        )
+        .unwrap();
+
+        assert!(decision.enter);
+        assert_eq!(decision.action, "paper_trade_small");
+        assert_eq!(decision.blocked_by, Vec::<String>::new());
+        assert_eq!(decision.edge_gross, 0.12);
+        assert_eq!(decision.edge_net_all_in, 0.108);
+        assert_eq!(decision.size_hint_usd, 10.0);
+    }
+
+    #[test]
+    fn evaluate_entry_blocks_with_stable_reasons() {
+        let decision = evaluate_entry(
+            "crypto_5m_conservative",
+            0.60,
+            0.95,
+            0.05,
+            0.85,
+            0.02,
+            1000.0,
+            0.0,
+            0.40,
+            0.43,
+            0.70,
+            0.06,
+            100.0,
+            100.0,
+            "yes",
+        )
+        .unwrap();
+
+        assert!(!decision.enter);
+        assert_eq!(
+            decision.blocked_by,
+            vec![
+                "price_outside_window".to_string(),
+                "edge_below_threshold".to_string(),
+                "confidence_below_threshold".to_string(),
+                "spread_too_wide".to_string(),
+                "depth_insufficient".to_string(),
+                "execution_cost_exceeds_edge".to_string(),
+            ]
+        );
+        assert_eq!(decision.edge_gross, 0.03);
+        assert_eq!(decision.edge_net_all_in, 0.02);
+    }
+
+    #[test]
+    fn evaluate_entry_supports_no_side() {
+        let decision = evaluate_entry(
+            "tail_risk_micro",
+            0.01,
+            0.20,
+            0.09,
+            0.90,
+            0.05,
+            20.0,
+            5.0,
+            0.12,
+            0.02,
+            0.95,
+            0.02,
+            100.0,
+            50.0,
+            "no",
+        )
+        .unwrap();
+
+        assert!(decision.enter);
+        assert_eq!(decision.side, "no");
+        assert_eq!(decision.edge_gross, 0.10);
+        assert_eq!(decision.edge_net_all_in, 0.095);
+        assert_eq!(decision.size_hint_usd, 5.0);
     }
 
     #[test]

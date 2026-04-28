@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys
+import types
+
 from prediction_core.decision.entry_policy import EntryPolicy, evaluate_entry
 
 
@@ -92,3 +95,62 @@ def test_evaluate_entry_supports_no_side_for_buying_no_outcomes() -> None:
     assert decision.edge_gross == 0.10
     assert decision.edge_net_all_in == 0.095
     assert decision.size_hint_usd == 5.0
+
+
+def test_evaluate_entry_uses_rust_when_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    fake_module = types.ModuleType("prediction_core._rust_orderbook")
+
+    def rust_evaluate_entry(**kwargs):
+        assert kwargs["policy_name"] == "weather_station"
+        assert kwargs["market_price"] == 0.55
+        assert kwargs["model_probability"] == 0.67
+        return {
+            "policy": "weather_station",
+            "enter": True,
+            "action": "paper_trade_small",
+            "side": "yes",
+            "market_price": 0.55,
+            "model_probability": 0.67,
+            "confidence": 0.81,
+            "edge_gross": 0.12,
+            "edge_net_all_in": 0.108,
+            "blocked_by": [],
+            "size_hint_usd": 10.0,
+        }
+
+    fake_module.evaluate_entry = rust_evaluate_entry
+    monkeypatch.setitem(sys.modules, "prediction_core._rust_orderbook", fake_module)
+
+    decision = evaluate_entry(
+        policy=EntryPolicy(
+            name="weather_station",
+            q_min=0.08,
+            q_max=0.92,
+            min_edge=0.07,
+            min_confidence=0.75,
+            max_spread=0.08,
+            min_depth_usd=50.0,
+            max_position_usd=10.0,
+        ),
+        market_price=0.55,
+        model_probability=0.67,
+        confidence=0.81,
+        spread=0.03,
+        depth_usd=240.0,
+        execution_cost_bps=120.0,
+    )
+
+    assert decision.to_dict() == {
+        "policy": "weather_station",
+        "enter": True,
+        "action": "paper_trade_small",
+        "side": "yes",
+        "market_price": 0.55,
+        "model_probability": 0.67,
+        "confidence": 0.81,
+        "edge_gross": 0.12,
+        "edge_net_all_in": 0.108,
+        "blocked_by": [],
+        "size_hint_usd": 10.0,
+    }
