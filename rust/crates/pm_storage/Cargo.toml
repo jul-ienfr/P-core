@@ -9,7 +9,9 @@ pm_ledger = { path = "../pm_ledger" }
 pm_risk = { path = "../pm_risk" }
 pm_signal = { path = "../pm_signal" }
 pm_types = { path = "../pm_types" }
+chrono.workspace = true
 serde.workspace = true
+uuid.workspace = true
 serde_json.workspace = true
 sqlx = { workspace = true }
 

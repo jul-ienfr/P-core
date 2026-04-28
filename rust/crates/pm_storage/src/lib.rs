@@ -1,3 +1,5 @@
+pub mod market_data_log;
+
 use pm_executor::OrderIntent;
 use pm_ledger::LedgerEnvelope;
 use pm_risk::RiskDecision;

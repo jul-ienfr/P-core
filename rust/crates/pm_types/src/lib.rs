@@ -41,7 +41,7 @@ pub enum ExecutionStatus {
     Error,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct MarketEvent {
     pub event_id: Uuid,
     pub ts: DateTime<Utc>,
@@ -66,6 +66,22 @@ pub struct BookLevel {
 pub struct OrderBookSnapshot {
     pub bids: Vec<BookLevel>,
     pub asks: Vec<BookLevel>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum BookDeltaSide {
+    Bid,
+    Ask,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BookDelta {
+    pub ts: DateTime<Utc>,
+    pub seq: u64,
+    pub side: BookDeltaSide,
+    pub price: f64,
+    pub quantity: f64,
+    pub is_trade: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -288,6 +304,22 @@ mod tests {
         };
 
         assert_eq!(order_side_str(&fill.side), "buy_yes");
+    }
+
+    #[test]
+    fn book_delta_has_explicit_l2_side_and_sequence() {
+        let delta = BookDelta {
+            ts: Utc::now(),
+            seq: 42,
+            side: BookDeltaSide::Bid,
+            price: 0.47,
+            quantity: 12.5,
+            is_trade: false,
+        };
+
+        assert_eq!(delta.side, BookDeltaSide::Bid);
+        assert_eq!(delta.seq, 42);
+        assert!(!delta.is_trade);
     }
 
     #[test]

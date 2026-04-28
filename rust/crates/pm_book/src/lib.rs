@@ -1,6 +1,6 @@
 use pm_types::{
-    BookLevel, BookSide, ExitValueEstimate, FillEstimate, MarketEvent, OrderBookSnapshot,
-    SpendFillEstimate,
+    BookDelta, BookDeltaSide, BookLevel, BookSide, ExitValueEstimate, FillEstimate, MarketEvent,
+    OrderBookSnapshot, SpendFillEstimate,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -51,6 +51,168 @@ pub fn normalize_bids(levels: &[BookLevel]) -> Vec<BookLevel> {
         .collect();
     normalized.sort_by(|a, b| b.price.total_cmp(&a.price));
     normalized
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum BookDeltaError {
+    InvalidPrice { price: f64 },
+    InvalidQuantity { quantity: f64 },
+    IncoherentSequence { expected: u64, actual: u64 },
+    CrossedBook { best_bid: f64, best_ask: f64 },
+}
+
+impl std::fmt::Display for BookDeltaError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidPrice { price } => write!(f, "invalid book delta price: {price}"),
+            Self::InvalidQuantity { quantity } => {
+                write!(f, "invalid book delta quantity: {quantity}")
+            }
+            Self::IncoherentSequence { expected, actual } => {
+                write!(
+                    f,
+                    "incoherent book delta sequence: expected {expected}, got {actual}"
+                )
+            }
+            Self::CrossedBook { best_bid, best_ask } => {
+                write!(
+                    f,
+                    "crossed book after delta: best_bid {best_bid} > best_ask {best_ask}"
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for BookDeltaError {}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct DeltaBookState {
+    pub snapshot: OrderBookSnapshot,
+    pub last_seq: Option<u64>,
+}
+
+impl Default for DeltaBookState {
+    fn default() -> Self {
+        Self {
+            snapshot: OrderBookSnapshot {
+                bids: Vec::new(),
+                asks: Vec::new(),
+            },
+            last_seq: None,
+        }
+    }
+}
+
+impl DeltaBookState {
+    pub fn new(snapshot: OrderBookSnapshot, last_seq: Option<u64>) -> Result<Self, BookDeltaError> {
+        let snapshot = normalize_snapshot(&snapshot);
+        validate_not_crossed(&snapshot)?;
+        Ok(Self { snapshot, last_seq })
+    }
+
+    pub fn apply_delta(&mut self, delta: &BookDelta) -> Result<(), BookDeltaError> {
+        validate_delta(delta)?;
+        if let Some(last_seq) = self.last_seq {
+            let expected = last_seq + 1;
+            if delta.seq != expected {
+                return Err(BookDeltaError::IncoherentSequence {
+                    expected,
+                    actual: delta.seq,
+                });
+            }
+        }
+
+        let mut candidate = self.snapshot.clone();
+        apply_delta_unchecked(&mut candidate, delta);
+        candidate = normalize_snapshot(&candidate);
+        validate_not_crossed(&candidate)?;
+
+        self.snapshot = candidate;
+        self.last_seq = Some(delta.seq);
+        Ok(())
+    }
+}
+
+pub fn validate_delta(delta: &BookDelta) -> Result<(), BookDeltaError> {
+    if !valid_price(delta.price) || delta.price <= 0.0 {
+        return Err(BookDeltaError::InvalidPrice { price: delta.price });
+    }
+    if !delta.quantity.is_finite() || delta.quantity < 0.0 {
+        return Err(BookDeltaError::InvalidQuantity {
+            quantity: delta.quantity,
+        });
+    }
+    Ok(())
+}
+
+pub fn apply_delta(
+    snapshot: &OrderBookSnapshot,
+    delta: &BookDelta,
+) -> Result<OrderBookSnapshot, BookDeltaError> {
+    let mut state = DeltaBookState::new(snapshot.clone(), delta.seq.checked_sub(1))?;
+    state.apply_delta(delta)?;
+    Ok(state.snapshot)
+}
+
+pub fn reconstruct_from_deltas(deltas: &[BookDelta]) -> Result<OrderBookSnapshot, BookDeltaError> {
+    let mut state = DeltaBookState::default();
+    for delta in deltas {
+        state.apply_delta(delta)?;
+    }
+    Ok(state.snapshot)
+}
+
+pub fn reconstruct_from_snapshot_and_deltas(
+    snapshot: OrderBookSnapshot,
+    last_seq: Option<u64>,
+    deltas: &[BookDelta],
+) -> Result<OrderBookSnapshot, BookDeltaError> {
+    let mut state = DeltaBookState::new(snapshot, last_seq)?;
+    for delta in deltas {
+        state.apply_delta(delta)?;
+    }
+    Ok(state.snapshot)
+}
+
+fn apply_delta_unchecked(snapshot: &mut OrderBookSnapshot, delta: &BookDelta) {
+    let levels = match delta.side {
+        BookDeltaSide::Bid => &mut snapshot.bids,
+        BookDeltaSide::Ask => &mut snapshot.asks,
+    };
+
+    if delta.quantity == 0.0 {
+        levels.retain(|level| level.price != delta.price);
+        return;
+    }
+
+    if let Some(level) = levels.iter_mut().find(|level| level.price == delta.price) {
+        level.quantity = delta.quantity;
+    } else {
+        levels.push(BookLevel {
+            price: delta.price,
+            quantity: delta.quantity,
+        });
+    }
+}
+
+fn normalize_snapshot(snapshot: &OrderBookSnapshot) -> OrderBookSnapshot {
+    OrderBookSnapshot {
+        bids: normalize_bids(&snapshot.bids),
+        asks: normalize_asks(&snapshot.asks),
+    }
+}
+
+fn validate_not_crossed(snapshot: &OrderBookSnapshot) -> Result<(), BookDeltaError> {
+    if let (Some(best_bid), Some(best_ask)) = (snapshot.bids.first(), snapshot.asks.first()) {
+        if best_bid.price > best_ask.price {
+            return Err(BookDeltaError::CrossedBook {
+                best_bid: best_bid.price,
+                best_ask: best_ask.price,
+            });
+        }
+    }
+    Ok(())
 }
 
 pub fn estimate_fill_from_book(
@@ -290,6 +452,17 @@ mod tests {
         OrderBookSnapshot { bids, asks }
     }
 
+    fn delta(seq: u64, side: BookDeltaSide, price: f64, quantity: f64) -> BookDelta {
+        BookDelta {
+            ts: Utc::now(),
+            seq,
+            side,
+            price,
+            quantity,
+            is_trade: false,
+        }
+    }
+
     #[test]
     fn apply_updates_top_of_book_from_event() {
         let mut book = TopOfBook::default();
@@ -340,6 +513,74 @@ mod tests {
 
         assert_eq!(book.best_bid, Some(0.47));
         assert_eq!(book.best_ask, Some(0.49));
+    }
+
+    #[test]
+    fn delta_replay_reconstructs_sorted_book() {
+        let snapshot = reconstruct_from_deltas(&[
+            delta(1, BookDeltaSide::Bid, 0.40, 10.0),
+            delta(2, BookDeltaSide::Ask, 0.55, 3.0),
+            delta(3, BookDeltaSide::Bid, 0.45, 2.0),
+            delta(4, BookDeltaSide::Ask, 0.50, 4.0),
+        ])
+        .expect("valid replay should reconstruct");
+
+        assert_eq!(snapshot.bids, vec![level(0.45, 2.0), level(0.40, 10.0)]);
+        assert_eq!(snapshot.asks, vec![level(0.50, 4.0), level(0.55, 3.0)]);
+    }
+
+    #[test]
+    fn delta_zero_quantity_removes_level() {
+        let snapshot = book(vec![level(0.42, 5.0)], vec![level(0.51, 1.0)]);
+
+        let updated = apply_delta(&snapshot, &delta(7, BookDeltaSide::Bid, 0.42, 0.0))
+            .expect("zero quantity should delete level");
+
+        assert!(updated.bids.is_empty());
+        assert_eq!(updated.asks, vec![level(0.51, 1.0)]);
+    }
+
+    #[test]
+    fn delta_replay_rejects_invalid_price_and_quantity() {
+        assert!(matches!(
+            validate_delta(&delta(1, BookDeltaSide::Bid, 1.2, 1.0)),
+            Err(BookDeltaError::InvalidPrice { price }) if price == 1.2
+        ));
+        assert!(matches!(
+            validate_delta(&delta(1, BookDeltaSide::Ask, 0.5, -1.0)),
+            Err(BookDeltaError::InvalidQuantity { quantity }) if quantity == -1.0
+        ));
+    }
+
+    #[test]
+    fn delta_replay_rejects_incoherent_sequence() {
+        let result = reconstruct_from_deltas(&[
+            delta(1, BookDeltaSide::Bid, 0.40, 10.0),
+            delta(3, BookDeltaSide::Ask, 0.60, 2.0),
+        ]);
+
+        assert!(matches!(
+            result,
+            Err(BookDeltaError::IncoherentSequence {
+                expected: 2,
+                actual: 3
+            })
+        ));
+    }
+
+    #[test]
+    fn delta_replay_rejects_crossed_book_without_mutating_state() {
+        let mut state = DeltaBookState::new(
+            book(vec![level(0.45, 5.0)], vec![level(0.55, 5.0)]),
+            Some(10),
+        )
+        .expect("initial book is valid");
+
+        let result = state.apply_delta(&delta(11, BookDeltaSide::Bid, 0.56, 1.0));
+
+        assert!(matches!(result, Err(BookDeltaError::CrossedBook { .. })));
+        assert_eq!(state.snapshot.bids, vec![level(0.45, 5.0)]);
+        assert_eq!(state.last_seq, Some(10));
     }
 
     #[test]

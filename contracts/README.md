@@ -42,6 +42,70 @@ Comparaison avec les hypothèses `hftbacktest` :
 - Fees : maker/taker, min fee, deposit/withdrawal bps/fixes.
 - Limite connue : pas encore de modèle probabiliste d’annulations devant nous ni de relecture tick-by-tick complète façon hftbacktest.
 
+## Phase 4 — Contrats Rust P-core prediction markets
+
+Périmètre strict : contrats Rust locaux, fixtures offline et validation déterministe. Cette phase ne définit aucun client réseau, aucune connexion stream/websocket, aucune dépendance async/network additionnelle, et aucune capacité d'exécution live.
+
+### `pm_feed` — normalisation read-only
+
+`rust/crates/pm_feed` convertit des messages déjà reçus ou chargés depuis fixture en événements canoniques :
+
+- `FeedMessage` conserve les métadonnées d'audit (`source`, `venue`, `market_id`, `symbol`, `received_at`, `message_type`) et le `raw_json` original.
+- `Trade` et `Bbo` se convertissent en `MarketEvent` sans effet de bord.
+- `L2Snapshot` se convertit en `OrderBookSnapshot` avec niveaux `BookLevel { price, quantity }`.
+- `FeedMessageType::L2Delta` reste une frontière de normalisation (`L2DeltaPlaceholder`) tant que le mapping venue-spécifique n'est pas approuvé.
+
+Aucune fonction de `pm_feed` ne doit ouvrir de socket, appeler une API venue, signer une requête ou muter un état distant. Les entrées attendues sont des payloads offline, des fixtures ou des messages fournis par un composant read-only approuvé séparément.
+
+### `BookDelta` / `L2Update` — replay tick-level et carnet
+
+Le contrat L2 canonique côté `pm_types` est `BookDelta` : timestamp, séquence, côté (`Bid`/`Ask`), prix, quantité et indicateur `is_trade`. Il couvre l'usage `L2Update` du plan sous un nom Rust stabilisé.
+
+`rust/crates/pm_book` applique ces deltas en replay tick-level :
+
+- prix finis dans l'intervalle prediction-market `[0.0, 1.0]`, prix strictement positif pour les niveaux actifs ;
+- quantité finie et non négative ; `quantity == 0.0` supprime le niveau ;
+- séquences strictement contiguës quand `last_seq` est connu ;
+- normalisation déterministe : bids décroissants, asks croissants ;
+- rejet des carnets croisés sans mutation de l'état précédent.
+
+Les fonctions de simulation de fill (`estimate_fill_from_book`, `simulate_spend_fill`, `simulate_exit_value`) restent des estimations locales de replay/paper : elles ne produisent pas de fill exchange et ne soumettent aucun ordre.
+
+### `pm_storage::market_data_log` — JSONL offline
+
+`rust/crates/pm_storage/src/market_data_log.rs` définit un journal JSONL local : un `MarketDataLogRecord` par ligne avec `market_id`, `ts` et un `MarketDataPayload` tagué (`market_event`, `order_book_snapshot`, `book_delta`).
+
+Garanties :
+
+- encodage/décodage `serde_json` ligne par ligne ;
+- append/write/read locaux seulement via filesystem ;
+- itération filtrable par `market_id` et fenêtre temporelle inclusive ;
+- conversion utilitaire vers `MarketEvent`/`OrderBookSnapshot` pour replay et validation.
+
+Ce module ne copie aucun code Tectonicdb, n'embarque aucun client de base distante et ne définit aucun transport réseau. Les optimisations async, streaming et stockage externe sont explicitement différées.
+
+### `live_engine` — advisory / dry-run only
+
+`rust/crates/live_engine` assemble source de marché normalisée, signal, risk gate, intent advisory et ledger local/in-memory. La frontière d'exécution autorisée est `DryRunAdvisory` :
+
+- un signal approuvé peut créer un `OrderIntent` à statut advisory ;
+- le rapport d'exécution est volontairement `rejected` avec `simulation_only_advisory_no_exchange_fill` ;
+- `fill`, `fill_row` restent `None` ;
+- `FillMetadata.live_submit` reste `false`.
+
+`live_engine` ne doit exposer aucun sink mutable vers venue réelle. Toute évolution vers exécution réelle nécessite une phase séparée, une revue de sécurité et des contrats distincts.
+
+### Garde-fous obligatoires
+
+Interdits dans ces contrats Rust et leurs docs opérationnelles :
+
+- primitives `place_order`, `cancel_order`, submit/cancel live, signing/wallet/private key/credentials ;
+- client venue mutable, mutation de carnet distant, ordre réel ou fill exchange simulé comme réel ;
+- commande réseau, stream marketdata live ou dépendance async/network nouvelle dans cette phase ;
+- code copié de Tectonicdb ou couplage à un stockage externe.
+
+Autorisés : fixtures offline, JSONL local, replay tick-by-tick déterministe, orderbook local, intents advisory non exécutables, tests unitaires/workspace `cargo test` depuis `/home/jul/P-core/rust`.
+
 ## Phase 5 — Frontière adaptateurs prediction markets
 
 `prediction_core.execution.prediction_market_adapters` décrit les capacités candidates (`pmxt`, `pykalshi`, `Parsec`, `PolyClawster`) uniquement comme métadonnées d’audit. Ces contrats préservent le langage d’origine : clients Python côté Python pour discovery/replay/paper/calibration, composants Rust côté Rust derrière les contrats communs. La politique par défaut reste `read_only=true`, `paper_only=true`, `live_order_allowed=false` ; toute capacité mutable, mode live, wallet signing, credentials ou primitive d’ordre/cancel réel est bloquée et nécessite une approbation séparée hors de cette frontière.

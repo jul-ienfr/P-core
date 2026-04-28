@@ -2,6 +2,7 @@
 members = [
     "crates/live_engine",
     "crates/pm_types",
+    "crates/pm_feed",
     "crates/pm_book",
     "crates/pm_signal",
     "crates/pm_storage",
