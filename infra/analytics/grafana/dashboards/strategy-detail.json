@@ -15,8 +15,9 @@
       "targetBlank": false,
       "title": "Vue d’ensemble des stratégies",
       "tooltip": "Retour à la vue d’ensemble",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-overview"
+      "type": "link",
+      "uid": "prediction-core-strategy-overview",
+      "url": "/d/prediction-core-strategy-overview/vue-densemble-des-strategies?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -26,8 +27,9 @@
       "targetBlank": false,
       "title": "Santé stratégies",
       "tooltip": "Voir la santé",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-health"
+      "type": "link",
+      "uid": "prediction-core-strategy-health",
+      "url": "/d/prediction-core-strategy-health/sante-et-attentes-des-strategies?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -37,8 +39,9 @@
       "targetBlank": false,
       "title": "Pilotage paper/live",
       "tooltip": "Ouvrir la console d’action paper/live",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-control"
+      "type": "link",
+      "uid": "prediction-core-strategy-control",
+      "url": "/d/prediction-core-strategy-control/pilotage-paper-live?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     }
   ],
   "liveNow": false,

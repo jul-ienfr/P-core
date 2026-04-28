@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fcntl
+import importlib
 import json
 import math
 import os
@@ -215,6 +216,11 @@ def evaluate_execution_risk(
     state: ExecutionRiskState,
     market_snapshot: dict[str, Any],
 ) -> ExecutionRiskDecision:
+    if os.getenv("PREDICTION_CORE_RUST_ORDERBOOK") == "1":
+        try:
+            return _evaluate_execution_risk_with_rust(order=order, limits=limits, state=state, market_snapshot=market_snapshot)
+        except (ImportError, AttributeError):
+            pass
     blocked: list[str] = []
     if order.notional_usdc > float(limits.max_order_notional_usdc):
         blocked.append("max_order_notional_usdc")
@@ -236,6 +242,29 @@ def evaluate_execution_risk(
             elif spread_value > float(limits.max_spread):
                 blocked.append("max_spread")
     return ExecutionRiskDecision(allowed=not blocked, blocked_by=blocked)
+
+
+def _evaluate_execution_risk_with_rust(
+    *,
+    order: OrderRequest,
+    limits: ExecutionRiskLimits,
+    state: ExecutionRiskState,
+    market_snapshot: dict[str, Any],
+) -> ExecutionRiskDecision:
+    backend = importlib.import_module("prediction_core._rust_orderbook")
+    payload = backend.evaluate_execution_risk(
+        order_notional_usdc=order.notional_usdc,
+        total_exposure_usdc=state.total_exposure_usdc,
+        daily_realized_pnl_usdc=state.daily_realized_pnl_usdc,
+        max_order_notional_usdc=limits.max_order_notional_usdc,
+        max_total_exposure_usdc=limits.max_total_exposure_usdc,
+        max_daily_loss_usdc=limits.max_daily_loss_usdc,
+        max_spread=limits.max_spread,
+        spread=market_snapshot.get("spread"),
+    )
+    if not isinstance(payload, dict):
+        raise ValueError("rust execution risk payload must be an object")
+    return ExecutionRiskDecision(allowed=bool(payload["allowed"]), blocked_by=[str(reason) for reason in payload["blocked_by"]])
 
 
 class JsonlIdempotencyStore:

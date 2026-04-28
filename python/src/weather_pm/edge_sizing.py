@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import importlib
 import math
+import os
 from typing import Any
+
+
+RUST_EDGE_SIZING_ENV = "PREDICTION_CORE_RUST_ORDERBOOK"
 
 
 @dataclass(slots=True)
@@ -23,6 +28,40 @@ class EdgeSizing:
 
 
 def calculate_edge_sizing(
+    *,
+    prediction_probability: float,
+    market_price: float,
+    side: str = "buy",
+    edge_cost_bps: float = 0.0,
+    kelly_scale: float = 0.25,
+    max_fraction: float = 0.02,
+    min_net_edge: float = 0.015,
+) -> EdgeSizing:
+    if _rust_edge_sizing_enabled():
+        try:
+            return _calculate_edge_sizing_with_rust(
+                prediction_probability=prediction_probability,
+                market_price=market_price,
+                side=side,
+                edge_cost_bps=edge_cost_bps,
+                kelly_scale=kelly_scale,
+                max_fraction=max_fraction,
+                min_net_edge=min_net_edge,
+            )
+        except (ImportError, AttributeError):
+            pass
+    return _calculate_edge_sizing_python(
+        prediction_probability=prediction_probability,
+        market_price=market_price,
+        side=side,
+        edge_cost_bps=edge_cost_bps,
+        kelly_scale=kelly_scale,
+        max_fraction=max_fraction,
+        min_net_edge=min_net_edge,
+    )
+
+
+def _calculate_edge_sizing_python(
     *,
     prediction_probability: float,
     market_price: float,
@@ -66,6 +105,46 @@ def calculate_edge_sizing(
         suggested_fraction=round(suggested_fraction, 4),
         recommendation=recommendation,
     )
+
+
+def _calculate_edge_sizing_with_rust(
+    *,
+    prediction_probability: float,
+    market_price: float,
+    side: str,
+    edge_cost_bps: float,
+    kelly_scale: float,
+    max_fraction: float,
+    min_net_edge: float,
+) -> EdgeSizing:
+    backend = importlib.import_module("prediction_core._rust_orderbook")
+    payload = backend.calculate_edge_sizing(
+        prediction_probability=prediction_probability,
+        market_price=market_price,
+        side=side,
+        edge_cost_bps=edge_cost_bps,
+        kelly_scale=kelly_scale,
+        max_fraction=max_fraction,
+        min_net_edge=min_net_edge,
+    )
+    if not isinstance(payload, dict):
+        raise ValueError("rust edge sizing payload must be an object")
+    return EdgeSizing(
+        prediction_probability=float(payload["prediction_probability"]),
+        market_price=float(payload["market_price"]),
+        side=str(payload["side"]),
+        raw_edge=float(payload["raw_edge"]),
+        net_edge=float(payload["net_edge"]),
+        edge_bps=int(payload["edge_bps"]),
+        net_edge_bps=int(payload["net_edge_bps"]),
+        kelly_fraction=float(payload["kelly_fraction"]),
+        suggested_fraction=float(payload["suggested_fraction"]),
+        recommendation=str(payload["recommendation"]),
+    )
+
+
+def _rust_edge_sizing_enabled() -> bool:
+    return os.getenv(RUST_EDGE_SIZING_ENV) == "1"
 
 
 def _kelly_fraction(*, prediction: float, price: float, side: str) -> float:

@@ -1,3 +1,6 @@
+import sys
+import types
+
 from prediction_core.polymarket_execution import (
     ExecutionRiskLimits,
     ExecutionRiskState,
@@ -51,6 +54,35 @@ def test_risk_blocks_oversized_order():
 
     assert result.allowed is False
     assert "max_order_notional_usdc" in result.blocked_by
+
+
+def test_risk_uses_rust_when_enabled(monkeypatch):
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    fake_module = types.ModuleType("prediction_core._rust_orderbook")
+
+    def rust_evaluate_execution_risk(**kwargs):
+        assert kwargs["order_notional_usdc"] == 7.5
+        assert kwargs["total_exposure_usdc"] == 20.0
+        assert kwargs["spread"] == 0.03
+        return {"allowed": False, "blocked_by": ["max_spread"]}
+
+    fake_module.evaluate_execution_risk = rust_evaluate_execution_risk
+    monkeypatch.setitem(sys.modules, "prediction_core._rust_orderbook", fake_module)
+
+    result = evaluate_execution_risk(
+        _order(),
+        limits=ExecutionRiskLimits(
+            max_order_notional_usdc=10,
+            max_total_exposure_usdc=100,
+            max_daily_loss_usdc=25,
+            max_spread=0.05,
+        ),
+        state=ExecutionRiskState(total_exposure_usdc=20, daily_realized_pnl_usdc=0),
+        market_snapshot={"spread": 0.03, "sequence": 10},
+    )
+
+    assert result.allowed is False
+    assert result.blocked_by == ["max_spread"]
 
 
 def test_risk_blocks_total_exposure():

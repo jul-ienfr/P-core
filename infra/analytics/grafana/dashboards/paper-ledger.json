@@ -15,8 +15,9 @@
       "targetBlank": false,
       "title": "Voir le debug décision",
       "tooltip": "Drilldown décisions filtré",
-      "type": "dashboard",
-      "uid": "prediction-core-decision-debug"
+      "type": "link",
+      "uid": "prediction-core-decision-debug",
+      "url": "/d/prediction-core-decision-debug/debug-des-decisions?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -26,8 +27,9 @@
       "targetBlank": false,
       "title": "Vue d’ensemble des stratégies",
       "tooltip": "Vue d’ensemble des stratégies",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-overview"
+      "type": "link",
+      "uid": "prediction-core-strategy-overview",
+      "url": "/d/prediction-core-strategy-overview/vue-densemble-des-strategies?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -37,8 +39,9 @@
       "targetBlank": false,
       "title": "Détail stratégie",
       "tooltip": "Détail stratégie",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-detail"
+      "type": "link",
+      "uid": "prediction-core-strategy-detail",
+      "url": "/d/prediction-core-strategy-detail/detail-strategie?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -48,8 +51,9 @@
       "targetBlank": false,
       "title": "Santé stratégies",
       "tooltip": "Santé et attentes des stratégies",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-health"
+      "type": "link",
+      "uid": "prediction-core-strategy-health",
+      "url": "/d/prediction-core-strategy-health/sante-et-attentes-des-strategies?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -59,8 +63,9 @@
       "targetBlank": false,
       "title": "Pilotage paper/live",
       "tooltip": "Ouvrir la console d’action paper/live",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-control"
+      "type": "link",
+      "uid": "prediction-core-strategy-control",
+      "url": "/d/prediction-core-strategy-control/pilotage-paper-live?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     }
   ],
   "liveNow": false,

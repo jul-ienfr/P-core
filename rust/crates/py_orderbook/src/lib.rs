@@ -1,4 +1,6 @@
 use pm_book::estimate_fill_from_book as rust_estimate_fill_from_book;
+use pm_risk::evaluate_execution_risk as rust_evaluate_execution_risk;
+use pm_signal::calculate_edge_sizing as rust_calculate_edge_sizing;
 use pm_types::{BookLevel, BookSide, OrderBookSnapshot};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -28,9 +30,79 @@ fn estimate_fill_from_book<'py>(
     Ok(result)
 }
 
+#[pyfunction]
+#[pyo3(signature = (prediction_probability, market_price, side="buy", edge_cost_bps=0.0, kelly_scale=0.25, max_fraction=0.02, min_net_edge=0.015))]
+fn calculate_edge_sizing<'py>(
+    py: Python<'py>,
+    prediction_probability: f64,
+    market_price: f64,
+    side: &str,
+    edge_cost_bps: f64,
+    kelly_scale: f64,
+    max_fraction: f64,
+    min_net_edge: f64,
+) -> PyResult<Bound<'py, PyDict>> {
+    let sizing = rust_calculate_edge_sizing(
+        prediction_probability,
+        market_price,
+        side,
+        edge_cost_bps,
+        kelly_scale,
+        max_fraction,
+        min_net_edge,
+    )
+    .map_err(PyValueError::new_err)?;
+    let result = PyDict::new_bound(py);
+    result.set_item("prediction_probability", sizing.prediction_probability)?;
+    result.set_item("market_price", sizing.market_price)?;
+    result.set_item("side", sizing.side)?;
+    result.set_item("raw_edge", sizing.raw_edge)?;
+    result.set_item("net_edge", sizing.net_edge)?;
+    result.set_item("edge_bps", sizing.edge_bps)?;
+    result.set_item("net_edge_bps", sizing.net_edge_bps)?;
+    result.set_item("kelly_fraction", sizing.kelly_fraction)?;
+    result.set_item("suggested_fraction", sizing.suggested_fraction)?;
+    result.set_item("recommendation", sizing.recommendation)?;
+    Ok(result)
+}
+
+#[pyfunction]
+#[pyo3(signature = (order_notional_usdc, total_exposure_usdc, daily_realized_pnl_usdc, max_order_notional_usdc, max_total_exposure_usdc, max_daily_loss_usdc, max_spread, spread=None))]
+fn evaluate_execution_risk<'py>(
+    py: Python<'py>,
+    order_notional_usdc: f64,
+    total_exposure_usdc: f64,
+    daily_realized_pnl_usdc: f64,
+    max_order_notional_usdc: f64,
+    max_total_exposure_usdc: f64,
+    max_daily_loss_usdc: f64,
+    max_spread: f64,
+    spread: Option<&Bound<'_, PyAny>>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let (spread_value, invalid_spread) = parse_optional_spread(spread)?;
+    let decision = rust_evaluate_execution_risk(
+        order_notional_usdc,
+        total_exposure_usdc,
+        daily_realized_pnl_usdc,
+        max_order_notional_usdc,
+        max_total_exposure_usdc,
+        max_daily_loss_usdc,
+        max_spread,
+        spread_value,
+        invalid_spread,
+    )
+    .map_err(PyValueError::new_err)?;
+    let result = PyDict::new_bound(py);
+    result.set_item("allowed", decision.allowed)?;
+    result.set_item("blocked_by", decision.blocked_by)?;
+    Ok(result)
+}
+
 #[pymodule]
 fn _rust_orderbook(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(estimate_fill_from_book, module)?)?;
+    module.add_function(wrap_pyfunction!(calculate_edge_sizing, module)?)?;
+    module.add_function(wrap_pyfunction!(evaluate_execution_risk, module)?)?;
     Ok(())
 }
 
@@ -85,5 +157,18 @@ fn parse_side(side: &str) -> PyResult<BookSide> {
         "buy" => Ok(BookSide::Buy),
         "sell" => Ok(BookSide::Sell),
         _ => Err(PyValueError::new_err("side must be buy or sell")),
+    }
+}
+
+fn parse_optional_spread(spread: Option<&Bound<'_, PyAny>>) -> PyResult<(Option<f64>, bool)> {
+    let Some(raw) = spread else {
+        return Ok((None, false));
+    };
+    if raw.is_none() {
+        return Ok((None, false));
+    }
+    match raw.extract::<f64>() {
+        Ok(value) => Ok((Some(value), false)),
+        Err(_) => Ok((None, true)),
     }
 }

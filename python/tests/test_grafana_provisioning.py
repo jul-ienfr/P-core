@@ -236,6 +236,16 @@ def test_existing_dashboards_link_to_strategy_console() -> None:
         "prediction-core-paper-ledger",
     ]:
         assert uid in control_text
+        assert f"/d/{uid}/" in control_text
+
+    for path in ALL_DASHBOARDS:
+        dashboard = json.loads(path.read_text())
+        for link in dashboard.get("links") or []:
+            assert link["type"] == "link"
+            assert link["url"].startswith("/d/")
+            assert "${__url_time_range}" in link["url"]
+            assert "timezone=Europe%2FParis" in link["url"]
+            assert "${__all_variables}" in link["url"]
 
 
     text = ALERTS.read_text()

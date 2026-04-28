@@ -15,8 +15,9 @@
       "targetBlank": false,
       "title": "Vue d’ensemble des stratégies",
       "tooltip": "Retour à la vue d’ensemble",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-overview"
+      "type": "link",
+      "uid": "prediction-core-strategy-overview",
+      "url": "/d/prediction-core-strategy-overview/vue-densemble-des-strategies?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -26,8 +27,9 @@
       "targetBlank": false,
       "title": "Détail stratégie",
       "tooltip": "Ouvrir le détail",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-detail"
+      "type": "link",
+      "uid": "prediction-core-strategy-detail",
+      "url": "/d/prediction-core-strategy-detail/detail-strategie?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -37,8 +39,9 @@
       "targetBlank": false,
       "title": "Santé stratégies",
       "tooltip": "Ouvrir la matrice santé",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-health"
+      "type": "link",
+      "uid": "prediction-core-strategy-health",
+      "url": "/d/prediction-core-strategy-health/sante-et-attentes-des-strategies?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -48,8 +51,9 @@
       "targetBlank": false,
       "title": "Comparaison stratégies / profils",
       "tooltip": "Comparer les performances",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-vs-profile"
+      "type": "link",
+      "uid": "prediction-core-strategy-vs-profile",
+      "url": "/d/prediction-core-strategy-vs-profile/comparaison-strategies-profils?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -59,8 +63,9 @@
       "targetBlank": false,
       "title": "Fraîcheur des données",
       "tooltip": "Vérifier l’alimentation",
-      "type": "dashboard",
-      "uid": "prediction-core-data-freshness"
+      "type": "link",
+      "uid": "prediction-core-data-freshness",
+      "url": "/d/prediction-core-data-freshness/fraicheur-des-donnees?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -70,8 +75,9 @@
       "targetBlank": false,
       "title": "Debug des décisions",
       "tooltip": "Analyser les décisions",
-      "type": "dashboard",
-      "uid": "prediction-core-decision-debug"
+      "type": "link",
+      "uid": "prediction-core-decision-debug",
+      "url": "/d/prediction-core-decision-debug/debug-des-decisions?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -81,8 +87,9 @@
       "targetBlank": false,
       "title": "Ledger paper",
       "tooltip": "Contrôler le paper trading",
-      "type": "dashboard",
-      "uid": "prediction-core-paper-ledger"
+      "type": "link",
+      "uid": "prediction-core-paper-ledger",
+      "url": "/d/prediction-core-paper-ledger/ledger-paper?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     }
   ],
   "liveNow": false,

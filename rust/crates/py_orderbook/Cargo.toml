@@ -9,5 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pm_book = { path = "../pm_book" }
+pm_risk = { path = "../pm_risk" }
+pm_signal = { path = "../pm_signal" }
 pm_types = { path = "../pm_types" }
 pyo3 = { version = "0.22", features = ["extension-module"] }

@@ -15,8 +15,9 @@
       "targetBlank": false,
       "title": "Debug des décisions",
       "tooltip": "Ouvrir le debug décision filtré",
-      "type": "dashboard",
-      "uid": "prediction-core-decision-debug"
+      "type": "link",
+      "uid": "prediction-core-decision-debug",
+      "url": "/d/prediction-core-decision-debug/debug-des-decisions?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -26,8 +27,9 @@
       "targetBlank": false,
       "title": "Ledger paper",
       "tooltip": "Ouvrir le ledger paper filtré",
-      "type": "dashboard",
-      "uid": "prediction-core-paper-ledger"
+      "type": "link",
+      "uid": "prediction-core-paper-ledger",
+      "url": "/d/prediction-core-paper-ledger/ledger-paper?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     },
     {
       "asDropdown": false,
@@ -37,8 +39,9 @@
       "targetBlank": false,
       "title": "Pilotage paper/live",
       "tooltip": "Ouvrir la console stratégie",
-      "type": "dashboard",
-      "uid": "prediction-core-strategy-control"
+      "type": "link",
+      "uid": "prediction-core-strategy-control",
+      "url": "/d/prediction-core-strategy-control/pilotage-paper-live?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     }
   ],
   "liveNow": false,

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys
+import types
+
 from weather_pm.edge_sizing import calculate_edge_sizing
 
 
@@ -47,6 +50,45 @@ def test_calculate_edge_sizing_supports_sell_side_edges() -> None:
     assert sizing.edge_bps == -800
     assert sizing.net_edge_bps == 700
     assert sizing.suggested_fraction > 0.0
+
+
+def test_calculate_edge_sizing_uses_rust_when_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    fake_module = types.ModuleType("prediction_core._rust_orderbook")
+
+    def rust_calculate_edge_sizing(**kwargs):
+        assert kwargs["prediction_probability"] == 0.62
+        assert kwargs["market_price"] == 0.55
+        return {
+            "prediction_probability": 0.62,
+            "market_price": 0.55,
+            "side": "buy",
+            "raw_edge": 0.07,
+            "net_edge": 0.058,
+            "edge_bps": 700,
+            "net_edge_bps": 580,
+            "kelly_fraction": 0.1556,
+            "suggested_fraction": 0.02,
+            "recommendation": "buy",
+        }
+
+    fake_module.calculate_edge_sizing = rust_calculate_edge_sizing
+    monkeypatch.setitem(sys.modules, "prediction_core._rust_orderbook", fake_module)
+
+    sizing = calculate_edge_sizing(prediction_probability=0.62, market_price=0.55, edge_cost_bps=120.0)
+
+    assert sizing.to_dict() == {
+        "prediction_probability": 0.62,
+        "market_price": 0.55,
+        "side": "buy",
+        "raw_edge": 0.07,
+        "net_edge": 0.058,
+        "edge_bps": 700,
+        "net_edge_bps": 580,
+        "kelly_fraction": 0.1556,
+        "suggested_fraction": 0.02,
+        "recommendation": "buy",
+    }
 
 
 def test_calculate_edge_sizing_rejects_invalid_probabilities() -> None:
