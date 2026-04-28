@@ -33,6 +33,19 @@ Scénarios replay déterministes couverts côté Python : carnet vide, spread la
 
 `prediction_core.risk.evaluate_risk_sizing` fournit un gate déterministe paper/dry-run indépendant des modèles prédictifs. Les payloads `RiskSizingInput`, `RiskSizingLimits`, `RiskSizingDecision` et `RiskSizingSnapshot` couvrent notional, exposition, drawdown, turnover, concentration, coût all-in et edge net minimum. Les sorties `to_dict()` incluent toujours `paper_only=true` et `live_order_allowed=false` pour ingestion ClickHouse/Grafana sans autoriser d’ordre réel.
 
+### Règles Polymarket communes — simulation, dry-run et réel gardé
+
+`prediction_core.execution.polymarket_rules` centralise les règles observées côté Polymarket afin que la simulation, le paper/dry-run et un éventuel réel gardé utilisent les mêmes hypothèses avant tout ordre :
+
+- `minimum_order_size` est traité comme une quantité de shares, pas comme un montant fixe en USDC. La valeur par défaut issue des marchés CLOB observés est `5` shares.
+- Le notional minimum dépend donc du prix : `minimum_order_size_shares * price` (`5 * 0.01 = 0.05 USDC`, `5 * 0.99 = 4.95 USDC`).
+- Les prix doivent respecter `minimum_tick_size` (`0.01` ou `0.001` selon le marché CLOB).
+- Les frais maker sont `0` par défaut ; les frais taker suivent la formule officielle `shares * fee_rate * price * (1 - price)` avec arrondi à `0.00001 USDC`.
+- Pour la catégorie météo, `fee_rate = 0.05`.
+- Un achat “market buy” UI/API peut avoir une contrainte séparée de notional `> 1 USDC`; elle est modélisée comme garde supplémentaire, sans remplacer le minimum CLOB en shares.
+
+Ces helpers sont purs et side-effect-free : ils ne lisent pas de secret, ne signent rien, ne contactent pas Polymarket et ne soumettent aucun ordre. Pour le réel, ils sont seulement un pré-gate local ; l’exécution reste derrière les garde-fous explicites de `ClobRestPolymarketExecutor` (`POLYMARKET_LIVE_ENABLED`, ack opérateur, max notional, kill switch).
+
 Comparaison avec les hypothèses `hftbacktest` :
 
 - Latency : modélisée explicitement (`latency_ms`) et propagée dans la quote, sans simulation temporelle probabiliste.
