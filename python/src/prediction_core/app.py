@@ -33,6 +33,7 @@ from prediction_core.polymarket_marketdata import (
 )
 from prediction_core.polymarket_runtime import ExecutionDisabledError, build_polymarket_runtime_scaffold, authorize_polymarket_live_execution, preflight_polymarket_live_readiness, run_polymarket_runtime_cycle
 from prediction_core.polymarket_stack import recommended_polymarket_stack, stack_decision_table
+from prediction_core.replay.signatures import verify_replay_event_chain
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -238,6 +239,12 @@ def build_parser() -> argparse.ArgumentParser:
     replay_jsonl.add_argument("--jsonl", required=True, help="JSONL audit file to inspect")
     replay_jsonl.add_argument("--max-rows", type=int, help="Maximum rows to include in the dry-run plan")
     replay_jsonl.add_argument("--dry-run", action="store_true", default=True, help="Plan only; writes are intentionally not enabled yet")
+
+    replay_trading = subparsers.add_parser(
+        "replay-trading-events",
+        help="Verify a deterministic canonical trading-event JSONL stream",
+    )
+    replay_trading.add_argument("--events-jsonl", required=True, help="Canonical trading-event JSONL file to verify")
 
     runtime_cycle = subparsers.add_parser(
         "polymarket-runtime-cycle",
@@ -479,6 +486,16 @@ def main() -> int:
 
         print(json.dumps(replay_jsonl_audit_plan(jsonl_path=args.jsonl, max_rows=args.max_rows)))
         return 0
+
+    if args.command == "replay-trading-events":
+        events: list[dict] = []
+        try:
+            events = _read_jsonl_events(Path(args.events_jsonl))
+            result = verify_replay_event_chain(events)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            result = {"valid": False, "event_count": len(events), "digest": "", "errors": [f"{type(exc).__name__}: {exc}"]}
+        print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+        return 0 if result["valid"] else 1
 
     if args.command == "polymarket-daemon":
         markets = _read_json_file(Path(args.markets_json))
