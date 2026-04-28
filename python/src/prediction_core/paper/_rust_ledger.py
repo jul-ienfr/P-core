@@ -89,6 +89,40 @@ def refresh_pnl_with_optional_rust(
         )
 
 
+def exit_policy_with_optional_rust(
+    *,
+    entry_price: float | None,
+    current_price: float | None,
+    highest_price: float | None,
+    filled_usdc: float,
+    shares: float,
+    status: str,
+    stop_loss_pct: float,
+    trailing_stop_pct: float,
+    breakeven_after_profit_pct: float,
+) -> dict[str, Any] | None:
+    if not rust_ledger_enabled():
+        return None
+    try:
+        backend = importlib.import_module("prediction_core._rust_orderbook")
+        payload = backend.paper_evaluate_exit_policy(
+            entry_price=entry_price,
+            current_price=current_price,
+            highest_price=highest_price,
+            filled_usdc=float(filled_usdc),
+            shares=float(shares),
+            status=str(status),
+            stop_loss_pct=float(stop_loss_pct),
+            trailing_stop_pct=float(trailing_stop_pct),
+            breakeven_after_profit_pct=float(breakeven_after_profit_pct),
+        )
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return dict(payload)
+
+
 def settlement_pnl_with_optional_rust(
     *,
     shares: float,

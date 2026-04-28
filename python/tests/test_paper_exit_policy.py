@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys
+import types
+
 from prediction_core.paper.exit_policy import (
     ExitDecision,
     ExitPolicy,
@@ -109,3 +112,36 @@ def test_annotate_order_with_exit_policy_adds_pure_recommendation_without_mutati
         "unrealized_return_pct": 0.25,
     }
     assert annotated["operator_action"] != "SELL"
+
+
+def test_exit_policy_uses_rust_when_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    fake_module = types.ModuleType("prediction_core._rust_orderbook")
+
+    def rust_evaluate_exit_policy(**kwargs):
+        assert kwargs["entry_price"] == 0.40
+        assert kwargs["current_price"] == 0.33
+        assert kwargs["stop_loss_pct"] == 0.15
+        return {
+            "action": "EXIT_REVIEW_PAPER",
+            "reason": "stop_loss",
+            "trigger_price": 0.34,
+            "current_price": 0.33,
+            "unrealized_return_pct": -0.175,
+        }
+
+    fake_module.paper_evaluate_exit_policy = rust_evaluate_exit_policy
+    monkeypatch.setitem(sys.modules, "prediction_core._rust_orderbook", fake_module)
+
+    decision = evaluate_exit_policy(
+        _snapshot(current_price=0.33, highest_price=0.45),
+        ExitPolicy(stop_loss_pct=0.15, trailing_stop_pct=0.20, breakeven_after_profit_pct=0.25),
+    )
+
+    assert decision == ExitDecision(
+        action="EXIT_REVIEW_PAPER",
+        reason="stop_loss",
+        trigger_price=0.34,
+        current_price=0.33,
+        unrealized_return_pct=-0.175,
+    )

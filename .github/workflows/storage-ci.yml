@@ -167,7 +167,7 @@ jobs:
           cargo build --manifest-path rust/Cargo.toml -p py_orderbook --release
           cp rust/target/release/lib_rust_orderbook.so python/src/prediction_core/_rust_orderbook.so
           cd python
-          PREDICTION_CORE_RUST_ORDERBOOK=1 uv run --frozen --with pytest --with pytest-asyncio pytest tests/test_execution_book.py tests/test_execution_rust_orderbook_wrapper.py tests/test_entry_policy.py tests/test_weather_e2e_paper_rust_smoke.py
+          PREDICTION_CORE_RUST_ORDERBOOK=1 uv run --frozen --with pytest --with pytest-asyncio pytest tests/test_execution_book.py tests/test_execution_rust_orderbook_wrapper.py tests/test_entry_policy.py tests/test_paper_exit_policy.py tests/test_weather_e2e_paper_rust_smoke.py
 
       - name: Check shared orderbook parity fixture
         working-directory: rust

@@ -1,7 +1,8 @@
 use pm_book::estimate_fill_from_book as rust_estimate_fill_from_book;
 use pm_executor::compute_order_size as rust_compute_order_size;
 use pm_ledger::{
-    fee_amount as rust_paper_fee_amount, paper_opening_cost_state as rust_paper_opening_cost_state,
+    evaluate_exit_policy as rust_paper_evaluate_exit_policy, fee_amount as rust_paper_fee_amount,
+    paper_opening_cost_state as rust_paper_opening_cost_state,
     refresh_pnl as rust_paper_refresh_pnl, settlement_pnl as rust_paper_settlement_pnl,
 };
 use pm_risk::evaluate_execution_risk as rust_evaluate_execution_risk;
@@ -235,6 +236,42 @@ fn paper_refresh_pnl(
 }
 
 #[pyfunction]
+#[pyo3(signature = (entry_price=None, current_price=None, highest_price=None, filled_usdc=0.0, shares=0.0, status="filled", stop_loss_pct=0.20, trailing_stop_pct=0.25, breakeven_after_profit_pct=0.25))]
+#[allow(clippy::too_many_arguments)]
+fn paper_evaluate_exit_policy<'py>(
+    py: Python<'py>,
+    entry_price: Option<f64>,
+    current_price: Option<f64>,
+    highest_price: Option<f64>,
+    filled_usdc: f64,
+    shares: f64,
+    status: &str,
+    stop_loss_pct: f64,
+    trailing_stop_pct: f64,
+    breakeven_after_profit_pct: f64,
+) -> PyResult<Bound<'py, PyDict>> {
+    let decision = rust_paper_evaluate_exit_policy(
+        entry_price,
+        current_price,
+        highest_price,
+        filled_usdc,
+        shares,
+        status,
+        stop_loss_pct,
+        trailing_stop_pct,
+        breakeven_after_profit_pct,
+    )
+    .map_err(PyValueError::new_err)?;
+    let result = PyDict::new_bound(py);
+    result.set_item("action", decision.action)?;
+    result.set_item("reason", decision.reason)?;
+    result.set_item("trigger_price", decision.trigger_price)?;
+    result.set_item("current_price", decision.current_price)?;
+    result.set_item("unrealized_return_pct", decision.unrealized_return_pct)?;
+    Ok(result)
+}
+
+#[pyfunction]
 fn paper_settlement_pnl<'py>(
     py: Python<'py>,
     shares: f64,
@@ -265,6 +302,7 @@ fn _rust_orderbook(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(paper_fee_amount, module)?)?;
     module.add_function(wrap_pyfunction!(paper_opening_cost_state, module)?)?;
     module.add_function(wrap_pyfunction!(paper_refresh_pnl, module)?)?;
+    module.add_function(wrap_pyfunction!(paper_evaluate_exit_policy, module)?)?;
     module.add_function(wrap_pyfunction!(paper_settlement_pnl, module)?)?;
     Ok(())
 }

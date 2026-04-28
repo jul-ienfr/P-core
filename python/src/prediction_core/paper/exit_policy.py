@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from prediction_core.paper._rust_ledger import exit_policy_with_optional_rust
+
 
 @dataclass(frozen=True)
 class ExitPolicy:
@@ -43,9 +45,29 @@ def evaluate_exit_policy(snapshot: PaperPositionSnapshot, policy: ExitPolicy | N
     policy = policy or ExitPolicy()
     entry_price = _positive_float(snapshot.entry_price)
     current_price = _positive_float(snapshot.current_price)
+    highest_price = _positive_float(snapshot.highest_price)
     filled_usdc = _positive_float(snapshot.filled_usdc) or 0.0
     shares = _positive_float(snapshot.shares) or 0.0
     status = str(snapshot.status or "").lower()
+    rust_payload = exit_policy_with_optional_rust(
+        entry_price=entry_price,
+        current_price=current_price,
+        highest_price=highest_price,
+        filled_usdc=filled_usdc,
+        shares=shares,
+        status=status,
+        stop_loss_pct=policy.stop_loss_pct,
+        trailing_stop_pct=policy.trailing_stop_pct,
+        breakeven_after_profit_pct=policy.breakeven_after_profit_pct,
+    )
+    if rust_payload is not None:
+        return ExitDecision(
+            action=str(rust_payload["action"]),
+            reason=str(rust_payload["reason"]),
+            trigger_price=rust_payload["trigger_price"],
+            current_price=rust_payload["current_price"],
+            unrealized_return_pct=rust_payload["unrealized_return_pct"],
+        )
 
     if status not in {"filled", "partial"} or filled_usdc <= 0.0 or shares <= 0.0:
         return ExitDecision("HOLD", "not_open_position", None, current_price, None)

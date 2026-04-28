@@ -33,6 +33,15 @@ pub struct SettlementAccounting {
     pub net_pnl_after_all_costs: f64,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ExitDecision {
+    pub action: String,
+    pub reason: String,
+    pub trigger_price: Option<f64>,
+    pub current_price: Option<f64>,
+    pub unrealized_return_pct: Option<f64>,
+}
+
 pub fn fee_amount(notional: f64, bps: f64, fixed: f64) -> Result<f64, String> {
     validate_finite("notional", notional)?;
     validate_finite("bps", bps)?;
@@ -137,11 +146,122 @@ pub fn settlement_pnl(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn evaluate_exit_policy(
+    entry_price: Option<f64>,
+    current_price: Option<f64>,
+    highest_price: Option<f64>,
+    filled_usdc: f64,
+    shares: f64,
+    status: &str,
+    stop_loss_pct: f64,
+    trailing_stop_pct: f64,
+    breakeven_after_profit_pct: f64,
+) -> Result<ExitDecision, String> {
+    let entry = positive_float("entry_price", entry_price)?;
+    let current = positive_float("current_price", current_price)?;
+    let highest = positive_float("highest_price", highest_price)?;
+    validate_finite("filled_usdc", filled_usdc)?;
+    validate_finite("shares", shares)?;
+    validate_finite("stop_loss_pct", stop_loss_pct)?;
+    validate_finite("trailing_stop_pct", trailing_stop_pct)?;
+    validate_finite("breakeven_after_profit_pct", breakeven_after_profit_pct)?;
+
+    let filled = if filled_usdc > 0.0 { filled_usdc } else { 0.0 };
+    let share_count = if shares > 0.0 { shares } else { 0.0 };
+    let normalized_status = status.to_lowercase();
+    if normalized_status != "filled" && normalized_status != "partial"
+        || filled <= 0.0
+        || share_count <= 0.0
+    {
+        return Ok(exit_decision(
+            "HOLD",
+            "not_open_position",
+            None,
+            current,
+            None,
+        ));
+    }
+    let (Some(entry), Some(current)) = (entry, current) else {
+        return Ok(exit_decision("HOLD", "missing_price", None, current, None));
+    };
+
+    let high = highest.unwrap_or(entry.max(current));
+    let unrealized_return = Some(round6((current - entry) / entry));
+
+    let stop_loss_price = round6(entry * (1.0 - stop_loss_pct.max(0.0)));
+    if current <= stop_loss_price {
+        return Ok(exit_decision(
+            "EXIT_REVIEW_PAPER",
+            "stop_loss",
+            Some(stop_loss_price),
+            Some(round6(current)),
+            unrealized_return,
+        ));
+    }
+
+    let trailing_stop_price = round6(high * (1.0 - trailing_stop_pct.max(0.0)));
+    if high > entry && current <= trailing_stop_price {
+        return Ok(exit_decision(
+            "EXIT_REVIEW_PAPER",
+            "trailing_stop",
+            Some(trailing_stop_price),
+            Some(round6(current)),
+            unrealized_return,
+        ));
+    }
+
+    let profit_trigger = breakeven_after_profit_pct.max(0.0);
+    let breakeven_buffer = 0.02_f64.min(profit_trigger / 10.0);
+    let breakeven_floor = round6(entry * (1.0 + breakeven_buffer));
+    if high >= entry * (1.0 + profit_trigger) && current <= breakeven_floor {
+        return Ok(exit_decision(
+            "EXIT_REVIEW_PAPER",
+            "breakeven_after_profit",
+            Some(round6(entry)),
+            Some(round6(current)),
+            unrealized_return,
+        ));
+    }
+
+    Ok(exit_decision(
+        "HOLD",
+        "no_exit_trigger",
+        None,
+        Some(round6(current)),
+        unrealized_return,
+    ))
+}
+
 fn validate_finite(name: &str, value: f64) -> Result<(), String> {
     if !value.is_finite() {
         return Err(format!("{name} must be finite"));
     }
     Ok(())
+}
+
+fn positive_float(name: &str, value: Option<f64>) -> Result<Option<f64>, String> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    validate_finite(name, value)?;
+    Ok((value > 0.0).then_some(value))
+}
+
+fn exit_decision(
+    action: &str,
+    reason: &str,
+    trigger_price: Option<f64>,
+    current_price: Option<f64>,
+    unrealized_return_pct: Option<f64>,
+) -> ExitDecision {
+    ExitDecision {
+        action: action.to_string(),
+        reason: reason.to_string(),
+        trigger_price,
+        current_price,
+        unrealized_return_pct,
+    }
 }
 
 fn round6(value: f64) -> f64 {
@@ -196,5 +316,93 @@ mod tests {
         assert_eq!(win.pnl_usdc, 11.35);
         assert_eq!(loss.status, "settled_loss");
         assert_eq!(loss.pnl_usdc, -10.15);
+    }
+
+    #[test]
+    fn exit_policy_recommends_stop_loss() {
+        let decision = evaluate_exit_policy(
+            Some(0.40),
+            Some(0.33),
+            Some(0.45),
+            10.0,
+            25.0,
+            "filled",
+            0.15,
+            0.20,
+            0.25,
+        )
+        .unwrap();
+
+        assert_eq!(decision.action, "EXIT_REVIEW_PAPER");
+        assert_eq!(decision.reason, "stop_loss");
+        assert_eq!(decision.trigger_price, Some(0.34));
+        assert_eq!(decision.current_price, Some(0.33));
+        assert_eq!(decision.unrealized_return_pct, Some(-0.175));
+    }
+
+    #[test]
+    fn exit_policy_preserves_trigger_priority() {
+        let trailing = evaluate_exit_policy(
+            Some(0.40),
+            Some(0.50),
+            Some(0.72),
+            10.0,
+            25.0,
+            "filled",
+            0.20,
+            0.25,
+            0.50,
+        )
+        .unwrap();
+        let breakeven = evaluate_exit_policy(
+            Some(0.40),
+            Some(0.405),
+            Some(0.55),
+            10.0,
+            25.0,
+            "filled",
+            0.20,
+            0.40,
+            0.25,
+        )
+        .unwrap();
+
+        assert_eq!(trailing.reason, "trailing_stop");
+        assert_eq!(trailing.trigger_price, Some(0.54));
+        assert_eq!(breakeven.reason, "breakeven_after_profit");
+        assert_eq!(breakeven.trigger_price, Some(0.40));
+    }
+
+    #[test]
+    fn exit_policy_holds_for_missing_price_or_closed_position() {
+        let missing = evaluate_exit_policy(
+            Some(0.40),
+            None,
+            Some(0.50),
+            10.0,
+            25.0,
+            "filled",
+            0.20,
+            0.25,
+            0.25,
+        )
+        .unwrap();
+        let closed = evaluate_exit_policy(
+            Some(0.40),
+            Some(0.50),
+            Some(0.50),
+            0.0,
+            0.0,
+            "planned",
+            0.20,
+            0.25,
+            0.25,
+        )
+        .unwrap();
+
+        assert_eq!(missing.action, "HOLD");
+        assert_eq!(missing.reason, "missing_price");
+        assert_eq!(closed.action, "HOLD");
+        assert_eq!(closed.reason, "not_open_position");
     }
 }
