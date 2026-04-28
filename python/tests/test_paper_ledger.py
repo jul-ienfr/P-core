@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from prediction_core.paper import (
@@ -8,6 +11,13 @@ from prediction_core.paper import (
     paper_ledger_refresh,
     summarize_paper_ledger,
 )
+from prediction_core.paper.ledger import simulate_orderbook_fill
+
+FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "orderbook_fill_parity.json"
+
+
+def _parity_fixture():
+    return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _candidate(**overrides):
@@ -26,6 +36,47 @@ def _candidate(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+def test_paper_ledger_simulate_orderbook_fill_matches_parity_fixture() -> None:
+    payload = _parity_fixture()
+
+    result = simulate_orderbook_fill(
+        payload["polymarket_orderbook"],
+        side="NO",
+        spend_usd=payload["requests"]["spend_usdc"],
+        strict_limit=payload["requests"]["strict_limit"],
+    )
+
+    expected = dict(payload["expected"]["spend_fill"])
+    expected.pop("filled_quantity")
+
+    assert result == expected
+
+
+def test_paper_ledger_place_uses_parity_fixture_spend_fill() -> None:
+    payload = _parity_fixture()
+    expected = payload["expected"]["spend_fill"]
+
+    ledger = paper_ledger_place(
+        _candidate(
+            orderbook=payload["polymarket_orderbook"],
+            spend_usdc=payload["requests"]["spend_usdc"],
+            strict_limit=payload["requests"]["strict_limit"],
+            actual_refresh_price=expected["top_ask"],
+        )
+    )
+
+    order = ledger["orders"][0]
+    assert order["status"] == "filled"
+    assert order["filled_usdc"] == expected["fillable_spend"]
+    assert order["shares"] == pytest.approx(expected["fillable_spend"] / expected["avg_fill_price"], rel=1e-6)
+    assert order["avg_fill_price"] == pytest.approx(expected["avg_fill_price"], rel=1e-6)
+    assert order["simulated_fill"]["top_ask"] == expected["top_ask"]
+    assert order["simulated_fill"]["levels_used"] == expected["levels_used"]
+    assert order["simulated_fill"]["slippage_from_top_ask"] == pytest.approx(expected["slippage_from_top_ask"], rel=1e-6)
+    assert order["simulated_fill"]["execution_blocker"] is None
+    assert order["simulated_fill"]["fill_status"] == "filled"
 
 
 def test_paper_ledger_place_creates_generic_limit_only_order_with_cost_summary() -> None:
@@ -52,8 +103,32 @@ def test_paper_ledger_place_creates_generic_limit_only_order_with_cost_summary()
     assert order["slippage_usdc"] == pytest.approx(0.293349, rel=1e-6)
     assert order["estimated_exit_fee_usdc"] == 0.24
     assert order["pnl_usdc"] == -10.39
+    assert ledger["summary"]["paper_only"] is True
+    assert ledger["summary"]["live_order_allowed"] is False
     assert ledger["summary"]["status_counts"] == {"filled": 1}
     assert ledger["summary"]["net_pnl_after_all_costs"] == -10.39
+
+
+def test_paper_ledger_place_records_planned_when_no_spend_is_requested() -> None:
+    ledger = paper_ledger_place(_candidate(spend_usdc=0.0))
+
+    order = ledger["orders"][0]
+    assert order["paper_only"] is True
+    assert order["live_order_allowed"] is False
+    assert order["status"] == "planned"
+    assert order["operator_action"] == "PENDING_LIMIT"
+    assert ledger["summary"]["status_counts"] == {"planned": 1}
+
+
+def test_paper_ledger_place_records_partial_without_market_fallback() -> None:
+    ledger = paper_ledger_place(_candidate(orderbook={"no_asks": [{"price": 0.28, "size": 5.0}]}))
+
+    order = ledger["orders"][0]
+    assert order["paper_only"] is True
+    assert order["live_order_allowed"] is False
+    assert order["status"] == "partial"
+    assert order["operator_action"] == "PENDING_LIMIT"
+    assert order["simulated_fill"]["execution_blocker"] == "insufficient_executable_depth"
 
 
 def test_paper_ledger_place_enforces_book_and_strict_limit_without_market_fallback() -> None:
@@ -68,6 +143,35 @@ def test_paper_ledger_place_enforces_book_and_strict_limit_without_market_fallba
     assert order["status"] == "skipped_price_moved"
     assert order["filled_usdc"] == 0.0
     assert order["simulated_fill"]["execution_blocker"] == "strict_limit_price_exceeded"
+
+
+def test_paper_ledger_refresh_uses_parity_fixture_exit_orderbook() -> None:
+    payload = _parity_fixture()
+    ledger = paper_ledger_place(_candidate(orderbook=payload["polymarket_orderbook"]))
+    order = ledger["orders"][0]
+    order["shares"] = payload["requests"]["exit_quantity"]
+    order["filled_usdc"] = 5.0
+    order["all_in_entry_cost_usdc"] = 5.0
+    order["estimated_exit_fee_bps"] = 0.0
+    order["estimated_exit_fee_usdc"] = 0.0
+
+    refreshed = paper_ledger_refresh(
+        {"orders": [order]},
+        refreshes={
+            order["token_id"]: {
+                "best_bid": payload["polymarket_orderbook"]["no_bids"][0]["price"],
+                "exit_orderbook": {"no_bids": payload["polymarket_orderbook"]["no_bids"]},
+            }
+        },
+    )
+
+    refreshed_order = refreshed["orders"][0]
+    expected = payload["expected"]["exit_value"]
+    assert refreshed_order["exit_cost_basis"] == "live_bid_book"
+    assert refreshed_order["paper_exit_value_usdc"] == pytest.approx(expected["value"], rel=1e-6)
+    assert refreshed_order["mtm_usdc"] == pytest.approx(expected["value"], rel=1e-6)
+    assert refreshed_order["realized_exit_fee_usdc"] == 0.0
+    assert refreshed_order["pnl_usdc"] == pytest.approx(expected["value"] - 5.0, rel=1e-6)
 
 
 def test_paper_ledger_refresh_marks_to_market_and_settles_orders() -> None:

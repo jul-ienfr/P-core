@@ -4,6 +4,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from weather_pm.official_settlement import settlement_validation_status
+
 
 def resolution_check_schedule_from_gamma_event(
     event: dict[str, Any],
@@ -48,6 +50,62 @@ def enrich_exited_position_with_official_outcome(position: dict[str, Any], event
     enriched["paper_realized_pnl_usdc"] = current_exit_pnl
     return enriched
 
+
+
+def resolve_position_from_official_weather(
+    position: dict[str, Any],
+    structure: Any,
+    official_result: Any,
+) -> dict[str, Any]:
+    """Resolve a YES/NO paper position from a pure official weather settlement result.
+
+    This is paper-settlement bookkeeping only. It does not place orders, cancel orders,
+    sign wallet operations, or alter existing EXIT_PAPER PnL semantics.
+    """
+    observation = getattr(official_result, "observation", None)
+    result = {
+        "settlement_status": "UNSETTLED",
+        "winning_outcome": None,
+        "paper_settlement_value_usdc": None,
+        "paper_realized_pnl_usdc": None,
+        "settlement_source": "official_weather_unresolved",
+        "resolution_scheduled_at": getattr(structure, "date_local", None),
+        "resolution_checked_at": getattr(observation, "observed_date", None) or getattr(structure, "date_local", None),
+        "official_observed_value": getattr(official_result, "observed_value", None),
+        "official_observed_unit": getattr(official_result, "observed_unit", None),
+        "official_observation_source": getattr(observation, "source", None),
+        "official_station_code": getattr(observation, "station_code", None),
+        "official_reason": getattr(official_result, "reason", None),
+    }
+    if not bool(getattr(official_result, "resolved", False)) or getattr(official_result, "outcome_yes", None) is None:
+        return result
+
+    winning_outcome = "Yes" if bool(getattr(official_result, "outcome_yes")) else "No"
+    side = str(position.get("side") or "").strip().lower()
+    shares = _safe_float(position.get("shares")) or 0.0
+    spend = _safe_float(position.get("filled_usdc", position.get("spend_usdc"))) or 0.0
+    won = side == winning_outcome.lower()
+    settlement_value = round(shares if won else 0.0, 6)
+    pnl = round(settlement_value - spend, 6)
+    result.update(
+        {
+            "settlement_status": "SETTLED_WON" if won else "SETTLED_LOST",
+            "winning_outcome": winning_outcome,
+            "paper_settlement_value_usdc": settlement_value,
+            "paper_realized_pnl_usdc": pnl,
+            "settlement_source": f"official_weather:{getattr(official_result, 'provider', 'unknown')}",
+        }
+    )
+    return result
+
+
+
+def validate_settlement(
+    *,
+    official_result: Any = None,
+    polymarket_result: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return settlement_validation_status(official_result=official_result, polymarket_result=polymarket_result)
 
 
 def resolve_position_from_gamma_event(position: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:

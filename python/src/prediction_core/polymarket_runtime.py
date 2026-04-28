@@ -16,6 +16,7 @@ from prediction_core.polymarket_execution import (
     JsonlIdempotencyStore,
     OrderExecutor,
     OrderManagementExecutor,
+    LIVE_ACK_PHRASE,
     OrderRequest,
     reconcile_orders,
     OrderSide,
@@ -31,6 +32,8 @@ def preflight_polymarket_live_readiness(
     local_orders: list[dict[str, Any]] | None = None,
     positions_confirmed: bool = False,
     live_submission_wired: bool | None = None,
+    postgres_primary_confirmed: bool = False,
+    max_orders_per_cycle: int = 1,
 ) -> dict[str, Any]:
     """Check live CLOB environment without constructing a live executor or submitting/canceling orders."""
     source = env if env is not None else __import__("os").environ
@@ -38,7 +41,7 @@ def preflight_polymarket_live_readiness(
     missing = [name for name in required if not str(source.get(name, "")).strip()]
     configured = [name for name in required if name not in missing]
     credentials_ready = not missing
-    live_ack_ready = str(source.get("POLYMARKET_LIVE_ACK", "")) == "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS"
+    live_ack_ready = str(source.get("POLYMARKET_LIVE_ACK", "")) == LIVE_ACK_PHRASE
     live_enabled = str(source.get("POLYMARKET_LIVE_ENABLED", "")).strip() == "1"
     kill_switch_active = str(source.get("PREDICTION_CORE_DISABLE_LIVE_EXECUTION", "")).strip() == "1"
     if live_submission_wired is None:
@@ -76,7 +79,11 @@ def preflight_polymarket_live_readiness(
         readiness_blockers.append("open_orders_or_reconciliation_not_clear")
     if not positions_confirmed:
         readiness_blockers.append("positions_not_confirmed")
-    ready = credentials_ready and live_submission_wired and execution_available and open_orders_confirmed and positions_confirmed
+    if not postgres_primary_confirmed:
+        readiness_blockers.append("postgres_primary_not_confirmed")
+    if int(max_orders_per_cycle) != 1:
+        readiness_blockers.append("max_orders_per_cycle_not_one")
+    ready = credentials_ready and live_submission_wired and execution_available and open_orders_confirmed and positions_confirmed and postgres_primary_confirmed and int(max_orders_per_cycle) == 1
     return {
         "mode": "polymarket live read-only preflight",
         "ready": ready,
@@ -86,6 +93,7 @@ def preflight_polymarket_live_readiness(
         "execution_available": execution_available,
         "open_orders_confirmed": open_orders_confirmed,
         "positions_confirmed": positions_confirmed,
+        "postgres_primary_confirmed": postgres_primary_confirmed,
         "readiness_blockers": readiness_blockers,
         "checks": {
             "clob_env": {
@@ -109,6 +117,8 @@ def preflight_polymarket_live_readiness(
                 "error": open_orders_error,
             },
             "positions_confirmed": positions_confirmed,
+            "postgres_primary_confirmed": postgres_primary_confirmed,
+            "max_orders_per_cycle": int(max_orders_per_cycle),
             "reconciliation": reconciliation,
         },
     }
@@ -125,20 +135,63 @@ class ExecutionDisabledError(RuntimeError):
     """Raised when a caller attempts to enable real order execution in this scaffold."""
 
 
+def authorize_polymarket_live_execution(
+    *,
+    preflight: dict[str, Any],
+    operator_ack: str,
+    positions_confirmed: bool,
+    max_orders_per_cycle: int,
+) -> "LiveExecutionPermit":
+    checks = preflight.get("checks") or {}
+    if preflight.get("ready") is not True:
+        reconciliation = checks.get("reconciliation") or {}
+        if preflight.get("open_orders_confirmed") is not True or reconciliation.get("status") not in {None, "ok"}:
+            raise ExecutionDisabledError("live execution requires clean order reconciliation")
+        raise ExecutionDisabledError("live execution requires a ready preflight")
+    if preflight.get("postgres_primary_confirmed") is not True:
+        raise ExecutionDisabledError("live execution requires confirmed Postgres primary durability")
+    if preflight.get("open_orders_confirmed") is not True:
+        raise ExecutionDisabledError("live execution requires clean order reconciliation")
+    if (checks.get("reconciliation") or {}).get("status") != "ok":
+        raise ExecutionDisabledError("live execution requires clean order reconciliation")
+    if operator_ack != LIVE_ACK_PHRASE:
+        raise ExecutionDisabledError("live execution requires operator acknowledgement")
+    if positions_confirmed is not True:
+        raise ExecutionDisabledError("live execution requires confirmed positions")
+    if checks.get("kill_switch_active") is True:
+        raise ExecutionDisabledError("live execution is disabled by kill switch")
+    if checks.get("live_enabled") is not True:
+        raise ExecutionDisabledError("live execution requires POLYMARKET_LIVE_ENABLED=1")
+    if checks.get("live_submission_wired") is not True:
+        raise ExecutionDisabledError("live execution requires live submission wiring")
+    if int(max_orders_per_cycle) != 1:
+        raise ExecutionDisabledError("live execution is limited to one order per cycle")
+    return LiveExecutionPermit(
+        preflight_ready=True,
+        operator_ack=operator_ack,
+        positions_confirmed=positions_confirmed,
+        postgres_primary_confirmed=True,
+        max_orders_per_cycle=max_orders_per_cycle,
+    )
+
+
 @dataclass(frozen=True, kw_only=True)
 class LiveExecutionPermit:
     preflight_ready: bool
     operator_ack: str
     positions_confirmed: bool
+    postgres_primary_confirmed: bool = False
     max_orders_per_cycle: int = 1
 
     def __post_init__(self) -> None:
         if self.preflight_ready is not True:
             raise ExecutionDisabledError("live execution requires a ready preflight")
-        if self.operator_ack != "I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS":
+        if self.operator_ack != LIVE_ACK_PHRASE:
             raise ExecutionDisabledError("live execution requires operator acknowledgement")
         if self.positions_confirmed is not True:
             raise ExecutionDisabledError("live execution requires confirmed positions")
+        if self.postgres_primary_confirmed is not True:
+            raise ExecutionDisabledError("live execution requires confirmed Postgres primary durability")
         if int(self.max_orders_per_cycle) != 1:
             raise ExecutionDisabledError("live execution is limited to one order per cycle")
 
@@ -152,6 +205,18 @@ def build_polymarket_runtime_scaffold() -> dict[str, Any]:
             "paper_intents_only": True,
             "live_marketdata_allowed": True,
             "execution_requires_future_explicit_auth": True,
+        },
+        "ops_status": {
+            "daemon": "available via polymarket-daemon",
+            "risk": "configured",
+            "provider": "polymarket_clob_read_path",
+            "settlement": "not_configured",
+            "notification": "not_configured",
+            "analytics": "configured_off_hot_path",
+        },
+        "metrics": {
+            "orders_submitted": 0,
+            "cancel_submitted": False,
         },
         "workers": {
             "discovery_worker": {
@@ -394,7 +459,13 @@ def plan_disabled_execution_actions(
             if executor_result.accepted:
                 idempotency_store.mark_submitted(
                     order.idempotency_key,
-                    metadata={"market_id": order.market_id, "token_id": order.token_id, "status": executor_result.status, "mode": execution_mode},
+                    metadata={
+                        "market_id": order.market_id,
+                        "token_id": order.token_id,
+                        "status": executor_result.status,
+                        "mode": execution_mode,
+                        "exchange_order_id": executor_result.exchange_order_id,
+                    },
                 )
                 reserved_exposure_usdc += order.notional_usdc
                 summary["submitted_count"] += 1
@@ -509,6 +580,7 @@ async def run_polymarket_runtime_cycle(
         "paper_only": execution_mode != "live",
         "live_order_allowed": execution_mode == "live" and live_permit is not None,
         "guardrails": scaffold["guardrails"],
+        "ops_status": scaffold["ops_status"],
         "subscriptions": subscriptions,
         "marketdata": marketdata,
         "decisions": decisions,

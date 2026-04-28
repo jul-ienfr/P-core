@@ -22,6 +22,16 @@ def test_derive_requested_quantity_prefers_explicit_quantity() -> None:
     ) == 4.0
 
 
+def test_derive_requested_quantity_rejects_non_finite_explicit_quantity() -> None:
+    with pytest.raises(ValueError, match="requested_quantity must be finite"):
+        derive_requested_quantity(
+            requested_quantity=float("inf"),
+            bankroll_usd=1000,
+            yes_price=0.53,
+            score_bundle=BASE_SCORE_BUNDLE,
+        )
+
+
 def test_derive_requested_quantity_from_bankroll_and_decision() -> None:
     assert derive_requested_quantity(
         requested_quantity=None,
@@ -40,12 +50,32 @@ def test_derive_requested_quantity_returns_zero_for_non_tradeable_decision() -> 
     ) == 0.0
 
 
+def test_derive_requested_quantity_rejects_non_finite_bankroll() -> None:
+    with pytest.raises(ValueError, match="bankroll_usd must be finite"):
+        derive_requested_quantity(
+            requested_quantity=None,
+            bankroll_usd=float("inf"),
+            yes_price=0.53,
+            score_bundle=BASE_SCORE_BUNDLE,
+        )
+
+
 def test_derive_requested_quantity_rejects_negative_bankroll() -> None:
     with pytest.raises(ValueError, match="bankroll_usd must be >= 0"):
         derive_requested_quantity(
             requested_quantity=None,
             bankroll_usd=-1,
             yes_price=0.53,
+            score_bundle=BASE_SCORE_BUNDLE,
+        )
+
+
+def test_derive_requested_quantity_rejects_non_finite_yes_price_for_bankroll_sizing() -> None:
+    with pytest.raises(ValueError, match="yes_price must be finite"):
+        derive_requested_quantity(
+            requested_quantity=None,
+            bankroll_usd=1000,
+            yes_price=float("nan"),
             score_bundle=BASE_SCORE_BUNDLE,
         )
 
@@ -191,6 +221,17 @@ def test_derive_filled_execution_rejects_negative_filled_quantity() -> None:
         derive_filled_execution(
             filled_quantity=-1,
             fill_price=0.53,
+            requested_quantity=4,
+            yes_price=0.53,
+            score_bundle=BASE_SCORE_BUNDLE,
+        )
+
+
+def test_derive_filled_execution_rejects_invalid_fill_price() -> None:
+    with pytest.raises(ValueError, match="fill_price must be finite and between 0 and 1"):
+        derive_filled_execution(
+            filled_quantity=1,
+            fill_price=1.5,
             requested_quantity=4,
             yes_price=0.53,
             score_bundle=BASE_SCORE_BUNDLE,

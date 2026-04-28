@@ -56,3 +56,19 @@ def test_calculate_edge_sizing_rejects_invalid_probabilities() -> None:
         assert "prediction_probability" in str(exc)
     else:
         raise AssertionError("expected invalid probability to raise")
+
+
+def test_calculate_edge_sizing_rejects_non_finite_inputs() -> None:
+    for kwargs, field in (
+        ({"prediction_probability": float("nan"), "market_price": 0.5}, "prediction_probability"),
+        ({"prediction_probability": 0.5, "market_price": float("inf")}, "market_price"),
+        ({"prediction_probability": 0.5, "market_price": 0.4, "edge_cost_bps": float("nan")}, "edge_cost_bps"),
+        ({"prediction_probability": 0.5, "market_price": 0.4, "kelly_scale": float("inf")}, "kelly_scale"),
+    ):
+        try:
+            calculate_edge_sizing(**kwargs)
+        except ValueError as exc:
+            assert field in str(exc)
+            assert "finite" in str(exc)
+        else:
+            raise AssertionError(f"expected {field} to reject non-finite input")

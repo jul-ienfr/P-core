@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 
@@ -38,11 +39,17 @@ def derive_filled_execution(
                 filled_quantity = 0.0
                 fill_price = yes_price
 
+    if not math.isfinite(float(requested_quantity)) or requested_quantity < 0:
+        raise ValueError("requested_quantity must be finite and >= 0")
+    if not math.isfinite(float(filled_quantity)):
+        raise ValueError("filled_quantity must be finite")
     if filled_quantity < 0:
         raise ValueError("filled_quantity must be >= 0")
     if filled_quantity > requested_quantity:
         raise ValueError("filled_quantity must be <= requested_quantity")
     assert fill_price is not None
+    if not math.isfinite(float(fill_price)) or fill_price < 0.0 or fill_price > 1.0:
+        raise ValueError("fill_price must be finite and between 0 and 1")
     return float(filled_quantity), float(fill_price)
 
 
@@ -54,16 +61,22 @@ def derive_requested_quantity(
     score_bundle: dict[str, Any] | None,
 ) -> float:
     if requested_quantity is not None:
+        if not math.isfinite(float(requested_quantity)):
+            raise ValueError("requested_quantity must be finite")
         if requested_quantity < 0:
             raise ValueError("requested_quantity must be >= 0")
         return float(requested_quantity)
 
     if bankroll_usd is None:
         raise ValueError("requested_quantity is required when bankroll_usd or scored question sizing is unavailable")
+    if not math.isfinite(float(bankroll_usd)):
+        raise ValueError("bankroll_usd must be finite")
     if bankroll_usd < 0:
         raise ValueError("bankroll_usd must be >= 0")
     if score_bundle is None or yes_price is None:
         raise ValueError("bankroll_usd requires question and yes_price for scored sizing")
+    if not math.isfinite(float(yes_price)):
+        raise ValueError("yes_price must be finite")
     if yes_price <= 0:
         raise ValueError("yes_price must be > 0 for bankroll sizing")
 
@@ -77,6 +90,8 @@ def derive_requested_quantity(
     except (TypeError, ValueError) as exc:
         raise ValueError("max_position_pct_bankroll is required for bankroll sizing") from exc
 
+    if not math.isfinite(max_position_pct_bankroll_value):
+        raise ValueError("max_position_pct_bankroll must be finite")
     if max_position_pct_bankroll_value <= 0:
         return 0.0
 

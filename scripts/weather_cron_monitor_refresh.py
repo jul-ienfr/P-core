@@ -587,6 +587,146 @@ def refresh_position(pos, dtiso):
     p['reason']='; '.join(reasons)
     return p
 
+def french_reason(text):
+    if not text:
+        return text
+    replacements={
+        'official Polymarket final outcome: Yes':'résultat final officiel Polymarket : Oui',
+        'official Polymarket final outcome: No':'résultat final officiel Polymarket : Non',
+        'p_side':'p_side',
+        'hard_stop':'stop dur',
+    }
+    result=str(text)
+    for old, new in replacements.items():
+        result=result.replace(old, new)
+    return result
+
+
+def french_outcome(value):
+    if value == 'Yes': return 'Oui'
+    if value == 'No': return 'Non'
+    return value or ''
+
+
+def french_side(value):
+    if value == 'yes': return 'oui'
+    if value == 'no': return 'non'
+    if value == 'skip': return 'ignorer'
+    return value or ''
+
+
+def french_decision_status(value):
+    mapping={
+        'paper_trade_small':'entrée paper limitée',
+        'profile_enter_paper_planned':'entrée paper planifiée',
+        'skip':'ignorer',
+        'hold':'conserver',
+    }
+    return mapping.get(value, value or '')
+
+
+def french_blocker(value):
+    mapping={
+        'edge_below_threshold':'edge sous le seuil',
+        'execution_cost_exceeds_edge':'coût d’exécution supérieur à l’edge',
+        'no_profile_candidate_market':'aucun marché candidat pour ce profil',
+        'missing_probability':'probabilité manquante',
+        'missing_liquidity':'liquidité manquante',
+        'min_liquidity_not_met':'liquidité minimale non atteinte',
+        'non_probability_signal':'signal sans probabilité exploitable',
+        'synthetic_probability':'probabilité synthétique',
+        'market_derived_probability_not_allowed':'probabilité dérivée du marché non autorisée',
+        'circuit_breaker_tripped':'coupe-circuit activé',
+        'max_open_positions_reached':'nombre maximal de positions ouvertes atteint',
+        'daily_paper_loss_cap_reached':'limite de perte paper journalière atteinte',
+        'deployed_capital_cap_reached':'limite de capital déployé atteinte',
+    }
+    return mapping.get(value, value)
+
+
+def french_blockers(values):
+    return ', '.join(french_blocker(str(value)) for value in values or [])
+
+
+def french_action(value):
+    mapping={
+        'SETTLED_WON':'réglé gagné',
+        'SETTLED_LOST':'réglé perdu',
+        'EXIT_PAPER':'sortie paper',
+        'HOLD_CAPPED':'conserver plafonné',
+        'TRIM_OR_STOP_MONITOR':'surveiller réduction ou stop',
+    }
+    return mapping.get(value, value or '')
+
+
+def french_action_counts(counts):
+    if not counts:
+        return '-'
+    return ', '.join(f'{french_action(action)}={count}' for action, count in counts.items())
+
+
+def french_analytics_rows(rows):
+    if not isinstance(rows, dict):
+        return '-'
+    labels={
+        'prediction_runs':'runs prédiction',
+        'strategy_signals':'signaux stratégie',
+        'profile_decisions':'décisions profil',
+        'debug_decisions':'décisions debug',
+        'execution_events':'événements exécution',
+        'profile_metrics':'métriques profil',
+        'strategy_metrics':'métriques stratégie',
+        'paper_orders':'ordres paper',
+        'paper_positions':'positions paper',
+        'paper_pnl_snapshots':'snapshots PnL paper',
+    }
+    return ', '.join(f'{labels.get(key, key)}={value}' for key, value in rows.items())
+
+
+def french_live_status(value):
+    mapping={
+        'paper_evaluation_required':'évaluation paper requise',
+        'ready':'prêt',
+        'blocked':'bloqué',
+    }
+    return mapping.get(value, value or '')
+
+
+def french_bool(value):
+    if value is True:
+        return 'oui'
+    if value is False:
+        return 'non'
+    return value
+
+
+def french_mode(value):
+    if value == 'dry_run':
+        return 'paper à blanc'
+    return value or ''
+
+
+def french_live_condition(value):
+    mapping={
+        'accumulate_24_48h_paper_runs':'accumuler 24–48h de runs paper',
+        'verify_profile_pnl_and_blockers_in_grafana':'vérifier PnL et blocages des profils dans Grafana',
+        'confirm_order_attribution_for_submitted_dry_run_orders':'confirmer l’attribution des ordres à blanc soumis',
+        'operator_live_ack_required':'validation live opérateur requise',
+        'clob_credentials_and_kill_switch_preflight_required':'pré-vol identifiants CLOB et kill-switch requis',
+    }
+    return mapping.get(value, value)
+
+
+def french_live_conditions(values):
+    return ', '.join(french_live_condition(str(value)) for value in values or [])
+
+
+def french_display_value(value):
+    if value is None:
+        return '-'
+    return value
+
+
 def main():
     dt=now_utc(); stamp=ts(dt); dtiso=iso(dt)
     src_path, src_doc = latest_structural()
@@ -626,6 +766,7 @@ def main():
     out['analytics']=export_runtime_analytics(out, stamp)
     summary['analytics_inserted']=out['analytics'].get('inserted') if isinstance(out.get('analytics'), dict) else False
     summary['analytics_rows']=out['analytics'].get('rows') if isinstance(out.get('analytics'), dict) else {}
+    runtime_report['analytics']=out['analytics']
     json_path=BASE/f'weather_paper_cron_monitor_{stamp}.json'
     md_path=BASE/f'weather_paper_cron_monitor_{stamp}.md'
     csv_path=BASE/f'weather_paper_cron_monitor_{stamp}.csv'
@@ -635,70 +776,74 @@ def main():
         w=csv.DictWriter(f, fieldnames=fields); w.writeheader()
         for p in refreshed + closed: w.writerow({k:p.get(k) for k in fields})
     lines=[]
-    lines.append(f"# Weather paper cron monitor — {stamp}")
+    lines.append(f"# Monitoring cron météo paper — {stamp}")
     lines.append("")
-    lines.append("Paper only — no real orders placed. No fresh add unless Julien explicitly asks.")
+    lines.append("Mode paper-only — aucun ordre réel placé. Aucun nouvel ajout sans demande explicite de Julien.")
     lines.append("")
-    lines.append(f"Summary: active={len(refreshed)}, closed_preserved={len(closed)}, spend={spend:.4f} USDC, EV={ev:.4f} USDC, MTM_bid={mtm:.4f} USDC, actions={counts}, alerts={len(alerts)}")
+    lines.append(f"Résumé : actifs={len(refreshed)}, sorties_préservées={len(closed)}, capital={spend:.4f} USDC, valeur attendue={ev:.4f} USDC, valeur au meilleur bid={mtm:.4f} USDC, actions={french_action_counts(counts)}, alertes={len(alerts)}")
     lines.append("")
-    lines.append("## Runtime strategies")
+    lines.append("## Stratégies exécutées")
     if runtime_report.get('ok'):
         rp=runtime_report.get('runtime_summary',{})
         wp=runtime_report.get('weather_profiles',{})
         an=runtime_report.get('analytics',{})
-        lines.append(f"- Mode: `{runtime_report.get('runtime_execution_mode')}`")
-        lines.append(f"- Profils météo: {wp.get('profile_count')} ; stratégies: {wp.get('strategy_count')} ; signaux: {wp.get('signal_count')} ; décisions: {wp.get('decision_count')} ; enter={wp.get('enter_count')} ; skip={wp.get('skip_count')}")
-        lines.append(f"- Runtime: processed_events={rp.get('processed_events')}, paper_signal_count={rp.get('paper_signal_count')}, simulated_orders={rp.get('orders_submitted')}")
-        lines.append(f"- Grafana/ClickHouse: inserted={an.get('inserted')}, rows={an.get('rows')}")
+        lines.append(f"- Mode : `{french_mode(runtime_report.get('runtime_execution_mode'))}`")
+        lines.append(f"- Profils météo : {wp.get('profile_count')} ; stratégies : {wp.get('strategy_count')} ; signaux : {wp.get('signal_count')} ; décisions : {wp.get('decision_count')} ; entrées={wp.get('enter_count')} ; ignorées={wp.get('skip_count')}")
+        analytics_rows=an.get('rows') if isinstance(an.get('rows'), dict) else {}
+        lines.append(f"- Exécution : événements traités={rp.get('processed_events')}, signaux paper={rp.get('paper_signal_count')}, ordres executor soumis={rp.get('orders_submitted')}, intentions paper={rp.get('paper_intent_count')}")
+        lines.append(f"- Analytics paper : décisions d’entrée={wp.get('enter_count')}, lignes ordres paper={analytics_rows.get('paper_orders')}, lignes événements d’exécution={analytics_rows.get('execution_events')}")
+        lines.append(f"- Grafana/ClickHouse : inséré={french_bool(an.get('inserted'))}, lignes={french_analytics_rows(an.get('rows'))}")
         lr=runtime_report.get('live_readiness') if isinstance(runtime_report.get('live_readiness'), dict) else {}
-        lines.append(f"- Live readiness: ready={lr.get('ready_for_live')} ; status={lr.get('status')} ; remaining={lr.get('remaining_conditions')}")
+        lines.append(f"- Préparation live : prêt={french_bool(lr.get('ready_for_live'))} ; statut={french_live_status(lr.get('status'))} ; restant={french_live_conditions(lr.get('remaining_conditions'))}")
         decisions=wp.get('decisions') if isinstance(wp.get('decisions'), list) else []
         if decisions:
             lines.append("")
-            lines.append("| Profil | Décision | Side | Edge | Confidence | Notional | Blockers |")
+            lines.append("| Profil | Décision | Côté | Avantage | Confiance | Montant notionnel | Blocages |")
             lines.append("|---|---:|---:|---:|---:|---:|---|")
             for decision in decisions:
-                blockers=', '.join(decision.get('blockers') or []) if isinstance(decision, dict) else ''
-                lines.append(f"| {decision.get('profile_id')} | {decision.get('decision_status')} | {decision.get('side')} | {decision.get('edge')} | {decision.get('confidence')} | {decision.get('capped_spend_usdc')} | {blockers or '-'} |")
+                blockers=french_blockers(decision.get('blockers') or []) if isinstance(decision, dict) else ''
+                lines.append(f"| {decision.get('profile_id')} | {french_decision_status(decision.get('decision_status'))} | {french_side(decision.get('side'))} | {decision.get('edge')} | {decision.get('confidence')} | {decision.get('capped_spend_usdc')} | {blockers or '-'} |")
     else:
         lines.append(f"- FAILED stage={runtime_report.get('stage')} error={runtime_report.get('error')}")
     lines.append("")
     pr=portfolio_report
     pnl=pr['pnl_usdc']; pr_counts=pr['counts']
-    lines.append("## Portfolio PnL")
-    lines.append(f"- Counts: open={pr_counts['open']}, settled={pr_counts['settled']}, exit_paper={pr_counts['exit_paper']}, total={pr_counts['total']}")
-    lines.append(f"- Realized: {pnl['realized_total']:.6f} USDC (settled={pnl['settled_realized']:.6f}, exit_paper={pnl['exit_realized']:.6f})")
-    lines.append(f"- Open MTM bid: {pnl['open_mtm_bid']:.6f} USDC")
-    lines.append(f"- Realized + open MTM: {pnl['realized_plus_open_mtm']:.6f} USDC")
-    lines.append(f"- If open loses: {pnl['if_open_loses']:.6f} USDC; if open wins full payout: {pnl['if_open_wins_full_payout']:.6f} USDC")
-    lines.append(f"- Official hold-to-settlement PnL for EXIT_PAPER rows: {pnl['official_hold_to_settlement_for_exits']:.6f} USDC (postmortem only; does not rewrite exit PnL)")
+    lines.append("## PnL portefeuille")
+    lines.append(f"- Comptes : ouvertes={pr_counts['open']}, réglées={pr_counts['settled']}, sorties_paper={pr_counts['exit_paper']}, total={pr_counts['total']}")
+    lines.append(f"- Réalisé : {pnl['realized_total']:.6f} USDC (réglé={pnl['settled_realized']:.6f}, sortie_paper={pnl['exit_realized']:.6f})")
+    lines.append(f"- Valeur des positions ouvertes au meilleur bid : {pnl['open_mtm_bid']:.6f} USDC")
+    lines.append(f"- Réalisé + valeur ouverte au meilleur bid : {pnl['realized_plus_open_mtm']:.6f} USDC")
+    lines.append(f"- Si les positions ouvertes perdent : {pnl['if_open_loses']:.6f} USDC ; si elles gagnent à 100% : {pnl['if_open_wins_full_payout']:.6f} USDC")
+    lines.append(f"- Résultat officiel si les sorties paper avaient été conservées jusqu’au règlement : {pnl['official_hold_to_settlement_for_exits']:.6f} USDC (analyse après coup seulement ; ne réécrit pas le PnL de sortie)")
     lines.append("")
     if alerts:
-        lines.append("## Alerts")
+        lines.append("## Alertes")
         for a in alerts:
-            lines.append(f"- {a.get('action')}: {a.get('city')} {a.get('date')} {a.get('side')}{a.get('temp')} — p={a.get('p_side_now')} bid/ask={a.get('best_bid_now')}/{a.get('best_ask_now')} — {a.get('reason')}")
+            lines.append(f"- {french_action(a.get('action'))}: {a.get('city')} {a.get('date')} {a.get('side')}{a.get('temp')} — p={french_display_value(a.get('p_side_now'))} meilleur achat/vente={french_display_value(a.get('best_bid_now'))}/{french_display_value(a.get('best_ask_now'))} — {french_reason(a.get('reason'))}")
         lines.append("")
-    lines.append("## Active positions")
-    lines.append("| Position | Action | p_side | bid/ask | EV | MTM | Forecast | Official source |")
+    lines.append("## Positions actives")
+    lines.append("| Position | Action | Proba côté | meilleur achat/vente | Valeur attendue | Valeur bid | Prévision | Source officielle |")
     lines.append("|---|---:|---:|---:|---:|---:|---:|---|")
     for p in refreshed:
         pos=f"{p.get('city')} {p.get('date')} {p.get('side')}{p.get('temp')}"
-        src=p.get('official_resolution_source') or 'missing'
-        lines.append(f"| {pos} | {p.get('action')} | {p.get('p_side_now')} | {p.get('best_bid_now')}/{p.get('best_ask_now')} | {p.get('paper_ev_now_usdc')} | {p.get('paper_mtm_bid_usdc')} | {p.get('current_forecast_max_c')}°C via {p.get('forecast_query_used')} | {src} |")
+        src=p.get('official_resolution_source') or 'manquante'
+        lines.append(f"| {pos} | {french_action(p.get('action'))} | {french_display_value(p.get('p_side_now'))} | {french_display_value(p.get('best_bid_now'))}/{french_display_value(p.get('best_ask_now'))} | {french_display_value(p.get('paper_ev_now_usdc'))} | {french_display_value(p.get('paper_mtm_bid_usdc'))} | {french_display_value(p.get('current_forecast_max_c'))}°C via {french_display_value(p.get('forecast_query_used'))} | {src} |")
     lines.append("")
     if closed:
-        lines.append("## Closed / exited positions")
-        lines.append("| Position | Action | Exit PnL | Official final | Official hold-to-settlement PnL |")
+        lines.append("## Positions fermées / sorties")
+        lines.append("| Position | Action | PnL sortie | Résultat officiel | Résultat officiel si conservé jusqu’au règlement |")
         lines.append("|---|---:|---:|---:|---:|")
         for p in closed:
             pos=f"{p.get('city')} {p.get('date')} {p.get('side')}{p.get('temp')}"
-            official=p.get('official_settlement_status') or 'not checked'
-            lines.append(f"| {pos} | {p.get('action')} | {p.get('paper_realized_pnl_usdc')} | {official} {p.get('official_winning_outcome') or ''} | {p.get('official_hold_to_settlement_pnl_usdc')} |")
+            official=french_action(p.get('official_settlement_status')) if p.get('official_settlement_status') else 'non vérifié'
+            lines.append(f"| {pos} | {french_action(p.get('action'))} | {p.get('paper_realized_pnl_usdc')} | {official} {french_outcome(p.get('official_winning_outcome'))} | {p.get('official_hold_to_settlement_pnl_usdc')} |")
         lines.append("")
-    lines.append(f"Artifacts: `{json_path}`, `{csv_path}`, `{md_path}`")
+    lines.append(f"Artefacts : `{json_path}`, `{csv_path}`, `{md_path}`")
     md_path.write_text('\n'.join(lines)+'\n', encoding='utf-8')
     # Verification
     ok=json_path.exists() and csv_path.exists() and md_path.exists() and out['summary']['paper_only'] is True and out['summary']['no_real_order_placed'] is True and runtime_report.get('ok') is True
-    print(json.dumps({'ok':ok,'json':str(json_path),'csv':str(csv_path),'md':str(md_path),'summary':summary,'runtime_strategies':{'ok':runtime_report.get('ok'),'mode':runtime_report.get('runtime_execution_mode'),'weather_profile_count':summary.get('weather_profile_count'),'weather_profile_strategy_count':summary.get('weather_profile_strategy_count'),'weather_profile_signal_count':summary.get('weather_profile_signal_count'),'weather_profile_decision_count':summary.get('weather_profile_decision_count'),'weather_profile_enter_count':summary.get('weather_profile_enter_count'),'weather_profile_skip_count':summary.get('weather_profile_skip_count'),'analytics_inserted':summary.get('analytics_inserted')} ,'alerts':alerts}, ensure_ascii=False))
+    runtime_summary=runtime_report.get('runtime_summary') if isinstance(runtime_report.get('runtime_summary'), dict) else {}
+    analytics_rows=out.get('analytics',{}).get('rows') if isinstance(out.get('analytics'), dict) and isinstance(out.get('analytics',{}).get('rows'), dict) else {}
+    print(json.dumps({'ok':ok,'json':str(json_path),'csv':str(csv_path),'md':str(md_path),'summary':summary,'runtime_strategies':{'ok':runtime_report.get('ok'),'mode':runtime_report.get('runtime_execution_mode'),'weather_profile_count':summary.get('weather_profile_count'),'weather_profile_strategy_count':summary.get('weather_profile_strategy_count'),'weather_profile_signal_count':summary.get('weather_profile_signal_count'),'weather_profile_decision_count':summary.get('weather_profile_decision_count'),'weather_profile_enter_count':summary.get('weather_profile_enter_count'),'weather_profile_skip_count':summary.get('weather_profile_skip_count'),'executor_orders_submitted':runtime_summary.get('orders_submitted'),'paper_intent_count':runtime_summary.get('paper_intent_count'),'analytics_paper_orders_rows':analytics_rows.get('paper_orders'),'analytics_execution_events_rows':analytics_rows.get('execution_events'),'analytics_inserted':summary.get('analytics_inserted')} ,'alerts':alerts}, ensure_ascii=False))
 if __name__=='__main__': main()
 

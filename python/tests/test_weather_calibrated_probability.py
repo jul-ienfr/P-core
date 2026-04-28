@@ -9,6 +9,7 @@ from weather_pm.calibrated_probability import (
     gaussian_cdf,
     threshold_probability,
 )
+from weather_pm.calibration_dataset import GroupedRmsePolicy, LeadTimeBucket, RmseEstimate
 from weather_pm.models import ForecastBundle, MarketStructure
 from weather_pm.probability_model import build_model_output
 
@@ -139,3 +140,74 @@ def test_build_model_output_preserves_safe_fallback_when_data_is_insufficient() 
 
     assert model.probability_yes == 0.50
     assert model.method == "calibrated_threshold_v1"
+
+
+def test_build_model_output_uses_grouped_rmse_policy_context_to_soften_threshold_probability() -> None:
+    bucket = LeadTimeBucket(start_hours=24.0, end_hours=72.0)
+    rmse_policy = GroupedRmsePolicy(
+        estimates={
+            ("denver", "kden", "high", bucket): RmseEstimate(rmse=3.0, count=8),
+            (None, None, None, None): RmseEstimate(rmse=0.0, count=20),
+        },
+        minimum_sigma=0.6,
+    )
+    structure = MarketStructure(
+        city="Denver",
+        measurement_kind="high",
+        unit="f",
+        is_threshold=True,
+        is_exact_bin=False,
+        target_value=64.0,
+        range_low=None,
+        range_high=None,
+        threshold_direction="above",
+    )
+    forecast = ForecastBundle(
+        source_count=3,
+        consensus_value=66.0,
+        dispersion=1.0,
+        historical_station_available=True,
+        source_station_code="KDEN",
+        lead_time_hours=48.0,
+    )
+
+    model = build_model_output(structure, forecast, rmse_policy=rmse_policy)
+
+    assert model.probability_yes == 0.74
+    assert model.probability_yes < build_model_output(structure, forecast).probability_yes
+    assert model.method == "calibrated_gaussian_threshold_v1"
+
+
+def test_build_model_output_uses_grouped_rmse_policy_context_to_widen_exact_bin_probability() -> None:
+    bucket = LeadTimeBucket(start_hours=24.0, end_hours=72.0)
+    rmse_policy = GroupedRmsePolicy(
+        estimates={
+            ("denver", "kden", "high", bucket): RmseEstimate(rmse=3.0, count=8),
+            (None, None, None, None): RmseEstimate(rmse=0.0, count=20),
+        },
+        minimum_sigma=0.6,
+    )
+    structure = MarketStructure(
+        city="Denver",
+        measurement_kind="high",
+        unit="f",
+        is_threshold=False,
+        is_exact_bin=True,
+        target_value=None,
+        range_low=64.0,
+        range_high=66.0,
+    )
+    forecast = ForecastBundle(
+        source_count=3,
+        consensus_value=65.0,
+        dispersion=1.0,
+        historical_station_available=True,
+        source_station_code="KDEN",
+        lead_time_hours=48.0,
+    )
+
+    model = build_model_output(structure, forecast, rmse_policy=rmse_policy)
+
+    assert model.probability_yes == 0.25
+    assert model.probability_yes < build_model_output(structure, forecast).probability_yes
+    assert model.method == "calibrated_gaussian_bin_v1"

@@ -148,6 +148,32 @@ def test_build_forecast_bundle_falls_back_to_synthetic_surface_when_live_lookup_
     assert bundle.consensus_value == 64.2
     assert bundle.dispersion == 1.2
     assert bundle.historical_station_available is True
+    assert bundle.fallback_reason == "open_meteo_failed:RuntimeError"
+    assert bundle.source_health == "fallback"
+
+
+def test_build_forecast_bundle_fallback_keeps_resolution_metadata_and_reason() -> None:
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher?")
+    resolution = parse_resolution_metadata(
+        resolution_source="Resolution source: NOAA daily climate report for station KDEN",
+        description="Official observed high temperature at Denver International Airport station KDEN.",
+        rules="Source: https://www.weather.gov/wrh/climate?wfo=bou station KDEN.",
+    )
+
+    bundle = build_forecast_bundle(
+        structure,
+        live=True,
+        client=_FailingOpenMeteoClient(),
+        resolution=resolution,
+        direct_client=_FakeDirectStationClient({}),
+    )
+
+    assert bundle.source_provider == "noaa"
+    assert bundle.source_station_code == "KDEN"
+    assert bundle.source_latency_tier == "resolution_direct_target"
+    assert bundle.fallback_reason == "direct_station_failed:ValueError"
+    assert bundle.source_health == "fallback"
+
 
 
 def test_direct_station_client_builds_hong_kong_observatory_bundle_from_current_weather() -> None:
@@ -180,3 +206,4 @@ def test_direct_station_client_builds_hong_kong_observatory_bundle_from_current_
     assert bundle.source_station_code is None
     assert bundle.source_url == "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en"
     assert bundle.source_latency_tier == "direct"
+    assert bundle.source_health == "healthy"

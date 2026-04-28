@@ -9,6 +9,7 @@ from functools import partial
 from pathlib import Path
 
 from prediction_core.orchestrator import consume_weather_markets, run_weather_paper_batch, run_weather_workflow
+from prediction_core.polymarket_daemon import PolymarketDaemonConfig, run_polymarket_daemon
 from prediction_core.polymarket_execution import (
     ClobRestPolymarketExecutor,
     CompositeExecutionAuditLog,
@@ -30,7 +31,7 @@ from prediction_core.polymarket_marketdata import (
     replay_clob_ws_events,
     run_clob_marketdata_stream,
 )
-from prediction_core.polymarket_runtime import ExecutionDisabledError, LiveExecutionPermit, build_polymarket_runtime_scaffold, preflight_polymarket_live_readiness, run_polymarket_runtime_cycle
+from prediction_core.polymarket_runtime import ExecutionDisabledError, build_polymarket_runtime_scaffold, authorize_polymarket_live_execution, preflight_polymarket_live_readiness, run_polymarket_runtime_cycle
 from prediction_core.polymarket_stack import recommended_polymarket_stack, stack_decision_table
 
 
@@ -261,7 +262,37 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_cycle.add_argument("--daily-realized-pnl-usdc", type=float, default=0.0, help="Current daily realized PnL for risk checks")
     runtime_cycle.add_argument("--i-understand-live-orders", action="store_true", help="Required with --execution-mode live; acknowledges real Polymarket orders may be submitted")
     runtime_cycle.add_argument("--positions-confirmed", action="store_true", help="Required with --execution-mode live after operator position reconciliation")
+    runtime_cycle.add_argument("--postgres-primary-confirmed", action="store_true", help="Required with --execution-mode live after confirming Postgres is primary durability")
     runtime_cycle.add_argument("--max-orders-per-cycle", type=int, default=1, help="Maximum live orders per bounded cycle; currently must be 1")
+
+    daemon = subparsers.add_parser(
+        "polymarket-daemon",
+        help="Run the minimal durable Polymarket daemon; --once is bounded and testable without network",
+    )
+    daemon.add_argument("--mode", choices=("paper", "dry_run", "live"), default="paper", help="Daemon execution mode")
+    daemon.add_argument("--once", action="store_true", help="Run one bounded daemon cycle")
+    daemon.add_argument("--interval-seconds", type=float, default=60.0, help="Daemon loop interval")
+    daemon.add_argument("--heartbeat-seconds", type=float, default=300.0, help="Heartbeat interval represented in run lifecycle output")
+    daemon.add_argument("--markets-json", required=True, help="Path to local Gamma-like markets JSON array")
+    daemon.add_argument("--probabilities-json", required=True, help="Path to token_id -> model probability JSON object")
+    daemon.add_argument("--dry-run-events-jsonl", help="Path to JSONL CLOB websocket events for deterministic runs")
+    daemon.add_argument("--max-events", type=int, help="Stop after this many CLOB events")
+    daemon.add_argument("--min-liquidity", type=float, default=0.0, help="Minimum market liquidity for hot-path subscription")
+    daemon.add_argument("--min-edge", type=float, default=0.0, help="Minimum probability minus ask edge for paper signal")
+    daemon.add_argument("--max-snapshot-age-seconds", type=float, help="Maximum CLOB snapshot age allowed for decisions")
+    daemon.add_argument("--paper-notional-usdc", type=float, default=5.0, help="Paper intent notional")
+    daemon.add_argument("--idempotency-jsonl", help="JSONL idempotency store path required for dry_run/live execution")
+    daemon.add_argument("--audit-jsonl", help="JSONL audit log path required for dry_run/live execution")
+    daemon.add_argument("--max-order-notional-usdc", type=float, help="Per-order risk cap required for dry_run/live execution")
+    daemon.add_argument("--max-total-exposure-usdc", type=float, help="Total exposure risk cap required for dry_run/live execution")
+    daemon.add_argument("--max-daily-loss-usdc", type=float, help="Daily loss risk cap required for dry_run/live execution")
+    daemon.add_argument("--max-spread", type=float, help="Maximum allowed bid/ask spread required for dry_run/live execution")
+    daemon.add_argument("--total-exposure-usdc", type=float, default=0.0, help="Current total exposure for risk checks")
+    daemon.add_argument("--daily-realized-pnl-usdc", type=float, default=0.0, help="Current daily realized PnL for risk checks")
+    daemon.add_argument("--i-understand-live-orders", action="store_true", help="Required with --mode live; acknowledges real Polymarket orders may be submitted")
+    daemon.add_argument("--positions-confirmed", action="store_true", help="Required with --mode live after operator position reconciliation")
+    daemon.add_argument("--postgres-primary-confirmed", action="store_true", help="Required with --mode live after confirming Postgres is primary durability")
+    daemon.add_argument("--max-orders-per-cycle", type=int, default=1, help="Maximum live orders per bounded cycle; currently must be 1")
     del runtime_plan
 
     return parser
@@ -449,6 +480,69 @@ def main() -> int:
         print(json.dumps(replay_jsonl_audit_plan(jsonl_path=args.jsonl, max_rows=args.max_rows)))
         return 0
 
+    if args.command == "polymarket-daemon":
+        markets = _read_json_file(Path(args.markets_json))
+        probabilities = _read_json_file(Path(args.probabilities_json))
+        if not isinstance(markets, list):
+            parser.error("--markets-json must contain a JSON array")
+        if not isinstance(probabilities, dict):
+            parser.error("--probabilities-json must contain a JSON object")
+        if args.mode == "live":
+            if not args.once:
+                parser.error("--mode live requires --once for bounded operator runs")
+            if not args.i_understand_live_orders:
+                parser.error("--mode live requires --i-understand-live-orders")
+            if not args.positions_confirmed:
+                parser.error("--mode live requires --positions-confirmed")
+            if not args.postgres_primary_confirmed:
+                parser.error("--mode live requires --postgres-primary-confirmed")
+            if int(args.max_orders_per_cycle) != 1:
+                parser.error("--mode live currently requires --max-orders-per-cycle 1")
+        if args.mode in {"dry_run", "live"}:
+            required_risk_values = [args.max_order_notional_usdc, args.max_total_exposure_usdc, args.max_daily_loss_usdc, args.max_spread]
+            if not args.idempotency_jsonl or not args.audit_jsonl or any(value is None for value in required_risk_values):
+                parser.error("dry_run/live daemon requires --idempotency-jsonl, --audit-jsonl, and risk limits")
+        if args.mode != "paper" and not args.dry_run_events_jsonl:
+            parser.error("dry_run/live daemon requires --dry-run-events-jsonl for bounded deterministic marketdata")
+        if args.paper_notional_usdc is None or not math.isfinite(float(args.paper_notional_usdc)) or float(args.paper_notional_usdc) <= 0.0:
+            parser.error("--paper-notional-usdc must be finite and positive")
+        repository = _try_build_operational_state_repository()
+        config = PolymarketDaemonConfig(
+            mode=args.mode,
+            once=args.once,
+            interval_seconds=args.interval_seconds,
+            heartbeat_seconds=args.heartbeat_seconds,
+            markets=markets,
+            probabilities=probabilities,
+            dry_run_events_jsonl=args.dry_run_events_jsonl,
+            max_events=args.max_events,
+            min_liquidity=args.min_liquidity,
+            min_edge=args.min_edge,
+            max_snapshot_age_seconds=args.max_snapshot_age_seconds,
+            paper_notional_usdc=args.paper_notional_usdc,
+            idempotency_jsonl=args.idempotency_jsonl,
+            audit_jsonl=args.audit_jsonl,
+            max_order_notional_usdc=args.max_order_notional_usdc,
+            max_total_exposure_usdc=args.max_total_exposure_usdc,
+            max_daily_loss_usdc=args.max_daily_loss_usdc,
+            max_spread=args.max_spread,
+            total_exposure_usdc=args.total_exposure_usdc,
+            daily_realized_pnl_usdc=args.daily_realized_pnl_usdc,
+            positions_confirmed=args.positions_confirmed,
+            postgres_primary_confirmed=args.postgres_primary_confirmed,
+            operator_ack="I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS" if args.i_understand_live_orders else "",
+            max_orders_per_cycle=args.max_orders_per_cycle,
+        )
+        daemon_order_executor = None
+        if args.mode == "live":
+            try:
+                daemon_order_executor = ClobRestPolymarketExecutor.from_env()
+            except (ExecutionCredentialsError, LiveExecutionUnavailableError, LiveExecutionGuardrailError) as exc:
+                parser.error(str(exc))
+        result = asyncio.run(run_polymarket_daemon(config, repository=repository, order_executor=daemon_order_executor))
+        print(json.dumps(result.to_dict()))
+        return 0
+
     if args.command == "polymarket-runtime-cycle":
         markets = _read_json_file(Path(args.markets_json))
         probabilities = _read_json_file(Path(args.probabilities_json))
@@ -469,6 +563,8 @@ def main() -> int:
                 parser.error("--execution-mode live requires --i-understand-live-orders")
             if not args.positions_confirmed:
                 parser.error("--execution-mode live requires --positions-confirmed")
+            if not args.postgres_primary_confirmed:
+                parser.error("--execution-mode live requires --postgres-primary-confirmed")
             if int(args.max_orders_per_cycle) != 1:
                 parser.error("--execution-mode live currently requires --max-orders-per-cycle 1")
         if args.execution_mode in {"dry_run", "live"}:
@@ -491,15 +587,23 @@ def main() -> int:
             idempotency_store = JsonlIdempotencyStore(args.idempotency_jsonl)
             audit_log = JsonlExecutionAuditLog(args.audit_jsonl)
             postgres_repository = _try_build_operational_state_repository()
+            postgres_primary_confirmed = False
             if postgres_repository is not None:
-                idempotency_store = CompositeIdempotencyStore(
-                    idempotency_store,
-                    PostgresIdempotencyStore(postgres_repository, mode=args.execution_mode, paper_only=True),
-                )
-                audit_log = CompositeExecutionAuditLog(
-                    audit_log,
-                    PostgresExecutionAuditLog(postgres_repository, paper_only=True, live_order_allowed=False),
-                )
+                if args.execution_mode == "live" and args.postgres_primary_confirmed:
+                    idempotency_store = PostgresIdempotencyStore(postgres_repository, mode=args.execution_mode, paper_only=False)
+                    audit_log = PostgresExecutionAuditLog(postgres_repository, paper_only=False, live_order_allowed=True)
+                    postgres_primary_confirmed = True
+                elif args.execution_mode == "live":
+                    parser.error("--execution-mode live requires configured Postgres primary durability")
+                else:
+                    idempotency_store = CompositeIdempotencyStore(
+                        idempotency_store,
+                        PostgresIdempotencyStore(postgres_repository, mode=args.execution_mode, paper_only=True),
+                    )
+                    audit_log = CompositeExecutionAuditLog(
+                        audit_log,
+                        PostgresExecutionAuditLog(postgres_repository, paper_only=True, live_order_allowed=False),
+                    )
             if args.execution_mode == "dry_run":
                 order_executor = DryRunPolymarketExecutor()
                 live_permit = None
@@ -509,11 +613,11 @@ def main() -> int:
                     preflight = preflight_polymarket_live_readiness(
                         order_management=order_executor,
                         positions_confirmed=args.positions_confirmed,
+                        postgres_primary_confirmed=postgres_primary_confirmed,
+                        max_orders_per_cycle=args.max_orders_per_cycle,
                     )
-                    if not preflight["ready"]:
-                        parser.error("live preflight failed: " + ",".join(preflight["readiness_blockers"]))
-                    live_permit = LiveExecutionPermit(
-                        preflight_ready=True,
+                    live_permit = authorize_polymarket_live_execution(
+                        preflight=preflight,
                         operator_ack="I_UNDERSTAND_THIS_SUBMITS_REAL_POLYMARKET_ORDERS",
                         positions_confirmed=args.positions_confirmed,
                         max_orders_per_cycle=args.max_orders_per_cycle,

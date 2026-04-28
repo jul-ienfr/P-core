@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
+from prediction_core.execution._rust_orderbook import estimate_fill_with_optional_rust
 from prediction_core.execution.models import BookLevel, OrderBookSnapshot
 
 BookSide = Literal["buy", "sell"]
@@ -29,6 +30,16 @@ class FillEstimate:
 
 
 def estimate_fill_from_book(*, book: OrderBookSnapshot, side: BookSide, requested_quantity: float) -> FillEstimate:
+    return estimate_fill_with_optional_rust(
+        book=book,
+        side=side,
+        requested_quantity=requested_quantity,
+        fill_estimate_type=FillEstimate,
+        python_fallback=_estimate_fill_from_book_python,
+    )
+
+
+def _estimate_fill_from_book_python(*, book: OrderBookSnapshot, side: BookSide, requested_quantity: float) -> FillEstimate:
     quantity = max(0.0, float(requested_quantity))
     if side not in ("buy", "sell"):
         return _empty_fill(quantity)

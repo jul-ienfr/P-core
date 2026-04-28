@@ -29,3 +29,7 @@ ClickHouse tables are partitioned monthly by `observed_at` in `/home/jul/P-core/
 Back up analytics data with environment-specific ClickHouse backup tooling or storage snapshots. Keep backups compressed, checksummed, access-controlled, and separate from local developer volumes. Do not commit dumps or exported dashboard data that may include market, strategy, or operational details.
 
 For the full local storage backup/restore preflight and non-destructive MinIO lifecycle dry-run helpers, see `/home/jul/P-core/infra/storage/README.md`.
+
+## Weather operator cockpit
+
+Grafana provisions `weather-operator-cockpit.json` as the weather-specific paper operator cockpit. It reads existing ClickHouse analytics tables (`strategy_signals`, `profile_decisions`, `debug_decisions`, `paper_orders`, and `resolution_events`) to show city/date/source context, model probability vs market price, source freshness, intraday alerts, risk caps, paper position/action state, and official settlement status without adding live trading controls.

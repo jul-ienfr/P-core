@@ -620,7 +620,14 @@ def test_station_history_command_fetches_direct_resolution_station_history() -> 
     assert payload["source_route"]["polling_focus"] == "station_history_page"
     assert payload["history"]["latency_tier"] == "direct"
     assert payload["history"]["source_url"].endswith("/KMIA/date/2026-04-23")
-    assert payload["history"]["summary"] == {"min": 71.0, "max": 72.0, "mean": 71.5, "latest": 71.0, "point_count": 2.0}
+    assert payload["history"]["summary"] == {
+        "min": 71.0,
+        "max": 72.0,
+        "mean": 71.5,
+        "latest": 71.0,
+        "point_count": 2.0,
+        "source_health": "unknown",
+    }
     assert payload["history"]["latest"] == {"timestamp": "2026-04-23 06:53", "value": 71.0, "unit": "f"}
     assert payload["history"]["points"][0] == {"timestamp": "2026-04-23 05:53", "value": 72.0, "unit": "f"}
     assert payload["latency"] == {
@@ -633,6 +640,7 @@ def test_station_history_command_fetches_direct_resolution_station_history() -> 
         "latest_value": 71.0,
         "unit": "f",
         "source_url": "https://www.wunderground.com/history/daily/us/fl/miami/KMIA/date/2026-04-23",
+        "source_health": "unknown",
     }
 
 
@@ -696,6 +704,7 @@ def test_station_latest_command_fetches_latest_direct_resolution_station_observa
         "unit": "f",
         "source_url": "https://api.weather.gov/stations/KDEN/observations/latest",
         "source_lag_seconds": 600,
+        "source_health": "unknown",
     }
 
 

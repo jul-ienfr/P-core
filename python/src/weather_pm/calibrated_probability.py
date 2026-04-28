@@ -28,6 +28,8 @@ class CalibratedProbabilityInput:
     dispersion: float | None = None
     lead_time_hours: float | None = None
     market_yes_price: float | None = None
+    schema_version: str = "calibrated_probability_input_v1"
+    provenance: dict[str, str] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +38,8 @@ class CalibratedProbabilityOutput:
     sigma: float
     z_score: float
     edge: float | None = None
+    schema_version: str = "calibrated_probability_output_v1"
+    provenance: dict[str, str] | None = None
 
 
 def gaussian_cdf(z_score: float) -> float:
@@ -57,7 +61,13 @@ def threshold_probability(
         signed_distance = probability_input.forecast_value - probability_input.target_value
     z_score = signed_distance / sigma
     probability_yes = gaussian_cdf(z_score)
-    return _output(probability_yes=probability_yes, sigma=sigma, z_score=z_score, market_yes_price=probability_input.market_yes_price)
+    return _output(
+        probability_yes=probability_yes,
+        sigma=sigma,
+        z_score=z_score,
+        market_yes_price=probability_input.market_yes_price,
+        provenance=probability_input.provenance,
+    )
 
 
 def exact_bin_probability(
@@ -75,7 +85,13 @@ def exact_bin_probability(
     probability_yes = exact_bin_mass(low_z, high_z)
     midpoint = (low + high) / 2.0
     z_score = abs(probability_input.forecast_value - midpoint) / sigma
-    return _output(probability_yes=probability_yes, sigma=sigma, z_score=z_score, market_yes_price=probability_input.market_yes_price)
+    return _output(
+        probability_yes=probability_yes,
+        sigma=sigma,
+        z_score=z_score,
+        market_yes_price=probability_input.market_yes_price,
+        provenance=probability_input.provenance,
+    )
 
 
 def exact_bin_mass(low_z: float, high_z: float) -> float:
@@ -87,7 +103,14 @@ def _sigma(probability_input: CalibratedProbabilityInput, rmse_policy: LeadTimeR
     return policy.sigma(probability_input.dispersion, probability_input.lead_time_hours)
 
 
-def _output(*, probability_yes: float, sigma: float, z_score: float, market_yes_price: float | None) -> CalibratedProbabilityOutput:
+def _output(
+    *,
+    probability_yes: float,
+    sigma: float,
+    z_score: float,
+    market_yes_price: float | None,
+    provenance: dict[str, str] | None,
+) -> CalibratedProbabilityOutput:
     rounded_probability = round(probability_yes, 4)
     edge = None if market_yes_price is None else round(rounded_probability - float(market_yes_price), 4)
     return CalibratedProbabilityOutput(
@@ -95,4 +118,5 @@ def _output(*, probability_yes: float, sigma: float, z_score: float, market_yes_
         sigma=round(sigma, 4),
         z_score=round(z_score, 4),
         edge=edge,
+        provenance=provenance,
     )

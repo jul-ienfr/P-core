@@ -3,17 +3,32 @@ import json
 from prediction_core.storage.postgres import OperationalStateRepository
 
 
+class FakeMappings:
+    def __init__(self, rows=None):
+        self.rows = rows or []
+
+    def all(self):
+        return self.rows
+
+
 class FakeResult:
     rowcount = 1
 
+    def __init__(self, rows=None):
+        self.rows = rows or []
+
+    def mappings(self):
+        return FakeMappings(self.rows)
+
 
 class FakeConnection:
-    def __init__(self):
+    def __init__(self, rows=None):
         self.calls = []
+        self.rows = rows or []
 
     def execute(self, sql, params):
         self.calls.append((str(sql), params))
-        return FakeResult()
+        return FakeResult(self.rows)
 
 
 class FakeBegin:
@@ -28,8 +43,8 @@ class FakeBegin:
 
 
 class FakeEngine:
-    def __init__(self):
-        self.connection = FakeConnection()
+    def __init__(self, rows=None):
+        self.connection = FakeConnection(rows)
 
     def begin(self):
         return FakeBegin(self.connection)
@@ -45,6 +60,36 @@ def test_claim_idempotency_key_uses_insert_conflict_do_nothing():
     assert "ON CONFLICT (key) DO NOTHING" in sql
     assert params["key"] == "k1"
     assert params["paper_only"] is True
+
+
+def test_list_live_submitted_orders_reads_exchange_order_id_from_metadata():
+    engine = FakeEngine(
+        rows=[
+            {
+                "key": "idem-1",
+                "run_id": "run-1",
+                "market_id": "market-1",
+                "token_id": "token-1",
+                "metadata": {"status": "submitted", "exchange_order_id": "ord-1"},
+            }
+        ]
+    )
+    repo = OperationalStateRepository(engine)
+
+    orders = repo.list_live_submitted_orders()
+
+    sql, params = engine.connection.calls[0]
+    assert "mode = 'live'" in sql
+    assert params == {}
+    assert orders == [
+        {
+            "idempotency_key": "idem-1",
+            "exchange_order_id": "ord-1",
+            "market_id": "market-1",
+            "token_id": "token-1",
+            "status": "submitted",
+        }
+    ]
 
 
 def test_append_execution_audit_event_keeps_live_disabled():

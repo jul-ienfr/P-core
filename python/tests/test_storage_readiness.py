@@ -1,11 +1,12 @@
 import json
 import subprocess
+from pathlib import Path
 
 from prediction_core.storage.health import storage_health
 from prediction_core.storage.readiness import SECTION_NAMES, storage_live_validation_report, storage_readiness_bundle, storage_readiness_section
 
 
-SCRIPT = "../python/scripts/prediction-core"
+SCRIPT = str(Path(__file__).resolve().parents[1] / "scripts" / "prediction-core")
 
 
 def test_storage_readiness_bundle_contains_six_safe_sections():

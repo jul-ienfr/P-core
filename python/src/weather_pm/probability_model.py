@@ -1,15 +1,26 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from weather_pm.calibrated_probability import CalibratedProbabilityInput, exact_bin_probability, threshold_probability
 from weather_pm.models import ForecastBundle, MarketStructure, ModelOutput
+
+
+class RmsePolicy(Protocol):
+    def sigma(self, dispersion: float | None, lead_time_hours: float | None = None, **kwargs: object) -> float: ...
 
 
 _MIN_PROBABILITY = 0.05
 _MAX_PROBABILITY = 0.95
 
 
-def build_model_output(structure: MarketStructure, forecast_bundle: ForecastBundle) -> ModelOutput:
-    calibrated = _build_calibrated_probability(structure, forecast_bundle)
+def build_model_output(
+    structure: MarketStructure,
+    forecast_bundle: ForecastBundle,
+    *,
+    rmse_policy: RmsePolicy | None = None,
+) -> ModelOutput:
+    calibrated = _build_calibrated_probability(structure, forecast_bundle, rmse_policy=rmse_policy)
     if calibrated is not None:
         probability_yes, method = calibrated
         confidence = _calibrated_confidence(forecast_bundle)
@@ -26,11 +37,17 @@ def build_model_output(structure: MarketStructure, forecast_bundle: ForecastBund
         probability_yes=round(_clamp(probability_yes, _MIN_PROBABILITY, _MAX_PROBABILITY), 2),
         confidence=round(_clamp(confidence, _MIN_PROBABILITY, _MAX_PROBABILITY), 2),
         method=method,
+        version="v1",
     )
 
 
 
-def _build_calibrated_probability(structure: MarketStructure, forecast_bundle: ForecastBundle) -> tuple[float, str] | None:
+def _build_calibrated_probability(
+    structure: MarketStructure,
+    forecast_bundle: ForecastBundle,
+    *,
+    rmse_policy: RmsePolicy | None = None,
+) -> tuple[float, str] | None:
     if forecast_bundle.consensus_value is None or forecast_bundle.dispersion is None:
         return None
     calibrated_input = CalibratedProbabilityInput(
@@ -40,17 +57,44 @@ def _build_calibrated_probability(structure: MarketStructure, forecast_bundle: F
         range_low=structure.range_low,
         range_high=structure.range_high,
         dispersion=forecast_bundle.dispersion,
+        lead_time_hours=forecast_bundle.lead_time_hours,
     )
     try:
         if structure.is_threshold and structure.target_value is not None:
-            output = threshold_probability(calibrated_input)
+            output = threshold_probability(calibrated_input, rmse_policy=_contextual_rmse_policy(structure, forecast_bundle, rmse_policy))
             return output.probability_yes, "calibrated_gaussian_threshold_v1"
         if structure.is_exact_bin and structure.range_low is not None and structure.range_high is not None:
-            output = exact_bin_probability(calibrated_input)
+            output = exact_bin_probability(calibrated_input, rmse_policy=_contextual_rmse_policy(structure, forecast_bundle, rmse_policy))
             return output.probability_yes, "calibrated_gaussian_bin_v1"
     except ValueError:
         return None
     return None
+
+
+class _ContextualRmsePolicy:
+    def __init__(self, policy: RmsePolicy, structure: MarketStructure, forecast_bundle: ForecastBundle) -> None:
+        self._policy = policy
+        self._structure = structure
+        self._forecast_bundle = forecast_bundle
+
+    def sigma(self, dispersion: float | None, lead_time_hours: float | None = None) -> float:
+        return self._policy.sigma(
+            dispersion,
+            lead_time_hours,
+            city=self._forecast_bundle.calibration_city or self._structure.city,
+            station_code=self._forecast_bundle.calibration_station_code or self._forecast_bundle.source_station_code,
+            measurement_kind=self._structure.measurement_kind,
+        )
+
+
+def _contextual_rmse_policy(
+    structure: MarketStructure,
+    forecast_bundle: ForecastBundle,
+    rmse_policy: RmsePolicy | None,
+) -> RmsePolicy | None:
+    if rmse_policy is None:
+        return None
+    return _ContextualRmsePolicy(rmse_policy, structure, forecast_bundle)
 
 
 

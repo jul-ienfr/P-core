@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from weather_pm.orderbook_simulator import simulate_orderbook_fill
 from weather_pm.paper_ledger import (
     PaperLedgerError,
     paper_ledger_place,
@@ -17,6 +18,11 @@ from weather_pm.paper_ledger import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "orderbook_fill_parity.json"
+
+
+def _parity_fixture():
+    return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _candidate(**overrides):
@@ -44,12 +50,143 @@ def _candidate(**overrides):
     return payload
 
 
+def test_weather_orderbook_normalization_accepts_supported_no_formats():
+    from weather_pm.orderbook_simulator import normalize_orderbook_asks
+
+    cases = [
+        {"noAsks": [{"price": 0.31, "quantity": 2.0}, {"price": 0.29, "size": 3.0}]},
+        {"no_ask_levels": [{"price": 0.31, "quantity": 2.0}, {"price": 0.29, "size": 3.0}]},
+        {"NO": {"asks": [{"price": 0.31, "quantity": 2.0}, {"price": 0.29, "size": 3.0}]}},
+        {"NO": {"ask_levels": [{"price": 0.31, "quantity": 2.0}, {"price": 0.29, "size": 3.0}]}},
+    ]
+
+    for orderbook in cases:
+        assert normalize_orderbook_asks(orderbook, side="NO") == [
+            {"price": 0.29, "size": 3.0},
+            {"price": 0.31, "size": 2.0},
+        ]
+
+
+def test_weather_orderbook_normalization_accepts_supported_yes_formats():
+    from weather_pm.orderbook_simulator import normalize_orderbook_asks
+
+    cases = [
+        {"yes_ask_levels": [{"price": 0.62, "quantity": 2.0}, {"price": 0.58, "size": 3.0}]},
+        {"YES": {"asks": [{"price": 0.62, "quantity": 2.0}, {"price": 0.58, "size": 3.0}]}},
+        {"YES": {"ask_levels": [{"price": 0.62, "quantity": 2.0}, {"price": 0.58, "size": 3.0}]}},
+        {"asks": [{"price": 0.62, "quantity": 2.0}, {"price": 0.58, "size": 3.0}]},
+    ]
+
+    for orderbook in cases:
+        assert normalize_orderbook_asks(orderbook, side="YES") == [
+            {"price": 0.58, "size": 3.0},
+            {"price": 0.62, "size": 2.0},
+        ]
+
+
+def test_weather_orderbook_normalization_does_not_use_top_level_asks_for_no_side():
+    from weather_pm.orderbook_simulator import normalize_orderbook_asks
+
+    assert normalize_orderbook_asks({"asks": [{"price": 0.31, "size": 2.0}]}, side="NO") == []
+
+
+def test_weather_orderbook_bids_normalize_to_descending_rust_compatible_shape():
+    from weather_pm.orderbook_simulator import normalize_orderbook_bids, rust_compatible_orderbook_payload
+
+    orderbook = {
+        "NO": {
+            "asks": [{"price": 0.31, "quantity": 2.0}],
+            "bid_levels": [{"price": 0.27, "quantity": 4.0}, {"price": 0.29, "size": 3.0}],
+        }
+    }
+
+    assert normalize_orderbook_bids(orderbook, side="NO") == [
+        {"price": 0.29, "size": 3.0},
+        {"price": 0.27, "size": 4.0},
+    ]
+    assert rust_compatible_orderbook_payload(orderbook, side="NO") == {
+        "bids": [{"price": 0.29, "quantity": 3.0}, {"price": 0.27, "quantity": 4.0}],
+        "asks": [{"price": 0.31, "quantity": 2.0}],
+    }
+
+
+def test_weather_orderbook_bid_fallback_is_yes_only():
+    from weather_pm.orderbook_simulator import normalize_orderbook_bids
+
+    orderbook = {"bid_levels": [{"price": 0.59, "size": 2.0}]}
+
+    assert normalize_orderbook_bids(orderbook, side="YES") == [{"price": 0.59, "size": 2.0}]
+    assert normalize_orderbook_bids(orderbook, side="NO") == []
+
+
+def test_weather_orderbook_normalization_ignores_invalid_levels():
+    from weather_pm.orderbook_simulator import normalize_orderbook_asks
+
+    assert normalize_orderbook_asks(
+        {
+            "no_asks": [
+                {"price": 0.31, "size": 2.0},
+                {"price": 0.0, "size": 2.0},
+                {"price": 0.30, "size": 0.0},
+                {"price": "bad", "size": 1.0},
+            ]
+        },
+        side="NO",
+    ) == [{"price": 0.31, "size": 2.0}]
+
+
+def test_weather_paper_ledger_simulate_orderbook_fill_matches_parity_fixture():
+    payload = _parity_fixture()
+
+    result = simulate_orderbook_fill(
+        payload["polymarket_orderbook"],
+        side="NO",
+        spend_usd=payload["requests"]["spend_usdc"],
+        strict_limit=payload["requests"]["strict_limit"],
+    )
+
+    expected = dict(payload["expected"]["spend_fill"])
+    expected.pop("filled_quantity")
+
+    assert result == expected
+
+
+def test_weather_paper_ledger_place_uses_parity_fixture_spend_fill():
+    payload = _parity_fixture()
+    expected = payload["expected"]["spend_fill"]
+    expected_fill = dict(expected)
+    expected_fill.pop("filled_quantity")
+
+    ledger = paper_ledger_place(
+        _candidate(
+            orderbook=payload["polymarket_orderbook"],
+            spend_usdc=payload["requests"]["spend_usdc"],
+            strict_limit=payload["requests"]["strict_limit"],
+            actual_refresh_price=expected["top_ask"],
+        )
+    )
+
+    order = ledger["orders"][0]
+    assert order["status"] == "filled"
+    assert order["filled_usdc"] == expected["fillable_spend"]
+    assert order["shares"] == pytest.approx(expected["fillable_spend"] / expected["avg_fill_price"], rel=1e-6)
+    assert order["avg_fill_price"] == pytest.approx(expected["avg_fill_price"], rel=1e-6)
+    assert order["simulated_fill"] == expected_fill
+    assert order["unfilled_usdc"] == 0.0
+    assert order["live_order_allowed"] is False
+    assert order["order_type"] == "limit_only_paper"
+
+
 def test_paper_ledger_place_records_limit_only_filled_entry_with_required_context():
     ledger = paper_ledger_place(_candidate())
 
     assert ledger["summary"]["orders"] == 1
     assert ledger["summary"]["status_counts"] == {"filled": 1}
+    assert ledger["summary"]["paper_only"] is True
+    assert ledger["summary"]["live_order_allowed"] is False
     order = ledger["orders"][0]
+    assert order["paper_only"] is True
+    assert order["live_order_allowed"] is False
     assert order["status"] == "filled"
     assert order["order_type"] == "limit_only_paper"
     assert order["surface_id"] == "seoul-2026-04-26-temp-c"
@@ -100,6 +237,35 @@ def test_paper_ledger_place_charges_opening_slippage_and_marks_exit_cost_as_esti
     assert ledger["summary"]["net_pnl_after_all_costs"] == -10.39
 
 
+def test_weather_paper_ledger_refresh_uses_parity_fixture_exit_orderbook():
+    payload = _parity_fixture()
+    ledger = paper_ledger_place(_candidate(orderbook=payload["polymarket_orderbook"]))
+    order = ledger["orders"][0]
+    order["shares"] = payload["requests"]["exit_quantity"]
+    order["filled_usdc"] = 5.0
+    order["all_in_entry_cost_usdc"] = 5.0
+    order["estimated_exit_fee_bps"] = 0.0
+    order["estimated_exit_fee_usdc"] = 0.0
+
+    refreshed = paper_ledger_refresh(
+        {"orders": [order]},
+        refreshes={
+            "tok-no-20c": {
+                "best_bid": payload["polymarket_orderbook"]["no_bids"][0]["price"],
+                "exit_orderbook": {"no_bids": payload["polymarket_orderbook"]["no_bids"]},
+            }
+        },
+    )
+
+    refreshed_order = refreshed["orders"][0]
+    expected = payload["expected"]["exit_value"]
+    assert refreshed_order["exit_cost_basis"] == "live_bid_book"
+    assert refreshed_order["paper_exit_value_usdc"] == pytest.approx(expected["value"], rel=1e-6)
+    assert refreshed_order["mtm_usdc"] == pytest.approx(expected["value"], rel=1e-6)
+    assert refreshed_order["realized_exit_fee_usdc"] == 0.0
+    assert refreshed_order["pnl_usdc"] == pytest.approx(expected["value"] - 5.0, rel=1e-6)
+
+
 def test_paper_ledger_refresh_uses_live_bid_book_for_real_paper_exit_costs():
     ledger = paper_ledger_place(
         _candidate(
@@ -131,10 +297,23 @@ def test_paper_ledger_refresh_uses_live_bid_book_for_real_paper_exit_costs():
     assert refreshed["summary"]["realized_exit_fee_usdc"] == pytest.approx(0.029914, rel=1e-6)
 
 
+def test_paper_ledger_place_records_planned_when_no_spend_is_requested():
+    ledger = paper_ledger_place(_candidate(spend_usdc=0.0))
+
+    order = ledger["orders"][0]
+    assert order["paper_only"] is True
+    assert order["live_order_allowed"] is False
+    assert order["status"] == "planned"
+    assert order["operator_action"] == "PENDING_LIMIT"
+    assert ledger["summary"]["status_counts"] == {"planned": 1}
+
+
 def test_paper_ledger_place_records_partial_fill_but_still_never_market_buys():
     ledger = paper_ledger_place(_candidate(orderbook={"no_asks": [{"price": 0.28, "size": 5.0}]}))
 
     order = ledger["orders"][0]
+    assert order["paper_only"] is True
+    assert order["live_order_allowed"] is False
     assert order["status"] == "partial"
     assert order["filled_usdc"] == 1.4
     assert order["unfilled_usdc"] == 3.6
@@ -146,6 +325,8 @@ def test_paper_ledger_place_skips_when_price_moved_above_strict_limit():
     ledger = paper_ledger_place(_candidate(actual_refresh_price=0.34, orderbook={"no_asks": [{"price": 0.34, "size": 100.0}]}))
 
     order = ledger["orders"][0]
+    assert order["paper_only"] is True
+    assert order["live_order_allowed"] is False
     assert order["status"] == "skipped_price_moved"
     assert order["filled_usdc"] == 0.0
     assert order["operator_action"] == "NO_ADD_PRICE_MOVED"

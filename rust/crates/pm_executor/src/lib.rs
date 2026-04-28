@@ -8,7 +8,11 @@ pub struct OrderIntent {
     pub size: f64,
 }
 
-pub fn build_order_intent(market_id: impl Into<String>, side: OrderSide, price: f64) -> OrderIntent {
+pub fn build_order_intent(
+    market_id: impl Into<String>,
+    side: OrderSide,
+    price: f64,
+) -> OrderIntent {
     OrderIntent {
         market_id: market_id.into(),
         side,

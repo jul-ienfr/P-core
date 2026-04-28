@@ -147,6 +147,7 @@ Grafana provisions these dashboards from `infra/analytics/grafana/dashboards`:
 - **Strategy vs Profile** — compares strategy/profile metrics such as PnL, trade count, skip count, and average edge.
 - **Decision Debug** — inspects decision statuses, blockers, skip reasons, source/orderbook/risk gates, and debug rows.
 - **Paper Ledger** — monitors paper PnL snapshots, paper positions, paper orders, and net PnL.
+- **Weather Operator Cockpit** (`weather-operator-cockpit.json`) — weather-specific operator view for city/date/source, model probability vs market price, source freshness, intraday alerts, risk cap, paper position/action, and official settlement status.
 
 ## Environment variables
 

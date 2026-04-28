@@ -1,0 +1,75 @@
+{
+  "case_id": "minimal_orderbook_fill_parity_v1",
+  "book": {
+    "bids": [
+      {"price": 0.42, "quantity": 12.0},
+      {"price": 0.41, "quantity": 10.0}
+    ],
+    "asks": [
+      {"price": 0.45, "quantity": 10.0},
+      {"price": 0.46, "quantity": 15.0}
+    ]
+  },
+  "polymarket_orderbook": {
+    "no_asks": [
+      {"price": 0.28, "size": 20.0},
+      {"price": 0.30, "size": 20.0}
+    ],
+    "no_bids": [
+      {"price": 0.43, "size": 7.85715},
+      {"price": 0.41, "size": 20.0}
+    ]
+  },
+  "requests": {
+    "quantity": 20.0,
+    "spend_usdc": 10.0,
+    "strict_limit": 0.30,
+    "exit_quantity": 17.857142
+  },
+  "expected": {
+    "estimate_buy": {
+      "requested_quantity": 20.0,
+      "filled_quantity": 20.0,
+      "unfilled_quantity": 0.0,
+      "gross_notional": 9.1,
+      "average_price": 0.455,
+      "top_of_book_price": 0.45,
+      "slippage_cost": 0.1,
+      "slippage_bps": 111.11,
+      "levels_consumed": 2
+    },
+    "estimate_sell": {
+      "requested_quantity": 20.0,
+      "filled_quantity": 20.0,
+      "unfilled_quantity": 0.0,
+      "gross_notional": 8.32,
+      "average_price": 0.416,
+      "top_of_book_price": 0.42,
+      "slippage_cost": 0.08,
+      "slippage_bps": 95.24,
+      "levels_consumed": 2
+    },
+    "spend_fill": {
+      "side": "NO",
+      "requested_spend": 10.0,
+      "top_ask": 0.28,
+      "avg_fill_price": 0.288462,
+      "fillable_spend": 10.0,
+      "filled_quantity": 34.666667,
+      "levels_used": 2,
+      "slippage_from_top_ask": 0.008462,
+      "edge_after_fill": null,
+      "execution_blocker": null,
+      "fill_status": "filled"
+    },
+    "exit_value": {
+      "requested_quantity": 17.857142,
+      "filled_quantity": 17.857142,
+      "unfilled_quantity": 0.0,
+      "average_price": 0.4188,
+      "value": 7.478571,
+      "levels_consumed": 2,
+      "status": "filled"
+    }
+  }
+}

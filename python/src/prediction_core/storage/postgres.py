@@ -143,6 +143,34 @@ class OperationalStateRepository:
         )
         return bool(getattr(result, "rowcount", 0))
 
+    def list_live_submitted_orders(self) -> list[dict[str, Any]]:
+        result = self._execute(
+            """
+            SELECT key, run_id, market_id, token_id, metadata
+            FROM execution_idempotency_keys
+            WHERE mode = 'live'
+              AND paper_only = FALSE
+              AND COALESCE(metadata->>'status', '') IN ('submitted', 'pending', 'open')
+            """,
+            {},
+        )
+        rows = result.mappings().all() if hasattr(result, "mappings") else []
+        orders: list[dict[str, Any]] = []
+        for row in rows:
+            metadata = row.get("metadata") or {}
+            if isinstance(metadata, str):
+                metadata = json.loads(metadata)
+            orders.append(
+                {
+                    "idempotency_key": row.get("key"),
+                    "exchange_order_id": metadata.get("exchange_order_id") or metadata.get("order_id"),
+                    "market_id": row.get("market_id") or metadata.get("market_id"),
+                    "token_id": row.get("token_id") or metadata.get("token_id"),
+                    "status": metadata.get("status", "submitted"),
+                }
+            )
+        return orders
+
     def append_execution_audit_event(
         self,
         *,

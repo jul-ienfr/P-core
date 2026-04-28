@@ -19,15 +19,16 @@ def build_forecast_bundle(
     direct_client: DirectStationForecastClient | None = None,
 ) -> ForecastBundle:
     if not live:
-        return build_synthetic_forecast_bundle(structure)
+        return build_synthetic_forecast_bundle(structure, fallback_reason="live_disabled")
 
     direct_target = _direct_resolution_target(resolution)
-    if resolution is not None:
+    direct_failure_reason = None
+    if direct_target is not None:
         station_client = direct_client or DirectStationForecastClient()
         try:
             return station_client.build_forecast_bundle(structure, resolution)
-        except Exception:
-            pass
+        except Exception as exc:
+            direct_failure_reason = f"direct_station_failed:{exc.__class__.__name__}"
 
     forecast_client = client or OpenMeteoForecastClient()
     try:
@@ -35,14 +36,15 @@ def build_forecast_bundle(
         if direct_target is not None:
             return _bundle_with_resolution_target(bundle, direct_target)
         return bundle
-    except Exception:
-        bundle = build_synthetic_forecast_bundle(structure)
+    except Exception as exc:
+        reason = direct_failure_reason or f"open_meteo_failed:{exc.__class__.__name__}"
+        bundle = build_synthetic_forecast_bundle(structure, fallback_reason=reason)
         if direct_target is not None:
             return _bundle_with_resolution_target(bundle, direct_target)
         return bundle
 
 
-def build_synthetic_forecast_bundle(structure: MarketStructure) -> ForecastBundle:
+def build_synthetic_forecast_bundle(structure: MarketStructure, *, fallback_reason: str = "synthetic_baseline") -> ForecastBundle:
     consensus_value = structure.target_value if structure.target_value is not None else ((structure.range_low or 0.0) + (structure.range_high or 0.0)) / 2
     if structure.is_threshold:
         threshold_shift = -0.2 if structure.threshold_direction == "below" else 0.2
@@ -52,6 +54,8 @@ def build_synthetic_forecast_bundle(structure: MarketStructure) -> ForecastBundl
         consensus_value=consensus_value,
         dispersion=1.2 if structure.is_threshold else 1.8,
         historical_station_available=True,
+        fallback_reason=fallback_reason,
+        source_health="fallback",
     )
 
 
@@ -130,6 +134,7 @@ class DirectStationForecastClient:
             source_station_code=resolution.station_code,
             source_url=url,
             source_latency_tier=latency_tier,
+            source_health="healthy",
         )
 
     def _extract_noaa_value(self, structure: MarketStructure, payload: dict[str, Any]) -> float:
@@ -276,6 +281,8 @@ def _bundle_with_resolution_target(bundle: ForecastBundle, resolution: Resolutio
         source_station_code=bundle.source_station_code or resolution.station_code,
         source_url=bundle.source_url or resolution.source_url,
         source_latency_tier=bundle.source_latency_tier if bundle.source_latency_tier != "fallback" else "resolution_direct_target",
+        fallback_reason=bundle.fallback_reason,
+        source_health=bundle.source_health,
     )
 
 
@@ -295,6 +302,9 @@ class OpenMeteoForecastClient:
             consensus_value=round(consensus_value, 2),
             dispersion=round(dispersion, 2),
             historical_station_available=False,
+            source_provider="open_meteo",
+            source_latency_tier="direct_api",
+            source_health="healthy",
         )
 
     def _lookup_city(self, city: str) -> _GeoPoint:

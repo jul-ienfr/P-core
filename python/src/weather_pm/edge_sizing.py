@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import math
 from typing import Any
 
 
@@ -34,7 +35,11 @@ def calculate_edge_sizing(
     prediction = _validate_probability("prediction_probability", prediction_probability)
     price = _validate_probability("market_price", market_price)
     resolved_side = _validate_side(side)
-    cost_fraction = max(float(edge_cost_bps), 0.0) / 10000.0
+    cost_bps = _validate_finite("edge_cost_bps", edge_cost_bps)
+    scale = _validate_finite("kelly_scale", kelly_scale)
+    fraction_cap = _validate_finite("max_fraction", max_fraction)
+    minimum_edge = _validate_finite("min_net_edge", min_net_edge)
+    cost_fraction = max(cost_bps, 0.0) / 10000.0
 
     raw_edge = round(prediction - price, 4)
     directional_edge = raw_edge if resolved_side == "buy" else -raw_edge
@@ -42,8 +47,8 @@ def calculate_edge_sizing(
 
     kelly_fraction = _kelly_fraction(prediction=prediction, price=price, side=resolved_side)
     suggested_fraction = 0.0
-    if net_edge >= min_net_edge:
-        suggested_fraction = min(max(kelly_fraction, 0.0) * max(kelly_scale, 0.0), max(max_fraction, 0.0))
+    if net_edge >= minimum_edge:
+        suggested_fraction = min(max(kelly_fraction, 0.0) * max(scale, 0.0), max(fraction_cap, 0.0))
 
     recommendation = "skip"
     if suggested_fraction > 0.0:
@@ -82,9 +87,16 @@ def _kelly_fraction(*, prediction: float, price: float, side: str) -> float:
 
 
 def _validate_probability(name: str, value: float) -> float:
-    resolved = float(value)
+    resolved = _validate_finite(name, value)
     if resolved < 0.0 or resolved > 1.0:
         raise ValueError(f"{name} must be between 0 and 1")
+    return resolved
+
+
+def _validate_finite(name: str, value: float) -> float:
+    resolved = float(value)
+    if not math.isfinite(resolved):
+        raise ValueError(f"{name} must be finite")
     return resolved
 
 

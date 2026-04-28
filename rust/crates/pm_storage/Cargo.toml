@@ -17,4 +17,5 @@ sqlx = { workspace = true }
 chrono.workspace = true
 sqlx = { workspace = true }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+url.workspace = true
 uuid.workspace = true

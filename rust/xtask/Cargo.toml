@@ -6,3 +6,9 @@ edition.workspace = true
 [[bin]]
 name = "xtask"
 path = "src/main.rs"
+
+[dependencies]
+pm_book = { path = "../crates/pm_book" }
+pm_types = { path = "../crates/pm_types" }
+serde = { workspace = true }
+serde_json = { workspace = true }

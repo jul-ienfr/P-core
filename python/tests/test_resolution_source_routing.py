@@ -71,6 +71,26 @@ def test_build_resolution_source_route_targets_wunderground_station_without_geoc
     assert route.freshness_sla_seconds == 3600
 
 
+def test_build_resolution_source_route_redacts_sensitive_api_query_values() -> None:
+    structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://api.weatherapi.com/v1/history.json?client_secret=secret-token&x-api-key=secret-key&X-Amz-Credential=cred&q=Denver&dt=2026-04-25",
+        description="WeatherAPI endpoint for Denver.",
+        rules="Use explicit WeatherAPI endpoint.",
+    )
+
+    route = build_resolution_source_route(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    assert "secret-token" not in route.source_url
+    assert "secret-token" not in route.latest_url
+    assert "secret-key" not in route.latest_url
+    assert "cred" not in route.latest_url
+    assert "client_secret=%5BREDACTED%5D" in route.latest_url
+    assert "x-api-key=%5BREDACTED%5D" in route.latest_url
+    assert "X-Amz-Credential=%5BREDACTED%5D" in route.latest_url
+    assert "q=Denver" in route.latest_url
+
+
 def test_build_resolution_source_route_targets_aviation_weather_station_api() -> None:
     structure = parse_market_question("Will the highest temperature in Denver be 64F or higher on April 25?")
     resolution = parse_resolution_metadata(

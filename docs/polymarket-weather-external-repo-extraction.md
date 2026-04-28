@@ -34,17 +34,38 @@ P-core now has pure intraday weather feature extraction for momentum spikes, pea
 
 Runtime/profile payloads include the summary only when recent observation rows are present, preserving existing behavior when absent.
 
+### Calibration samples and grouped RMSE policy
+
+P-core V1 now has a canonical weather calibration sample contract for forecast-vs-observed rows keyed by city, station, measurement, and lead-time bucket. The grouped RMSE policy widens calibrated probability sigma from matched historical errors, with global/default fallbacks when a group is missing.
+
+This implements the useful calibration/RMSE idea identified during the external audit without importing external datasets, scripts, or model code.
+
+### Official weather settlement resolver
+
+P-core V1 now has a pure official weather settlement resolver that classifies threshold and exact-bin weather markets from already-fetched official payloads or station history bundles. Supported fixture contracts cover NOAA daily summaries, Wunderground observations, HKO monthly extracts, and generic station-history rows.
+
+Paper settlement can be enriched from this official result when Polymarket is not final, while closed Polymarket outcome prices remain authoritative. The resolver does not require network access; any live fetch path must be explicitly injected by the caller.
+
+### Weather operator cockpit
+
+P-core now provisions a weather-specific Grafana cockpit backed by existing ClickHouse analytics tables. It focuses on city/date/source context, model probability vs market price, source freshness, intraday alerts, risk caps, paper position/action state, and official settlement status.
+
 ## What was deliberately not imported
 
 - No external repository was vendored into P-core.
 - No credentials, tokens, API keys, or account-specific config were copied.
 - No Telegram/Discord notification behavior was copied.
 - No live-trading path was enabled.
-- No external dashboard/frontend stack was imported.
+- No wallet signing, order placement, or cancellation behavior was added.
+- No external calibration dataset, official-settlement fixture, dashboard, or frontend stack was imported.
 - No broad architecture replacement was attempted; P-core remains the canonical implementation boundary.
 
 ## Validation
 
-The extraction was implemented with test-first phases and targeted validation. The final targeted suite is recorded in the execution plan at:
+The extraction was implemented with test-first phases and targeted validation. The probability/risk/intraday suite is recorded in:
 
 `docs/plans/2026-04-27-weather-probability-risk-intraday-extraction.md`
+
+The calibration/official-settlement V1 suite and final regression are recorded in:
+
+`docs/plans/2026-04-28-weather-calibration-official-settlement-v1.md`

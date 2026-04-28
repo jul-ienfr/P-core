@@ -1,0 +1,13 @@
+[package]
+name = "py_orderbook"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "_rust_orderbook"
+crate-type = ["cdylib"]
+
+[dependencies]
+pm_book = { path = "../pm_book" }
+pm_types = { path = "../pm_types" }
+pyo3 = { version = "0.22", features = ["extension-module"] }

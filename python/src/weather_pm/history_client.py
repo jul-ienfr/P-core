@@ -23,7 +23,8 @@ def build_station_history_bundle(
     history_client = client or StationHistoryClient()
     try:
         return history_client.fetch_history_bundle(structure, resolution, start_date=start_date, end_date=end_date)
-    except Exception:
+    except Exception as exc:
+        reason = f"history_fetch_failed:{exc.__class__.__name__}"
         return StationHistoryBundle(
             source_provider=resolution.provider,
             station_code=resolution.station_code,
@@ -31,6 +32,8 @@ def build_station_history_bundle(
             latency_tier="unsupported",
             points=[],
             summary={},
+            fallback_reason=reason,
+            source_health="failed",
         )
 
 
@@ -540,6 +543,7 @@ class StationHistoryClient:
             polling_focus=polling_focus,
             expected_lag_seconds=expected_lag_seconds,
             source_lag_seconds=self._source_lag_seconds(points) if latency_tier.startswith("direct") else None,
+            source_health="healthy" if points else "stale_or_empty",
         )
 
     def _source_lag_seconds(self, points: list[StationHistoryPoint]) -> int | None:

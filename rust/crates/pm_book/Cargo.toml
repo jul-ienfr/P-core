@@ -5,3 +5,9 @@ edition.workspace = true
 
 [dependencies]
 pm_types = { path = "../pm_types" }
+chrono.workspace = true
+uuid.workspace = true
+
+[[bench]]
+name = "orderbook_levels"
+harness = false

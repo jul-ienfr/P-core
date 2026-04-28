@@ -17,6 +17,9 @@ target/
 build/
 dist/
 *.egg-info/
+*.so
+*.pyd
+*.dylib
 
 # Local environment and secret-bearing files
 .env

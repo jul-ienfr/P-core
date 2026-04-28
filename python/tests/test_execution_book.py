@@ -1,7 +1,44 @@
 from __future__ import annotations
 
+import inspect
+
 from prediction_core.execution.book import estimate_fill, estimate_fill_from_book
 from prediction_core.execution.models import BookLevel, OrderBookSnapshot
+
+
+def test_estimate_fill_from_book_signature_is_stable() -> None:
+    signature = inspect.signature(estimate_fill_from_book)
+
+    assert list(signature.parameters) == ["book", "side", "requested_quantity"]
+    assert all(parameter.kind is inspect.Parameter.KEYWORD_ONLY for parameter in signature.parameters.values())
+
+
+def test_estimate_fill_uses_python_fallback_when_rust_flag_is_unset(monkeypatch) -> None:
+    monkeypatch.delenv("PREDICTION_CORE_RUST_ORDERBOOK", raising=False)
+    book = OrderBookSnapshot(
+        bids=[BookLevel(price=0.42, quantity=100.0)],
+        asks=[BookLevel(price=0.45, quantity=10.0), BookLevel(price=0.46, quantity=15.0)],
+    )
+
+    result = estimate_fill_from_book(book=book, side="buy", requested_quantity=20.0)
+
+    assert result.filled_quantity == 20.0
+    assert result.gross_notional == 9.1
+    assert result.average_price == 0.455
+
+
+def test_estimate_fill_falls_back_when_rust_flag_enabled_but_module_missing(monkeypatch) -> None:
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    book = OrderBookSnapshot(
+        bids=[BookLevel(price=0.42, quantity=100.0)],
+        asks=[BookLevel(price=0.45, quantity=10.0), BookLevel(price=0.46, quantity=15.0)],
+    )
+
+    result = estimate_fill_from_book(book=book, side="buy", requested_quantity=20.0)
+
+    assert result.filled_quantity == 20.0
+    assert result.gross_notional == 9.1
+    assert result.levels_consumed == 2
 
 
 def test_estimate_buy_fill_consumes_single_ask_level() -> None:

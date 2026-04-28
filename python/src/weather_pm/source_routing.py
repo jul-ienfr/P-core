@@ -218,9 +218,9 @@ def _route(
         provider=resolution.provider,
         station_code=resolution.station_code if station_code is None else station_code,
         station_name=resolution.station_name if station_name is None else station_name,
-        source_url=resolution.source_url,
-        latest_url=latest_url,
-        history_url=history_url,
+        source_url=_redact_url(resolution.source_url),
+        latest_url=_redact_url(latest_url),
+        history_url=_redact_url(history_url),
         direct=direct,
         supported=supported,
         latency_tier=latency_tier,
@@ -236,6 +236,37 @@ def _route(
 
 def _unsupported(structure: MarketStructure, resolution: ResolutionMetadata, *, latency_tier: str, polling_focus: str, reason: str) -> ResolutionSourceRoute:
     return _route(structure, resolution, latest_url=None, history_url=None, direct=False, supported=False, latency_tier=latency_tier, latency_priority="manual_review_required", polling_focus=polling_focus, manual_review_needed=True, reason=reason)
+
+
+_SECRET_QUERY_TOKENS = (
+    "key",
+    "secret",
+    "token",
+    "credential",
+    "signature",
+    "password",
+    "passwd",
+    "auth",
+    "sig",
+)
+
+
+def _redact_url(url: str | None) -> str | None:
+    if url is None:
+        return None
+    parts = urlsplit(url)
+    if not parts.query:
+        return url
+    query = urlencode(
+        [(key, "[REDACTED]" if _is_sensitive_query_key(key) else value) for key, value in parse_qsl(parts.query, keep_blank_values=True)],
+        doseq=True,
+    )
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
+
+
+def _is_sensitive_query_key(key: str) -> bool:
+    normalized = key.lower()
+    return any(token in normalized for token in _SECRET_QUERY_TOKENS)
 
 
 def _noaa_latest_url(station_code: str) -> str:

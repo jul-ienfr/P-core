@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -47,7 +48,7 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 self._json_response(400, {"status": "error", "message": str(exc)})
             except Exception as exc:  # pragma: no cover - defensive boundary
-                self._json_response(500, {"status": "error", "message": f"internal error: {exc}"})
+                self._json_response(500, {"status": "error", "message": "internal error"})
             return
         if parsed_url.path.startswith("/strategies/config/"):
             strategy_id = parsed_url.path.removeprefix("/strategies/config/").strip("/")
@@ -58,7 +59,7 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
                 except ValueError as exc:
                     self._json_response(400, {"status": "error", "message": str(exc)})
                 except Exception as exc:  # pragma: no cover - defensive boundary
-                    self._json_response(500, {"status": "error", "message": f"internal error: {exc}"})
+                    self._json_response(500, {"status": "error", "message": "internal error"})
                 return
         if parsed_url.path == "/weather/polymarket/markets":
             try:
@@ -67,7 +68,16 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 self._json_response(400, {"status": "error", "message": str(exc)})
             except Exception as exc:  # pragma: no cover - defensive boundary
-                self._json_response(500, {"status": "error", "message": f"internal error: {exc}"})
+                self._json_response(500, {"status": "error", "message": "internal error"})
+            return
+        if parsed_url.path == "/ops/status":
+            self._json_response(200, ops_status_request())
+            return
+        if parsed_url.path == "/ops/risk":
+            self._json_response(200, ops_risk_request())
+            return
+        if parsed_url.path == "/ops/reconciliation":
+            self._json_response(200, ops_reconciliation_request())
             return
         self._json_response(404, {"status": "error", "message": f"unknown path: {self.path}"})
 
@@ -135,11 +145,16 @@ class PredictionCoreHandler(BaseHTTPRequestHandler):
                 self._json_response(200, result)
                 return
 
+            if self.path == "/ops/live-preflight":
+                result = ops_live_preflight_request(payload)
+                self._json_response(200, result)
+                return
+
             self._json_response(404, {"status": "error", "message": f"unknown path: {self.path}"})
         except ValueError as exc:
             self._json_response(400, {"status": "error", "message": str(exc)})
         except Exception as exc:  # pragma: no cover - defensive boundary
-            self._json_response(500, {"status": "error", "message": f"internal error: {exc}"})
+            self._json_response(500, {"status": "error", "message": "internal error"})
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return
@@ -221,6 +236,69 @@ def polymarket_weather_markets_query(query: dict[str, list[str]]) -> dict[str, A
         "limit": limit_value,
         "markets": _normalized_weather_markets(source=source, limit=limit_value),
     }
+
+
+def ops_status_request() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "service": "prediction_core_python",
+        "mode": "read_only",
+        "orders_enabled": False,
+    }
+
+
+def ops_risk_request() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "mode": "read_only",
+        "orders_enabled": False,
+        "risk": {
+            "live_submit_enabled": False,
+            "max_order_size_usd": 0.0,
+            "open_order_count": 0,
+        },
+    }
+
+
+def ops_reconciliation_request() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "mode": "read_only",
+        "orders_enabled": False,
+        "reconciliation": {
+            "open_order_count": 0,
+            "unmatched_fill_count": 0,
+            "pending_cancel_count": 0,
+        },
+    }
+
+
+def ops_live_preflight_request(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "mode": "read_only",
+        "orders_enabled": False,
+        "preflight": {
+            "would_submit_live_order": False,
+            "checks": [
+                {"name": "operator_api_read_only", "status": "ok"},
+            ],
+        },
+        "request": _redact_secrets(payload),
+    }
+
+
+def _redact_secrets(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): ("[REDACTED]" if _is_secret_key(str(key)) else _redact_secrets(item)) for key, item in sorted(value.items(), key=lambda item: str(item[0]))}
+    if isinstance(value, list):
+        return [_redact_secrets(item) for item in value]
+    return value
+
+
+def _is_secret_key(key: str) -> bool:
+    normalized = key.lower()
+    return any(token in normalized for token in ("secret", "token", "key", "password", "credential"))
 
 
 def _normalized_weather_markets(*, source: str, limit: int) -> list[dict[str, Any]]:
@@ -1139,9 +1217,12 @@ def _optional_number(value: Any) -> float | None:
     if value is None:
         return None
     try:
-        return float(value)
+        number = float(value)
     except (TypeError, ValueError) as exc:
         raise ValueError("optional numeric fields must be numeric") from exc
+    if not math.isfinite(number):
+        raise ValueError("optional numeric fields must be finite")
+    return number
 
 
 def _optional_bool(value: Any) -> bool | None:

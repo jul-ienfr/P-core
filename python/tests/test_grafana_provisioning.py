@@ -13,6 +13,7 @@ STRATEGY_OVERVIEW = DASHBOARDS / "strategy-overview.json"
 STRATEGY_DETAIL = DASHBOARDS / "strategy-detail.json"
 STRATEGY_HEALTH = DASHBOARDS / "strategy-health.json"
 STRATEGY_CONTROL = DASHBOARDS / "strategy-control.json"
+WEATHER_OPERATOR_COCKPIT = DASHBOARDS / "weather-operator-cockpit.json"
 ALERTS = ROOT / "infra" / "analytics" / "grafana" / "provisioning" / "alerting" / "prediction-core-alerts.yml"
 COMPOSE = ROOT / "infra" / "analytics" / "docker-compose.yml"
 ALL_DASHBOARDS = [
@@ -24,6 +25,7 @@ ALL_DASHBOARDS = [
     STRATEGY_DETAIL,
     STRATEGY_HEALTH,
     STRATEGY_CONTROL,
+    WEATHER_OPERATOR_COCKPIT,
 ]
 
 
@@ -58,6 +60,7 @@ def test_all_dashboards_are_french_paris_and_provisionable() -> None:
         "prediction-core-strategy-detail",
         "prediction-core-strategy-health",
         "prediction-core-strategy-control",
+        "prediction-core-weather-operator-cockpit",
     }
     dashboards = [json.loads(path.read_text()) for path in ALL_DASHBOARDS]
     assert {dashboard["uid"] for dashboard in dashboards} == expected_uids
@@ -178,6 +181,36 @@ def test_strategy_control_dashboard_is_provisioned() -> None:
         assert source in text
     assert dashboard["uid"] == "prediction-core-strategy-control"
     assert dashboard["timezone"] == "Europe/Paris"
+    assert "prediction-core-clickhouse" in text
+
+
+def test_weather_operator_cockpit_dashboard_is_provisioned() -> None:
+    dashboard = json.loads(WEATHER_OPERATOR_COCKPIT.read_text())
+    text = json.dumps(dashboard, ensure_ascii=False)
+    for label in [
+        "Weather Operator Cockpit",
+        "Marchés météo par ville / date / source",
+        "Probabilité modèle vs prix marché",
+        "Fraîcheur source météo minutes",
+        "Alertes intraday",
+        "Risk cap et action paper",
+        "Position et ordres paper météo",
+        "Settlement officiel météo",
+        "Statut settlement officiel",
+        "Paper only",
+        "Live autorisé",
+        "PAPER_ONLY",
+    ]:
+        assert label in text
+    for label in ["run_id", "strategy", "profile", "market", "mode", "business_time"]:
+        assert label in text
+    for source in ["strategy_signals", "profile_decisions", "paper_orders", "resolution_events", "debug_decisions"]:
+        assert source in text
+    for weather_field in ["city", "date", "source", "provider", "station_code", "observed_value", "intraday", "risk_caps"]:
+        assert weather_field in text
+    assert dashboard["uid"] == "prediction-core-weather-operator-cockpit"
+    assert dashboard["timezone"] == "Europe/Paris"
+    assert dashboard["time"]["from"] == "now-48h"
     assert "prediction-core-clickhouse" in text
 
 

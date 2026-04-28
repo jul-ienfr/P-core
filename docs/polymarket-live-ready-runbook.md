@@ -229,6 +229,7 @@ If anything is unexpected during preflight or dry-run rehearsal, stay in or retu
 - [ ] Record the last observed order ids from runtime output and audit logs.
 - [ ] Use the approved exchange UI/API process to inspect and, if needed, cancel outstanding orders manually if any orders were created outside this CLI.
 - [ ] Do not attempt `live` again unless it is explicitly exposed by the CLI after real submission is implemented, post-run reconciliation is complete, and a new approval is recorded.
+- [ ] If orderbook estimates regress after enabling the optional Rust path, unset `PREDICTION_CORE_RUST_ORDERBOOK` or set it to `0`, then rerun the Python fallback checks documented in `python/README.md`.
 
 ## Post-run reconciliation checklist
 

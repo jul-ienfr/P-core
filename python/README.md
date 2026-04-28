@@ -130,6 +130,46 @@ Le scaffold `marketdata-plan` formalise le prochain découpage rapide sans encor
 
 Le module `prediction_core.polymarket_marketdata` contient aussi un cache in-memory testable (`MarketDataCache`) qui calcule défensivement `best_bid=max(bids)` et `best_ask=min(asks)` au lieu de faire confiance à l'ordre des niveaux CLOB.
 
+## Optional Rust orderbook path
+
+`prediction_core.execution.book.estimate_fill_from_book` garde son API Python publique et utilise le chemin Python par défaut. Le chemin Rust orderbook est opt-in avec :
+
+```bash
+PREDICTION_CORE_RUST_ORDERBOOK=1
+```
+
+Si le module natif `prediction_core._rust_orderbook` est absent, si le flag n'est pas exactement `1`, si le carnet contient des niveaux non sûrs, ou si l'appel Rust échoue, le wrapper revient automatiquement au fallback Python. Le module natif source vit côté Rust dans `crates/py_orderbook`; il reste volontairement opt-in parce que le pont PyO3 unitaire mesuré est plus lent que le fallback Python, même si le noyau Rust pur est plus rapide. Pour désactiver Rust en cas de régression, supprimer la variable ou la mettre à `0`.
+
+Vérifications ciblées :
+
+```bash
+cd /home/jul/P-core/python
+uv run pytest tests/test_execution_book.py tests/test_execution_rust_orderbook_wrapper.py tests/contracts/test_orderbook_fill_parity_fixture_contract.py
+
+cd /home/jul/P-core/rust
+cargo test -p pm_book --lib
+cargo test -p py_orderbook --lib
+cargo run -p xtask -- orderbook-parity ../python/tests/fixtures/orderbook_fill_parity.json
+```
+
+Smoke test local avec le module natif importé par Python :
+
+```bash
+cd /home/jul/P-core
+cargo build --manifest-path rust/Cargo.toml -p py_orderbook --release
+cp rust/target/release/lib_rust_orderbook.so python/src/prediction_core/_rust_orderbook.so
+cd python
+PREDICTION_CORE_RUST_ORDERBOOK=1 uv run pytest tests/test_execution_book.py tests/test_execution_rust_orderbook_wrapper.py
+rm -f src/prediction_core/_rust_orderbook.so
+```
+
+Les benchmarks orderbook restent manuels et non bloquants :
+
+```bash
+cd /home/jul/P-core/rust && cargo bench -p pm_book --bench orderbook_levels
+cd /home/jul/P-core/python && uv run python benchmarks/orderbook_levels.py
+```
+
 ## Execution cost model
 
 Le domaine canonique `prediction_core.execution` estime maintenant un coût d'exécution détaillé : sweep du carnet multi-niveaux, prix moyen de fill, spread/slippage, frais maker/taker, frais optionnels de dépôt/retrait, puis `edge_net_execution` et `edge_net_all_in`.

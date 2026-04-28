@@ -3,8 +3,8 @@ use pm_executor::{build_order_intent, OrderIntent};
 use pm_risk::{approve_if_spread_not_crossed, RiskDecision};
 use pm_signal::{signal_from_book, SignalConfig, SignalEvent};
 use pm_storage::{
-    execution_report_row, fill_row, order_intent_row, risk_decision_row, ExecutionReportRow,
-    FillRow, OrderIntentRow, RiskDecisionRow,
+    execution_report_row, order_intent_row, risk_decision_row, ExecutionReportRow, FillRow,
+    OrderIntentRow, RiskDecisionRow,
 };
 use pm_types::{ExecutionStatus, FillEvent, MarketEvent, RiskDecisionStatus};
 
@@ -16,7 +16,14 @@ pub struct LiveEngineOutput {
     pub order_intent_row: Option<OrderIntentRow>,
     pub fill: Option<FillEvent>,
     pub fill_row: Option<FillRow>,
+    pub fill_metadata: Option<FillMetadata>,
     pub execution_report: ExecutionReportRow,
+}
+
+pub struct FillMetadata {
+    pub source: &'static str,
+    pub status: &'static str,
+    pub live_submit: bool,
 }
 
 pub fn engine_name() -> &'static str {
@@ -29,6 +36,25 @@ pub fn process_market_event(event: &MarketEvent, config: &SignalConfig) -> LiveE
 
     let risk_decision = approve_if_spread_not_crossed(book.best_bid, book.best_ask);
     let risk_decision_row = risk_decision_row(&risk_decision);
+
+    if risk_decision.decision != RiskDecisionStatus::Approved {
+        return LiveEngineOutput {
+            signal: None,
+            risk_decision,
+            risk_decision_row,
+            order_intent: None,
+            order_intent_row: None,
+            fill: None,
+            fill_row: None,
+            fill_metadata: None,
+            execution_report: execution_report_row(
+                event.market_id.clone(),
+                &ExecutionStatus::Rejected,
+                Some("risk_rejected".to_string()),
+            ),
+        };
+    }
+
     let signal = signal_from_book(config, event.venue.clone(), event.market_id.clone(), &book);
 
     if signal.is_none() {
@@ -40,27 +66,11 @@ pub fn process_market_event(event: &MarketEvent, config: &SignalConfig) -> LiveE
             order_intent_row: None,
             fill: None,
             fill_row: None,
+            fill_metadata: None,
             execution_report: execution_report_row(
                 event.market_id.clone(),
                 &ExecutionStatus::Rejected,
                 Some("no_signal".to_string()),
-            ),
-        };
-    }
-
-    if risk_decision.decision != RiskDecisionStatus::Approved {
-        return LiveEngineOutput {
-            signal,
-            risk_decision,
-            risk_decision_row,
-            order_intent: None,
-            order_intent_row: None,
-            fill: None,
-            fill_row: None,
-            execution_report: execution_report_row(
-                event.market_id.clone(),
-                &ExecutionStatus::Rejected,
-                Some("risk_rejected".to_string()),
             ),
         };
     }
@@ -72,13 +82,11 @@ pub fn process_market_event(event: &MarketEvent, config: &SignalConfig) -> LiveE
         signal.observed_price,
     );
     let order_intent_row = order_intent_row(&order_intent);
-    let fill = FillEvent {
-        market_id: order_intent.market_id.clone(),
-        side: order_intent.side.clone(),
-        price: order_intent.price,
-        size: order_intent.size,
+    let fill_metadata = FillMetadata {
+        source: "simulation_only",
+        status: "advisory_no_exchange_fill",
+        live_submit: false,
     };
-    let fill_row = fill_row(&fill);
 
     LiveEngineOutput {
         signal: Some(signal),
@@ -86,12 +94,13 @@ pub fn process_market_event(event: &MarketEvent, config: &SignalConfig) -> LiveE
         risk_decision_row,
         order_intent: Some(order_intent),
         order_intent_row: Some(order_intent_row),
-        fill: Some(fill),
-        fill_row: Some(fill_row),
+        fill: None,
+        fill_row: None,
+        fill_metadata: Some(fill_metadata),
         execution_report: execution_report_row(
             event.market_id.clone(),
-            &ExecutionStatus::Accepted,
-            None,
+            &ExecutionStatus::Rejected,
+            Some("simulation_only_advisory_no_exchange_fill".to_string()),
         ),
     }
 }
@@ -125,22 +134,86 @@ mod tests {
     }
 
     #[test]
-    fn process_market_event_accepts_signal_and_builds_canonical_rows() {
+    fn process_market_event_builds_order_intent_without_exchange_fill() {
         let event = base_event(Some(0.49), Some(0.50));
         let output = process_market_event(
             &event,
             &SignalConfig {
                 min_edge_bps: 5.0,
                 default_side: OrderSide::BuyYes,
+                side_fair_value: Some(0.52),
             },
         );
 
         assert!(output.signal.is_some());
         assert!(output.order_intent.is_some());
         assert_eq!(output.risk_decision_row.decision, "approved");
-        assert_eq!(output.order_intent_row.as_ref().map(|row| row.side), Some("buy_yes"));
-        assert_eq!(output.fill_row.as_ref().map(|row| row.side), Some("buy_yes"));
-        assert_eq!(output.execution_report.status, "accepted");
+        assert_eq!(
+            output.order_intent_row.as_ref().map(|row| row.side),
+            Some("buy_yes")
+        );
+        assert!(output.fill.is_none());
+        assert!(output.fill_row.is_none());
+        assert_eq!(
+            output
+                .fill_metadata
+                .as_ref()
+                .map(|metadata| metadata.source),
+            Some("simulation_only")
+        );
+        assert_eq!(
+            output
+                .fill_metadata
+                .as_ref()
+                .map(|metadata| metadata.live_submit),
+            Some(false)
+        );
+        assert_eq!(output.execution_report.status, "rejected");
+        assert_eq!(
+            output.execution_report.message.as_deref(),
+            Some("simulation_only_advisory_no_exchange_fill")
+        );
+    }
+
+    #[test]
+    fn advisory_mode_never_live_submits_or_simulates_exchange_fill() {
+        let event = base_event(Some(0.49), Some(0.50));
+        let output = process_market_event(
+            &event,
+            &SignalConfig {
+                min_edge_bps: 5.0,
+                default_side: OrderSide::BuyYes,
+                side_fair_value: Some(0.52),
+            },
+        );
+
+        let metadata = output.fill_metadata.as_ref().expect("metadata exists");
+        assert!(output.order_intent.is_some());
+        assert!(output.fill.is_none());
+        assert!(output.fill_row.is_none());
+        assert_eq!(metadata.source, "simulation_only");
+        assert_eq!(metadata.status, "advisory_no_exchange_fill");
+        assert!(!metadata.live_submit);
+        assert_eq!(output.execution_report.status, "rejected");
+        assert_eq!(
+            output.execution_report.message.as_deref(),
+            Some("simulation_only_advisory_no_exchange_fill")
+        );
+    }
+
+    #[test]
+    fn process_market_event_rejects_normal_spread_without_model_side_fair_value() {
+        let event = base_event(Some(0.49), Some(0.50));
+        let output = process_market_event(&event, &SignalConfig::default());
+
+        assert!(output.signal.is_none());
+        assert!(output.order_intent.is_none());
+        assert!(output.order_intent_row.is_none());
+        assert_eq!(output.execution_report.status, "rejected");
+        assert_eq!(
+            output.execution_report.message.as_deref(),
+            Some("no_signal")
+        );
     }
 
     #[test]
@@ -151,6 +224,7 @@ mod tests {
             &SignalConfig {
                 min_edge_bps: 20.0,
                 default_side: OrderSide::BuyYes,
+                side_fair_value: None,
             },
         );
 
@@ -159,7 +233,10 @@ mod tests {
         assert!(output.order_intent_row.is_none());
         assert!(output.fill_row.is_none());
         assert_eq!(output.execution_report.status, "rejected");
-        assert_eq!(output.execution_report.message.as_deref(), Some("no_signal"));
+        assert_eq!(
+            output.execution_report.message.as_deref(),
+            Some("no_signal")
+        );
     }
 
     #[test]
@@ -170,6 +247,7 @@ mod tests {
             &SignalConfig {
                 min_edge_bps: 5.0,
                 default_side: OrderSide::BuyYes,
+                side_fair_value: Some(0.52),
             },
         );
 
@@ -178,6 +256,9 @@ mod tests {
         assert!(output.order_intent.is_none());
         assert!(output.fill.is_none());
         assert_eq!(output.execution_report.status, "rejected");
-        assert_eq!(output.execution_report.message.as_deref(), Some("risk_rejected"));
+        assert_eq!(
+            output.execution_report.message.as_deref(),
+            Some("risk_rejected")
+        );
     }
 }

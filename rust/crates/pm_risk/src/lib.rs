@@ -8,15 +8,21 @@ pub struct RiskDecision {
 
 pub fn approve_if_spread_not_crossed(best_bid: Option<f64>, best_ask: Option<f64>) -> RiskDecision {
     match (best_bid, best_ask) {
-        (Some(bid), Some(ask)) if bid <= ask => RiskDecision {
-            decision: RiskDecisionStatus::Approved,
-            reasons: vec![],
-        },
+        (Some(bid), Some(ask)) if valid_price(bid) && valid_price(ask) && bid <= ask => {
+            RiskDecision {
+                decision: RiskDecisionStatus::Approved,
+                reasons: vec![],
+            }
+        }
         _ => RiskDecision {
             decision: RiskDecisionStatus::Rejected,
             reasons: vec!["crossed_or_incomplete_book".to_string()],
         },
     }
+}
+
+fn valid_price(value: f64) -> bool {
+    value.is_finite() && (0.0..=1.0).contains(&value)
 }
 
 #[cfg(test)]
@@ -36,12 +42,22 @@ mod tests {
         let decision = approve_if_spread_not_crossed(Some(0.51), Some(0.49));
 
         assert_eq!(decision.decision, RiskDecisionStatus::Rejected);
-        assert_eq!(decision.reasons, vec!["crossed_or_incomplete_book".to_string()]);
+        assert_eq!(
+            decision.reasons,
+            vec!["crossed_or_incomplete_book".to_string()]
+        );
     }
 
     #[test]
     fn rejects_incomplete_book() {
         let decision = approve_if_spread_not_crossed(Some(0.47), None);
+
+        assert_eq!(decision.decision, RiskDecisionStatus::Rejected);
+    }
+
+    #[test]
+    fn rejects_non_finite_prices() {
+        let decision = approve_if_spread_not_crossed(Some(0.47), Some(f64::INFINITY));
 
         assert_eq!(decision.decision, RiskDecisionStatus::Rejected);
     }

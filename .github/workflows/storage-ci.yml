@@ -44,7 +44,7 @@ jobs:
           set -euo pipefail
           ! grep -RInE 'image: .*:latest([[:space:]]|$)|image: .*:latest-' infra/storage infra/panoptique infra/analytics
           ! grep -RInE ':-0\.0\.0\.0|"0\.0\.0\.0:| 0\.0\.0\.0:' infra/storage/*.yml infra/panoptique/*.yml infra/analytics/*.yml
-          generated="$(git ls-files | grep -E '(^|/)(__pycache__|\.pytest_cache)(/|$)|\.(pyc|jsonl|parquet|dump|sha256)$' || true)"
+          generated="$(git ls-files | grep -E '(^|/)(__pycache__|\.pytest_cache)(/|$)|\.(pyc|so|pyd|dylib|jsonl|parquet|dump|sha256)$' || true)"
           secrets="$(git ls-files | grep -E '(^|/)\.env(\.|/|$)|\.(pem|key|p12|pfx|pgpass)$' | grep -v -E '(^|/)\.env\.example$' || true)"
           if [[ -n "$generated$secrets" ]]; then
             if [[ -n "$generated" ]]; then
@@ -114,6 +114,64 @@ jobs:
       - name: Run pm_storage tests without live services
         working-directory: rust
         run: cargo test -p pm_storage --lib
+
+  orderbook-parity:
+    name: Python/Rust orderbook parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Check Python lockfile
+        working-directory: python
+        run: test -f uv.lock
+
+      - name: Run Python orderbook parity tests
+        working-directory: python
+        run: |
+          uv run --frozen --with pytest --with pytest-asyncio pytest \
+            tests/test_execution_book.py \
+            tests/test_execution_models.py \
+            tests/test_paper_execution_integration.py \
+            tests/test_paper_ledger.py \
+            tests/test_weather_paper_ledger.py \
+            tests/test_weather_archetype_backtest.py \
+            tests/test_polymarket_marketdata.py \
+            tests/test_polymarket_depth_normalization.py \
+            tests/test_execution_rust_orderbook_wrapper.py \
+            tests/contracts/test_orderbook_fill_parity_fixture_contract.py
+
+      - name: Run Rust orderbook and live safety tests
+        working-directory: rust
+        run: |
+          cargo test -p pm_types
+          cargo test -p pm_book --lib
+          cargo test -p py_orderbook --lib
+          cargo test -p pm_executor
+          cargo test -p live_engine --lib
+
+      - name: Smoke test native Python orderbook module
+        run: |
+          cargo build --manifest-path rust/Cargo.toml -p py_orderbook --release
+          cp rust/target/release/lib_rust_orderbook.so python/src/prediction_core/_rust_orderbook.so
+          cd python
+          PREDICTION_CORE_RUST_ORDERBOOK=1 uv run --frozen --with pytest --with pytest-asyncio pytest tests/test_execution_book.py tests/test_execution_rust_orderbook_wrapper.py
+
+      - name: Check shared orderbook parity fixture
+        working-directory: rust
+        run: cargo run -p xtask -- orderbook-parity ../python/tests/fixtures/orderbook_fill_parity.json
 
   storage-runtime-smoke:
     name: Rust storage runtime smoke

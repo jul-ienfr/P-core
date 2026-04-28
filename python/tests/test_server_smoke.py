@@ -40,6 +40,71 @@ def test_health_endpoint_returns_ok() -> None:
         thread.join(timeout=2)
 
 
+def test_ops_status_endpoint_returns_read_only_status() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(f"http://127.0.0.1:{port}/ops/status")
+        assert status == 200
+        assert payload == {
+            "status": "ok",
+            "service": "prediction_core_python",
+            "mode": "read_only",
+            "orders_enabled": False,
+        }
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_ops_risk_endpoint_returns_read_only_risk() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(f"http://127.0.0.1:{port}/ops/risk")
+        assert status == 200
+        assert payload["orders_enabled"] is False
+        assert payload["risk"]["live_submit_enabled"] is False
+        assert payload["risk"]["open_order_count"] == 0
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_ops_reconciliation_endpoint_returns_read_only_reconciliation() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(f"http://127.0.0.1:{port}/ops/reconciliation")
+        assert status == 200
+        assert payload["orders_enabled"] is False
+        assert payload["reconciliation"]["open_order_count"] == 0
+        assert payload["reconciliation"]["pending_cancel_count"] == 0
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_ops_live_preflight_redacts_secrets_and_does_not_order() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/ops/live-preflight",
+            method="POST",
+            payload={"api_key": "secret", "nested": {"token": "hidden", "market_id": "123"}},
+        )
+        assert status == 200
+        assert payload["orders_enabled"] is False
+        assert payload["preflight"]["would_submit_live_order"] is False
+        assert payload["request"]["api_key"] == "[REDACTED]"
+        assert payload["request"]["nested"]["token"] == "[REDACTED]"
+        assert payload["request"]["nested"]["market_id"] == "123"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def test_parse_market_endpoint_returns_parsed_market_json() -> None:
     server, thread, port = _start_server()
     try:
@@ -96,6 +161,23 @@ def test_score_market_endpoint_rejects_invalid_request_payload() -> None:
         assert status == 400
         assert payload["status"] == "error"
         assert "yes_price" in payload["message"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_paper_cycle_endpoint_rejects_non_finite_numeric_input() -> None:
+    server, thread, port = _start_server()
+    try:
+        status, payload = _json_request(
+            f"http://127.0.0.1:{port}/weather/paper-cycle",
+            method="POST",
+            payload={"run_id": "nan-test", "market_id": "m1", "requested_quantity": "NaN"},
+        )
+        assert status == 400
+        assert payload["status"] == "error"
+        assert "finite" in payload["message"]
     finally:
         server.shutdown()
         server.server_close()

@@ -5,6 +5,11 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
+from prediction_core.execution.orderbook_spend import (
+    normalize_orderbook_asks,
+    normalize_orderbook_bids,
+    simulate_orderbook_fill,
+)
 from prediction_core.paper.exit_policy import annotate_order_with_exit_policy
 
 PAPER_LEDGER_STATUSES = {
@@ -158,113 +163,6 @@ def with_paper_ledger_summary(ledger: dict[str, Any]) -> dict[str, Any]:
     return ledger
 
 
-def normalize_orderbook_asks(orderbook: dict[str, Any] | None, *, side: str) -> list[dict[str, float]]:
-    if not isinstance(orderbook, dict):
-        return []
-    side_key = str(side or "YES").strip().lower()
-    candidates: list[Any] = []
-    for key in (f"{side_key}_asks", f"{side_key}Asks", f"{side_key}_ask_levels"):
-        value = orderbook.get(key)
-        if isinstance(value, list):
-            candidates = value
-            break
-    if not candidates:
-        nested = orderbook.get(side_key) or orderbook.get(side_key.upper())
-        if isinstance(nested, dict):
-            for key in ("asks", "ask_levels"):
-                value = nested.get(key)
-                if isinstance(value, list):
-                    candidates = value
-                    break
-    if not candidates and side_key == "yes":
-        value = orderbook.get("asks") or orderbook.get("ask_levels")
-        if isinstance(value, list):
-            candidates = value
-    levels: list[dict[str, float]] = []
-    for level in candidates:
-        if not isinstance(level, dict):
-            continue
-        price = _optional_float(level.get("price"))
-        size = _optional_float(level.get("size", level.get("quantity")))
-        if price is None or size is None or price <= 0.0 or size <= 0.0:
-            continue
-        levels.append({"price": price, "size": size})
-    return sorted(levels, key=lambda item: item["price"])
-
-
-def simulate_orderbook_fill(
-    orderbook: dict[str, Any] | None,
-    *,
-    side: str,
-    spend_usd: float,
-    probability_edge: float | None = None,
-    strict_limit: float | None = None,
-) -> dict[str, Any]:
-    side_label = str(side or "YES").upper()
-    requested_spend = round(max(float(spend_usd or 0.0), 0.0), 6)
-    asks = normalize_orderbook_asks(orderbook, side=side_label)
-    if requested_spend <= 0.0 or not asks:
-        return {
-            "side": side_label,
-            "requested_spend": requested_spend,
-            "top_ask": None,
-            "avg_fill_price": None,
-            "fillable_spend": 0.0,
-            "levels_used": 0,
-            "slippage_from_top_ask": None,
-            "edge_after_fill": None,
-            "execution_blocker": "missing_tradeable_quote",
-            "fill_status": "empty_book",
-        }
-
-    top_ask = asks[0]["price"]
-    remaining = requested_spend
-    filled_spend = 0.0
-    filled_shares = 0.0
-    levels_used = 0
-    for level in asks:
-        if remaining <= 1e-12:
-            break
-        spend_here = min(remaining, level["price"] * level["size"])
-        if spend_here <= 0.0:
-            continue
-        filled_spend += spend_here
-        filled_shares += spend_here / level["price"]
-        remaining -= spend_here
-        levels_used += 1
-
-    if filled_spend <= 0.0 or filled_shares <= 0.0:
-        avg_fill_price = None
-        slippage = None
-        edge_after_fill = None
-    else:
-        avg_fill_price = round(filled_spend / filled_shares, 6)
-        slippage = round(avg_fill_price - top_ask, 6)
-        edge_after_fill = None if probability_edge is None else round(float(probability_edge) - slippage, 6)
-
-    fill_status = "filled" if filled_spend + 1e-9 >= requested_spend else "partial_fill"
-    blocker = None
-    if strict_limit is not None and top_ask > float(strict_limit):
-        blocker = "strict_limit_price_exceeded"
-    elif fill_status != "filled":
-        blocker = "insufficient_executable_depth"
-    elif edge_after_fill is not None and edge_after_fill <= 0.0:
-        blocker = "edge_destroyed_by_fill"
-
-    return {
-        "side": side_label,
-        "requested_spend": requested_spend,
-        "top_ask": round(top_ask, 6),
-        "avg_fill_price": avg_fill_price,
-        "fillable_spend": round(filled_spend, 6),
-        "levels_used": levels_used,
-        "slippage_from_top_ask": slippage,
-        "edge_after_fill": edge_after_fill,
-        "execution_blocker": blocker,
-        "fill_status": fill_status,
-    }
-
-
 def _apply_refresh(order: dict[str, Any], refresh: dict[str, Any], *, max_position_usdc: float) -> None:
     if refresh:
         for key in ("source_status", "station_status", "station", "source_url", "actual_refresh_price"):
@@ -382,40 +280,6 @@ def _simulate_exit_value(orderbook: dict[str, Any], *, side: str, shares: float)
         value += shares_here * level["price"]
         remaining -= shares_here
     return round(value, 6)
-
-
-def normalize_orderbook_bids(orderbook: dict[str, Any] | None, *, side: str) -> list[dict[str, float]]:
-    if not isinstance(orderbook, dict):
-        return []
-    side_key = str(side or "YES").strip().lower()
-    candidates: list[Any] = []
-    for key in (f"{side_key}_bids", f"{side_key}Bids", f"{side_key}_bid_levels"):
-        value = orderbook.get(key)
-        if isinstance(value, list):
-            candidates = value
-            break
-    if not candidates:
-        nested = orderbook.get(side_key) or orderbook.get(side_key.upper())
-        if isinstance(nested, dict):
-            for key in ("bids", "bid_levels"):
-                value = nested.get(key)
-                if isinstance(value, list):
-                    candidates = value
-                    break
-    if not candidates and side_key == "yes":
-        value = orderbook.get("bids") or orderbook.get("bid_levels")
-        if isinstance(value, list):
-            candidates = value
-    levels: list[dict[str, float]] = []
-    for level in candidates:
-        if not isinstance(level, dict):
-            continue
-        price = _optional_float(level.get("price"))
-        size = _optional_float(level.get("size", level.get("quantity")))
-        if price is None or size is None or price <= 0.0 or size <= 0.0:
-            continue
-        levels.append({"price": price, "size": size})
-    return sorted(levels, key=lambda item: item["price"], reverse=True)
 
 
 def operator_action_for(

@@ -47,6 +47,11 @@ class ForecastBundle:
     source_station_code: str | None = None
     source_url: str | None = None
     source_latency_tier: str = "fallback"
+    fallback_reason: str | None = None
+    source_health: str = "unknown"
+    lead_time_hours: float | None = None
+    calibration_city: str | None = None
+    calibration_station_code: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -69,10 +74,12 @@ class StationHistoryBundle:
     source_url: str | None
     latency_tier: str
     points: list[StationHistoryPoint]
-    summary: dict[str, float]
+    summary: dict[str, Any]
     polling_focus: str | None = None
     expected_lag_seconds: int | None = None
     source_lag_seconds: int | None = None
+    fallback_reason: str | None = None
+    source_health: str = "unknown"
 
     def latest(self) -> StationHistoryPoint | None:
         if not self.points:
@@ -98,6 +105,9 @@ class StationHistoryBundle:
             payload["expected_lag_seconds"] = self.expected_lag_seconds
         if self.source_lag_seconds is not None:
             payload["source_lag_seconds"] = self.source_lag_seconds
+        if self.fallback_reason is not None:
+            payload["fallback_reason"] = self.fallback_reason
+        payload["source_health"] = self.source_health
         return payload
 
     def to_dict(self) -> dict[str, Any]:
@@ -109,6 +119,9 @@ class StationHistoryBundle:
                 "latest": round(latest.value, 2),
                 "point_count": float(len(self.points)),
             }
+        if self.fallback_reason is not None:
+            payload["summary"] = {**payload["summary"], "fallback_reason": self.fallback_reason}
+        payload["summary"] = {**payload["summary"], "source_health": self.source_health}
         payload["latest"] = latest.to_dict() if latest else None
         return payload
 
@@ -118,6 +131,7 @@ class ModelOutput:
     probability_yes: float
     confidence: float
     method: str
+    version: str = "v1"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

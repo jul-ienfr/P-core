@@ -321,7 +321,7 @@ def test_run_weather_paper_batch_fetches_scores_and_runs_paper_cycles_for_select
         assert payload["paper_cycles"][0]["simulation"]["status"] == "skipped"
         assert payload["paper_cycles"][0]["score_bundle"]["decision"]["status"] == "skip"
         assert payload["paper_cycles"][0]["decision"]["status"] == "trade"
-        assert payload["markets"][0]["model"]["method"] == "calibrated_threshold_v1"
+        assert payload["markets"][0]["model"]["method"] == "calibrated_gaussian_threshold_v1"
         assert payload["markets"][0]["edge"]["market_implied_yes_probability"] == 0.37
         assert payload["markets"][0]["edge"]["probability_edge"] == 0.2
     finally:
