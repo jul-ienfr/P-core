@@ -8,10 +8,12 @@ from uuid import uuid4
 from pydantic import BaseModel, Field, model_validator
 
 from prediction_core.execution import (
+    ExecutionAssumptions,
     OrderBookSnapshot,
     TradingFeeSchedule,
     TransferFeeSchedule,
     quote_execution_cost,
+    quote_execution_parity,
 )
 
 
@@ -111,6 +113,7 @@ def simulate_paper_trade_from_execution(
     position_side: PaperPositionSide = PaperPositionSide.yes,
     reference_price: float | None = None,
     metadata: dict[str, Any] | None = None,
+    execution_assumptions: ExecutionAssumptions | None = None,
 ) -> "PaperTradeSimulation":
     execution = quote_execution_cost(
         book=book,
@@ -122,6 +125,17 @@ def simulate_paper_trade_from_execution(
         edge_gross=edge_gross,
     )
     execution_payload = execution.to_dict()
+    parity_quote = None
+    if execution_assumptions is not None:
+        parity_quote = quote_execution_parity(
+            book=book,
+            side=side,
+            requested_quantity=size,
+            assumptions=execution_assumptions,
+            is_maker=is_maker,
+            edge_gross=edge_gross,
+        )
+        execution_payload["parity_quote"] = parity_quote.to_dict()
     fee_paid = round(
         execution.trading_fee_cost + execution.deposit_fee_cost + execution.withdrawal_fee_cost,
         6,
@@ -138,6 +152,10 @@ def simulate_paper_trade_from_execution(
             if execution.estimated_filled_quantity >= execution.requested_quantity
             else PaperTradeStatus.partial
         )
+        if parity_quote is not None and parity_quote.status == "rejected":
+            status = PaperTradeStatus.rejected
+        elif parity_quote is not None and parity_quote.status == "partial":
+            status = PaperTradeStatus.partial
         fills = [
             PaperTradeFill(
                 trade_id=f"paper_{uuid4().hex[:12]}",
@@ -154,7 +172,9 @@ def simulate_paper_trade_from_execution(
             )
         ]
     else:
-        combined_metadata.setdefault("reason", "no_fill")
+        combined_metadata.setdefault("reason", parity_quote.blocker if parity_quote is not None and parity_quote.blocker else "no_fill")
+    if parity_quote is not None and parity_quote.blocker:
+        combined_metadata.setdefault("reason", parity_quote.blocker)
 
     return PaperTradeSimulation(
         run_id=run_id,

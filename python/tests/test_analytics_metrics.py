@@ -60,7 +60,12 @@ def test_build_profile_metric_events_aggregates_decisions_orders_positions() -> 
     assert event.exposure_usdc == 5.0
     assert event.net_pnl_usdc == 6.0
     assert event.roi == 1.2
-    assert serialize_event(event)["raw"] == '{"order_count":1,"position_count":1}'
+    raw = serialize_event(event)["raw"]
+    assert '"canonical_evaluation_report"' in raw
+    assert '"execution_cost_usdc":0.0' in raw
+    assert '"gross_edge":0.045' in raw
+    assert '"paper_only":true' in raw
+    assert '"live_order_allowed":false' in raw
 
 
 def test_build_strategy_metric_events_aggregates_by_strategy() -> None:
@@ -76,4 +81,7 @@ def test_build_strategy_metric_events_aggregates_by_strategy() -> None:
     assert event.trade_count == 1
     assert event.skip_count == 1
     assert event.avg_edge == 0.05
-    assert serialize_event(event)["observed_at"] == "2026-04-27 12:00:00.000"
+    serialized = serialize_event(event)
+    assert serialized["observed_at"] == "2026-04-27 12:00:00.000"
+    assert '"canonical_evaluation_report"' in serialized["raw"]
+    assert '"source":"analytics"' in serialized["raw"]

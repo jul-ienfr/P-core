@@ -140,6 +140,20 @@ analytics.profile_decisions.rows=<n>
 analytics.enabled=true
 ```
 
+## Canonical evaluation reporting
+
+Evaluation reporting is standardized as a paper-safe canonical report per `strategy_id × profile_id × market_id × period`. Replay rows, paper ledger rows, and analytics exports should emit the same field names: `gross_pnl_usdc`, `net_pnl_usdc`, `execution_cost_usdc`, `exposure_usdc`, `turnover_usdc`, `hit_rate`, `max_drawdown_usdc`, `max_drawdown_fraction`, `sharpe`, `sortino`, `skip_reasons`, `blockers`, `gross_edge`, `net_edge`, `all_in_edge`, plus `mode`, `source`, `period_start`, `period_end`, `paper_only=true`, and `live_order_allowed=false`.
+
+The existing `strategy_metrics` and `profile_metrics` ClickHouse tables remain the wired storage path. Stable scalar columns continue to carry counts, PnL, exposure, ROI/edge; the complete canonical report is stored in the `raw` JSON payload under `canonical_evaluation_report` to avoid schema churn before visualization work.
+
+## Lightweight offline audit fallback
+
+ClickHouse remains the append-only analytical source of truth and Grafana remains the operator cockpit. For reproducible local audits when the cockpit is unavailable or a small report needs to be shared, `prediction_core.analytics.export_offline_audit` can write normalized analytics events and canonical evaluation reports to JSONL/CSV files.
+
+This JSONL/CSV offline audit export is a fallback only: it does not introduce a new store by default, does not replace ClickHouse tables or Grafana dashboards, and keeps safety metadata explicit: `backend='jsonl_csv'`, `duckdb_required=false`, `clickhouse_primary=true`, `grafana_primary=true`, `paper_only=true`, and `live_order_allowed=false`.
+
+DuckDB remains optional and deferred until a concrete offline workflow proves the stdlib JSONL/CSV path is slow or fragile. Do not add Lance, ArcticDB, TectonicDB, or another research store while the prediction/order/fill/position/risk/metrics schemas are still stabilizing.
+
 ## Dashboards
 
 Grafana provisions these dashboards from `infra/analytics/grafana/dashboards`:

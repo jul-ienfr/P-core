@@ -11,6 +11,7 @@ from prediction_core.analytics.events import (
     ProfileMetricEvent,
     StrategyMetricEvent,
 )
+from prediction_core.evaluation.metrics import build_canonical_evaluation_report
 
 _TRADE_STATUSES = {"trade", "trade_small", "filled", "partial"}
 _SKIP_STATUSES = {"skip", "skipped", "skipped_price_moved", "cancelled", "watch"}
@@ -80,6 +81,16 @@ def build_profile_metric_events(
         skip_count = sum(1 for decision in group_decisions if _is_skip_status(decision.decision_status)) + sum(
             1 for order in group_orders if _is_skip_status(order.status)
         )
+        report = build_canonical_evaluation_report(
+            [*group_decisions, *group_orders, *group_positions],
+            strategy_id=strategy_id,
+            profile_id=profile_id,
+            market_id="",
+            period_start=min((event.observed_at for event in [*group_decisions, *group_orders, *group_positions]), default=None),
+            period_end=max((event.observed_at for event in [*group_decisions, *group_orders, *group_positions]), default=None),
+            mode=mode,
+            source="analytics",
+        ).asdict()
         events.append(
             ProfileMetricEvent(
                 run_id=run_id,
@@ -94,7 +105,7 @@ def build_profile_metric_events(
                 gross_pnl_usdc=net_pnl,
                 net_pnl_usdc=net_pnl,
                 roi=roi,
-                raw={"order_count": len(group_orders), "position_count": len(group_positions)},
+                raw={"order_count": len(group_orders), "position_count": len(group_positions), "canonical_evaluation_report": report},
             )
         )
     return events
@@ -132,6 +143,16 @@ def build_strategy_metric_events(
         skip_count = sum(1 for decision in group_decisions if _is_skip_status(decision.decision_status)) + sum(
             1 for order in group_orders if _is_skip_status(order.status)
         )
+        report = build_canonical_evaluation_report(
+            [*group_decisions, *group_orders, *group_positions],
+            strategy_id=strategy_id,
+            profile_id="",
+            market_id="",
+            period_start=min((event.observed_at for event in [*group_decisions, *group_orders, *group_positions]), default=None),
+            period_end=max((event.observed_at for event in [*group_decisions, *group_orders, *group_positions]), default=None),
+            mode=mode,
+            source="analytics",
+        ).asdict()
         events.append(
             StrategyMetricEvent(
                 run_id=run_id,
@@ -145,7 +166,7 @@ def build_strategy_metric_events(
                 gross_pnl_usdc=net_pnl,
                 net_pnl_usdc=net_pnl,
                 exposure_usdc=exposure,
-                raw={"order_count": len(group_orders), "position_count": len(group_positions)},
+                raw={"order_count": len(group_orders), "position_count": len(group_positions), "canonical_evaluation_report": report},
             )
         )
     return events

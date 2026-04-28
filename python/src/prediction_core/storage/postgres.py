@@ -357,12 +357,16 @@ class OperationalStateRepository:
         return build_event_payload(event_type=event_type, data=payload, source="prediction_core.storage.audit")
 
     def _execute(self, sql: str, params: dict[str, Any]) -> Any:
-        try:
-            from sqlalchemy import text
-        except ImportError as exc:
-            raise RuntimeError("SQLAlchemy is required for Prediction Core PostgreSQL storage") from exc
         with self.engine.begin() as connection:
-            return connection.execute(text(sql), _serialize_json_params(params))
+            return connection.execute(_sql_text(sql), _serialize_json_params(params))
+
+
+def _sql_text(sql: str) -> Any:
+    try:
+        from sqlalchemy import text
+    except ImportError:
+        return sql
+    return text(sql)
 
 
 def _serialize_json_params(params: dict[str, Any]) -> dict[str, Any]:

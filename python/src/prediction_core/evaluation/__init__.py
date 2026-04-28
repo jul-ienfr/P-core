@@ -1,6 +1,8 @@
 """Evaluation domain for prediction_core Python research stack."""
 
 from .metrics import (
+    EvaluationReport,
+    build_canonical_evaluation_report,
     clamp_probability,
     ece_bucket,
     evaluation_record_canonical,
@@ -10,6 +12,8 @@ from .metrics import (
 )
 
 __all__ = [
+    "EvaluationReport",
+    "build_canonical_evaluation_report",
     "clamp_probability",
     "ece_bucket",
     "evaluation_record_canonical",

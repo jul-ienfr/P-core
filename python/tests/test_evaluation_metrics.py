@@ -13,6 +13,7 @@ if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
 from prediction_core.evaluation import (
+    build_canonical_evaluation_report,
     clamp_probability,
     ece_bucket,
     evaluation_record_canonical,
@@ -162,3 +163,72 @@ def test_evaluation_record_canonical_accepts_object_input_and_prefers_explicit_s
             "theme": "rates",
         },
     }
+
+
+def test_build_canonical_evaluation_report_aggregates_trade_like_rows_by_period_and_stays_paper_safe() -> None:
+    report = build_canonical_evaluation_report(
+        [
+            {
+                "strategy_id": "strategy-a",
+                "profile_id": "profile-a",
+                "market_id": "market-a",
+                "observed_at": "2026-04-27T12:00:00+00:00",
+                "gross_pnl_usdc": 3.0,
+                "net_pnl_usdc": 2.5,
+                "execution_cost_usdc": 0.5,
+                "turnover_usdc": 10.0,
+                "exposure_usdc": 8.0,
+                "edge": 0.12,
+                "net_edge": 0.09,
+                "all_in_edge": 0.07,
+                "status": "filled",
+            },
+            {
+                "strategy_id": "strategy-a",
+                "profile_id": "profile-a",
+                "market_id": "market-a",
+                "observed_at": "2026-04-27T13:00:00+00:00",
+                "gross_pnl_usdc": -1.0,
+                "net_pnl_usdc": -1.2,
+                "execution_cost_usdc": 0.2,
+                "spend_usdc": 4.0,
+                "exposure_usdc": 6.0,
+                "edge": -0.02,
+                "status": "filled",
+            },
+            {"status": "skip", "skip_reason": "wide_spread", "blocker": "orderbook"},
+        ],
+        strategy_id="strategy-a",
+        profile_id="profile-a",
+        market_id="market-a",
+        period_start="2026-04-27T00:00:00+00:00",
+        period_end="2026-04-28T00:00:00+00:00",
+        mode="paper",
+        source="replay",
+    )
+
+    payload = report.asdict()
+    assert payload["strategy_id"] == "strategy-a"
+    assert payload["profile_id"] == "profile-a"
+    assert payload["market_id"] == "market-a"
+    assert payload["period_start"] == "2026-04-27T00:00:00+00:00"
+    assert payload["period_end"] == "2026-04-28T00:00:00+00:00"
+    assert payload["mode"] == "paper"
+    assert payload["source"] == "replay"
+    assert payload["gross_pnl_usdc"] == 2.0
+    assert payload["net_pnl_usdc"] == 1.3
+    assert payload["execution_cost_usdc"] == 0.7
+    assert payload["turnover_usdc"] == 14.0
+    assert payload["exposure_usdc"] == 14.0
+    assert payload["hit_rate"] == 0.5
+    assert payload["max_drawdown_usdc"] == 1.2
+    assert payload["max_drawdown_fraction"] == pytest.approx(1.2 / 2.5)
+    assert payload["sharpe"] is not None
+    assert payload["sortino"] is None
+    assert payload["skip_reasons"] == ["wide_spread"]
+    assert payload["blockers"] == ["orderbook"]
+    assert payload["gross_edge"] == pytest.approx(0.05)
+    assert payload["net_edge"] == 0.09
+    assert payload["all_in_edge"] == 0.07
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False

@@ -114,6 +114,73 @@ pub struct ExitValueEstimate {
     pub status: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ExecutionMode {
+    Replay,
+    Paper,
+    LiveDryRun,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ExecutionBlocker {
+    EmptyBook,
+    NoFill,
+    InsufficientDepth,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ExecutionAssumptions {
+    pub schema_version: String,
+    pub mode: ExecutionMode,
+    pub latency_ms: u64,
+    pub slippage_bps: f64,
+    pub queue_ahead_quantity: f64,
+    pub allow_multi_level_sweep: bool,
+    pub reject_on_empty_book: bool,
+    pub reject_on_insufficient_depth: bool,
+    pub maker_fee_bps: f64,
+    pub taker_fee_bps: f64,
+    pub min_fee: f64,
+    pub deposit_fixed: f64,
+    pub deposit_bps: f64,
+    pub withdrawal_fixed: f64,
+    pub withdrawal_bps: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ExecutionParityQuote {
+    pub schema_version: String,
+    pub mode: ExecutionMode,
+    pub side: BookSide,
+    pub requested_quantity: f64,
+    pub filled_quantity: f64,
+    pub unfilled_quantity: f64,
+    pub average_fill_price: Option<f64>,
+    pub top_of_book_price: Option<f64>,
+    pub gross_notional: f64,
+    pub book_slippage_cost: f64,
+    pub assumption_slippage_cost: f64,
+    pub total_slippage_cost: f64,
+    pub latency_ms: u64,
+    pub queue_ahead_quantity: f64,
+    pub levels_consumed: usize,
+    pub status: ExecutionStatus,
+    pub blocker: Option<ExecutionBlocker>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct PositionSnapshot {
+    pub schema_version: String,
+    pub market_id: String,
+    pub side: OrderSide,
+    pub quantity: f64,
+    pub avg_entry_price: f64,
+    pub realized_pnl_usdc: f64,
+    pub unrealized_pnl_usdc: f64,
+    pub fees_paid_usdc: f64,
+    pub paper_only: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FillEvent {
     pub market_id: String,
@@ -157,6 +224,22 @@ pub fn execution_status_str(value: &ExecutionStatus) -> &'static str {
         ExecutionStatus::Filled => "filled",
         ExecutionStatus::Cancelled => "cancelled",
         ExecutionStatus::Error => "error",
+    }
+}
+
+pub fn execution_mode_str(value: &ExecutionMode) -> &'static str {
+    match value {
+        ExecutionMode::Replay => "replay",
+        ExecutionMode::Paper => "paper",
+        ExecutionMode::LiveDryRun => "live_dry_run",
+    }
+}
+
+pub fn execution_blocker_str(value: &ExecutionBlocker) -> &'static str {
+    match value {
+        ExecutionBlocker::EmptyBook => "empty_book",
+        ExecutionBlocker::NoFill => "no_fill",
+        ExecutionBlocker::InsufficientDepth => "insufficient_depth",
     }
 }
 
@@ -205,5 +288,50 @@ mod tests {
         };
 
         assert_eq!(order_side_str(&fill.side), "buy_yes");
+    }
+
+    #[test]
+    fn execution_parity_contract_is_dry_run_only() {
+        let assumptions = ExecutionAssumptions {
+            schema_version: "v1".to_string(),
+            mode: ExecutionMode::LiveDryRun,
+            latency_ms: 250,
+            slippage_bps: 5.0,
+            queue_ahead_quantity: 2.0,
+            allow_multi_level_sweep: true,
+            reject_on_empty_book: true,
+            reject_on_insufficient_depth: false,
+            maker_fee_bps: 0.0,
+            taker_fee_bps: 10.0,
+            min_fee: 0.0,
+            deposit_fixed: 0.0,
+            deposit_bps: 0.0,
+            withdrawal_fixed: 0.0,
+            withdrawal_bps: 0.0,
+        };
+
+        assert_eq!(execution_mode_str(&assumptions.mode), "live_dry_run");
+        assert_eq!(
+            execution_blocker_str(&ExecutionBlocker::InsufficientDepth),
+            "insufficient_depth"
+        );
+    }
+
+    #[test]
+    fn position_snapshot_requires_explicit_paper_only_flag() {
+        let position = PositionSnapshot {
+            schema_version: "v1".to_string(),
+            market_id: "demo-market".to_string(),
+            side: OrderSide::BuyYes,
+            quantity: 3.0,
+            avg_entry_price: 0.42,
+            realized_pnl_usdc: 0.0,
+            unrealized_pnl_usdc: 0.1,
+            fees_paid_usdc: 0.01,
+            paper_only: true,
+        };
+
+        assert!(position.paper_only);
+        assert_eq!(order_side_str(&position.side), "buy_yes");
     }
 }

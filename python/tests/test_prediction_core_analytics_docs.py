@@ -55,3 +55,22 @@ def test_prediction_core_runbook_documents_security_and_local_compose_quirk() ->
         "legacy `docker-compose`",
     ]:
         assert phrase in text
+
+
+def test_prediction_core_runbook_keeps_clickhouse_grafana_primary_with_lightweight_offline_export() -> None:
+    text = RUNBOOK.read_text()
+
+    for phrase in [
+        "ClickHouse remains the append-only analytical source of truth",
+        "Grafana remains the operator cockpit",
+        "JSONL/CSV offline audit export",
+        "DuckDB remains optional and deferred",
+        "does not introduce a new store by default",
+        "backend='jsonl_csv'",
+        "duckdb_required=false",
+        "clickhouse_primary=true",
+        "grafana_primary=true",
+        "paper_only=true",
+        "live_order_allowed=false",
+    ]:
+        assert phrase in text
