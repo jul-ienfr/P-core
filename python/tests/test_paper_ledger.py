@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
+import types
 
 import pytest
 
@@ -109,6 +111,47 @@ def test_paper_ledger_place_creates_generic_limit_only_order_with_cost_summary()
     assert ledger["summary"]["net_pnl_after_all_costs"] == -10.39
 
 
+def test_paper_ledger_place_uses_rust_cost_state_when_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    fake_module = types.ModuleType("prediction_core._rust_orderbook")
+
+    def paper_opening_cost_state(**kwargs):
+        assert kwargs["filled_usdc"] == 10.0
+        assert kwargs["opening_fee_bps"] == 50.0
+        return {
+            "opening_trading_fee_usdc": 0.05,
+            "opening_fixed_fee_usdc": 0.1,
+            "opening_fee_usdc": 0.15,
+            "slippage_usdc": 0.293349,
+            "all_in_entry_cost_usdc": 10.15,
+            "estimated_exit_fixed_fee_usdc": 0.2,
+            "estimated_exit_fee_bps": 40.0,
+            "estimated_exit_fee_usdc": 0.24,
+            "paper_exit_value_usdc": 0.0,
+        }
+
+    def paper_fee_amount(**kwargs):
+        return round(max(0.0, kwargs["fixed"]) + max(0.0, kwargs["notional"]) * max(0.0, kwargs["bps"]) / 10000.0, 6)
+
+    fake_module.paper_opening_cost_state = paper_opening_cost_state
+    fake_module.paper_fee_amount = paper_fee_amount
+    monkeypatch.setitem(sys.modules, "prediction_core._rust_orderbook", fake_module)
+
+    ledger = paper_ledger_place(
+        _candidate(
+            spend_usdc=10.0,
+            orderbook={"no_asks": [{"price": 0.28, "size": 20.0}, {"price": 0.30, "size": 20.0}]},
+            taker_base_fee=0.005,
+            opening_fee_usdc=0.10,
+            estimated_exit_fee_bps=40.0,
+            estimated_exit_fee_usdc=0.20,
+        )
+    )
+
+    assert ledger["orders"][0]["all_in_entry_cost_usdc"] == 10.15
+    assert ledger["orders"][0]["pnl_usdc"] == -10.39
+
+
 def test_paper_ledger_place_records_planned_when_no_spend_is_requested() -> None:
     ledger = paper_ledger_place(_candidate(spend_usdc=0.0))
 
@@ -201,3 +244,41 @@ def test_paper_ledger_refresh_marks_to_market_and_settles_orders() -> None:
     assert by_token["loser"]["status"] == "settled_loss"
     assert by_token["loser"]["pnl_usdc"] == -5.0
     assert summarize_paper_ledger(refreshed)["orders"] == 3
+
+
+def test_paper_ledger_refresh_uses_rust_pnl_when_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    fake_module = types.ModuleType("prediction_core._rust_orderbook")
+
+    def paper_refresh_pnl(**kwargs):
+        assert kwargs["mtm_usdc"] == pytest.approx(7.678571, rel=1e-6)
+        return 2.678571
+
+    def paper_settlement_pnl(**kwargs):
+        return {
+            "status": "settled_win" if kwargs["won"] else "settled_loss",
+            "mtm_usdc": round(kwargs["shares"], 6) if kwargs["won"] else 0.0,
+            "pnl_usdc": 12.857142 if kwargs["won"] else -5.0,
+            "net_pnl_after_all_costs": 12.857142 if kwargs["won"] else -5.0,
+        }
+
+    fake_module.paper_refresh_pnl = paper_refresh_pnl
+    fake_module.paper_settlement_pnl = paper_settlement_pnl
+    monkeypatch.setitem(sys.modules, "prediction_core._rust_orderbook", fake_module)
+    ledger = {
+        "orders": [
+            paper_ledger_place(_candidate(token_id="active", market_id="m1"))["orders"][0],
+            paper_ledger_place(_candidate(token_id="winner", market_id="m2"))["orders"][0],
+        ]
+    }
+
+    refreshed = paper_ledger_refresh(
+        ledger,
+        refreshes={"active": {"best_bid": 0.43, "actual_refresh_price": 0.44}},
+        settlements={"winner": "win"},
+    )
+
+    by_token = {order["token_id"]: order for order in refreshed["orders"]}
+    assert by_token["active"]["pnl_usdc"] == 2.678571
+    assert by_token["winner"]["status"] == "settled_win"
+    assert by_token["winner"]["pnl_usdc"] == 12.857142

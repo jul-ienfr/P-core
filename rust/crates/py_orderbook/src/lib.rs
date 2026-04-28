@@ -1,4 +1,9 @@
 use pm_book::estimate_fill_from_book as rust_estimate_fill_from_book;
+use pm_executor::compute_order_size as rust_compute_order_size;
+use pm_ledger::{
+    fee_amount as rust_paper_fee_amount, paper_opening_cost_state as rust_paper_opening_cost_state,
+    refresh_pnl as rust_paper_refresh_pnl, settlement_pnl as rust_paper_settlement_pnl,
+};
 use pm_risk::evaluate_execution_risk as rust_evaluate_execution_risk;
 use pm_signal::calculate_edge_sizing as rust_calculate_edge_sizing;
 use pm_types::{BookLevel, BookSide, OrderBookSnapshot};
@@ -98,11 +103,112 @@ fn evaluate_execution_risk<'py>(
     Ok(result)
 }
 
+#[pyfunction]
+fn compute_order_size(
+    notional_usdc: f64,
+    limit_price: f64,
+    min_order_size: f64,
+    size_tick: f64,
+) -> PyResult<f64> {
+    rust_compute_order_size(notional_usdc, limit_price, min_order_size, size_tick)
+        .map_err(PyValueError::new_err)
+}
+
+#[pyfunction]
+fn paper_fee_amount(notional: f64, bps: f64, fixed: f64) -> PyResult<f64> {
+    rust_paper_fee_amount(notional, bps, fixed).map_err(PyValueError::new_err)
+}
+
+#[pyfunction]
+#[pyo3(signature = (filled_usdc, top_ask=None, avg_fill_price=None, shares=0.0, mtm_usdc=0.0, opening_fee_bps=0.0, opening_fixed_fee_usdc=0.0, estimated_exit_fee_bps=0.0, estimated_exit_fixed_fee_usdc=0.0))]
+fn paper_opening_cost_state<'py>(
+    py: Python<'py>,
+    filled_usdc: f64,
+    top_ask: Option<f64>,
+    avg_fill_price: Option<f64>,
+    shares: f64,
+    mtm_usdc: f64,
+    opening_fee_bps: f64,
+    opening_fixed_fee_usdc: f64,
+    estimated_exit_fee_bps: f64,
+    estimated_exit_fixed_fee_usdc: f64,
+) -> PyResult<Bound<'py, PyDict>> {
+    let cost = rust_paper_opening_cost_state(
+        filled_usdc,
+        top_ask,
+        avg_fill_price,
+        shares,
+        mtm_usdc,
+        opening_fee_bps,
+        opening_fixed_fee_usdc,
+        estimated_exit_fee_bps,
+        estimated_exit_fixed_fee_usdc,
+    )
+    .map_err(PyValueError::new_err)?;
+    let result = PyDict::new_bound(py);
+    result.set_item("opening_trading_fee_usdc", cost.opening_trading_fee_usdc)?;
+    result.set_item("opening_fixed_fee_usdc", cost.opening_fixed_fee_usdc)?;
+    result.set_item("opening_fee_usdc", cost.opening_fee_usdc)?;
+    result.set_item("slippage_usdc", cost.slippage_usdc)?;
+    result.set_item("all_in_entry_cost_usdc", cost.all_in_entry_cost_usdc)?;
+    result.set_item(
+        "estimated_exit_fixed_fee_usdc",
+        cost.estimated_exit_fixed_fee_usdc,
+    )?;
+    result.set_item("estimated_exit_fee_bps", cost.estimated_exit_fee_bps)?;
+    result.set_item("estimated_exit_fee_usdc", cost.estimated_exit_fee_usdc)?;
+    result.set_item("paper_exit_value_usdc", cost.paper_exit_value_usdc)?;
+    Ok(result)
+}
+
+#[pyfunction]
+#[pyo3(signature = (mtm_usdc, all_in_entry_cost_usdc, estimated_exit_fee_usdc, realized_exit_fee_usdc=None))]
+fn paper_refresh_pnl(
+    mtm_usdc: f64,
+    all_in_entry_cost_usdc: f64,
+    estimated_exit_fee_usdc: f64,
+    realized_exit_fee_usdc: Option<f64>,
+) -> PyResult<f64> {
+    rust_paper_refresh_pnl(
+        mtm_usdc,
+        all_in_entry_cost_usdc,
+        estimated_exit_fee_usdc,
+        realized_exit_fee_usdc,
+    )
+    .map_err(PyValueError::new_err)
+}
+
+#[pyfunction]
+fn paper_settlement_pnl<'py>(
+    py: Python<'py>,
+    shares: f64,
+    all_in_entry_cost_usdc: f64,
+    filled_usdc: f64,
+    won: bool,
+) -> PyResult<Bound<'py, PyDict>> {
+    let settlement = rust_paper_settlement_pnl(shares, all_in_entry_cost_usdc, filled_usdc, won)
+        .map_err(PyValueError::new_err)?;
+    let result = PyDict::new_bound(py);
+    result.set_item("status", settlement.status)?;
+    result.set_item("mtm_usdc", settlement.mtm_usdc)?;
+    result.set_item("pnl_usdc", settlement.pnl_usdc)?;
+    result.set_item(
+        "net_pnl_after_all_costs",
+        settlement.net_pnl_after_all_costs,
+    )?;
+    Ok(result)
+}
+
 #[pymodule]
 fn _rust_orderbook(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(estimate_fill_from_book, module)?)?;
     module.add_function(wrap_pyfunction!(calculate_edge_sizing, module)?)?;
     module.add_function(wrap_pyfunction!(evaluate_execution_risk, module)?)?;
+    module.add_function(wrap_pyfunction!(compute_order_size, module)?)?;
+    module.add_function(wrap_pyfunction!(paper_fee_amount, module)?)?;
+    module.add_function(wrap_pyfunction!(paper_opening_cost_state, module)?)?;
+    module.add_function(wrap_pyfunction!(paper_refresh_pnl, module)?)?;
+    module.add_function(wrap_pyfunction!(paper_settlement_pnl, module)?)?;
     Ok(())
 }
 

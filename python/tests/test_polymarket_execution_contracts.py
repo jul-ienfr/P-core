@@ -1,3 +1,6 @@
+import sys
+import types
+
 import pytest
 
 from prediction_core.polymarket_execution import (
@@ -188,6 +191,30 @@ def test_clob_rest_executor_submits_limit_buy_with_injected_client_and_sanitizes
     assert client.submitted == [{"token_id": "yes-token", "price": 0.5, "size": 10.0, "side": "BUY", "order_type": "LIMIT"}]
     assert result.raw_response["response"]["api_key"] == "[redacted]"
     assert "secret" not in str(result.raw_response)
+
+
+def test_clob_rest_executor_uses_rust_order_size_when_enabled(monkeypatch):
+    monkeypatch.setenv("PREDICTION_CORE_RUST_ORDERBOOK", "1")
+    fake_module = types.ModuleType("prediction_core._rust_orderbook")
+
+    def compute_order_size(**kwargs):
+        assert kwargs == {
+            "notional_usdc": 5.0,
+            "limit_price": 0.5,
+            "min_order_size": 0.01,
+            "size_tick": 0.01,
+        }
+        return 9.99
+
+    fake_module.compute_order_size = compute_order_size
+    monkeypatch.setitem(sys.modules, "prediction_core._rust_orderbook", fake_module)
+    client = FakeClobClient()
+    executor = ClobRestPolymarketExecutor(config=_live_config(), client=client)
+    order = OrderRequest(market_id="m1", token_id="yes-token", outcome="Yes", side="buy", order_type="limit", limit_price=0.5, notional_usdc=5, idempotency_key="k1")
+
+    executor.submit_order(order)
+
+    assert client.submitted[0]["size"] == 9.99
 
 
 def test_clob_rest_executor_lists_open_orders_read_only_and_redacts_sensitive_fields():

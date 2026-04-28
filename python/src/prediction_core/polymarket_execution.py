@@ -830,18 +830,60 @@ class ClobRestPolymarketExecutor:
         return self._client
 
     def _order_size(self, order: OrderRequest) -> float:
-        raw_size = order.notional_usdc / order.limit_price
-        tick = self.config.size_tick
-        size = math.floor(raw_size / tick) * tick
-        size = round(size, 8)
-        if not math.isfinite(size) or size < self.config.min_order_size:
-            raise LiveExecutionGuardrailError("computed Polymarket order size is below minimum")
-        effective_notional = size * order.limit_price
-        if effective_notional <= 0.0 or effective_notional > order.notional_usdc:
-            raise LiveExecutionGuardrailError("computed Polymarket order notional is invalid")
-        if (order.notional_usdc - effective_notional) / order.notional_usdc > 0.05:
-            raise LiveExecutionGuardrailError("computed Polymarket order size is too far below requested notional")
-        return size
+        return _compute_order_size_with_optional_rust(
+            notional_usdc=order.notional_usdc,
+            limit_price=order.limit_price,
+            min_order_size=self.config.min_order_size,
+            size_tick=self.config.size_tick,
+        )
+
+
+def _compute_order_size_with_optional_rust(
+    *,
+    notional_usdc: float,
+    limit_price: float,
+    min_order_size: float,
+    size_tick: float,
+) -> float:
+    if os.getenv("PREDICTION_CORE_RUST_ORDERBOOK") == "1":
+        try:
+            backend = importlib.import_module("prediction_core._rust_orderbook")
+            return float(
+                backend.compute_order_size(
+                    notional_usdc=float(notional_usdc),
+                    limit_price=float(limit_price),
+                    min_order_size=float(min_order_size),
+                    size_tick=float(size_tick),
+                )
+            )
+        except (ImportError, AttributeError):
+            pass
+    return _compute_order_size_python(
+        notional_usdc=notional_usdc,
+        limit_price=limit_price,
+        min_order_size=min_order_size,
+        size_tick=size_tick,
+    )
+
+
+def _compute_order_size_python(
+    *,
+    notional_usdc: float,
+    limit_price: float,
+    min_order_size: float,
+    size_tick: float,
+) -> float:
+    raw_size = notional_usdc / limit_price
+    size = math.floor(raw_size / size_tick) * size_tick
+    size = round(size, 8)
+    if not math.isfinite(size) or size < min_order_size:
+        raise LiveExecutionGuardrailError("computed Polymarket order size is below minimum")
+    effective_notional = size * limit_price
+    if effective_notional <= 0.0 or effective_notional > notional_usdc:
+        raise LiveExecutionGuardrailError("computed Polymarket order notional is invalid")
+    if (notional_usdc - effective_notional) / notional_usdc > 0.05:
+        raise LiveExecutionGuardrailError("computed Polymarket order size is too far below requested notional")
+    return size
 
 
 def _optional_int(value: Any) -> int | None:

@@ -10,6 +10,12 @@ from prediction_core.execution.orderbook_spend import (
     normalize_orderbook_bids,
     simulate_orderbook_fill,
 )
+from prediction_core.paper._rust_ledger import (
+    fee_amount_with_optional_rust,
+    opening_cost_state_with_optional_rust,
+    refresh_pnl_with_optional_rust,
+    settlement_pnl_with_optional_rust,
+)
 from prediction_core.paper.exit_policy import annotate_order_with_exit_policy
 
 PAPER_LEDGER_STATUSES = {
@@ -197,8 +203,13 @@ def _apply_refresh(order: dict[str, Any], refresh: dict[str, Any], *, max_positi
     if realized_exit_fee is not None:
         order["paper_exit_value_usdc"] = round(mtm, 6)
         order["realized_exit_fee_usdc"] = realized_exit_fee
-    exit_fee = realized_exit_fee if realized_exit_fee is not None else float(order.get("estimated_exit_fee_usdc") or 0.0)
-    pnl = round(mtm - float(order.get("all_in_entry_cost_usdc") or order.get("filled_usdc") or 0.0) - exit_fee, 6)
+    pnl = refresh_pnl_with_optional_rust(
+        mtm_usdc=mtm,
+        all_in_entry_cost_usdc=float(order.get("all_in_entry_cost_usdc") or order.get("filled_usdc") or 0.0),
+        estimated_exit_fee_usdc=float(order.get("estimated_exit_fee_usdc") or 0.0),
+        realized_exit_fee_usdc=realized_exit_fee,
+        python_fallback=_refresh_pnl_python,
+    )
     order["pnl_usdc"] = pnl
     order["net_pnl_after_all_costs"] = pnl
     order.setdefault("refresh_history", []).append(
@@ -225,48 +236,66 @@ def _apply_settlement(order: dict[str, Any], outcome: str) -> None:
     shares = float(order.get("shares") or 0.0)
     filled = float(order.get("filled_usdc") or 0.0)
     if outcome in {"win", "won", "settled_win", "true", "1"}:
-        order["status"] = "settled_win"
-        order["mtm_usdc"] = round(shares, 6)
-        pnl = round(shares - float(order.get("all_in_entry_cost_usdc") or filled), 6)
-        order["pnl_usdc"] = pnl
-        order["net_pnl_after_all_costs"] = pnl
+        settlement = settlement_pnl_with_optional_rust(
+            shares=shares,
+            all_in_entry_cost_usdc=float(order.get("all_in_entry_cost_usdc") or filled),
+            filled_usdc=filled,
+            won=True,
+        )
+        if settlement is None:
+            settlement = _settlement_pnl_python(shares=shares, all_in_entry_cost_usdc=float(order.get("all_in_entry_cost_usdc") or filled), filled_usdc=filled, won=True)
+        order.update(settlement)
         order["operator_action"] = "HOLD"
     elif outcome in {"loss", "lost", "settled_loss", "false", "0"}:
-        order["status"] = "settled_loss"
-        order["mtm_usdc"] = 0.0
-        pnl = round(-float(order.get("all_in_entry_cost_usdc") or filled), 6)
-        order["pnl_usdc"] = pnl
-        order["net_pnl_after_all_costs"] = pnl
+        settlement = settlement_pnl_with_optional_rust(
+            shares=shares,
+            all_in_entry_cost_usdc=float(order.get("all_in_entry_cost_usdc") or filled),
+            filled_usdc=filled,
+            won=False,
+        )
+        if settlement is None:
+            settlement = _settlement_pnl_python(shares=shares, all_in_entry_cost_usdc=float(order.get("all_in_entry_cost_usdc") or filled), filled_usdc=filled, won=False)
+        order.update(settlement)
         order["operator_action"] = "HOLD"
     else:
         raise PaperLedgerError(f"unknown settlement outcome: {outcome}")
 
 
 def _paper_cost_state(candidate: dict[str, Any], *, fill: dict[str, Any], filled_usdc: float, shares: float, mtm_usdc: float) -> dict[str, Any]:
-    opening_trading_fee = _fee_amount(filled_usdc, bps=_fee_bps(candidate, "open"), fixed=0.0)
     opening_fixed_fee = _optional_float(candidate.get("opening_fee_usdc", candidate.get("deposit_fee_usd"))) or 0.0
-    opening_fee = round(opening_trading_fee + opening_fixed_fee, 6)
-    top_ask = _optional_float(fill.get("top_ask"))
-    avg_fill_price = _optional_float(fill.get("avg_fill_price"))
-    slippage_usdc = 0.0
-    if top_ask is not None and avg_fill_price is not None and shares > 0:
-        slippage_usdc = round(max(avg_fill_price - top_ask, 0.0) * shares, 6)
     estimated_exit_fixed = _optional_float(candidate.get("estimated_exit_fee_usdc", candidate.get("withdrawal_fee_usd")))
     if estimated_exit_fixed is None:
         estimated_exit_fixed = _optional_float(candidate.get("closing_fee_usdc")) or 0.0
-    estimated_exit_fee = _fee_amount(filled_usdc, bps=_estimated_exit_fee_bps(candidate), fixed=estimated_exit_fixed)
+    top_ask = _optional_float(fill.get("top_ask"))
+    avg_fill_price = _optional_float(fill.get("avg_fill_price"))
+    estimated_exit_fee_bps = _estimated_exit_fee_bps(candidate)
+    cost_state = opening_cost_state_with_optional_rust(
+        filled_usdc=filled_usdc,
+        top_ask=top_ask,
+        avg_fill_price=avg_fill_price,
+        shares=shares,
+        mtm_usdc=mtm_usdc,
+        opening_fee_bps=_fee_bps(candidate, "open"),
+        opening_fixed_fee_usdc=opening_fixed_fee,
+        estimated_exit_fee_bps=estimated_exit_fee_bps,
+        estimated_exit_fixed_fee_usdc=estimated_exit_fixed,
+    )
+    if cost_state is None:
+        cost_state = _paper_cost_state_python(
+            filled_usdc=filled_usdc,
+            top_ask=top_ask,
+            avg_fill_price=avg_fill_price,
+            shares=shares,
+            mtm_usdc=mtm_usdc,
+            opening_fee_bps=_fee_bps(candidate, "open"),
+            opening_fixed_fee_usdc=opening_fixed_fee,
+            estimated_exit_fee_bps=estimated_exit_fee_bps,
+            estimated_exit_fixed_fee_usdc=estimated_exit_fixed,
+        )
     return {
-        "opening_trading_fee_usdc": opening_trading_fee,
-        "opening_fixed_fee_usdc": round(opening_fixed_fee, 6),
-        "opening_fee_usdc": opening_fee,
-        "slippage_usdc": slippage_usdc,
-        "all_in_entry_cost_usdc": round(filled_usdc + opening_fee, 6),
-        "estimated_exit_fixed_fee_usdc": round(estimated_exit_fixed, 6),
-        "estimated_exit_fee_bps": _estimated_exit_fee_bps(candidate),
-        "estimated_exit_fee_usdc": estimated_exit_fee,
+        **cost_state,
         "exit_cost_basis": "estimate_until_live_exit_book" if filled_usdc > 0 else "no_fill",
         "realized_exit_fee_usdc": None,
-        "paper_exit_value_usdc": round(mtm_usdc, 6),
     }
 
 
@@ -331,7 +360,66 @@ def _estimated_exit_fee_bps(payload: dict[str, Any]) -> float:
     return _optional_float(payload.get("estimated_exit_fee_bps", payload.get("closing_fee_bps"))) or 0.0
 
 
+def _paper_cost_state_python(
+    *,
+    filled_usdc: float,
+    top_ask: float | None,
+    avg_fill_price: float | None,
+    shares: float,
+    mtm_usdc: float,
+    opening_fee_bps: float,
+    opening_fixed_fee_usdc: float,
+    estimated_exit_fee_bps: float,
+    estimated_exit_fixed_fee_usdc: float,
+) -> dict[str, Any]:
+    opening_trading_fee = _fee_amount_python(filled_usdc, bps=opening_fee_bps, fixed=0.0)
+    opening_fixed_fee = max(opening_fixed_fee_usdc, 0.0)
+    opening_fee = round(opening_trading_fee + opening_fixed_fee, 6)
+    slippage_usdc = 0.0
+    if top_ask is not None and avg_fill_price is not None and shares > 0:
+        slippage_usdc = round(max(avg_fill_price - top_ask, 0.0) * shares, 6)
+    estimated_exit_fixed = max(estimated_exit_fixed_fee_usdc, 0.0)
+    estimated_exit_fee = _fee_amount_python(filled_usdc, bps=estimated_exit_fee_bps, fixed=estimated_exit_fixed)
+    return {
+        "opening_trading_fee_usdc": opening_trading_fee,
+        "opening_fixed_fee_usdc": round(opening_fixed_fee, 6),
+        "opening_fee_usdc": opening_fee,
+        "slippage_usdc": slippage_usdc,
+        "all_in_entry_cost_usdc": round(filled_usdc + opening_fee, 6),
+        "estimated_exit_fixed_fee_usdc": round(estimated_exit_fixed, 6),
+        "estimated_exit_fee_bps": estimated_exit_fee_bps,
+        "estimated_exit_fee_usdc": estimated_exit_fee,
+        "paper_exit_value_usdc": round(mtm_usdc, 6),
+    }
+
+
+def _refresh_pnl_python(
+    *,
+    mtm_usdc: float,
+    all_in_entry_cost_usdc: float,
+    estimated_exit_fee_usdc: float,
+    realized_exit_fee_usdc: float | None,
+) -> float:
+    exit_fee = realized_exit_fee_usdc if realized_exit_fee_usdc is not None else estimated_exit_fee_usdc
+    return round(mtm_usdc - all_in_entry_cost_usdc - exit_fee, 6)
+
+
+def _settlement_pnl_python(*, shares: float, all_in_entry_cost_usdc: float, filled_usdc: float, won: bool) -> dict[str, Any]:
+    mtm = round(shares, 6) if won else 0.0
+    pnl = round(mtm - (all_in_entry_cost_usdc or filled_usdc), 6)
+    return {
+        "status": "settled_win" if won else "settled_loss",
+        "mtm_usdc": mtm,
+        "pnl_usdc": pnl,
+        "net_pnl_after_all_costs": pnl,
+    }
+
+
 def _fee_amount(notional: float, *, bps: float, fixed: float) -> float:
+    return fee_amount_with_optional_rust(notional=notional, bps=bps, fixed=fixed, python_fallback=_fee_amount_python)
+
+
+def _fee_amount_python(notional: float, *, bps: float, fixed: float) -> float:
     return round(max(0.0, fixed) + max(0.0, notional) * max(0.0, bps) / 10000.0, 6)
 
 
