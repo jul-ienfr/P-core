@@ -161,12 +161,8 @@ def write_orderbook_context_report(
     *,
     max_staleness_seconds: int = 3600,
 ) -> dict[str, Any]:
-    trades_payload = json.loads(Path(trades_json).read_text(encoding="utf-8"))
-    snapshots_payload = json.loads(Path(orderbook_snapshots_json).read_text(encoding="utf-8"))
-    if not isinstance(trades_payload, dict):
-        raise ValueError("trades JSON must be an object")
-    if not isinstance(snapshots_payload, dict):
-        raise ValueError("orderbook snapshots JSON must be an object")
+    trades_payload = _load_json_or_jsonl_payload(trades_json, preferred_key="trades")
+    snapshots_payload = _load_json_or_jsonl_payload(orderbook_snapshots_json, preferred_key="snapshots")
     artifact = build_orderbook_context_report(trades_payload, snapshots_payload, max_staleness_seconds=max_staleness_seconds)
     output_path = Path(output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -178,7 +174,38 @@ def write_orderbook_context_report(
         "trades": summary["trades"],
         "with_orderbook_context": summary["with_orderbook_context"],
         "missing_orderbook_context": summary["missing_orderbook_context"],
+        "max_staleness_seconds": summary["max_staleness_seconds"],
     }
+
+
+def _load_json_or_jsonl_payload(path: str | Path, *, preferred_key: str) -> dict[str, Any]:
+    source = Path(path)
+    text = source.read_text(encoding="utf-8")
+    stripped = text.strip()
+    if not stripped:
+        return {preferred_key: []}
+    try:
+        payload = json.loads(stripped)
+    except json.JSONDecodeError as exc:
+        rows: list[dict[str, Any]] = []
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            clean = line.strip()
+            if not clean:
+                continue
+            try:
+                row = json.loads(clean)
+            except json.JSONDecodeError as line_exc:
+                raise ValueError(f"invalid JSON/JSONL in {source} at line {line_number}: {line_exc}") from line_exc
+            if isinstance(row, dict):
+                rows.append(row)
+            else:
+                raise ValueError(f"JSONL rows in {source} must be objects") from exc
+        return {preferred_key: rows}
+    if isinstance(payload, dict):
+        return payload
+    if isinstance(payload, list):
+        return {preferred_key: [dict(row) for row in payload if isinstance(row, dict)]}
+    raise ValueError(f"{source} must contain a JSON object, array of objects, or JSONL objects")
 
 
 def _latest_snapshot_for_trade(trade: dict[str, Any], snapshots: Iterable[dict[str, Any]] | dict[str, Any]) -> dict[str, Any] | None:
@@ -250,12 +277,16 @@ def _missing_context(reason: str) -> dict[str, Any]:
 
 
 def _snapshot_matches_trade(trade: dict[str, Any], snapshot: dict[str, Any]) -> bool:
-    for key in ("token_id", "asset", "market_id", "condition_id"):
-        trade_value = trade.get(key)
-        snap_value = snapshot.get(key)
-        if trade_value is not None and snap_value is not None and str(trade_value) != str(snap_value):
-            return False
-    return True
+    comparable_keys = ("market_id", "condition_id", "token_id", "asset", "slug")
+    shared_keys = [key for key in comparable_keys if trade.get(key) is not None and snapshot.get(key) is not None]
+    if shared_keys:
+        return all(str(trade.get(key)) == str(snapshot.get(key)) for key in shared_keys)
+
+    trade_keys = set(_trade_snapshot_keys(trade))
+    snapshot_keys = {str(snapshot.get(key)).strip() for key in comparable_keys if snapshot.get(key) is not None and str(snapshot.get(key)).strip()}
+    if trade_keys and snapshot_keys:
+        return bool(trade_keys & snapshot_keys)
+    return False
 
 
 def _snapshot_timestamp(snapshot: dict[str, Any]) -> Any:

@@ -271,8 +271,14 @@ def test_report_surfaces_top_wallet_independent_gap_for_research_only_patterns()
             "max_wallet_positive_pnl_share_gate_max": 0.45,
             "pnl_without_top_wallet": -33.817683,
             "additional_non_top_wallet_net_pnl_needed": 33.817684,
+            "top_wallet": None,
+            "top_wallet_positive_pnl": None,
+            "avg_non_top_wallet_winning_trade_pnl": None,
+            "additional_non_top_wallet_winning_trades_needed": None,
             "positive_wallets": 3,
+            "positive_wallets_gate_min": 3,
             "unique_wallets": 10,
+            "independent_wallets_gate_min": 4,
             "paper_only": True,
             "live_order_allowed": False,
         }
@@ -282,6 +288,45 @@ def test_report_surfaces_top_wallet_independent_gap_for_research_only_patterns()
     assert "threshold|toronto|buy|unclear: pnl_without_top_wallet=-33.817683; need +33.817684 non-top-wallet net PnL" in md
     assert "paper_only=true; live_order_allowed=false" in md
 
+
+
+def test_report_surfaces_top_wallet_identity_and_break_even_trade_gap() -> None:
+    from weather_pm.winner_pattern_report import build_winner_pattern_operator_report
+
+    patterns = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "robust_patterns": [],
+        "research_only_patterns": [
+            {
+                "pattern_id": "threshold|toronto|buy|unclear",
+                "promotion_eligible": False,
+                "promotion_blockers": ["top_wallet_dependent_pnl"],
+                "promotion_metrics": {
+                    "max_positive_pnl_wallet": "0xTOP",
+                    "max_wallet_positive_pnl": 41.2,
+                    "max_wallet_positive_pnl_share": 0.837547,
+                    "pnl_without_top_wallet": -33.817683,
+                    "avg_non_top_wallet_winning_trade_pnl": 2.5,
+                    "positive_wallets": 3,
+                    "unique_wallets": 10,
+                },
+            }
+        ],
+        "anti_patterns": [],
+    }
+
+    payload = build_winner_pattern_operator_report(patterns, _paper_candidates())
+
+    gap = payload["summary"]["top_wallet_independent_gaps"][0]
+    assert gap["top_wallet"] == "0xTOP"
+    assert gap["top_wallet_positive_pnl"] == 41.2
+    assert gap["avg_non_top_wallet_winning_trade_pnl"] == 2.5
+    assert gap["additional_non_top_wallet_winning_trades_needed"] == 14
+    assert gap["independent_wallets_gate_min"] == 4
+    assert gap["positive_wallets_gate_min"] == 3
+    assert "top_wallet=0xTOP" in payload["markdown"]
+    assert "need ~14 more non-top-wallet winning trades" in payload["markdown"]
 
 def test_cli_winner_pattern_report_writes_json_md_and_compact_stdout(tmp_path: Path) -> None:
     patterns_path = tmp_path / "patterns.json"

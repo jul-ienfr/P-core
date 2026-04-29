@@ -197,15 +197,27 @@ def _top_wallet_independent_gaps(patterns: list[dict[str, Any]]) -> list[dict[st
         if pnl_without_top_wallet is None and max_wallet_positive_pnl_share is None:
             continue
         additional_net = None if pnl_without_top_wallet is None or pnl_without_top_wallet > 0 else round(abs(pnl_without_top_wallet) + 0.000001, 6)
+        avg_non_top_trade_pnl = _as_float(metrics.get("avg_non_top_wallet_winning_trade_pnl"))
+        additional_trades = None
+        if additional_net is not None and avg_non_top_trade_pnl is not None and avg_non_top_trade_pnl > 0:
+            import math
+
+            additional_trades = int(math.ceil(additional_net / avg_non_top_trade_pnl))
         gaps.append(
             {
                 "pattern_id": pattern.get("pattern_id"),
+                "top_wallet": metrics.get("max_positive_pnl_wallet") or metrics.get("top_wallet"),
+                "top_wallet_positive_pnl": _as_float(metrics.get("max_wallet_positive_pnl") or metrics.get("top_wallet_positive_pnl")),
                 "max_wallet_positive_pnl_share": max_wallet_positive_pnl_share,
                 "max_wallet_positive_pnl_share_gate_max": 0.45,
                 "pnl_without_top_wallet": pnl_without_top_wallet,
                 "additional_non_top_wallet_net_pnl_needed": additional_net,
+                "avg_non_top_wallet_winning_trade_pnl": avg_non_top_trade_pnl,
+                "additional_non_top_wallet_winning_trades_needed": additional_trades,
                 "positive_wallets": _as_int(metrics.get("positive_wallets")),
+                "positive_wallets_gate_min": 3,
                 "unique_wallets": _as_int(metrics.get("unique_wallets")),
+                "independent_wallets_gate_min": 4,
                 "paper_only": True,
                 "live_order_allowed": False,
             }
@@ -223,10 +235,16 @@ def _top_wallet_independent_gaps(patterns: list[dict[str, Any]]) -> list[dict[st
 def _format_top_wallet_independent_gap(gap: dict[str, Any]) -> str:
     net_gap = gap.get("additional_non_top_wallet_net_pnl_needed")
     need = f"need +{net_gap} non-top-wallet net PnL" if net_gap is not None else "non-top-wallet net PnL already positive"
+    trade_gap = gap.get("additional_non_top_wallet_winning_trades_needed")
+    trade_need = f"; need ~{trade_gap} more non-top-wallet winning trades" if trade_gap is not None else ""
+    top_wallet = f"; top_wallet={gap.get('top_wallet')}" if gap.get("top_wallet") else ""
+    top_wallet_pnl = f" pnl={gap.get('top_wallet_positive_pnl')}" if gap.get("top_wallet_positive_pnl") is not None else ""
     return (
-        f"{gap.get('pattern_id')}: pnl_without_top_wallet={gap.get('pnl_without_top_wallet')}; {need}; "
+        f"{gap.get('pattern_id')}: pnl_without_top_wallet={gap.get('pnl_without_top_wallet')}; {need}{trade_need}; "
         f"top_wallet_positive_pnl_share={gap.get('max_wallet_positive_pnl_share')} "
-        f"(gate <= {gap.get('max_wallet_positive_pnl_share_gate_max')}); "
+        f"(gate <= {gap.get('max_wallet_positive_pnl_share_gate_max')}){top_wallet}{top_wallet_pnl}; "
+        f"wallets={gap.get('unique_wallets')}/{gap.get('independent_wallets_gate_min')} "
+        f"positive_wallets={gap.get('positive_wallets')}/{gap.get('positive_wallets_gate_min')}; "
         "paper_only=true; live_order_allowed=false"
     )
 

@@ -77,6 +77,7 @@ from weather_pm.shadow_paper_runner import (
     run_shadow_profile_exposure_preview_artifact,
 )
 from weather_pm.shadow_profiles import write_learned_shadow_patterns_artifacts, write_promoted_profile_opportunity_dataset_artifact, write_shadow_profile_artifacts
+from weather_pm.smoke_comparison import write_smoke_comparison
 from weather_pm.source_coverage import build_weather_source_coverage_report
 from weather_pm.source_routing import build_resolution_source_route
 from weather_pm.station_binding import build_station_binding
@@ -227,6 +228,12 @@ def build_parser() -> argparse.ArgumentParser:
     winner_pattern_report.add_argument("--orderbook-context-json", required=False, help="Optional orderbook context JSON")
     winner_pattern_report.add_argument("--output-json", required=True, help="Output operator report JSON")
     winner_pattern_report.add_argument("--output-md", required=True, help="Output operator report Markdown")
+
+    smoke_comparison = subparsers.add_parser("smoke-comparison", help="Compare two weather winner-pattern smoke artifacts in paper-only mode")
+    smoke_comparison.add_argument("--before-json", required=True, help="Baseline operator_report.json or winner_patterns.json")
+    smoke_comparison.add_argument("--after-json", required=True, help="New operator_report.json or winner_patterns.json")
+    smoke_comparison.add_argument("--output-json", required=True, help="Output comparison JSON")
+    smoke_comparison.add_argument("--output-md", required=False, help="Optional output comparison Markdown")
 
     winner_pattern_pipeline = subparsers.add_parser("winner-pattern-pipeline", help="Run fixture-only winner pattern pipeline without network by default")
     winner_pattern_pipeline.add_argument("--trades-json", required=True, help="Input account trades JSON")
@@ -810,6 +817,10 @@ def main() -> int:
 
     if args.command == "winner-pattern-report":
         print(json.dumps(write_winner_pattern_operator_report(args.winner_patterns_json, args.paper_candidates_json, args.output_json, args.output_md, resolution_coverage_json=args.resolution_coverage_json, orderbook_context_json=args.orderbook_context_json)))
+        return 0
+
+    if args.command == "smoke-comparison":
+        print(json.dumps(write_smoke_comparison(args.before_json, args.after_json, args.output_json, args.output_md)))
         return 0
 
     if args.command == "winner-pattern-pipeline":

@@ -165,7 +165,7 @@ def test_cli_enrich_trades_orderbook_context_writes_artifact_and_compact_summary
         "600",
     )
 
-    assert result == {"paper_only": True, "live_order_allowed": False, "trades": 1, "with_orderbook_context": 1, "missing_orderbook_context": 0}
+    assert result == {"paper_only": True, "live_order_allowed": False, "trades": 1, "with_orderbook_context": 1, "missing_orderbook_context": 0, "max_staleness_seconds": 600}
     artifact = json.loads(output_path.read_text(encoding="utf-8"))
     assert artifact["paper_only"] is True
     assert artifact["live_order_allowed"] is False
@@ -175,3 +175,59 @@ def test_cli_enrich_trades_orderbook_context_writes_artifact_and_compact_summary
     assert "PMXT hourly L2 archive candidate" in artifact["limitations"]
     assert "Telonex full-depth candidate" in artifact["limitations"]
     assert "evan-kolberg/prediction-market-backtesting" in artifact["limitations"]
+
+
+def test_jsonl_backfill_matches_by_slug_and_reports_missing_without_cross_market_leakage(tmp_path: Path) -> None:
+    trades_path = tmp_path / "trades.jsonl"
+    snapshots_path = tmp_path / "snapshots.jsonl"
+    output_path = tmp_path / "orderbook_context.json"
+    trades_path.write_text(
+        "\n".join(
+            [
+                json.dumps({"id": "t_slug", "slug": "weather-paris-hot", "timestamp": "2026-04-29T12:00:00Z", "side": "BUY", "price": 0.41, "size": 10}),
+                json.dumps({"id": "t_missing", "slug": "weather-london-cold", "timestamp": "2026-04-29T12:00:00Z", "side": "BUY", "price": 0.52, "size": 10}),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    snapshots_path.write_text(
+        "\n".join(
+            [
+                json.dumps({"slug": "weather-paris-hot", "timestamp": "2026-04-29T11:58:30Z", "bids": [[0.40, 25]], "asks": [[0.42, 30]]}),
+                json.dumps({"slug": "unrelated-market", "timestamp": "2026-04-29T12:00:00Z", "bids": [[0.50, 100]], "asks": [[0.53, 100]]}),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = _run_weather_pm(
+        "enrich-trades-orderbook-context",
+        "--trades-json",
+        str(trades_path),
+        "--orderbook-snapshots-json",
+        str(snapshots_path),
+        "--output-json",
+        str(output_path),
+        "--max-staleness-seconds",
+        "120",
+    )
+
+    assert result == {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "trades": 2,
+        "with_orderbook_context": 1,
+        "missing_orderbook_context": 1,
+        "max_staleness_seconds": 120,
+    }
+    artifact = json.loads(output_path.read_text(encoding="utf-8"))
+    assert artifact["summary"] == result
+    by_id = {row["id"]: row for row in artifact["trades"]}
+    assert by_id["t_slug"]["orderbook_context_available"] is True
+    assert by_id["t_slug"]["snapshot_timestamp"] == "2026-04-29T11:58:30Z"
+    assert by_id["t_slug"]["staleness_seconds"] == 90
+    assert by_id["t_missing"]["orderbook_context_available"] is False
+    assert by_id["t_missing"]["missing_reason"] == "no_snapshot_within_max_staleness"
+    assert by_id["t_missing"]["best_bid"] is None
+    assert artifact["paper_only"] is True
+    assert artifact["live_order_allowed"] is False
