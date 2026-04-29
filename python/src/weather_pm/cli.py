@@ -19,6 +19,7 @@ from prediction_core.strategies.config_store import StrategyConfigStore
 from weather_pm.account_learning import (
     load_account_trade_backfill,
     write_account_learning_backfill_pipeline,
+    write_account_pattern_learning_digest,
     write_account_trade_import,
     write_shadow_profile_deep_dive,
     write_shadow_profile_report,
@@ -183,6 +184,12 @@ def build_parser() -> argparse.ArgumentParser:
     legacy_shadow_patterns.add_argument("--output-json", required=True, help="Output learned patterns JSON")
     legacy_shadow_patterns.add_argument("--output-md", required=False, help="Optional Markdown operator report")
     legacy_shadow_patterns.add_argument("--limit", required=False, type=int, default=20, help="Maximum learned patterns")
+
+    account_pattern_digest = subparsers.add_parser("account-pattern-learning-digest", help="Consolidate validated account patterns and live radar conflicts into paper-only guardrails")
+    account_pattern_digest.add_argument("--validation-json", required=True, help="Input account-pattern validation JSON")
+    account_pattern_digest.add_argument("--live-radar-json", required=True, help="Input live radar JSON")
+    account_pattern_digest.add_argument("--output-json", required=True, help="Output consolidated learning digest JSON")
+    account_pattern_digest.add_argument("--output-md", required=False, help="Optional Markdown operator report")
 
     promoted_profile_opportunities = subparsers.add_parser("promoted-profile-opportunity-dataset", help="Build a paper-only opportunity dataset from promoted shadow profiles and candidate markets")
     promoted_profile_opportunities.add_argument("--promoted-profiles-json", required=True, help="Shadow profile evaluation JSON containing promoted profiles")
@@ -711,6 +718,19 @@ def main() -> int:
                     output_json=args.output_json,
                     output_md=args.output_md,
                     limit=args.limit,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "account-pattern-learning-digest":
+        print(
+            json.dumps(
+                write_account_pattern_learning_digest(
+                    validation_json=args.validation_json,
+                    live_radar_json=args.live_radar_json,
+                    output_json=args.output_json,
+                    output_md=args.output_md,
                 )
             )
         )

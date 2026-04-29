@@ -193,6 +193,121 @@ def write_account_learning_backfill_pipeline(input_json: str | Path, output_dir:
     }
 
 
+def build_account_pattern_learning_digest(validation_payload: dict[str, Any], live_radar_payload: dict[str, Any]) -> dict[str, Any]:
+    """Consolidate pattern validation and live radar into paper-only guardrails.
+
+    This is deliberately not an execution command. It records what the account
+    analysis has learned, which conflicts block action, and which rows remain
+    watch-only for independent station/orderbook checks.
+    """
+    robust = [row for row in validation_payload.get("robust_patterns_confirmed_out_of_sample", []) if isinstance(row, dict)]
+    anti = [row for row in validation_payload.get("anti_patterns_to_ban", []) if isinstance(row, dict)]
+    suspect = [row for row in validation_payload.get("downgraded_suspect_concentrated_positives", []) if isinstance(row, dict)]
+    candidates = [row for row in live_radar_payload.get("candidates", []) if isinstance(row, dict)]
+    radar_lessons = [_radar_lesson(row) for row in candidates]
+    blocked_by_conflict = sum(1 for row in radar_lessons if row["operator_action"] == "watch_only_conflict_visible")
+    watch_only = sum(1 for row in radar_lessons if row["operator_action"].startswith("watch_only"))
+    summary = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "robust_patterns": len(robust),
+        "anti_patterns": len(anti),
+        "suspect_concentrated_patterns": len(suspect),
+        "radar_candidates": len(candidates),
+        "blocked_by_conflict": blocked_by_conflict,
+        "watch_only": watch_only,
+        "paper_probe_authorized": 0,
+    }
+    return {
+        "artifact": "account_pattern_learning_digest",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "guardrails": [
+            {
+                "rule": "block_conflicting_anti_patterns",
+                "effect": "do_not_auto_probe_when_live_candidate_matches_losing_profile_pattern",
+                "count": blocked_by_conflict,
+            },
+            {
+                "rule": "downgrade_concentrated_positives",
+                "effect": "treat single-winner or whale-dominated historical positives as research-only",
+                "count": len(suspect),
+            },
+            {
+                "rule": "paper_only_until_independent_edge",
+                "effect": "validated account behavior can rank surfaces, but station/source/book edge must authorize paper replay separately",
+                "count": len(candidates),
+            },
+        ],
+        "validated_pattern_summary": {
+            "top_robust_patterns": _top_pattern_rows(robust, score_key="walk_forward_score", limit=10),
+            "top_anti_patterns": _top_pattern_rows(anti, score_key="trades", limit=10),
+            "suspect_concentrated_examples": _top_pattern_rows(suspect, score_key="trades", limit=10),
+        },
+        "radar_lessons": radar_lessons,
+        "operator_next_actions": [
+            "Use robust account patterns to prioritize surfaces, not to copy trades blindly.",
+            "Keep anti-pattern conflicts as hard blockers for auto paper probes.",
+            "For watch-only rows, require independent station/source confirmation and fresh side-specific orderbook checks.",
+        ],
+    }
+
+
+def write_account_pattern_learning_digest(
+    *,
+    validation_json: str | Path,
+    live_radar_json: str | Path,
+    output_json: str | Path,
+    output_md: str | Path | None = None,
+) -> dict[str, Any]:
+    validation_payload = json.loads(Path(validation_json).read_text(encoding="utf-8"))
+    live_radar_payload = json.loads(Path(live_radar_json).read_text(encoding="utf-8"))
+    if not isinstance(validation_payload, dict) or not isinstance(live_radar_payload, dict):
+        raise ValueError("validation and live radar inputs must be JSON objects")
+    digest = build_account_pattern_learning_digest(validation_payload, live_radar_payload)
+    digest.setdefault("artifacts", {})["validation_json"] = str(validation_json)
+    digest["artifacts"]["live_radar_json"] = str(live_radar_json)
+    digest["artifacts"]["output_json"] = str(output_json)
+    output_path = Path(output_json)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if output_md:
+        digest["artifacts"]["output_md"] = str(output_md)
+        md_path = Path(output_md)
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(account_pattern_learning_digest_markdown(digest), encoding="utf-8")
+    output_path.write_text(json.dumps(digest, indent=2, sort_keys=True), encoding="utf-8")
+    return {"summary": digest["summary"], "artifacts": {key: value for key, value in digest["artifacts"].items() if key.startswith("output_")}}
+
+
+def account_pattern_learning_digest_markdown(digest: dict[str, Any]) -> str:
+    summary = dict(digest.get("summary") or {})
+    lines = [
+        "# Account Pattern Learning Digest",
+        "",
+        f"Safety: paper_only={summary.get('paper_only', True)}, live_order_allowed={summary.get('live_order_allowed', False)}, paper_probe_authorized={summary.get('paper_probe_authorized', 0)}.",
+        "",
+        "## Summary",
+        "",
+    ]
+    for key in ("robust_patterns", "anti_patterns", "suspect_concentrated_patterns", "radar_candidates", "blocked_by_conflict", "watch_only"):
+        lines.append(f"- {key}: {summary.get(key, 0)}")
+    lines.extend(["", "## Guardrails", ""])
+    for row in digest.get("guardrails", []):
+        if isinstance(row, dict):
+            lines.append(f"- **{row.get('rule')}**: {row.get('effect')} (count={row.get('count')})")
+    lines.extend(["", "## Radar lessons", "", "| # | Action | City | Type | Side | Ask | Conflicts | Question |", "|---:|---|---|---|---|---:|---:|---|"])
+    for index, row in enumerate([item for item in digest.get("radar_lessons", []) if isinstance(item, dict)][:25], 1):
+        lines.append(
+            f"| {index} | {_md(row.get('operator_action'))} | {_md(row.get('city'))} | {_md(row.get('weather_market_type'))} | {_md(row.get('effective_position'))} | {row.get('best_ask')} | {row.get('anti_pattern_conflicts')} | {_md(str(row.get('question') or '')[:100])} |"
+        )
+    lines.extend(["", "## Next actions", ""])
+    for action in digest.get("operator_next_actions", []):
+        lines.append(f"- {action}")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def shadow_profiles_markdown(report: dict[str, Any]) -> str:
     lines = ["# Polymarket weather shadow profiles", "", "Read-only profile artifact. No wallet, signature, or live order action is authorized.", ""]
     summary = report.get("summary", {}) if isinstance(report.get("summary"), dict) else {}
@@ -455,6 +570,46 @@ def _deep_dive_notes(profile: dict[str, Any]) -> list[str]:
     if profile.get("abstention_signals"):
         notes.append("Abstention/coverage caveats: " + ", ".join(profile.get("abstention_signals") or []))
     return notes
+
+
+def _radar_lesson(candidate: dict[str, Any]) -> dict[str, Any]:
+    book = candidate.get("book") if isinstance(candidate.get("book"), dict) else {}
+    conflicts = [row for row in candidate.get("anti_pattern_conflicts", []) if isinstance(row, dict)]
+    suspect = [row for row in candidate.get("suspect_concentration_hits", []) if isinstance(row, dict)]
+    if conflicts:
+        operator_action = "watch_only_conflict_visible"
+        blocker = "anti_pattern_conflict"
+    elif suspect:
+        operator_action = "watch_only_concentration_suspect"
+        blocker = "suspect_concentrated_pattern"
+    elif str(candidate.get("radar_action") or "").startswith("WATCH"):
+        operator_action = "watch_only_requires_independent_edge"
+        blocker = str(candidate.get("radar_action") or "watch_only")
+    else:
+        operator_action = "watch_only_research"
+        blocker = str(candidate.get("radar_action") or "unclassified")
+    return {
+        "operator_action": operator_action,
+        "blocker": blocker,
+        "radar_action": candidate.get("radar_action"),
+        "city": candidate.get("city"),
+        "weather_market_type": candidate.get("weather_market_type"),
+        "effective_position": candidate.get("effective_position"),
+        "question": candidate.get("question"),
+        "best_ask": book.get("best_ask"),
+        "spread": book.get("spread"),
+        "anti_pattern_conflicts": len(conflicts),
+        "suspect_concentration_hits": len(suspect),
+        "conflict_handles": sorted({str(row.get("handle") or "unknown") for row in conflicts})[:8],
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+
+
+def _top_pattern_rows(rows: list[dict[str, Any]], *, score_key: str, limit: int) -> list[dict[str, Any]]:
+    selected = sorted(rows, key=lambda row: _optional_float(row.get(score_key)) or 0.0, reverse=True)[:limit]
+    keys = ("handle", "city", "weather_market_type", "market_type", "effective_position", "side", "trades", "test_trades", "pnl", "test_pnl", "roi", "test_roi", "walk_forward_score", "top1_pnl_share")
+    return [{key: row.get(key) for key in keys if key in row} for row in selected]
 
 
 def _counter(rows: list[dict[str, Any]], key: str) -> dict[str, int]:
