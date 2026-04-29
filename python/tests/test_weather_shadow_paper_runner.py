@@ -500,6 +500,28 @@ def test_build_market_metadata_resolution_dataset_infers_from_final_outcome_pric
     assert resolved["outcome_prices"] == [0.998, 0.002]
 
 
+def test_build_market_metadata_resolution_dataset_keeps_condition_and_asset_aliases_from_raw_trade_backfill() -> None:
+    result = build_market_metadata_resolution_dataset(
+        [
+            {
+                "id": "gamma-123",
+                "question": "Will the highest temperature in Paris be 18°C on April 15?",
+                "slug": "highest-temperature-in-paris-on-april-15-2026-18c",
+                "conditionId": "0xfcaa1ef1c76f5dd40c79453ac3ded6e6520e3479ad0b76b981e3a338b1f154d3",
+                "clobTokenIds": ["51396883469573037621641529571787709896734286286721233849202787156093799397234"],
+                "closed": True,
+                "active": False,
+                "outcomes": ["Yes", "No"],
+                "outcomePrices": ["0.001", "0.999"],
+            }
+        ]
+    )
+
+    aliases = result["resolutions"]["gamma-123"]["aliases"]
+    assert "0xfcaa1ef1c76f5dd40c79453ac3ded6e6520e3479ad0b76b981e3a338b1f154d3" in aliases
+    assert "51396883469573037621641529571787709896734286286721233849202787156093799397234" in aliases
+
+
 def test_build_account_trade_resolution_dataset_matches_resolution_by_question_when_trade_has_no_market_id() -> None:
     trades = {
         "trades": [

@@ -398,20 +398,24 @@ def _resolution_from_market_metadata(market: dict[str, Any]) -> dict[str, Any] |
 
 def _market_resolution_aliases(market: dict[str, Any], *, market_id: str, resolution: dict[str, Any]) -> list[str]:
     aliases: list[str] = []
-    for value in (
+    values: list[Any] = [
         market_id,
         market.get("market_id"),
         market.get("conditionId"),
         market.get("condition_id"),
         market.get("clobTokenId"),
         market.get("token_id"),
+        market.get("asset"),
         market.get("slug"),
         resolution.get("slug"),
         market.get("question"),
         market.get("title"),
         resolution.get("question"),
         resolution.get("title"),
-    ):
+    ]
+    for key in ("clobTokenIds", "clob_token_ids", "tokenIds", "token_ids", "assets", "asset_ids"):
+        values.extend(_jsonish_list(market.get(key)))
+    for value in values:
         raw = str(value or "").strip()
         if raw and raw not in aliases:
             aliases.append(raw)
