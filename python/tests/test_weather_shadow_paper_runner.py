@@ -521,6 +521,28 @@ def test_build_market_metadata_resolution_dataset_infers_from_final_outcome_pric
     assert resolved["outcome_prices"] == [0.998, 0.002]
 
 
+def test_build_market_metadata_resolution_dataset_infers_from_terminal_orderbook_prices() -> None:
+    result = build_market_metadata_resolution_dataset(
+        [
+            {
+                "id": "m-toronto-19",
+                "question": "Will the highest temperature in Toronto be 19°C or higher on April 28?",
+                "best_bid": 0.001,
+                "best_ask": 0.003,
+                "bids": [{"price": 0.001, "size": 574.47}],
+                "asks": [{"price": 0.999, "size": 5055.0}, {"price": 0.003, "size": 10.0}],
+            }
+        ]
+    )
+
+    assert result["summary"]["resolved_markets"] == 1
+    resolved = result["resolutions"]["m-toronto-19"]
+    assert resolved["resolved_outcome"] == "No"
+    assert resolved["status"] == "terminal_orderbook_price_resolved_proxy"
+    assert resolved["source"] == "clob_terminal_orderbook_proxy"
+    assert resolved["confidence"] == 0.997
+
+
 def test_build_market_metadata_resolution_dataset_keeps_condition_and_asset_aliases_from_raw_trade_backfill() -> None:
     result = build_market_metadata_resolution_dataset(
         [
@@ -902,6 +924,29 @@ def test_build_shadow_profile_evaluation_scores_profiles_from_resolved_paper_ord
     }
     assert result["profiles"][1]["profile_id"] == "marchyel_like_capped"
     assert result["profiles"][1]["recommendation"] == "needs_resolution_data"
+
+
+def test_build_shadow_profile_evaluation_recommends_promising_historical_profiles_for_paper() -> None:
+    trade_resolution_dataset = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "trades": [
+            {"profile_id": "jey_threshold", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+            {"profile_id": "jey_threshold", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+            {"profile_id": "jey_threshold", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+            {"profile_id": "jey_threshold", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+            {"profile_id": "jey_threshold", "trade_result": "loss", "estimated_pnl_usdc": -0.5, "notional_usd": 4.0},
+        ],
+    }
+
+    result = build_shadow_profile_evaluation({"orders": [], "skipped": []}, trade_resolution_dataset=trade_resolution_dataset)
+
+    profile = result["profiles"][0]
+    assert profile["profile_id"] == "jey_threshold"
+    assert profile["historical_trades"] == 5
+    assert profile["trade_winrate"] == 0.8
+    assert profile["historical_roi"] == 0.175
+    assert profile["recommendation"] == "promote_to_paper_profile"
 
 
 def test_cli_market_metadata_resolution_writes_paper_only_resolution_artifact(tmp_path: Path) -> None:

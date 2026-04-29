@@ -381,23 +381,48 @@ def _resolution_from_market_metadata(market: dict[str, Any]) -> dict[str, Any] |
             "outcomes": outcomes,
             "market_closed": is_closed,
         }
-    if not is_closed or not outcome_prices or not outcomes or len(outcome_prices) != len(outcomes):
+    if is_closed and outcome_prices and outcomes and len(outcome_prices) == len(outcomes):
+        best_idx = max(range(len(outcome_prices)), key=lambda idx: outcome_prices[idx])
+        confidence = outcome_prices[best_idx]
+        inferred = outcomes[best_idx] if best_idx < len(outcomes) else ""
+        if inferred in {"Yes", "No"} and confidence >= 0.99:
+            return {
+                **base,
+                "resolved_outcome": inferred,
+                "status": "closed_price_resolved_proxy",
+                "source": "gamma_closed_outcomePrices_proxy",
+                "confidence": round(confidence, 6),
+                "outcome_prices": outcome_prices,
+                "outcomes": outcomes,
+                "market_closed": True,
+            }
+    terminal_orderbook_resolution = _resolution_from_terminal_orderbook(market)
+    if terminal_orderbook_resolution:
+        return {**base, **terminal_orderbook_resolution}
+    return None
+
+
+def _resolution_from_terminal_orderbook(market: dict[str, Any]) -> dict[str, Any] | None:
+    best_bid = _to_float(market.get("best_bid"))
+    best_ask = _to_float(market.get("best_ask"))
+    candidate_prices = [best_bid, best_ask]
+    for level in [*_jsonish_list(market.get("bids") or market.get("bid_levels")), *_jsonish_list(market.get("asks") or market.get("ask_levels"))]:
+        if isinstance(level, dict):
+            candidate_prices.append(_to_float(level.get("price")))
+    prices = [price for price in candidate_prices if price > 0]
+    if not prices:
         return None
-    best_idx = max(range(len(outcome_prices)), key=lambda idx: outcome_prices[idx])
-    confidence = outcome_prices[best_idx]
-    inferred = outcomes[best_idx] if best_idx < len(outcomes) else ""
-    if inferred not in {"Yes", "No"} or confidence < 0.99:
-        return None
-    return {
-        **base,
-        "resolved_outcome": inferred,
-        "status": "closed_price_resolved_proxy",
-        "source": "gamma_closed_outcomePrices_proxy",
-        "confidence": round(confidence, 6),
-        "outcome_prices": outcome_prices,
-        "outcomes": outcomes,
-        "market_closed": True,
-    }
+    low = min(prices)
+    high = max(prices)
+    if low <= 0.01 and high >= 0.99:
+        return {
+            "resolved_outcome": "No" if best_ask and best_ask <= 0.01 else "Yes",
+            "status": "terminal_orderbook_price_resolved_proxy",
+            "source": "clob_terminal_orderbook_proxy",
+            "confidence": round(1.0 - best_ask, 6) if best_ask > 0 else round(1.0 - low, 6),
+            "market_closed": False,
+        }
+    return None
 
 
 def _market_resolution_aliases(market: dict[str, Any], *, market_id: str, resolution: dict[str, Any]) -> list[str]:
@@ -592,9 +617,14 @@ def _finalize_profile_evaluation(bucket: dict[str, Any]) -> dict[str, Any]:
 
 
 def _profile_recommendation(profile: dict[str, Any]) -> str:
+    historical_resolved = int(profile.get("resolved_trades", 0))
     if profile["orders"] and not profile["resolved_orders"]:
+        if historical_resolved >= 5 and profile.get("historical_roi", 0.0) > 0.05 and profile.get("trade_winrate", 0.0) >= 0.55:
+            return "promote_to_paper_profile"
         return "needs_resolution_data"
     if profile["resolved_orders"] < 5:
+        if historical_resolved >= 5 and profile.get("historical_roi", 0.0) > 0.05 and profile.get("trade_winrate", 0.0) >= 0.55:
+            return "promote_to_paper_profile"
         return "observe_more"
     if profile["roi"] > 0.05 and profile["winrate"] >= 0.55:
         return "promote_to_paper_profile"
