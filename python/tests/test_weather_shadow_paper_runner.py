@@ -195,22 +195,8 @@ def test_build_shadow_profile_paper_orders_applies_profile_specific_sizing_and_r
     assert result["summary"]["profile_counts"] == {"marchyel_like_capped": 1}
 
 
-def test_build_shadow_profile_paper_orders_applies_historical_profile_rule_gates() -> None:
-    dataset = _dataset()
-    dataset["examples"][0].update({"wallet": "0xCold", "handle": "ColdMath", "city": "London", "weather_market_type": "exact_value"})
-    dataset["examples"][1].update({"label": "trade", "wallet": "0xCold", "handle": "ColdMath", "city": "Seoul", "weather_market_type": "exact_value"})
-    enriched = enrich_shadow_dataset_features(
-        dataset,
-        orderbooks={
-            "m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750},
-            "m-paris-18": {"best_bid": 0.20, "best_ask": 0.21, "depth_usd": 750},
-        },
-        forecasts={
-            "london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
-            "paris|april 25": {"forecast_high_c": 18.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
-        },
-    )
-    gates = {
+def _historical_profile_rule_gates() -> dict[str, object]:
+    return {
         "paper_only": True,
         "live_order_allowed": False,
         "rules": [
@@ -245,7 +231,23 @@ def test_build_shadow_profile_paper_orders_applies_historical_profile_rule_gates
         ],
     }
 
-    result = build_shadow_profile_paper_orders(enriched, run_id="shadow-gated", max_order_usdc=5.0, historical_profile_rules=gates)
+
+def test_build_shadow_profile_paper_orders_applies_historical_profile_rule_gates() -> None:
+    dataset = _dataset()
+    dataset["examples"][0].update({"wallet": "0xCold", "handle": "ColdMath", "city": "London", "weather_market_type": "exact_value"})
+    dataset["examples"][1].update({"label": "trade", "wallet": "0xCold", "handle": "ColdMath", "city": "Seoul", "weather_market_type": "exact_value"})
+    enriched = enrich_shadow_dataset_features(
+        dataset,
+        orderbooks={
+            "m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750},
+            "m-paris-18": {"best_bid": 0.20, "best_ask": 0.21, "depth_usd": 750},
+        },
+        forecasts={
+            "london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+            "paris|april 25": {"forecast_high_c": 18.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+        },
+    )
+    result = build_shadow_profile_paper_orders(enriched, run_id="shadow-gated", max_order_usdc=5.0, historical_profile_rules=_historical_profile_rule_gates())
 
     assert len(result["orders"]) == 1
     assert result["orders"][0]["market_id"] == "m-london-20"
@@ -1949,3 +1951,69 @@ def test_cli_historical_profile_rules_writes_json_and_markdown(tmp_path: Path) -
     assert "# Historical profile rule candidates" in markdown
     assert "| paper_candidate_allow | ColdMath | handle_weather_type_position" in markdown
     assert "Safety: paper_only=true, live_order_allowed=false" in markdown
+
+
+def test_cli_shadow_paper_runner_accepts_historical_profile_rules_json(tmp_path: Path) -> None:
+    dataset = _dataset()
+    dataset["examples"][0].update({"handle": "ColdMath"})
+    dataset["examples"][1].update({"label": "trade", "handle": "ColdMath", "city": "Seoul"})
+    dataset_in = tmp_path / "dataset.json"
+    orderbooks_in = tmp_path / "orderbooks.json"
+    forecasts_in = tmp_path / "forecasts.json"
+    rules_in = tmp_path / "historical_rules.json"
+    output_json = tmp_path / "paper_orders.json"
+    dataset_in.write_text(json.dumps(dataset), encoding="utf-8")
+    orderbooks_in.write_text(
+        json.dumps(
+            {
+                "m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750},
+                "m-paris-18": {"best_bid": 0.20, "best_ask": 0.21, "depth_usd": 750},
+            }
+        ),
+        encoding="utf-8",
+    )
+    forecasts_in.write_text(
+        json.dumps(
+            {
+                "london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+                "paris|april 25": {"forecast_high_c": 18.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+            }
+        ),
+        encoding="utf-8",
+    )
+    rules_in.write_text(json.dumps(_historical_profile_rule_gates()), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-paper-runner",
+            "--dataset-json",
+            str(dataset_in),
+            "--orderbooks-json",
+            str(orderbooks_in),
+            "--forecasts-json",
+            str(forecasts_in),
+            "--historical-profile-rules-json",
+            str(rules_in),
+            "--run-id",
+            "shadow-gated-cli",
+            "--output-json",
+            str(output_json),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    assert compact["summary"]["historical_profile_allow_orders"] == 1
+    assert compact["summary"]["historical_profile_avoid_skips"] == 1
+    payload = json.loads(output_json.read_text(encoding="utf-8"))
+    assert payload["orders"][0]["metadata"]["historical_profile_rule"]["action"] == "paper_candidate_allow"
+    assert payload["skipped"] == [{"market_id": "m-paris-18", "wallet": "0xCold", "reason": "historical_profile_avoid_or_invert_filter"}]
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False

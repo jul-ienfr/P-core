@@ -320,6 +320,7 @@ def run_shadow_paper_runner_artifact(
     historical_forecasts_json: str | Path | None = None,
     profile_configs_json: str | Path | None = None,
     promoted_profiles_json: str | Path | None = None,
+    historical_profile_rules_json: str | Path | None = None,
     stress_overlay_json: str | Path | None = None,
     max_order_usdc: float = 5.0,
 ) -> dict[str, Any]:
@@ -330,9 +331,17 @@ def run_shadow_paper_runner_artifact(
     resolutions = _load_optional_object(resolutions_json)
     profile_configs = _load_optional_object(profile_configs_json)
     promoted_profiles = _load_optional_object(promoted_profiles_json)
+    historical_profile_rules = _load_optional_object(historical_profile_rules_json)
     stress_overlay = _load_optional_object(stress_overlay_json)
     enriched = enrich_shadow_dataset_features(dataset, orderbooks=orderbooks, forecasts=forecasts, historical_forecasts=historical_forecasts, resolutions=resolutions)
-    result = build_shadow_profile_paper_orders(enriched, run_id=run_id, max_order_usdc=max_order_usdc, profile_configs=profile_configs, promoted_profiles=promoted_profiles)
+    result = build_shadow_profile_paper_orders(
+        enriched,
+        run_id=run_id,
+        max_order_usdc=max_order_usdc,
+        profile_configs=profile_configs,
+        promoted_profiles=promoted_profiles,
+        historical_profile_rules=historical_profile_rules,
+    )
     if stress_overlay:
         result = apply_stress_overlay_to_paper_orders(result, stress_overlay)
         result["run_id"] = run_id
