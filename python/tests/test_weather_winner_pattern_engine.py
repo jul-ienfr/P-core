@@ -1,0 +1,120 @@
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+PYTHON_SRC = Path(__file__).resolve().parents[1] / "src"
+
+
+def _run_weather_pm(*args: str) -> dict[str, object]:
+    result = subprocess.run(
+        [sys.executable, "-m", "weather_pm.cli", *args],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "PYTHONPATH": str(PYTHON_SRC)},
+    )
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+
+def _example(wallet: str, market_id: str, *, pnl: float, capturable: str = "capturable", label: str = "trade", market_type: str = "high_temperature", price: float = 0.42, distance_to_threshold: float = -0.2, forecast_age_minutes: int = 45) -> dict[str, object]:
+    return {
+        "label": label,
+        "account": wallet,
+        "wallet": wallet,
+        "market_id": market_id,
+        "city": "Paris",
+        "date": "2026-05-04",
+        "market_type": market_type,
+        "side": "YES",
+        "price": price,
+        "pnl": pnl,
+        "capturability": capturable,
+        "orderbook_context_available": capturable == "capturable",
+        "weather_context_available": True,
+        "distance_to_threshold": distance_to_threshold,
+        "forecast_age_minutes": forecast_age_minutes,
+    }
+
+
+def test_robust_positive_slice_outputs_robust_candidate() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    decision_context = {"examples": [_example("0xa", f"m{i}", pnl=3.0) for i in range(3)] + [_example("0xb", f"n{i}", pnl=2.0) for i in range(3)]}
+    payload = build_winner_pattern_engine(decision_context, {"trades": []}, min_resolved_trades=5)
+
+    robust = payload["robust_patterns"]
+    assert robust
+    assert robust[0]["pattern_status"] == "robust_candidate"
+    assert robust[0]["archetype"] == "threshold_harvester"
+    assert robust[0]["capturable_contexts"] >= 5
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+
+
+def test_negative_or_bad_capturability_outputs_anti_pattern_and_blocks_live_radar() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    decision_context = {"examples": [_example("0xa", f"m{i}", pnl=-2.0, capturable="not_capturable") for i in range(6)]}
+    payload = build_winner_pattern_engine(decision_context, {"trades": []}, min_resolved_trades=5)
+
+    anti = payload["anti_patterns"]
+    assert anti
+    assert anti[0]["pattern_status"] == "anti_pattern"
+    assert anti[0]["block_live_radar"] is True
+    assert anti[0]["reason"] in {"negative_out_of_sample_pnl", "bad_capturability"}
+
+
+def test_concentration_or_small_sample_downgrades_to_research_only() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    concentrated = {"examples": [_example("0xwhale", f"m{i}", pnl=10.0) for i in range(5)] + [_example("0xsmall", "m6", pnl=1.0)]}
+    payload = build_winner_pattern_engine(concentrated, {"trades": []}, min_resolved_trades=5, max_top1_pnl_share=0.8)
+
+    research = payload["research_only_patterns"]
+    assert research
+    assert research[0]["pattern_status"] == "research_only"
+    assert research[0]["reason"] == "concentrated_or_small_sample"
+
+
+def test_archetype_labels_cover_initial_pattern_families() -> None:
+    from weather_pm.winner_pattern_engine import classify_archetype
+
+    assert classify_archetype({"distance_to_threshold": 0.1, "market_type": "high_temperature"}) == "threshold_harvester"
+    assert classify_archetype({"market_type": "exact_bin", "bin_center": 72}) == "exact_bin_anomaly_hunter"
+    assert classify_archetype({"forecast_age_minutes": 5, "price": 0.87}) == "late_certainty_compounder"
+    assert classify_archetype({"surface_count": 4}) == "surface_grid_trader"
+    assert classify_archetype({"label": "no_trade"}) == "abstention_filter"
+    assert classify_archetype({}) == "unclear"
+
+
+def test_cli_winner_pattern_engine_writes_json_md_and_compact_stdout(tmp_path: Path) -> None:
+    decision_path = tmp_path / "decision_context.json"
+    trades_path = tmp_path / "resolved_trades.json"
+    output_json = tmp_path / "patterns.json"
+    output_md = tmp_path / "patterns.md"
+    decision_path.write_text(json.dumps({"examples": [_example("0xa", f"m{i}", pnl=3.0) for i in range(3)] + [_example("0xb", f"n{i}", pnl=2.0) for i in range(3)]}), encoding="utf-8")
+    trades_path.write_text(json.dumps({"trades": []}), encoding="utf-8")
+
+    result = _run_weather_pm(
+        "winner-pattern-engine",
+        "--decision-context-json", str(decision_path),
+        "--resolved-trades-json", str(trades_path),
+        "--output-json", str(output_json),
+        "--output-md", str(output_md),
+    )
+
+    assert result["paper_only"] is True
+    assert result["live_order_allowed"] is False
+    assert result["robust_patterns"] >= 1
+    assert result["anti_patterns"] == 0
+    assert result["research_only_patterns"] == 0
+    assert result["output_json"] == str(output_json)
+    artifact = json.loads(output_json.read_text(encoding="utf-8"))
+    assert artifact["operator_next_actions"]
+    assert artifact["feature_importance_counters"]["market_type"] >= 1
+    assert "# Weather Winner Pattern Engine" in output_md.read_text(encoding="utf-8")

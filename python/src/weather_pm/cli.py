@@ -17,6 +17,7 @@ from prediction_core.analytics.events import serialize_event
 from prediction_core.analytics.metrics import build_profile_metric_events, build_strategy_metric_events
 from prediction_core.strategies.config_store import StrategyConfigStore
 from weather_pm.account_data_sources import build_account_data_source_manifest, compact_account_data_source_manifest
+from weather_pm.account_resolution_coverage import write_resolution_coverage_report
 from weather_pm.account_learning import (
     load_account_trade_backfill,
     write_account_learning_backfill_pipeline,
@@ -40,6 +41,7 @@ from weather_pm.event_surface import build_weather_event_surface
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
 from weather_pm.hf_polymarket_dataset import write_hf_account_trades_sample
+from weather_pm.decision_dataset import write_account_decision_dataset
 from weather_pm.history_client import StationHistoryClient, _latency_operational_fields, _parse_observation_timestamp, build_station_history_bundle
 from weather_pm.live_observer import run_live_observer_fast_collector, run_live_observer_once
 from weather_pm.live_observer_config import load_live_observer_config
@@ -55,6 +57,7 @@ from weather_pm.multi_profile_paper_runner import (
 )
 from weather_pm.neighbor_context import build_neighbor_context
 from weather_pm.operator_summary import write_profitable_accounts_operator_summary
+from weather_pm.orderbook_context import write_orderbook_context_report
 from weather_pm.paper_ledger import load_candidate, load_paper_ledger, load_refresh_payload, paper_ledger_place, paper_ledger_refresh, write_paper_ledger_artifacts
 from weather_pm.paper_watchlist import compact_paper_watchlist_report, write_paper_watchlist_csv, write_paper_watchlist_markdown, write_paper_watchlist_report
 from weather_pm.pipeline import score_market_from_question
@@ -83,6 +86,11 @@ from weather_pm.strategy_shortlist import build_operator_shortlist_report, build
 from weather_pm.traders import WeatherTrader, build_weather_trader_registry, load_weather_traders, reverse_engineer_weather_traders
 from weather_pm.wallet_intel import fetch_trader_strategy_profile
 from weather_pm.wallet_sizing_priors import build_wallet_sizing_priors
+from weather_pm.weather_decision_context import write_decision_weather_context
+from weather_pm.winner_pattern_engine import write_winner_pattern_engine
+from weather_pm.paper_candidate_gate import write_winner_pattern_paper_candidates
+from weather_pm.winner_pattern_report import write_winner_pattern_operator_report
+from weather_pm.winner_pattern_pipeline import run_winner_pattern_pipeline
 from weather_pm.winning_patterns import compact_winning_patterns_operator_report, write_winning_patterns_operator_report
 
 
@@ -166,6 +174,63 @@ def build_parser() -> argparse.ArgumentParser:
     hf_account_trades_sample.add_argument("--wallets-json", required=False, help="Optional JSON array or object with wallets/accounts array")
     hf_account_trades_sample.add_argument("--output-json", required=True, help="Output normalized sample artifact")
     hf_account_trades_sample.add_argument("--limit", required=False, type=int, default=1000, help="Maximum local sample rows to scan")
+
+    account_resolution_coverage = subparsers.add_parser("account-resolution-coverage", help="Measure multi-key account trade resolution coverage in paper-only mode")
+    account_resolution_coverage.add_argument("--trades-json", required=True, help="Input account trades JSON")
+    account_resolution_coverage.add_argument("--resolutions-json", required=True, help="Input resolutions JSON")
+    account_resolution_coverage.add_argument("--output-json", required=True, help="Output resolution coverage artifact")
+
+    enrich_trades_orderbook_context = subparsers.add_parser("enrich-trades-orderbook-context", help="Attach historical orderbook context and capturability evidence to trades")
+    enrich_trades_orderbook_context.add_argument("--trades-json", required=True, help="Input account trades JSON")
+    enrich_trades_orderbook_context.add_argument("--orderbook-snapshots-json", required=True, help="Input historical orderbook snapshots JSON")
+    enrich_trades_orderbook_context.add_argument("--output-json", required=True, help="Output enriched trades artifact")
+    enrich_trades_orderbook_context.add_argument("--max-staleness-seconds", required=False, type=int, default=3600, help="Maximum allowed snapshot staleness in seconds")
+
+    build_account_decision_dataset = subparsers.add_parser("build-account-decision-dataset", help="Build observable account trade/no-trade decision dataset v2")
+    build_account_decision_dataset.add_argument("--trades-json", required=True, help="Input weather account trades JSON")
+    build_account_decision_dataset.add_argument("--markets-snapshots-json", required=True, help="Input active market snapshots JSON")
+    build_account_decision_dataset.add_argument("--output-json", required=True, help="Output decision dataset JSON")
+    build_account_decision_dataset.add_argument("--bucket-minutes", required=False, type=int, default=60, help="Decision timestamp bucket size in minutes")
+    build_account_decision_dataset.add_argument("--no-trade-per-trade", required=False, type=int, default=5, help="Max no-trade examples per trade per account/surface bucket")
+
+    enrich_decision_weather_context = subparsers.add_parser("enrich-decision-weather-context", help="Attach forecast-at-decision and resolution/source context to decision examples")
+    enrich_decision_weather_context.add_argument("--decision-dataset-json", required=True, help="Input decision dataset JSON")
+    enrich_decision_weather_context.add_argument("--forecast-snapshots-json", required=True, help="Input forecast snapshots JSON")
+    enrich_decision_weather_context.add_argument("--resolution-sources-json", required=False, help="Optional resolution/source observations JSON")
+    enrich_decision_weather_context.add_argument("--output-json", required=True, help="Output weather decision context JSON")
+
+    winner_pattern_engine = subparsers.add_parser("winner-pattern-engine", help="Learn robust, capturable weather winner patterns in paper-only mode")
+    winner_pattern_engine.add_argument("--decision-context-json", required=True, help="Input enriched decision/weather context JSON")
+    winner_pattern_engine.add_argument("--resolved-trades-json", required=True, help="Input resolved trades JSON")
+    winner_pattern_engine.add_argument("--output-json", required=True, help="Output winner patterns JSON")
+    winner_pattern_engine.add_argument("--output-md", required=False, help="Optional Markdown operator report")
+    winner_pattern_engine.add_argument("--min-resolved-trades", required=False, type=int, default=5, help="Minimum resolved trades for robust promotion")
+    winner_pattern_engine.add_argument("--max-top1-pnl-share", required=False, type=float, default=0.8, help="Maximum allowed top account/wallet PnL concentration")
+
+    winner_pattern_candidates = subparsers.add_parser("winner-pattern-paper-candidates", help="Gate current markets into paper candidates or watch-only skips")
+    winner_pattern_candidates.add_argument("--winner-patterns-json", required=True, help="Input winner patterns JSON")
+    winner_pattern_candidates.add_argument("--current-markets-json", required=True, help="Input current markets JSON")
+    winner_pattern_candidates.add_argument("--current-orderbooks-json", required=True, help="Input current orderbooks JSON")
+    winner_pattern_candidates.add_argument("--current-weather-context-json", required=True, help="Input current weather context JSON")
+    winner_pattern_candidates.add_argument("--output-json", required=True, help="Output paper candidates JSON")
+    winner_pattern_candidates.add_argument("--output-md", required=False, help="Optional Markdown operator report")
+
+    winner_pattern_report = subparsers.add_parser("winner-pattern-report", help="Build dashboard-ready winner pattern operator report")
+    winner_pattern_report.add_argument("--winner-patterns-json", required=True, help="Input winner patterns JSON")
+    winner_pattern_report.add_argument("--paper-candidates-json", required=True, help="Input paper candidates JSON")
+    winner_pattern_report.add_argument("--resolution-coverage-json", required=False, help="Optional resolution coverage JSON")
+    winner_pattern_report.add_argument("--orderbook-context-json", required=False, help="Optional orderbook context JSON")
+    winner_pattern_report.add_argument("--output-json", required=True, help="Output operator report JSON")
+    winner_pattern_report.add_argument("--output-md", required=True, help="Output operator report Markdown")
+
+    winner_pattern_pipeline = subparsers.add_parser("winner-pattern-pipeline", help="Run fixture-only winner pattern pipeline without network by default")
+    winner_pattern_pipeline.add_argument("--trades-json", required=True, help="Input account trades JSON")
+    winner_pattern_pipeline.add_argument("--resolutions-json", required=True, help="Input resolutions JSON")
+    winner_pattern_pipeline.add_argument("--orderbook-snapshots-json", required=True, help="Input orderbook snapshots JSON")
+    winner_pattern_pipeline.add_argument("--market-snapshots-json", required=True, help="Input active market snapshots JSON")
+    winner_pattern_pipeline.add_argument("--forecast-snapshots-json", required=True, help="Input forecast snapshots JSON")
+    winner_pattern_pipeline.add_argument("--output-dir", required=True, help="Output directory for pipeline artifacts")
+    winner_pattern_pipeline.add_argument("--allow-network", action="store_true", help="Explicitly request network access (currently rejected)")
 
     legacy_account_trades_backfill = subparsers.add_parser("backfill-account-trades", help="Backfill public Polymarket account trades from a followlist CSV")
     legacy_account_trades_backfill.add_argument("--followlist", required=True, help="CSV followlist with wallet/handle columns")
@@ -708,6 +773,50 @@ def main() -> int:
                 )
             )
         )
+        return 0
+
+    if args.command == "account-resolution-coverage":
+        print(json.dumps(write_resolution_coverage_report(args.trades_json, args.resolutions_json, args.output_json)))
+        return 0
+
+    if args.command == "enrich-trades-orderbook-context":
+        print(json.dumps(write_orderbook_context_report(args.trades_json, args.orderbook_snapshots_json, args.output_json, max_staleness_seconds=args.max_staleness_seconds)))
+        return 0
+
+    if args.command == "build-account-decision-dataset":
+        print(json.dumps(write_account_decision_dataset(args.trades_json, args.markets_snapshots_json, args.output_json, bucket_minutes=args.bucket_minutes, no_trade_per_trade=args.no_trade_per_trade)))
+        return 0
+
+    if args.command == "enrich-decision-weather-context":
+        print(json.dumps(write_decision_weather_context(args.decision_dataset_json, args.forecast_snapshots_json, args.output_json, resolution_sources_json=args.resolution_sources_json)))
+        return 0
+
+    if args.command == "winner-pattern-engine":
+        print(json.dumps(write_winner_pattern_engine(args.decision_context_json, args.resolved_trades_json, args.output_json, output_md=args.output_md, min_resolved_trades=args.min_resolved_trades, max_top1_pnl_share=args.max_top1_pnl_share)))
+        return 0
+
+    if args.command == "winner-pattern-paper-candidates":
+        print(json.dumps(write_winner_pattern_paper_candidates(args.winner_patterns_json, args.current_markets_json, args.current_orderbooks_json, args.current_weather_context_json, args.output_json, output_md=args.output_md)))
+        return 0
+
+    if args.command == "winner-pattern-report":
+        print(json.dumps(write_winner_pattern_operator_report(args.winner_patterns_json, args.paper_candidates_json, args.output_json, args.output_md, resolution_coverage_json=args.resolution_coverage_json, orderbook_context_json=args.orderbook_context_json)))
+        return 0
+
+    if args.command == "winner-pattern-pipeline":
+        try:
+            payload = run_winner_pattern_pipeline(
+                trades_json=args.trades_json,
+                resolutions_json=args.resolutions_json,
+                orderbook_snapshots_json=args.orderbook_snapshots_json,
+                market_snapshots_json=args.market_snapshots_json,
+                forecast_snapshots_json=args.forecast_snapshots_json,
+                output_dir=args.output_dir,
+                allow_network=args.allow_network,
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        print(json.dumps(payload))
         return 0
 
     if args.command == "backfill-account-trades":

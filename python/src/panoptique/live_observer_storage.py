@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import json
+import os
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Protocol
 
@@ -30,6 +31,7 @@ class LiveObserverStorageResult:
     path_or_uri: str | None
     row_count: int
     paper_only: bool = True
+    live_order_allowed: bool = False
     requested_backend: str | None = None
     dry_run: bool = False
     stream_name: str | None = None
@@ -44,6 +46,7 @@ class LiveObserverStorageResult:
             "path_or_uri": self.path_or_uri,
             "row_count": self.row_count,
             "paper_only": self.paper_only,
+            "live_order_allowed": self.live_order_allowed,
             "dry_run": self.dry_run,
             "stream_name": self.stream_name,
             "created_at": _json_value(self.created_at or datetime.now(UTC)),
@@ -59,10 +62,22 @@ class LiveObserverWriter(Protocol):
 class LocalJsonlLiveObserverWriter:
     """Append-only JSONL writer under the configured live-observer path."""
 
-    def __init__(self, *, path: str | Path, stream_name: str, paper_only: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        path: str | Path,
+        stream_name: str,
+        paper_only: bool = True,
+        retention_policy: str | None = None,
+        source: str = "weather_pm.live_observer",
+        compressed: bool = False,
+    ) -> None:
         self.path = Path(path)
         self.stream_name = stream_name
         self.paper_only = paper_only
+        self.retention_policy = retention_policy
+        self.source = source
+        self.compressed = compressed
 
     def write_many(self, rows: Iterable[Any]) -> LiveObserverStorageResult:
         _enforce_paper_only(self.paper_only)
@@ -70,7 +85,7 @@ class LocalJsonlLiveObserverWriter:
         count = 0
         with self.path.open("a", encoding="utf-8") as handle:
             for row in rows:
-                handle.write(json.dumps(_row_to_dict(row), sort_keys=True, separators=(",", ":")))
+                handle.write(json.dumps(_with_live_artifact_metadata(_row_to_dict(row), self), sort_keys=True, separators=(",", ":")))
                 handle.write("\n")
                 count += 1
         return LiveObserverStorageResult(
@@ -179,6 +194,9 @@ def create_live_observer_writer(
             path=Path(config.paths.jsonl_dir) / f"{safe_stream}.jsonl",
             stream_name=safe_stream,
             paper_only=config.safety.paper_only,
+            retention_policy=_retention_policy(config),
+            source="weather_pm.live_observer.fixture" if config.active_scenario == "minimal" else f"weather_pm.live_observer.{config.active_scenario}",
+            compressed=False,
         )
     if selected == "local_parquet":
         return LocalParquetLiveObserverWriter(
@@ -216,6 +234,21 @@ def _enforce_config_safety(config: LiveObserverConfig) -> None:
     _enforce_paper_only(config.safety.paper_only)
     if config.safety.live_order_allowed:
         raise ValueError("live_order_allowed must be false for live-observer storage")
+    mountpoint = config.safety.require_mountpoint
+    if mountpoint and config.safety.refuse_if_not_mounted:
+        root = Path(mountpoint).expanduser().resolve(strict=False)
+        for candidate in (
+            config.paths.base_dir,
+            config.paths.jsonl_dir,
+            config.paths.parquet_dir,
+            config.paths.reports_dir,
+            config.paths.manifests_dir,
+        ):
+            resolved = Path(candidate).expanduser().resolve(strict=False)
+            if resolved == root or root in resolved.parents:
+                if not os.path.ismount(root):
+                    raise ValueError(f"refusing to write under {root} because it is not a mountpoint")
+                break
 
 
 def _enforce_paper_only(paper_only: bool) -> None:
@@ -233,6 +266,22 @@ def _row_to_dict(row: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise TypeError("live-observer rows must serialize to JSON object mappings")
     return {str(key): _json_value(item) for key, item in value.items()}
+
+
+def _with_live_artifact_metadata(row: dict[str, Any], writer: LocalJsonlLiveObserverWriter) -> dict[str, Any]:
+    enriched = dict(row)
+    enriched.setdefault("retention_policy", writer.retention_policy or "raw_days=null;compact_days=null;aggregate_days=null")
+    enriched.setdefault("compressed", bool(writer.compressed))
+    enriched.setdefault("source", writer.source)
+    enriched.setdefault("captured_at", datetime.now(UTC).isoformat())
+    enriched["paper_only"] = True
+    enriched["live_order_allowed"] = False
+    return enriched
+
+
+def _retention_policy(config: LiveObserverConfig) -> str:
+    retention = config.active.retention
+    return f"raw_days={retention.raw_days};compact_days={retention.compact_days};aggregate_days={retention.aggregate_days}"
 
 
 def _json_value(value: Any) -> Any:

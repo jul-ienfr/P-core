@@ -48,6 +48,8 @@ paths:
 safety:
   paper_only: true
   live_order_allowed: false
+  require_mountpoint: null
+  refuse_if_not_mounted: true
 """
 
 
@@ -104,7 +106,112 @@ def test_enabled_fixture_run_writes_local_jsonl_rows(tmp_path):
     result = payload["storage_results"]["compact_market_snapshot"]
     assert result["status"] == "written"
     assert result["row_count"] == 1
-    assert Path(result["path_or_uri"]).exists()
+    output_path = Path(result["path_or_uri"])
+    assert output_path.exists()
+    row = json.loads(output_path.read_text(encoding="utf-8").splitlines()[0])
+    for key in ("retention_policy", "compressed", "source", "captured_at", "paper_only", "live_order_allowed"):
+        assert key in row
+    assert row["retention_policy"] == "raw_days=None;compact_days=None;aggregate_days=None"
+    assert row["compressed"] is False
+    assert row["source"] == "weather_pm.live_observer.fixture"
+    assert row["paper_only"] is True
+    assert row["live_order_allowed"] is False
+
+
+def test_winner_pattern_watchlist_mode_limits_live_capture_scope(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        _config_text(tmp_path / "observer", enabled=True, dry_run=False)
+        + """
+streams:
+  market_snapshots:
+    enabled: true
+  bin_surfaces:
+    enabled: true
+  forecasts:
+    enabled: true
+  account_trades:
+    enabled: true
+  full_books:
+    enabled: true
+followed_accounts:
+  ColdMath:
+    enabled: true
+""",
+        encoding="utf-8",
+    )
+    config = load_live_observer_config(config_path)
+    calls = []
+
+    def fake_list_weather_markets(*, source, limit):
+        calls.append(("markets", source, limit))
+        return [
+            {
+                "id": "paris-high-22",
+                "event_id": "paris-weather-2026-05-04",
+                "slug": "paris-high-22",
+                "question": "Will the highest temperature in Paris be 22C or higher on May 4, 2026?",
+                "best_bid": 0.40,
+                "best_ask": 0.42,
+                "active": True,
+                "closed": False,
+            }
+        ]
+
+    def fake_list_followed_account_trades(*, accounts, limit, after_timestamp=None):
+        calls.append(("account_trades", tuple(accounts), limit, after_timestamp))
+        return [
+            {
+                "userName": "ColdMath",
+                "transactionHash": "0xwatch",
+                "conditionId": "paris-high-22",
+                "side": "BUY",
+                "price": 0.41,
+                "size": 12,
+                "timestamp": "2026-04-29T12:00:00+00:00",
+                "title": "Will the highest temperature in Paris be 22C or higher on May 4, 2026?",
+            }
+        ]
+
+    monkeypatch.setattr("weather_pm.live_observer.list_weather_markets", fake_list_weather_markets)
+    monkeypatch.setattr("weather_pm.live_observer.list_followed_account_trades", fake_list_followed_account_trades)
+
+    payload = run_live_observer_once(config, source="live", dry_run=False, mode="winner_pattern_watchlist").to_dict()
+
+    assert payload["mode"] == "winner_pattern_watchlist"
+    assert payload["watchlist_capture_scope"] == [
+        "current_orderbook_compact_snapshots_for_matched_surfaces",
+        "full_book_only_on_account_trade_large_movement_or_candidate_trigger",
+        "forecast_snapshots",
+        "market_surface_snapshots",
+        "observed_account_trades",
+    ]
+    assert payload["full_book_policy"] == "account_trade_large_movement_or_candidate_trigger_only"
+    assert payload["snapshots"] == {"compact_market_snapshot": 1, "followed_account_trade_trigger": 1}
+    assert calls == [("markets", "live", 100), ("account_trades", ("ColdMath",), 10, None)]
+
+
+def test_live_observer_refuses_unmounted_truenas_write_before_creating_files(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    fake_mount = tmp_path / "mnt" / "truenas"
+    fake_base = fake_mount / "p-core" / "polymarket" / "live_observer"
+    config_path.write_text(
+        _config_text(fake_base, enabled=True, dry_run=False).replace(
+            "require_mountpoint: null",
+            f"require_mountpoint: {fake_mount}",
+        ),
+        encoding="utf-8",
+    )
+    config = load_live_observer_config(config_path)
+    monkeypatch.setattr("os.path.ismount", lambda path: False)
+
+    payload = run_live_observer_once(config, source="fixture", dry_run=False).to_dict()
+
+    assert payload["snapshots"]["compact_market_snapshot"] == 1
+    assert payload["errors"][0]["code"] == "storage_error"
+    assert "not a mountpoint" in payload["errors"][0]["message"]
+    assert all(result["status"] == "error" for result in payload["storage_results"].values())
+    assert not (fake_base / "jsonl" / "compact_market_snapshot.jsonl").exists()
 
 
 def test_live_source_collects_bounded_public_weather_snapshots_when_active(monkeypatch, tmp_path):

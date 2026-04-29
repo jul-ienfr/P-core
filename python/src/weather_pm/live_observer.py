@@ -24,6 +24,7 @@ from weather_pm.live_observer_snapshots import (
     ForecastSourceSnapshot,
     WeatherBinSurfaceSnapshot,
 )
+from weather_pm.winner_pattern_pipeline import WATCHLIST_CAPTURE_SCOPE
 from weather_pm.market_parser import parse_market_question
 from weather_pm.polymarket_client import list_weather_markets as _list_weather_markets
 
@@ -43,9 +44,12 @@ class LiveObserverRunSummary:
     snapshots: Mapping[str, int]
     storage_results: Mapping[str, Mapping[str, Any]]
     errors: list[dict[str, str]] = field(default_factory=list)
+    mode: str = "standard"
+    watchlist_capture_scope: Sequence[str] = field(default_factory=tuple)
+    full_book_policy: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "scenario": self.scenario,
             "source": self.source,
             "dry_run": self.dry_run,
@@ -57,6 +61,13 @@ class LiveObserverRunSummary:
             "storage_results": {name: dict(result) for name, result in self.storage_results.items()},
             "errors": list(self.errors),
         }
+        if self.mode != "standard":
+            payload["mode"] = self.mode
+        if self.watchlist_capture_scope:
+            payload["watchlist_capture_scope"] = list(self.watchlist_capture_scope)
+        if self.full_book_policy:
+            payload["full_book_policy"] = self.full_book_policy
+        return payload
 
 
 @dataclass(frozen=True)
@@ -207,22 +218,26 @@ def run_live_observer_once(
     *,
     source: str = "fixture",
     dry_run: bool = False,
+    mode: str = "standard",
 ) -> LiveObserverRunSummary:
     """Run one bounded, paper-only live-observer collection pass."""
 
     errors: list[dict[str, str]] = []
     if source not in {"fixture", "live"}:
         raise ValueError("source must be 'fixture' or 'live'")
+    if mode not in {"standard", "winner_pattern_watchlist"}:
+        raise ValueError("mode must be 'standard' or 'winner_pattern_watchlist'")
 
     if not config.live_collection_active and not (source == "fixture" and dry_run):
         return _summary(
             config,
             source=source,
             dry_run=dry_run,
+            mode=mode,
             errors=[_error("collection_disabled", "collection master switch is off; no collection attempted")],
         )
 
-    rows_by_stream = _live_rows(config, source=source) if source == "live" else _fixture_rows(config)
+    rows_by_stream = _live_rows(config, source=source, mode=mode) if source == "live" else _fixture_rows(config)
     snapshots = {name: len(rows) for name, rows in rows_by_stream.items() if rows}
     storage_results: dict[str, Mapping[str, Any]] = {}
     for stream_name, rows in rows_by_stream.items():
@@ -251,6 +266,7 @@ def run_live_observer_once(
         config,
         source=source,
         dry_run=dry_run,
+        mode=mode,
         snapshots=snapshots,
         storage_results=storage_results,
         errors=errors,
@@ -265,6 +281,7 @@ def _summary(
     snapshots: Mapping[str, int] | None = None,
     storage_results: Mapping[str, Mapping[str, Any]] | None = None,
     errors: list[dict[str, str]] | None = None,
+    mode: str = "standard",
 ) -> LiveObserverRunSummary:
     return LiveObserverRunSummary(
         scenario=config.active_scenario,
@@ -277,17 +294,28 @@ def _summary(
         snapshots=snapshots or {},
         storage_results=storage_results or {},
         errors=errors or [],
+        mode=mode,
+        watchlist_capture_scope=WATCHLIST_CAPTURE_SCOPE if mode == "winner_pattern_watchlist" else (),
+        full_book_policy="account_trade_large_movement_or_candidate_trigger_only" if mode == "winner_pattern_watchlist" else None,
     )
 
 
-def _live_rows(config: LiveObserverConfig, *, source: str) -> dict[str, list[Any]]:
+def _live_rows(config: LiveObserverConfig, *, source: str, mode: str = "standard") -> dict[str, list[Any]]:
     observed_at = datetime.now(UTC)
     rows: dict[str, list[Any]] = {}
     if _stream_enabled(config, "market_snapshots"):
         markets = list_weather_markets(source=source, limit=config.active.market_limit)
-        compact_rows = _market_snapshot_rows(markets, observed_at=observed_at, source=source)
+        compact_rows = _market_snapshot_rows(markets, observed_at=observed_at, source=source, mode=mode)
         if compact_rows:
             rows["compact_market_snapshot"] = compact_rows
+    if mode == "standard" and _stream_enabled(config, "bin_surfaces"):
+        surface_rows = _surface_snapshot_rows_from_compact(rows.get("compact_market_snapshot", []), observed_at=observed_at, source=source)
+        if surface_rows:
+            rows["weather_bin_surface_snapshot"] = surface_rows
+    if mode == "standard" and _stream_enabled(config, "forecasts"):
+        forecast_rows = _forecast_snapshot_rows_from_compact(rows.get("compact_market_snapshot", []), observed_at=observed_at, source=source)
+        if forecast_rows:
+            rows["forecast_source_snapshot"] = forecast_rows
     if _stream_enabled(config, "account_trades"):
         accounts = _enabled_followed_accounts(config)[: config.active.followed_account_limit]
         if accounts:
@@ -300,7 +328,13 @@ def _live_rows(config: LiveObserverConfig, *, source: str) -> dict[str, list[Any
     return rows
 
 
-def _market_snapshot_rows(markets: Sequence[Mapping[str, Any]], *, observed_at: datetime, source: str) -> list[CompactMarketSnapshot]:
+def _market_snapshot_rows(
+    markets: Sequence[Mapping[str, Any]],
+    *,
+    observed_at: datetime,
+    source: str,
+    mode: str = "standard",
+) -> list[CompactMarketSnapshot]:
     rows: list[CompactMarketSnapshot] = []
     for market in markets:
         question = str(market.get("question") or "").strip()
@@ -331,7 +365,64 @@ def _market_snapshot_rows(markets: Sequence[Mapping[str, Any]], *, observed_at: 
                 open_interest=_optional_float(market.get("open_interest") or market.get("openInterest")),
                 active=_optional_bool(market.get("active")),
                 closed=_optional_bool(market.get("closed")),
-                metadata={"source": "live_gamma_public" if source == "live" else source},
+                metadata={
+                    "source": "live_gamma_public" if source == "live" else source,
+                    "observer_mode": mode,
+                    "capture_scope": WATCHLIST_CAPTURE_SCOPE if mode == "winner_pattern_watchlist" else None,
+                    "full_book_policy": "account_trade_large_movement_or_candidate_trigger_only" if mode == "winner_pattern_watchlist" else None,
+                },
+            )
+        )
+    return rows
+
+
+def _surface_snapshot_rows_from_compact(
+    compact_rows: Sequence[CompactMarketSnapshot],
+    *,
+    observed_at: datetime,
+    source: str,
+) -> list[WeatherBinSurfaceSnapshot]:
+    rows: list[WeatherBinSurfaceSnapshot] = []
+    for row in compact_rows:
+        rows.append(
+            WeatherBinSurfaceSnapshot(
+                observed_at=observed_at,
+                market_id=row.market_id,
+                event_id=row.event_id,
+                city=row.city,
+                metric=row.metric,
+                target_date=row.target_date,
+                bins=[],
+                source_market_ids=[row.market_id],
+                surface_version="live-observer-v1",
+                metadata={"source": source, "derived_from": "compact_market_snapshot"},
+            )
+        )
+    return rows
+
+
+def _forecast_snapshot_rows_from_compact(
+    compact_rows: Sequence[CompactMarketSnapshot],
+    *,
+    observed_at: datetime,
+    source: str,
+) -> list[ForecastSourceSnapshot]:
+    rows: list[ForecastSourceSnapshot] = []
+    seen: set[tuple[str, str, str]] = set()
+    for row in compact_rows:
+        key = (row.city, row.metric, str(row.target_date))
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append(
+            ForecastSourceSnapshot(
+                observed_at=observed_at,
+                source="weather_pm.live_observer",
+                city=row.city,
+                metric=row.metric,
+                target_date=row.target_date,
+                source_uri=None,
+                metadata={"source": source, "available": False, "reason": "live_forecast_adapter_not_configured"},
             )
         )
     return rows
