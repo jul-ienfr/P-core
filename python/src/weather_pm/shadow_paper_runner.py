@@ -674,7 +674,7 @@ def _match_context_payload(mapping: dict[str, Any], row: dict[str, Any]) -> Any:
 def _match_trade_resolution(mapping: dict[str, Any], trade: dict[str, Any]) -> Any:
     resolution_mapping = mapping.get("resolutions") if isinstance(mapping.get("resolutions"), dict) else mapping
     direct_keys: list[str] = []
-    for key_name in ("market_id", "conditionId", "condition_id", "token_id", "clobTokenId", "slug", "surface_key", "title", "question"):
+    for key_name in ("market_id", "conditionId", "condition_id", "token_id", "tokenId", "asset", "asset_id", "clobTokenId", "clob_token_id", "slug", "surface_key", "title", "question"):
         raw = str(trade.get(key_name) or "").strip()
         if not raw:
             continue

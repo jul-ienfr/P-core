@@ -611,6 +611,43 @@ def test_build_account_trade_resolution_dataset_matches_resolution_from_enriched
     assert result["trades"][1]["resolution"]["matched_key"] == "highest-temperature-in-toronto-on-april-28-2026-19c-or-higher"
 
 
+def test_build_account_trade_resolution_dataset_matches_resolution_by_clob_token_id_alias() -> None:
+    metadata = build_market_metadata_resolution_dataset(
+        [
+            {
+                "id": "gamma-asset",
+                "question": "Will the highest temperature in Paris be 18°C on April 15?",
+                "conditionId": "0xcondition",
+                "clobTokenIds": ["51396883469573037621641529571787709896734286286721233849202787156093799397234"],
+                "closed": True,
+                "active": False,
+                "outcomes": ["Yes", "No"],
+                "outcomePrices": ["0.001", "0.999"],
+            }
+        ]
+    )
+    trades = {
+        "trades": [
+            {
+                "wallet": "0xAsset",
+                "asset": "51396883469573037621641529571787709896734286286721233849202787156093799397234",
+                "side": "BUY",
+                "outcome": "No",
+                "price": 0.90,
+                "size": 10,
+                "notional_usd": 9.0,
+            }
+        ]
+    }
+
+    result = build_account_trade_resolution_dataset(trades, resolutions=metadata)
+
+    assert result["summary"]["resolved_trades"] == 1
+    assert result["summary"]["wins"] == 1
+    assert result["trades"][0]["trade_result"] == "win"
+    assert result["trades"][0]["resolution"]["matched_key"] == "51396883469573037621641529571787709896734286286721233849202787156093799397234"
+
+
 def test_build_account_trade_resolution_dataset_scores_buy_sell_yes_no_trades() -> None:
     trades = {
         "trades": [
