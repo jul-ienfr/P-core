@@ -143,6 +143,8 @@ def _matches_surface(row: dict[str, Any], other: dict[str, Any]) -> bool:
     other_city = _norm(other.get("city"))
     if row_city and row_city == other_city and other.get("date") is None and other.get("resolution_date") is None:
         return True
+    if row_city and row_city == other_city and _is_broad_city_forecast(other):
+        return True
     return (
         row_city == other_city
         and str(row.get("date") or "") == str(other.get("date") or other.get("resolution_date") or "")
@@ -150,9 +152,13 @@ def _matches_surface(row: dict[str, Any], other: dict[str, Any]) -> bool:
     )
 
 
+def _is_broad_city_forecast(row: dict[str, Any]) -> bool:
+    return bool(row.get("sparse_key") and row.get("city") and not str(row.get("sparse_key")).strip().isdigit())
+
+
 def _surface_keys(row: dict[str, Any]) -> set[str]:
     keys: set[str] = set()
-    for key in ("primary_key", "matched_key", "market_id", "marketId", "id", "condition_id", "conditionId", "slug"):
+    for key in ("primary_key", "matched_key", "market_id", "marketId", "id", "condition_id", "conditionId", "slug", "sparse_key"):
         value = row.get(key)
         if value is not None and str(value).strip():
             keys.add(str(value).strip().lower())

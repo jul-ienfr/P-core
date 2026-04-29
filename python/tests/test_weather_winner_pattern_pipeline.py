@@ -170,7 +170,7 @@ def test_cli_winner_pattern_pipeline_runs_fixture_only_end_to_end(tmp_path: Path
     assert payload["artifact_counts"]["resolution_coverage"] == 6
     assert payload["artifact_counts"]["research_only_patterns"] >= 1
     assert payload["artifact_counts"]["winner_patterns"] == 0
-    assert payload["artifact_counts"]["weather_context"] == 1
+    assert payload["artifact_counts"]["weather_context"] == 12
     winner_payload = json.loads((output_dir / "winner_patterns.json").read_text(encoding="utf-8"))
     research_pattern = winner_payload["research_only_patterns"][0]
     assert research_pattern["promotion_gate_version"] == "weather_winner_pattern_v2_2026_04"
@@ -277,6 +277,212 @@ def test_pipeline_uses_resolution_match_primary_key_for_orderbook_context(tmp_pa
     assert orderbook_payload["trades"][0]["orderbook_context_available"] is True
     assert orderbook_payload["trades"][0]["snapshot_timestamp"] == "latest"
     assert orderbook_payload["trades"][0]["live_order_allowed"] is False
+
+
+def test_pipeline_carries_resolution_and_orderbook_context_into_decision_examples(tmp_path: Path) -> None:
+    from weather_pm.winner_pattern_pipeline import run_winner_pattern_pipeline
+
+    trades_path = tmp_path / "embedded_resolution_trades.json"
+    resolutions_path = tmp_path / "resolutions.json"
+    orderbooks_path = tmp_path / "orderbooks.json"
+    markets_path = tmp_path / "markets.json"
+    forecasts_path = tmp_path / "forecasts.json"
+    output_dir = tmp_path / "run-decision-context-bridge"
+
+    trades = []
+    for idx in range(5):
+        trades.append(
+            {
+                "account": f"wallet-{idx}",
+                "wallet": f"0x{idx}",
+                "slug": "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+                "title": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                "outcome": "Yes",
+                "side": "BUY",
+                "price": 0.35,
+                "size": 20,
+                "notional_usd": 7,
+                "timestamp": "2026-04-29T10:00:00Z",
+                "city": "Toronto",
+                "date": "April 30",
+                "market_type": "threshold",
+                "resolution": {
+                    "primary_key": "2112614",
+                    "matched_key": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                    "resolved_outcome": "Yes",
+                    "status": "terminal_orderbook_price_resolved_proxy",
+                    "source": "clob_terminal_orderbook_proxy",
+                },
+                "trade_result": "win",
+                "estimated_pnl_usdc": 13.0,
+            }
+        )
+    _write_json(trades_path, {"paper_only": True, "live_order_allowed": False, "trades": trades})
+    _write_json(resolutions_path, {"paper_only": True, "live_order_allowed": False, "resolutions": {}})
+    _write_json(orderbooks_path, {"2112614": {"best_bid": 0.31, "best_ask": 0.37, "depth_usd": 2500}})
+    _write_json(markets_path, {"markets": []})
+    _write_json(forecasts_path, {"forecasts": []})
+
+    payload = run_winner_pattern_pipeline(
+        trades_json=trades_path,
+        resolutions_json=resolutions_path,
+        orderbook_snapshots_json=orderbooks_path,
+        market_snapshots_json=markets_path,
+        forecast_snapshots_json=forecasts_path,
+        output_dir=output_dir,
+    )
+
+    assert payload["artifact_counts"]["resolution_coverage"] == 5
+    assert payload["artifact_counts"]["orderbook_context"] == 5
+    decision_payload = json.loads((output_dir / "decision_dataset.json").read_text(encoding="utf-8"))
+    first_trade = decision_payload["examples"][0]
+    assert first_trade["market_id"] == "2112614"
+    assert first_trade["pnl"] is not None
+    assert first_trade["winning_side"] == "Yes"
+    assert first_trade["orderbook_context_available"] is True
+    assert first_trade["capturability"] in {"capturable", "maybe"}
+    winner_payload = json.loads((output_dir / "winner_patterns.json").read_text(encoding="utf-8"))
+    research_pattern = winner_payload["research_only_patterns"][0]
+    assert research_pattern["resolved_trades"] == 5
+    assert research_pattern["capturable_contexts"] == 5
+    assert research_pattern["out_of_sample_pnl"] > 0
+
+
+def test_pipeline_counts_historical_decision_weather_context_from_sparse_forecasts(tmp_path: Path) -> None:
+    from weather_pm.winner_pattern_pipeline import run_winner_pattern_pipeline
+
+    trades_path = tmp_path / "historical_weather_trades.json"
+    resolutions_path = tmp_path / "resolutions.json"
+    orderbooks_path = tmp_path / "orderbooks.json"
+    markets_path = tmp_path / "markets.json"
+    forecasts_path = tmp_path / "forecasts.json"
+    output_dir = tmp_path / "run-historical-weather-context"
+
+    trades = []
+    for idx in range(5):
+        trades.append(
+            {
+                "account": f"weather-wallet-{idx}",
+                "wallet": f"0xw{idx}",
+                "slug": "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+                "title": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                "outcome": "Yes",
+                "side": "BUY",
+                "price": 0.35,
+                "size": 20,
+                "notional_usd": 7,
+                "timestamp": "2026-04-29T10:00:00Z",
+                "city": "Toronto",
+                "date": "April 30",
+                "market_type": "threshold",
+                "resolution": {
+                    "primary_key": "2112614",
+                    "matched_key": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                    "resolved_outcome": "Yes",
+                },
+                "estimated_pnl_usdc": 13.0,
+            }
+        )
+    _write_json(trades_path, {"paper_only": True, "live_order_allowed": False, "trades": trades})
+    _write_json(resolutions_path, {"paper_only": True, "live_order_allowed": False, "resolutions": {}})
+    _write_json(orderbooks_path, {"2112614": {"best_bid": 0.31, "best_ask": 0.37, "depth_usd": 2500}})
+    _write_json(markets_path, {"markets": []})
+    _write_json(forecasts_path, {"toronto": {"forecast_high_c": 17, "freshness_minutes": 30}})
+
+    payload = run_winner_pattern_pipeline(
+        trades_json=trades_path,
+        resolutions_json=resolutions_path,
+        orderbook_snapshots_json=orderbooks_path,
+        market_snapshots_json=markets_path,
+        forecast_snapshots_json=forecasts_path,
+        output_dir=output_dir,
+    )
+
+    assert payload["artifact_counts"]["weather_context"] == 5
+    historical_weather_path = Path(payload["artifact_paths"]["historical_decision_weather_context"])
+    historical_weather = json.loads(historical_weather_path.read_text(encoding="utf-8"))
+    assert historical_weather["summary"]["with_weather_context"] == 5
+    assert historical_weather["examples"][0]["weather_context_available"] is True
+    assert historical_weather["examples"][0]["forecast_value_at_decision"] == 17.0
+
+
+def test_pipeline_preserves_embedded_operator_pnl_when_resolution_recomputes_pnl(tmp_path: Path) -> None:
+    from weather_pm.winner_pattern_pipeline import run_winner_pattern_pipeline
+
+    trades_path = tmp_path / "operator_pnl_trades.json"
+    resolutions_path = tmp_path / "resolutions.json"
+    orderbooks_path = tmp_path / "orderbooks.json"
+    markets_path = tmp_path / "markets.json"
+    forecasts_path = tmp_path / "forecasts.json"
+    output_dir = tmp_path / "run-operator-pnl-bridge"
+    trades = [
+        {
+            "account": "dpnd",
+            "wallet": "0xabc",
+            "slug": "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+            "title": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+            "outcome": "Yes",
+            "side": "BUY",
+            "price": 0.23,
+            "size": 12.86487,
+            "notional_usd": 2.95892,
+            "timestamp": "2026-04-29T10:00:00Z",
+            "city": "Toronto",
+            "date": "April 30",
+            "market_type": "threshold",
+            "trade_result": "loss",
+            "estimated_pnl_usdc": -2.95892,
+            "resolution": {
+                "primary_key": "2112614",
+                "matched_key": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                "resolved_outcome": "No",
+                "status": "terminal_orderbook_price_resolved_proxy",
+                "source": "clob_terminal_orderbook_proxy",
+            },
+        },
+        {
+            "account": "stayfresh",
+            "wallet": "0xdef",
+            "slug": "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+            "title": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+            "outcome": "No",
+            "side": "BUY",
+            "price": 0.2,
+            "size": 3,
+            "notional_usd": 0.6,
+            "timestamp": "2026-04-29T10:00:00Z",
+            "city": "Toronto",
+            "date": "April 30",
+            "market_type": "threshold",
+            "trade_result": "win",
+            "estimated_pnl_usdc": 0.6,
+            "resolution": {
+                "primary_key": "2112614",
+                "matched_key": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                "resolved_outcome": "No",
+                "status": "terminal_orderbook_price_resolved_proxy",
+                "source": "clob_terminal_orderbook_proxy",
+            },
+        },
+    ]
+    _write_json(trades_path, {"paper_only": True, "live_order_allowed": False, "trades": trades})
+    _write_json(resolutions_path, {"paper_only": True, "live_order_allowed": False, "resolutions": {}})
+    _write_json(orderbooks_path, {"2112614": {"best_bid": 0.31, "best_ask": 0.37, "depth_usd": 2500}})
+    _write_json(markets_path, {"markets": []})
+    _write_json(forecasts_path, {"forecasts": []})
+
+    run_winner_pattern_pipeline(
+        trades_json=trades_path,
+        resolutions_json=resolutions_path,
+        orderbook_snapshots_json=orderbooks_path,
+        market_snapshots_json=markets_path,
+        forecast_snapshots_json=forecasts_path,
+        output_dir=output_dir,
+    )
+
+    decision_payload = json.loads((output_dir / "decision_dataset.json").read_text(encoding="utf-8"))
+    pnls = [row["out_of_sample_pnl"] for row in decision_payload["examples"]]
+    assert pnls == [-2.95892, 0.6]
 
 
 def test_winner_pattern_pipeline_rejects_allow_network(tmp_path: Path) -> None:
