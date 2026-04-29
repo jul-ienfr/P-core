@@ -1542,6 +1542,8 @@ def test_cli_market_metadata_resolution_writes_paper_only_resolution_artifact(tm
 
     assert result.returncode == 0, result.stderr
     compact = json.loads(result.stdout)
+    assert compact["paper_only"] is True
+    assert compact["live_order_allowed"] is False
     assert compact["summary"]["resolved_markets"] == 1
     payload = json.loads(output_json.read_text(encoding="utf-8"))
     assert payload["paper_only"] is True

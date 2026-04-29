@@ -398,7 +398,7 @@ def run_market_metadata_resolution_artifact(*, markets_json: str | Path, output_
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.setdefault("artifacts", {})["output_json"] = str(output_path)
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return {"summary": result["summary"], "artifacts": result["artifacts"]}
+    return {"paper_only": True, "live_order_allowed": False, "summary": result["summary"], "artifacts": result["artifacts"]}
 
 
 def build_account_trade_resolution_dataset(trades_payload: dict[str, Any], *, resolutions: dict[str, Any] | None = None) -> dict[str, Any]:
