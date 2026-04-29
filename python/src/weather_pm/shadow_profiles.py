@@ -43,6 +43,42 @@ def build_trade_no_trade_dataset(
     }
 
 
+def build_promoted_profile_opportunity_dataset(promoted_profiles: dict[str, Any], markets: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    profiles = _promoted_profile_accounts(promoted_profiles)
+    market_rows = [_normalize_market(row) for row in markets]
+    examples: list[dict[str, Any]] = []
+    for profile in profiles:
+        for market in market_rows:
+            row = _dataset_row(profile, market, None)
+            row.update(
+                {
+                    "label": "trade",
+                    "abstention_reason": None,
+                    "shadow_signal_source": "promoted_profile_opportunity_watch",
+                    "profile_id": profile.get("profile_id") or profile.get("wallet") or profile.get("handle") or "promoted_shadow_profile",
+                    "suggested_min_edge": profile.get("suggested_min_edge"),
+                    "suggested_max_order_usdc": profile.get("suggested_max_order_usdc"),
+                }
+            )
+            examples.append(row)
+    return {
+        "source": "polymarket_weather_promoted_profile_opportunities",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": {
+            "accounts": len(profiles),
+            "markets": len(market_rows),
+            "examples": len(examples),
+            "trade_examples": len(examples),
+            "no_trade_examples": 0,
+            "promoted_profiles": len(profiles),
+            "paper_only": True,
+            "live_order_allowed": False,
+        },
+        "examples": examples,
+    }
+
+
 def load_followlist_accounts(accounts_csv: str | Path, *, limit: int | None = None) -> list[dict[str, Any]]:
     """Load selected top accounts from a weather followlist CSV.
 
@@ -179,6 +215,21 @@ def learned_shadow_patterns_markdown(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def write_promoted_profile_opportunity_dataset_artifact(
+    *,
+    promoted_profiles_json: str | Path,
+    markets_json: str | Path,
+    dataset_out: str | Path,
+) -> dict[str, Any]:
+    promoted_profiles = json.loads(Path(promoted_profiles_json).read_text(encoding="utf-8"))
+    markets = _load_rows(markets_json, ("markets", "opportunities", "data", "results"))
+    dataset = build_promoted_profile_opportunity_dataset(promoted_profiles if isinstance(promoted_profiles, dict) else {}, markets)
+    dataset_path = Path(dataset_out)
+    dataset.setdefault("artifacts", {})["dataset"] = str(dataset_path)
+    _write_json(dataset_path, dataset)
+    return {"summary": dataset["summary"], "artifacts": {"dataset": str(dataset_path)}}
+
+
 def write_shadow_profile_artifacts(
     *,
     weather_trades_json: str | Path,
@@ -268,6 +319,24 @@ def _dataset_row(account_meta: dict[str, Any], market: dict[str, Any], trade: di
         "account_trade_notional_usd": 0.0,
         "abstention_reason": "no_account_trade_on_surface",
     }
+
+
+def _promoted_profile_accounts(promoted_profiles: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = promoted_profiles.get("profiles") if isinstance(promoted_profiles.get("profiles"), list) else []
+    accounts: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict) or row.get("recommendation") != "promote_to_paper_profile":
+            continue
+        account = _normalize_account(row)
+        account["profile_id"] = str(row.get("profile_id") or account.get("wallet") or account.get("handle") or "promoted_shadow_profile")
+        account["suggested_min_edge"] = _to_float(row.get("suggested_min_edge")) if row.get("suggested_min_edge") is not None else None
+        account["suggested_max_order_usdc"] = _to_float(row.get("suggested_max_order_usdc")) if row.get("suggested_max_order_usdc") is not None else None
+        key = str(account.get("wallet") or account.get("handle") or account.get("profile_id") or "").lower()
+        if key and key not in seen:
+            seen.add(key)
+            accounts.append(account)
+    return accounts
 
 
 def _normalize_accounts(accounts: Iterable[str | dict[str, Any]] | None, trades: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -67,7 +67,7 @@ from weather_pm.shadow_paper_runner import (
     run_shadow_paper_runner_artifact,
     run_shadow_profile_evaluator_artifact,
 )
-from weather_pm.shadow_profiles import write_learned_shadow_patterns_artifacts, write_shadow_profile_artifacts
+from weather_pm.shadow_profiles import write_learned_shadow_patterns_artifacts, write_promoted_profile_opportunity_dataset_artifact, write_shadow_profile_artifacts
 from weather_pm.source_coverage import build_weather_source_coverage_report
 from weather_pm.source_routing import build_resolution_source_route
 from weather_pm.station_binding import build_station_binding
@@ -181,6 +181,11 @@ def build_parser() -> argparse.ArgumentParser:
     legacy_shadow_patterns.add_argument("--output-json", required=True, help="Output learned patterns JSON")
     legacy_shadow_patterns.add_argument("--output-md", required=False, help="Optional Markdown operator report")
     legacy_shadow_patterns.add_argument("--limit", required=False, type=int, default=20, help="Maximum learned patterns")
+
+    promoted_profile_opportunities = subparsers.add_parser("promoted-profile-opportunity-dataset", help="Build a paper-only opportunity dataset from promoted shadow profiles and candidate markets")
+    promoted_profile_opportunities.add_argument("--promoted-profiles-json", required=True, help="Shadow profile evaluation JSON containing promoted profiles")
+    promoted_profile_opportunities.add_argument("--markets-json", required=True, help="Candidate/current markets JSON")
+    promoted_profile_opportunities.add_argument("--dataset-out", required=True, help="Output promoted profile opportunity dataset JSON")
 
     legacy_shadow_profile = subparsers.add_parser("shadow-profile-report", help="Build trade/no-trade dataset and operator shadow profile report")
     legacy_shadow_profile.add_argument("--weather-trades-json", required=True, help="Input classified weather trades JSON")
@@ -682,6 +687,18 @@ def main() -> int:
                     output_json=args.output_json,
                     output_md=args.output_md,
                     limit=args.limit,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "promoted-profile-opportunity-dataset":
+        print(
+            json.dumps(
+                write_promoted_profile_opportunity_dataset_artifact(
+                    promoted_profiles_json=args.promoted_profiles_json,
+                    markets_json=args.markets_json,
+                    dataset_out=args.dataset_out,
                 )
             )
         )

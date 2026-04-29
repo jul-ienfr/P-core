@@ -8,6 +8,7 @@ from pathlib import Path
 from weather_pm.account_trades import classify_weather_trade
 from weather_pm.shadow_profiles import (
     build_learned_shadow_patterns_report,
+    build_promoted_profile_opportunity_dataset,
     build_trade_no_trade_dataset,
     build_shadow_profile_operator_report,
     load_followlist_accounts,
@@ -204,6 +205,85 @@ def test_build_learned_shadow_patterns_report_extracts_operator_patterns() -> No
     assert any("paper replay only" in action for action in report["operator_next_actions"])
     assert any("independent forecast" in action for action in report["operator_next_actions"])
     assert all("copy" not in json.dumps(action).lower() for action in report["operator_next_actions"])
+
+
+def test_build_promoted_profile_opportunity_dataset_marks_promoted_watch_candidates() -> None:
+    evaluation = {
+        "profiles": [
+            {
+                "profile_id": "mrfox_profile",
+                "wallet": "0xFox",
+                "handle": "MrFox",
+                "recommendation": "promote_to_paper_profile",
+                "suggested_min_edge": 0.12,
+                "suggested_max_order_usdc": 1.5,
+            },
+            {"profile_id": "quiet", "wallet": "0xQuiet", "handle": "Quiet", "recommendation": "observe_more"},
+        ]
+    }
+
+    dataset = build_promoted_profile_opportunity_dataset(evaluation, MARKETS[:1])
+
+    assert dataset["summary"] == {
+        "accounts": 1,
+        "markets": 1,
+        "examples": 1,
+        "trade_examples": 1,
+        "no_trade_examples": 0,
+        "promoted_profiles": 1,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    row = dataset["examples"][0]
+    assert row["wallet"] == "0xFox"
+    assert row["handle"] == "MrFox"
+    assert row["label"] == "trade"
+    assert row["account_trade_count"] == 0
+    assert row["account_trade_notional_usd"] == 0.0
+    assert row["shadow_signal_source"] == "promoted_profile_opportunity_watch"
+    assert row["profile_id"] == "mrfox_profile"
+    assert row["suggested_min_edge"] == 0.12
+    assert row["suggested_max_order_usdc"] == 1.5
+    assert row["paper_only"] is True
+    assert row["live_order_allowed"] is False
+
+
+def test_cli_promoted_profile_opportunity_dataset_writes_artifact(tmp_path: Path) -> None:
+    evaluation_json = tmp_path / "evaluation.json"
+    markets_json = tmp_path / "markets.json"
+    dataset_out = tmp_path / "opportunity_dataset.json"
+    evaluation_json.write_text(
+        json.dumps({"profiles": [{"profile_id": "mrfox_profile", "wallet": "0xFox", "handle": "MrFox", "recommendation": "promote_to_paper_profile"}]}),
+        encoding="utf-8",
+    )
+    markets_json.write_text(json.dumps({"markets": MARKETS[:1]}), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "promoted-profile-opportunity-dataset",
+            "--promoted-profiles-json",
+            str(evaluation_json),
+            "--markets-json",
+            str(markets_json),
+            "--dataset-out",
+            str(dataset_out),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    assert compact["summary"]["promoted_profiles"] == 1
+    saved = json.loads(dataset_out.read_text(encoding="utf-8"))
+    assert saved["paper_only"] is True
+    assert saved["live_order_allowed"] is False
+    assert saved["examples"][0]["shadow_signal_source"] == "promoted_profile_opportunity_watch"
 
 
 def test_cli_shadow_patterns_report_writes_json_and_markdown(tmp_path: Path) -> None:
