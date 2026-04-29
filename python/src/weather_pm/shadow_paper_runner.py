@@ -231,8 +231,11 @@ def build_shadow_profile_evaluation(paper_orders: dict[str, Any], *, trade_resol
             continue
         profile_id = str(order.get("profile_id") or "shadow_profile_default")
         wallet = str(order.get("wallet_signal") or "")
+        handle = str(order.get("handle_signal") or order.get("handle") or "")
         if wallet:
             wallet_to_profile[wallet.lower()] = profile_id
+        if handle:
+            wallet_to_profile[handle.lower()] = profile_id
         bucket = buckets.setdefault(
             profile_id,
             {
@@ -497,7 +500,8 @@ def _merge_trade_resolution_dataset(
         if not isinstance(trade, dict):
             continue
         wallet = str(trade.get("wallet") or "")
-        profile_id = str(trade.get("profile_id") or wallet_to_profile.get(wallet.lower()) or wallet or "shadow_profile_default")
+        handle = str(trade.get("handle") or "")
+        profile_id = str(trade.get("profile_id") or wallet_to_profile.get(wallet.lower()) or wallet_to_profile.get(handle.lower()) or wallet or handle or "shadow_profile_default")
         bucket = buckets.setdefault(profile_id, _empty_profile_bucket(profile_id, str(trade.get("profile_role") or "")))
         bucket["historical_trades"] = bucket.get("historical_trades", 0) + 1
         bucket["historical_notional_usdc"] = bucket.get("historical_notional_usdc", 0.0) + _to_float(trade.get("notional_usd") or trade.get("account_trade_notional_usd"))

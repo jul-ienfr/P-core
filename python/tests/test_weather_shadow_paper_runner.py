@@ -783,6 +783,45 @@ def test_build_shadow_profile_evaluation_maps_historical_trades_to_existing_wall
     assert jey["trade_wins"] == 1
 
 
+def test_build_shadow_profile_evaluation_maps_historical_trades_to_existing_handle_profiles() -> None:
+    paper_orders = {
+        "orders": [
+            {
+                "profile_id": "jey_threshold",
+                "profile_role": "clean_threshold_reference",
+                "wallet_signal": "0xJey",
+                "handle_signal": "jey",
+                "requested_notional_usdc": 3.0,
+                "strict_limit_price": 0.40,
+                "features": {"resolution": {"available": False}},
+            }
+        ],
+        "skipped": [],
+    }
+    trade_resolution_dataset = {
+        "trades": [
+            {
+                "wallet": "",
+                "handle": "jey",
+                "trade_result": "win",
+                "estimated_pnl_usdc": 1.0,
+                "notional_usd": 9.0,
+                "weather_market_type": "threshold",
+                "city": "Toronto",
+            }
+        ]
+    }
+
+    result = build_shadow_profile_evaluation(paper_orders, trade_resolution_dataset=trade_resolution_dataset)
+
+    profile_ids = {profile["profile_id"] for profile in result["profiles"]}
+    assert "jey_threshold" in profile_ids
+    assert "jey" not in profile_ids
+    jey = next(profile for profile in result["profiles"] if profile["profile_id"] == "jey_threshold")
+    assert jey["historical_trades"] == 1
+    assert jey["trade_wins"] == 1
+
+
 def test_build_shadow_profile_evaluation_scores_profiles_from_resolved_paper_orders() -> None:
     paper_orders = {
         "paper_only": True,
