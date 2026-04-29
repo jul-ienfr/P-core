@@ -16,6 +16,7 @@ from prediction_core.analytics.clickhouse_writer import create_clickhouse_writer
 from prediction_core.analytics.events import serialize_event
 from prediction_core.analytics.metrics import build_profile_metric_events, build_strategy_metric_events
 from prediction_core.strategies.config_store import StrategyConfigStore
+from weather_pm.account_data_sources import build_account_data_source_manifest, compact_account_data_source_manifest
 from weather_pm.account_learning import (
     load_account_trade_backfill,
     write_account_learning_backfill_pipeline,
@@ -155,6 +156,8 @@ def build_parser() -> argparse.ArgumentParser:
     account_learning_backfill.add_argument("--input-json", required=True, help="Public account trade/backfill JSON")
     account_learning_backfill.add_argument("--output-dir", required=True, help="Output directory for account_trades and shadow_profiles artifacts")
     account_learning_backfill.add_argument("--run-id", required=False, help="Optional deterministic artifact run id")
+
+    subparsers.add_parser("account-data-source-manifest", help="Summarize read-only data sources for account pattern learning")
 
     legacy_account_trades_backfill = subparsers.add_parser("backfill-account-trades", help="Backfill public Polymarket account trades from a followlist CSV")
     legacy_account_trades_backfill.add_argument("--followlist", required=True, help="CSV followlist with wallet/handle columns")
@@ -679,6 +682,10 @@ def main() -> int:
 
     if args.command == "account-learning-backfill":
         print(json.dumps(write_account_learning_backfill_pipeline(args.input_json, args.output_dir, run_id=args.run_id)))
+        return 0
+
+    if args.command == "account-data-source-manifest":
+        print(json.dumps(compact_account_data_source_manifest(build_account_data_source_manifest())))
         return 0
 
     if args.command == "backfill-account-trades":
