@@ -1945,6 +1945,8 @@ def test_cli_historical_profile_rules_writes_json_and_markdown(tmp_path: Path) -
 
     assert result.returncode == 0, result.stderr
     compact = json.loads(result.stdout)
+    assert compact["paper_only"] is True
+    assert compact["live_order_allowed"] is False
     assert compact["summary"]["allow_rules"] >= 1
     assert compact["summary"]["avoid_rules"] >= 1
     payload = json.loads(output_json.read_text(encoding="utf-8"))
@@ -1952,6 +1954,8 @@ def test_cli_historical_profile_rules_writes_json_and_markdown(tmp_path: Path) -
     assert payload["live_order_allowed"] is False
     assert payload["artifacts"]["output_json"] == str(output_json)
     assert payload["artifacts"]["output_md"] == str(output_md)
+    assert compact["artifacts"]["output_json"] == str(output_json)
+    assert compact["artifacts"]["output_md"] == str(output_md)
     markdown = output_md.read_text(encoding="utf-8")
     assert "# Historical profile rule candidates" in markdown
     assert "| paper_candidate_allow | ColdMath | handle_weather_type_position" in markdown
