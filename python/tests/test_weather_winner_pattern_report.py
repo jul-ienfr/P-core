@@ -99,7 +99,30 @@ def test_report_markdown_surfaces_research_only_matches_as_watch_not_probe() -> 
         "robust_patterns": [],
         "anti_patterns": [],
         "research_only_patterns": [
-            {"pattern_id": "threshold|seoul|buy|unclear", "reason": "concentrated_or_small_sample", "examples": 8}
+            {
+                "pattern_id": "threshold|seoul|buy|unclear",
+                "reason": "concentrated_or_small_sample",
+                "examples": 18,
+                "out_of_sample_pnl": 12.5,
+                "promotion_eligible": False,
+                "promotion_blockers": ["insufficient_resolved_sample", "wallet_concentrated_pnl"],
+                "promotion_metrics": {
+                    "resolved_trades": 18,
+                    "oos_pnl": 4.2,
+                    "oos_win_rate": 0.61,
+                    "historical_capturable_ratio": 0.83,
+                    "forecast_fresh_pct": 100.0,
+                },
+            },
+            {
+                "pattern_id": "threshold|paris|buy|unclear",
+                "reason": "stale_forecast",
+                "examples": 9,
+                "out_of_sample_pnl": 2.0,
+                "promotion_eligible": False,
+                "promotion_blockers": ["stale_forecast", "insufficient_resolved_sample"],
+                "promotion_metrics": {"resolved_trades": 9, "forecast_fresh_pct": 22.0},
+            },
         ],
         "operator_next_actions": ["Expand sample size and reduce wallet concentration before promotion."],
     }
@@ -128,7 +151,21 @@ def test_report_markdown_surfaces_research_only_matches_as_watch_not_probe() -> 
     assert "Research-only matches: 1" in md
     assert "2112238: research_only_pattern_match -> threshold|seoul|buy|unclear" in md
     assert "Paper candidates: 0" in md
+    assert "Top promotion blockers" in md
+    assert "insufficient_resolved_sample: 2" in md
+    assert "wallet_concentrated_pnl: 1" in md
+    assert "Closest research-only patterns" in md
+    assert "threshold|seoul|buy|unclear: readiness=" in md
+    assert "resolved=18" in md
     assert payload["summary"]["research_only_matches"] == 1
+    assert payload["summary"]["top_promotion_blockers"] == [
+        {"blocker": "insufficient_resolved_sample", "patterns": 2},
+        {"blocker": "stale_forecast", "patterns": 1},
+        {"blocker": "wallet_concentrated_pnl", "patterns": 1},
+    ]
+    assert payload["summary"]["closest_research_only_patterns"][0]["pattern_id"] == "threshold|seoul|buy|unclear"
+    assert payload["summary"]["closest_research_only_patterns"][0]["paper_only"] is True
+    assert payload["summary"]["closest_research_only_patterns"][0]["live_order_allowed"] is False
     assert payload["live_order_allowed"] is False
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,10 @@ def build_winner_pattern_operator_report(
     promotion_blocked = sum(1 for row in all_patterns if row.get("promotion_eligible") is False and row.get("promotion_blockers"))
     candidate_summary = paper_candidates.get("summary", {}) if isinstance(paper_candidates.get("summary"), dict) else {}
     research_only_matches = int(candidate_summary.get("research_only_matches", 0)) if isinstance(candidate_summary, dict) else 0
+    top_blockers = _top_promotion_blockers(all_patterns)
+    closest_research = _closest_research_only_patterns(
+        winner_patterns.get("research_only_patterns", []) if isinstance(winner_patterns.get("research_only_patterns"), list) else []
+    )
     coverage_summary = resolution_coverage.get("summary", resolution_coverage) if isinstance(resolution_coverage, dict) else {}
     orderbook_summary = orderbook_context.get("summary", orderbook_context) if isinstance(orderbook_context, dict) else {}
     missing_books = orderbook_summary.get("missing_orderbook_context", orderbook_summary.get("missing_current_orderbook")) if isinstance(orderbook_summary, dict) else None
@@ -51,12 +56,57 @@ def build_winner_pattern_operator_report(
             "promotion_eligible_patterns": promotion_eligible,
             "promotion_blocked_patterns": promotion_blocked,
             "promotion_gate_version": (winner_patterns.get("summary", {}) if isinstance(winner_patterns.get("summary"), dict) else {}).get("promotion_gate_version"),
+            "top_promotion_blockers": top_blockers,
+            "closest_research_only_patterns": closest_research,
             "resolved_pct": coverage_summary.get("resolved_pct") if isinstance(coverage_summary, dict) else None,
             "capturability_gaps": missing_books,
         },
         "markdown": md,
         "inputs_present": {"resolution_coverage": resolution_coverage is not None, "orderbook_context": orderbook_context is not None},
     }
+
+
+def _top_promotion_blockers(patterns: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    counts: Counter[str] = Counter()
+    for row in patterns:
+        blockers = row.get("promotion_blockers") if isinstance(row.get("promotion_blockers"), list) else []
+        counts.update(str(blocker) for blocker in blockers)
+    return [
+        {"blocker": blocker, "patterns": count}
+        for blocker, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:10]
+    ]
+
+
+def _readiness_score(pattern: dict[str, Any]) -> float:
+    metrics = pattern.get("promotion_metrics") if isinstance(pattern.get("promotion_metrics"), dict) else {}
+    resolved = min(float(metrics.get("resolved_trades") or pattern.get("resolved_trades") or 0) / 20.0, 1.0)
+    capturable = min(float(metrics.get("historical_capturable_ratio") or 0.0), 1.0)
+    fresh = min(float(metrics.get("forecast_fresh_pct") or 0.0) / 100.0, 1.0)
+    oos_positive = 1.0 if float(metrics.get("oos_pnl") or pattern.get("out_of_sample_pnl") or 0.0) > 0 else 0.0
+    blocker_penalty = max(0.0, 1.0 - 0.08 * len(pattern.get("promotion_blockers") if isinstance(pattern.get("promotion_blockers"), list) else []))
+    return round(((resolved * 0.35) + (capturable * 0.25) + (fresh * 0.20) + (oos_positive * 0.20)) * blocker_penalty, 3)
+
+
+def _closest_research_only_patterns(research: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in research:
+        if not isinstance(row, dict):
+            continue
+        metrics = row.get("promotion_metrics") if isinstance(row.get("promotion_metrics"), dict) else {}
+        rows.append(
+            {
+                "pattern_id": row.get("pattern_id"),
+                "reason": row.get("reason"),
+                "readiness_score": _readiness_score(row),
+                "resolved_trades": metrics.get("resolved_trades", row.get("resolved_trades")),
+                "out_of_sample_pnl": metrics.get("oos_pnl", row.get("out_of_sample_pnl")),
+                "promotion_blockers": list(row.get("promotion_blockers") or []) if isinstance(row.get("promotion_blockers"), list) else [],
+                "paper_only": True,
+                "live_order_allowed": False,
+            }
+        )
+    rows.sort(key=lambda row: (float(row.get("readiness_score") or 0.0), float(row.get("out_of_sample_pnl") or 0.0), int(row.get("resolved_trades") or 0)), reverse=True)
+    return rows[:10]
 
 
 def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any], coverage: dict[str, Any], orderbook: dict[str, Any]) -> str:
@@ -95,6 +145,8 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
         for row in [*robust, *research, *anti]
         if isinstance(row, dict) and row.get("promotion_eligible") is False and row.get("promotion_blockers")
     ]
+    top_blockers = _top_promotion_blockers(blocked_patterns)
+    closest_research = _closest_research_only_patterns(research)
     lines.extend(["", "## Capturability gaps", ""])
     lines.append(f"- Historical/current orderbook gaps: {orderbook.get('missing_orderbook_context', orderbook.get('missing_current_orderbook', 'unknown'))}")
     lines.extend(["", "## Promotion readiness", ""])
@@ -106,6 +158,18 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
         blockers = row.get("promotion_blockers") if isinstance(row.get("promotion_blockers"), list) else []
         lines.append(f"- {row.get('pattern_id', 'pattern')}: {', '.join(str(blocker) for blocker in blockers) or row.get('reason', 'blocked')}")
     if not blocked_patterns:
+        lines.append("- none")
+    lines.extend(["", "### Top promotion blockers", ""])
+    lines.extend([f"- {row['blocker']}: {row['patterns']}" for row in top_blockers] or ["- none"])
+    lines.extend(["", "### Closest research-only patterns", ""])
+    for row in closest_research[:10]:
+        blockers = row.get("promotion_blockers") if isinstance(row.get("promotion_blockers"), list) else []
+        lines.append(
+            f"- {row.get('pattern_id')}: readiness={row.get('readiness_score')} "
+            f"resolved={row.get('resolved_trades')} pnl={row.get('out_of_sample_pnl')} "
+            f"blockers={', '.join(str(blocker) for blocker in blockers) or 'none'}"
+        )
+    if not closest_research:
         lines.append("- none")
     lines.extend(["", "## Paper candidates / watch-only", ""])
     lines.append(f"- Paper candidates: {len(candidates)}")
