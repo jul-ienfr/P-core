@@ -278,6 +278,46 @@ def test_build_shadow_profile_paper_orders_preserves_resolution_and_forecast_con
     assert order["live_order_allowed"] is False
 
 
+def test_build_shadow_profile_paper_orders_reports_promoted_profile_coverage() -> None:
+    dataset = _dataset()
+    dataset["examples"][0]["wallet"] = "0xJey"
+    dataset["examples"][1]["wallet"] = "0xCold"
+    enriched = enrich_shadow_dataset_features(
+        dataset,
+        orderbooks={"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}},
+        forecasts={"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}},
+    )
+
+    result = build_shadow_profile_paper_orders(
+        enriched,
+        run_id="shadow-smoke",
+        max_order_usdc=5.0,
+        promoted_profiles={
+            "profiles": [
+                {
+                    "profile_id": "jey_threshold",
+                    "wallets": ["0xJey"],
+                    "recommendation": "promote_to_paper_profile",
+                    "suggested_max_order_usdc": 1.75,
+                    "suggested_min_edge": 0.12,
+                },
+                {
+                    "profile_id": "cold_disabled",
+                    "wallets": ["0xCold"],
+                    "recommendation": "reduce_or_disable",
+                    "suggested_max_order_usdc": 1.0,
+                    "suggested_min_edge": 0.20,
+                },
+            ]
+        },
+    )
+
+    assert result["summary"]["promoted_profile_configs"] == 1
+    assert result["summary"]["promoted_profile_orders"] == 1
+    assert result["summary"]["promoted_profile_ids"] == ["jey_threshold"]
+    assert result["orders"][0]["profile_id"] == "jey_threshold"
+
+
 def test_build_shadow_profile_paper_orders_applies_promoted_profile_configuration() -> None:
     dataset = _dataset()
     dataset["examples"][0]["wallet"] = "0xJey"

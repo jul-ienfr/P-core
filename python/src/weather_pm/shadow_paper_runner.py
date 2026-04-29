@@ -53,6 +53,13 @@ def build_shadow_profile_paper_orders(
     promoted_profiles: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     profile_configs = _merge_promoted_profile_configs(profile_configs or {}, promoted_profiles or {})
+    promoted_profile_ids = sorted(
+        {
+            str(config.get("profile_id") or "")
+            for config in profile_configs.values()
+            if isinstance(config, dict) and config.get("source_recommendation") == "promote_to_paper_profile" and config.get("profile_id")
+        }
+    )
     orders: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     profile_counts: dict[str, int] = {}
@@ -96,8 +103,14 @@ def build_shadow_profile_paper_orders(
             profile_counts[profile_id] = profile_counts.get(profile_id, 0) + 1
         orders.append(order)
     summary = {"paper_orders": len(orders), "skipped": len(skipped), "paper_only": True, "live_order_allowed": False}
+    if promoted_profile_ids:
+        summary["promoted_profile_configs"] = len(promoted_profile_ids)
+        summary["promoted_profile_ids"] = promoted_profile_ids
     if profile_counts:
         summary["profile_counts"] = profile_counts
+        promoted_order_count = sum(profile_counts.get(profile_id, 0) for profile_id in promoted_profile_ids)
+        if promoted_order_count:
+            summary["promoted_profile_orders"] = promoted_order_count
     resolved_orders = sum(1 for order in orders if order.get("features", {}).get("resolution", {}).get("available"))
     if resolved_orders:
         summary["resolved_orders"] = resolved_orders
