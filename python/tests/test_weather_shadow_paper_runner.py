@@ -1103,6 +1103,57 @@ def test_build_shadow_profile_evaluation_recommends_promising_historical_profile
     assert profile["recommendation"] == "promote_to_paper_profile"
 
 
+def test_cli_shadow_profile_evaluator_markdown_includes_promoted_profile_suggestions(tmp_path: Path) -> None:
+    paper_orders_in = tmp_path / "paper_orders.json"
+    trade_resolution_in = tmp_path / "trade_resolution.json"
+    output_json = tmp_path / "evaluation.json"
+    output_md = tmp_path / "evaluation.md"
+    paper_orders_in.write_text(json.dumps({"paper_only": True, "live_order_allowed": False, "orders": [], "skipped": []}), encoding="utf-8")
+    trade_resolution_in.write_text(
+        json.dumps(
+            {
+                "trades": [
+                    {"profile_id": "alpha_weather", "wallet": "0xAlpha", "handle": "alpha", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+                    {"profile_id": "alpha_weather", "wallet": "0xAlpha", "handle": "alpha", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+                    {"profile_id": "alpha_weather", "wallet": "0xAlpha", "handle": "alpha", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+                    {"profile_id": "alpha_weather", "wallet": "0xAlpha", "handle": "alpha", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0},
+                    {"profile_id": "alpha_weather", "wallet": "0xAlpha", "handle": "alpha", "trade_result": "loss", "estimated_pnl_usdc": -0.5, "notional_usd": 4.0},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-profile-evaluator",
+            "--paper-orders-json",
+            str(paper_orders_in),
+            "--trade-resolution-json",
+            str(trade_resolution_in),
+            "--output-json",
+            str(output_json),
+            "--output-md",
+            str(output_md),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    markdown = output_md.read_text(encoding="utf-8")
+    assert "## Promoted paper profile suggestions" in markdown
+    assert "alpha_weather" in markdown
+    assert "--promoted-profiles-json" in markdown
+    assert "suggested_max_order_usdc" in markdown
+
+
+
 def test_cli_market_metadata_resolution_writes_paper_only_resolution_artifact(tmp_path: Path) -> None:
     markets_in = tmp_path / "markets.json"
     output_json = tmp_path / "resolutions.json"

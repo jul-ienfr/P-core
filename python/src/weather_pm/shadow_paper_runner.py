@@ -679,11 +679,31 @@ def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
         "| profile | orders | resolved | winrate | pnl | historical trades | trade winrate | historical pnl | recommendation |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
+    promoted: list[dict[str, Any]] = []
     for profile in result.get("profiles", []):
         lines.append(
             f"| {profile['profile_id']} | {profile['orders']} | {profile['resolved_orders']} | {profile['winrate']:.2f} | {profile['estimated_pnl_usdc']:.4f} | "
             f"{profile.get('historical_trades', 0)} | {profile.get('trade_winrate', 0.0):.2f} | {profile.get('historical_estimated_pnl_usdc', 0.0):.4f} | {profile['recommendation']} |"
         )
+        if profile.get("recommendation") == "promote_to_paper_profile":
+            promoted.append(profile)
+    if promoted:
+        lines.extend(
+            [
+                "",
+                "## Promoted paper profile suggestions",
+                "",
+                "Pass the JSON evaluation artifact back to `shadow-paper-runner --promoted-profiles-json` to apply these paper-only profile configs.",
+                "",
+                "| profile | suggested_max_order_usdc | suggested_min_edge | handles | wallets |",
+                "|---|---:|---:|---|---|",
+            ]
+        )
+        for profile in promoted:
+            lines.append(
+                f"| {profile['profile_id']} | {profile.get('suggested_max_order_usdc', 0.0):.2f} | {profile.get('suggested_min_edge', 0.0):.4f} | "
+                f"{', '.join(profile.get('handles', []))} | {', '.join(profile.get('wallets', []))} |"
+            )
     return "\n".join(lines) + "\n"
 
 
