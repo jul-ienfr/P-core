@@ -1273,6 +1273,69 @@ def test_cli_market_metadata_resolution_writes_paper_only_resolution_artifact(tm
     assert payload["resolutions"]["m-toronto-19"]["resolved_outcome"] == "No"
 
 
+def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_summary(tmp_path: Path) -> None:
+    paper_orders_in = tmp_path / "paper_orders.json"
+    output_json = tmp_path / "evaluation.json"
+    output_md = tmp_path / "evaluation.md"
+    paper_orders_in.write_text(
+        json.dumps(
+            {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "orders": [
+                    {
+                        "profile_id": "jey_threshold",
+                        "profile_role": "promoted_opportunity_watch",
+                        "wallet_signal": "0xJey",
+                        "requested_notional_usdc": 1.75,
+                        "strict_limit_price": 0.32,
+                        "metadata": {"profile_config": {"source_recommendation": "promoted_profile_opportunity_watch"}},
+                        "features": {"resolution": {"available": False}},
+                    }
+                ],
+                "skipped": [
+                    {
+                        "market_id": "m-paris-18",
+                        "wallet": "0xJey",
+                        "reason": "profile_min_edge_not_met",
+                        "profile_role": "promoted_opportunity_watch",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-profile-evaluator",
+            "--paper-orders-json",
+            str(paper_orders_in),
+            "--output-json",
+            str(output_json),
+            "--output-md",
+            str(output_md),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    markdown = output_md.read_text(encoding="utf-8")
+    assert "## Promoted opportunity watch summary" in markdown
+    assert "profiles: 1" in markdown
+    assert "orders: 1" in markdown
+    assert "skipped: 1" in markdown
+    assert "jey_threshold" in markdown
+    assert "promoted_profile_opportunity_watch" in markdown
+    assert "profile_min_edge_not_met" in markdown
+
+
 def test_cli_shadow_profile_evaluator_writes_json_and_markdown(tmp_path: Path) -> None:
     paper_orders_in = tmp_path / "paper_orders.json"
     output_json = tmp_path / "evaluation.json"

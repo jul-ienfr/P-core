@@ -688,6 +688,31 @@ def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
         )
         if profile.get("recommendation") == "promote_to_paper_profile":
             promoted.append(profile)
+    promoted_opportunities = [
+        profile
+        for profile in result.get("profiles", [])
+        if profile.get("profile_role") == "promoted_opportunity_watch" or profile.get("source_recommendation") == "promoted_profile_opportunity_watch"
+    ]
+    if promoted_opportunities:
+        summary = result.get("summary", {}) if isinstance(result.get("summary"), dict) else {}
+        lines.extend(
+            [
+                "",
+                "## Promoted opportunity watch summary",
+                "",
+                f"profiles: {summary.get('promoted_opportunity_profiles', len(promoted_opportunities))}",
+                f"orders: {summary.get('promoted_opportunity_orders', sum(profile.get('orders', 0) for profile in promoted_opportunities))}",
+                f"skipped: {summary.get('promoted_opportunity_skipped', sum(sum(profile.get('skipped_counts', {}).values()) for profile in promoted_opportunities))}",
+                "",
+                "| profile | source_recommendation | skipped_counts | recommendation |",
+                "|---|---|---|---|",
+            ]
+        )
+        for profile in promoted_opportunities:
+            skipped_counts = ", ".join(f"{reason}={count}" for reason, count in profile.get("skipped_counts", {}).items())
+            lines.append(
+                f"| {profile['profile_id']} | {profile.get('source_recommendation', '')} | {skipped_counts} | {profile['recommendation']} |"
+            )
     if promoted:
         lines.extend(
             [
