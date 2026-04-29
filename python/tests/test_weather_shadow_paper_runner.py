@@ -11,6 +11,7 @@ from weather_pm.shadow_paper_runner import (
     build_market_metadata_resolution_dataset,
     build_shadow_profile_evaluation,
     build_shadow_profile_paper_orders,
+    apply_stress_overlay_to_paper_orders,
     enrich_shadow_dataset_features,
 )
 
@@ -278,6 +279,80 @@ def test_build_shadow_profile_paper_orders_preserves_resolution_and_forecast_con
     assert order["live_order_allowed"] is False
 
 
+def test_apply_stress_overlay_filters_orders_and_tightens_limits() -> None:
+    paper_orders = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "orders": [
+            {
+                "market_id": "m-keep-cheap",
+                "profile_id": "p1",
+                "question": "Will Busan be 23°C or higher?",
+                "strict_limit_price": 0.01,
+                "requested_notional_usdc": 5.0,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "market_id": "m-reject",
+                "profile_id": "p1",
+                "question": "Will Busan be 17°C or below?",
+                "strict_limit_price": 0.01,
+                "requested_notional_usdc": 5.0,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        ],
+    }
+    stress_overlay = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "rows": [
+            {
+                "market_id": "m-keep-cheap",
+                "action": "PAPER_MICRO_STRICT_LIMIT",
+                "side": "YES",
+                "strict_limit_max": 0.001,
+                "paper_notional_usdc": 1.0,
+                "risk_bucket": "robust",
+                "good_scenarios": 25,
+                "total_scenarios": 30,
+                "worst_edge": -0.001,
+                "median_edge": 0.0448,
+            },
+            {
+                "market_id": "m-watch-only",
+                "action": "WATCH_ONLY_NO_FILL_YET",
+                "side": "YES",
+                "strict_limit_max": 0.04,
+                "paper_notional_usdc": 0.5,
+            },
+        ],
+    }
+
+    result = apply_stress_overlay_to_paper_orders(paper_orders, stress_overlay)
+
+    assert result["paper_only"] is True
+    assert result["live_order_allowed"] is False
+    assert result["summary"] == {
+        "source_orders": 2,
+        "stress_allowed_markets": 1,
+        "paper_orders": 1,
+        "rejected_orders": 1,
+        "paper_only": True,
+        "live_order_allowed": False,
+        "market_counts": {"m-keep-cheap": 1},
+        "notional_by_market": {"m-keep-cheap": 1.0},
+        "max_total_notional_usdc": 1.0,
+    }
+    assert result["orders"][0]["strict_limit_price"] == 0.001
+    assert result["orders"][0]["requested_notional_usdc"] == 1.0
+    assert result["orders"][0]["stress_overlay"]["risk_bucket"] == "robust"
+    assert result["orders"][0]["paper_only"] is True
+    assert result["orders"][0]["live_order_allowed"] is False
+    assert result["rejected"] == [{"market_id": "m-reject", "profile_id": "p1", "reason": "not_in_stressed_micro_candidates", "question": "Will Busan be 17°C or below?"}]
+
+
 def test_build_shadow_profile_paper_orders_reports_promoted_opportunity_watch_orders() -> None:
     dataset = _dataset()
     dataset["source"] = "polymarket_weather_promoted_profile_opportunities"
@@ -390,6 +465,83 @@ def test_build_shadow_profile_paper_orders_applies_promoted_profile_configuratio
         "source_recommendation": "promote_to_paper_profile",
     }
     assert result["summary"]["profile_counts"] == {"jey_threshold": 1}
+
+
+def test_cli_shadow_paper_runner_accepts_stress_overlay_json(tmp_path: Path) -> None:
+    dataset = _dataset()
+    dataset["examples"][0]["wallet"] = "0xJey"
+    dataset["examples"][1]["label"] = "trade"
+    dataset["examples"][1]["wallet"] = "0xJey"
+    dataset_in = tmp_path / "dataset.json"
+    orderbooks_in = tmp_path / "orderbooks.json"
+    forecasts_in = tmp_path / "forecasts.json"
+    stress_overlay_in = tmp_path / "stress_overlay.json"
+    output = tmp_path / "paper_orders.json"
+    dataset_in.write_text(json.dumps(dataset), encoding="utf-8")
+    orderbooks_in.write_text(
+        json.dumps(
+            {
+                "m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750},
+                "m-paris-18": {"best_bid": 0.20, "best_ask": 0.21, "depth_usd": 750},
+            }
+        ),
+        encoding="utf-8",
+    )
+    forecasts_in.write_text(
+        json.dumps(
+            {
+                "london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+                "paris|april 25": {"forecast_high_c": 18.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+            }
+        ),
+        encoding="utf-8",
+    )
+    stress_overlay_in.write_text(
+        json.dumps(
+            {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "rows": [{"market_id": "m-london-20", "action": "PAPER_MICRO_STRICT_LIMIT", "strict_limit_max": 0.11, "paper_notional_usdc": 0.75, "risk_bucket": "medium"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-paper-runner",
+            "--dataset-json",
+            str(dataset_in),
+            "--orderbooks-json",
+            str(orderbooks_in),
+            "--forecasts-json",
+            str(forecasts_in),
+            "--stress-overlay-json",
+            str(stress_overlay_in),
+            "--run-id",
+            "shadow-stress",
+            "--output-json",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["summary"]["paper_orders"] == 1
+    assert payload["summary"]["rejected_orders"] == 1
+    assert payload["orders"][0]["market_id"] == "m-london-20"
+    assert payload["orders"][0]["strict_limit_price"] == 0.11
+    assert payload["orders"][0]["requested_notional_usdc"] == 0.75
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+
 
 
 def test_cli_shadow_paper_runner_accepts_promoted_profiles_json(tmp_path: Path) -> None:

@@ -132,6 +132,80 @@ def build_shadow_profile_paper_orders(
     }
 
 
+def apply_stress_overlay_to_paper_orders(paper_orders: dict[str, Any], stress_overlay: dict[str, Any]) -> dict[str, Any]:
+    allowed = {
+        str(row.get("market_id")): row
+        for row in stress_overlay.get("rows", [])
+        if isinstance(row, dict) and row.get("action") == "PAPER_MICRO_STRICT_LIMIT" and row.get("market_id")
+    }
+    filtered: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    for order in paper_orders.get("orders", []):
+        if not isinstance(order, dict):
+            continue
+        market_id = str(order.get("market_id") or "")
+        stress_row = allowed.get(market_id)
+        if not stress_row:
+            rejected.append(
+                {
+                    "market_id": order.get("market_id"),
+                    "profile_id": order.get("profile_id"),
+                    "reason": "not_in_stressed_micro_candidates",
+                    "question": order.get("question"),
+                }
+            )
+            continue
+        capped_order = dict(order)
+        capped_order["strict_limit_price"] = float(stress_row.get("strict_limit_max"))
+        capped_order["requested_notional_usdc"] = min(
+            float(order.get("requested_notional_usdc") or 0.0),
+            float(stress_row.get("paper_notional_usdc") or 0.0),
+        )
+        capped_order["stress_overlay"] = {
+            key: stress_row[key]
+            for key in (
+                "risk_bucket",
+                "good_scenarios",
+                "total_scenarios",
+                "worst_edge",
+                "median_edge",
+                "base_edge",
+                "station_max_c",
+                "threshold_c",
+                "direction",
+            )
+            if key in stress_row
+        }
+        capped_order["paper_only"] = True
+        capped_order["live_order_allowed"] = False
+        filtered.append(capped_order)
+    market_counts: dict[str, int] = {}
+    notional_by_market: dict[str, float] = {}
+    for order in filtered:
+        market_id = str(order.get("market_id") or "")
+        market_counts[market_id] = market_counts.get(market_id, 0) + 1
+        notional_by_market[market_id] = round(notional_by_market.get(market_id, 0.0) + float(order.get("requested_notional_usdc") or 0.0), 6)
+    summary = {
+        "source_orders": len([order for order in paper_orders.get("orders", []) if isinstance(order, dict)]),
+        "stress_allowed_markets": len(allowed),
+        "paper_orders": len(filtered),
+        "rejected_orders": len(rejected),
+        "paper_only": True,
+        "live_order_allowed": False,
+        "market_counts": market_counts,
+        "notional_by_market": notional_by_market,
+        "max_total_notional_usdc": round(sum(float(order.get("requested_notional_usdc") or 0.0) for order in filtered), 6),
+    }
+    return {
+        "source": "shadow_profile_stress_overlay_paper_orders",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "orders": filtered,
+        "rejected": rejected,
+    }
+
+
 def run_shadow_paper_runner_artifact(
     *,
     dataset_json: str | Path,
@@ -143,6 +217,7 @@ def run_shadow_paper_runner_artifact(
     historical_forecasts_json: str | Path | None = None,
     profile_configs_json: str | Path | None = None,
     promoted_profiles_json: str | Path | None = None,
+    stress_overlay_json: str | Path | None = None,
     max_order_usdc: float = 5.0,
 ) -> dict[str, Any]:
     dataset = json.loads(Path(dataset_json).read_text(encoding="utf-8"))
@@ -152,8 +227,12 @@ def run_shadow_paper_runner_artifact(
     resolutions = _load_optional_object(resolutions_json)
     profile_configs = _load_optional_object(profile_configs_json)
     promoted_profiles = _load_optional_object(promoted_profiles_json)
+    stress_overlay = _load_optional_object(stress_overlay_json)
     enriched = enrich_shadow_dataset_features(dataset, orderbooks=orderbooks, forecasts=forecasts, historical_forecasts=historical_forecasts, resolutions=resolutions)
     result = build_shadow_profile_paper_orders(enriched, run_id=run_id, max_order_usdc=max_order_usdc, profile_configs=profile_configs, promoted_profiles=promoted_profiles)
+    if stress_overlay:
+        result = apply_stress_overlay_to_paper_orders(result, stress_overlay)
+        result["run_id"] = run_id
     output_path = Path(output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.setdefault("artifacts", {})["output_json"] = str(output_path)
