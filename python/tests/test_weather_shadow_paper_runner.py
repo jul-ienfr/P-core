@@ -319,6 +319,55 @@ def test_cli_shadow_paper_runner_accepts_resolutions_json(tmp_path: Path) -> Non
     assert payload["orders"][0]["features"]["resolution"]["resolved_outcome"] == "Yes"
 
 
+def test_cli_shadow_paper_runner_accepts_historical_forecasts_json(tmp_path: Path) -> None:
+    dataset_in = tmp_path / "dataset.json"
+    orderbooks_in = tmp_path / "orderbooks.json"
+    forecasts_in = tmp_path / "forecasts.json"
+    historical_forecasts_in = tmp_path / "historical_forecasts.json"
+    output = tmp_path / "paper_orders.json"
+    dataset_in.write_text(json.dumps(_dataset()), encoding="utf-8")
+    orderbooks_in.write_text(json.dumps({"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}}), encoding="utf-8")
+    forecasts_in.write_text(json.dumps({"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}}), encoding="utf-8")
+    historical_forecasts_in.write_text(
+        json.dumps({"m-london-20": {"source": "replay_archive", "freshness_minutes": 17, "model_probability_at_trade": 0.57}}),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-paper-runner",
+            "--dataset-json",
+            str(dataset_in),
+            "--orderbooks-json",
+            str(orderbooks_in),
+            "--forecasts-json",
+            str(forecasts_in),
+            "--historical-forecasts-json",
+            str(historical_forecasts_in),
+            "--run-id",
+            "shadow-smoke",
+            "--output-json",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["orders"][0]["features"]["forecast_context"] == {
+        "available": True,
+        "source": "replay_archive",
+        "freshness_minutes": 17.0,
+        "model_probability_at_trade": 0.57,
+    }
+
+
 def test_cli_shadow_paper_runner_accepts_profile_configs_json(tmp_path: Path) -> None:
     dataset = _dataset()
     dataset["examples"][0]["wallet"] = "0xMarchyel"

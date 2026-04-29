@@ -118,15 +118,17 @@ def run_shadow_paper_runner_artifact(
     run_id: str,
     output_json: str | Path,
     resolutions_json: str | Path | None = None,
+    historical_forecasts_json: str | Path | None = None,
     profile_configs_json: str | Path | None = None,
     max_order_usdc: float = 5.0,
 ) -> dict[str, Any]:
     dataset = json.loads(Path(dataset_json).read_text(encoding="utf-8"))
     orderbooks = _load_optional_object(orderbooks_json)
     forecasts = _load_optional_object(forecasts_json)
+    historical_forecasts = _load_optional_object(historical_forecasts_json)
     resolutions = _load_optional_object(resolutions_json)
     profile_configs = _load_optional_object(profile_configs_json)
-    enriched = enrich_shadow_dataset_features(dataset, orderbooks=orderbooks, forecasts=forecasts, resolutions=resolutions)
+    enriched = enrich_shadow_dataset_features(dataset, orderbooks=orderbooks, forecasts=forecasts, historical_forecasts=historical_forecasts, resolutions=resolutions)
     result = build_shadow_profile_paper_orders(enriched, run_id=run_id, max_order_usdc=max_order_usdc, profile_configs=profile_configs)
     output_path = Path(output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
