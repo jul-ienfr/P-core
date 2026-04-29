@@ -12,7 +12,7 @@ def enrich_decision_weather_context(
     resolution_sources_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     examples = _rows_from_payload(decision_dataset_payload, "examples")
-    forecasts = _rows_from_payload(forecast_snapshots_payload, "forecasts")
+    forecasts = _forecast_rows_from_payload(forecast_snapshots_payload)
     resolutions = _rows_from_payload(resolution_sources_payload or {}, "resolutions")
     enriched = [_enrich_row(row, forecasts, resolutions) for row in examples]
     with_context = sum(1 for row in enriched if row.get("weather_context_available") is True)
@@ -56,7 +56,7 @@ def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolution
             **_resolution_fields(resolution),
         }
     forecast_ts = _parse_timestamp(_forecast_timestamp(forecast))
-    forecast_value = _to_float(forecast.get("forecast_value") if forecast.get("forecast_value") is not None else forecast.get("value"))
+    forecast_value = _forecast_value(forecast)
     forecast_age = None
     if decision_ts is not None and forecast_ts is not None:
         forecast_age = int((decision_ts - forecast_ts).total_seconds() // 60)
@@ -73,6 +73,7 @@ def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolution
         "forecast_value": forecast_value,
         "forecast_value_at_decision": forecast_value,
         "forecast_age_minutes": forecast_age,
+        "forecast_source": forecast.get("source") or forecast.get("forecast_source"),
         "distance_to_threshold": _rounded_delta(forecast_value, threshold),
         "distance_to_bin_center": _rounded_delta(forecast_value, bin_center),
         "official_source_available": official_available,
@@ -115,9 +116,9 @@ def _select_forecast(row: dict[str, Any], forecasts: list[dict[str, Any]], decis
         if not _matches_surface(row, forecast):
             continue
         forecast_ts = _parse_timestamp(_forecast_timestamp(forecast))
-        if forecast_ts is None or (decision_ts is not None and forecast_ts > decision_ts):
+        if forecast_ts is not None and decision_ts is not None and forecast_ts > decision_ts:
             continue
-        candidates.append((forecast_ts, index, forecast))
+        candidates.append((forecast_ts or datetime.min.replace(tzinfo=timezone.utc), index, forecast))
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[0], item[1]))[2]
@@ -131,15 +132,28 @@ def _select_resolution(row: dict[str, Any], resolutions: list[dict[str, Any]]) -
 
 
 def _matches_surface(row: dict[str, Any], other: dict[str, Any]) -> bool:
-    row_market = row.get("market_id")
-    other_market = other.get("market_id") or other.get("marketId") or other.get("id")
-    if row_market is not None and other_market is not None:
-        return str(row_market) == str(other_market)
+    row_keys = _surface_keys(row)
+    other_keys = _surface_keys(other)
+    if row_keys and other_keys and row_keys.intersection(other_keys):
+        return True
+    row_city = _norm(row.get("city"))
+    other_city = _norm(other.get("city"))
+    if row_city and row_city == other_city and other.get("date") is None and other.get("resolution_date") is None:
+        return True
     return (
-        _norm(row.get("city")) == _norm(other.get("city"))
+        row_city == other_city
         and str(row.get("date") or "") == str(other.get("date") or other.get("resolution_date") or "")
         and _norm(row.get("market_type")) == _norm(other.get("market_type") or other.get("weather_market_type") or other.get("type"))
     )
+
+
+def _surface_keys(row: dict[str, Any]) -> set[str]:
+    keys: set[str] = set()
+    for key in ("primary_key", "matched_key", "market_id", "marketId", "id", "condition_id", "conditionId", "slug"):
+        value = row.get(key)
+        if value is not None and str(value).strip():
+            keys.add(str(value).strip().lower())
+    return keys
 
 
 def _forecast_timestamp(row: dict[str, Any]) -> Any:
@@ -179,6 +193,28 @@ def _rows_from_payload(payload: dict[str, Any], preferred_key: str) -> list[dict
     return []
 
 
+def _forecast_rows_from_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = _rows_from_payload(payload, "forecasts")
+    if rows:
+        return rows
+    sparse: list[dict[str, Any]] = []
+    for key, value in payload.items():
+        if not isinstance(value, dict):
+            continue
+        row = dict(value)
+        text_key = str(key).strip()
+        if text_key:
+            row.setdefault("sparse_key", text_key)
+            if text_key.isdigit():
+                row.setdefault("primary_key", text_key)
+                row.setdefault("id", text_key)
+            else:
+                row.setdefault("market_id", text_key)
+                row.setdefault("city", text_key)
+        sparse.append(row)
+    return sparse
+
+
 def _load_object(path: str | Path, label: str) -> dict[str, Any]:
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -190,6 +226,14 @@ def _rounded_delta(value: float | None, anchor: float | None) -> float | None:
     if value is None or anchor is None:
         return None
     return round(value - anchor, 4)
+
+
+def _forecast_value(row: dict[str, Any]) -> float | None:
+    for key in ("forecast_value", "value", "forecast_high_c", "forecast_max_proxy", "forecast_round_temp"):
+        value = _to_float(row.get(key))
+        if value is not None:
+            return value
+    return None
 
 
 def _to_float(value: Any) -> float | None:

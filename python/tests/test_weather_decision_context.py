@@ -126,6 +126,61 @@ def test_missing_forecast_before_decision_is_explicit_unavailable() -> None:
     assert row["decision_context_leakage_allowed"] is False
 
 
+def test_sparse_forecast_mapping_matches_primary_key_market_id_and_city() -> None:
+    from weather_pm.weather_decision_context import enrich_decision_weather_context
+
+    decisions = {
+        "examples": [
+            {
+                "id": "2112228",
+                "market_id": "m-seoul-low-10",
+                "primary_key": "2112228",
+                "timestamp": "2026-05-01T09:30:00Z",
+                "city": "Seoul",
+                "date": "May 1",
+                "market_type": "low_temperature",
+                "threshold": 10.0,
+            },
+            {
+                "id": "2112238",
+                "market_id": "m-seoul-high-20",
+                "timestamp": "2026-05-01T09:30:00Z",
+                "city": "Seoul",
+                "date": "May 1",
+                "market_type": "high_temperature",
+                "threshold": 20.0,
+            },
+            {
+                "id": "2119999",
+                "market_id": "m-toronto-high-19",
+                "timestamp": "2026-04-28T09:30:00Z",
+                "city": "Toronto",
+                "date": "April 28",
+                "market_type": "high_temperature",
+                "threshold": 19.0,
+            },
+        ]
+    }
+    forecasts = {
+        "2112228": {"forecast_high_c": 11.2, "freshness_minutes": 30, "source": "by_primary_key"},
+        "m-seoul-high-20": {"forecast_high_c": 21.3, "freshness_minutes": 45, "source": "by_market_id"},
+        "toronto": {"forecast_high_c": 20.0, "freshness_minutes": 60, "source": "by_city"},
+    }
+
+    payload = enrich_decision_weather_context(decisions, forecasts)
+
+    assert payload["summary"]["with_weather_context"] == 3
+    rows = payload["examples"]
+    assert rows[0]["weather_context_available"] is True
+    assert rows[0]["forecast_value_at_decision"] == 11.2
+    assert rows[0]["forecast_source"] == "by_primary_key"
+    assert rows[1]["forecast_value_at_decision"] == 21.3
+    assert rows[1]["forecast_source"] == "by_market_id"
+    assert rows[2]["forecast_value_at_decision"] == 20.0
+    assert rows[2]["forecast_source"] == "by_city"
+    assert all(row["decision_context_leakage_allowed"] is False for row in rows)
+
+
 def test_cli_enrich_decision_weather_context_writes_artifact_and_compact_summary(tmp_path: Path) -> None:
     decisions_path = tmp_path / "decisions.json"
     forecasts_path = tmp_path / "forecasts.json"
