@@ -204,6 +204,7 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_paper_runner.add_argument("--historical-forecasts-json", required=False, help="Optional market-id/surface-key forecast context JSON captured at trade time")
     shadow_paper_runner.add_argument("--resolutions-json", required=False, help="Optional market-id/surface-key historical resolution JSON")
     shadow_paper_runner.add_argument("--profile-configs-json", required=False, help="Optional wallet/handle keyed shadow profile replay config JSON")
+    shadow_paper_runner.add_argument("--promoted-profiles-json", required=False, help="Optional shadow profile evaluation JSON with promoted paper profiles")
     shadow_paper_runner.add_argument("--run-id", required=True, help="Shadow paper replay run id")
     shadow_paper_runner.add_argument("--output-json", required=True, help="Output paper-only shadow orders JSON")
     shadow_paper_runner.add_argument("--max-order-usdc", required=False, type=float, default=5.0, help="Maximum simulated notional per shadow order")
@@ -720,6 +721,7 @@ def main() -> int:
                     resolutions_json=args.resolutions_json,
                     historical_forecasts_json=args.historical_forecasts_json,
                     profile_configs_json=args.profile_configs_json,
+                    promoted_profiles_json=args.promoted_profiles_json,
                     max_order_usdc=args.max_order_usdc,
                 )
             )

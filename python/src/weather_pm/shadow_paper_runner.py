@@ -122,6 +122,7 @@ def run_shadow_paper_runner_artifact(
     resolutions_json: str | Path | None = None,
     historical_forecasts_json: str | Path | None = None,
     profile_configs_json: str | Path | None = None,
+    promoted_profiles_json: str | Path | None = None,
     max_order_usdc: float = 5.0,
 ) -> dict[str, Any]:
     dataset = json.loads(Path(dataset_json).read_text(encoding="utf-8"))
@@ -130,8 +131,9 @@ def run_shadow_paper_runner_artifact(
     historical_forecasts = _load_optional_object(historical_forecasts_json)
     resolutions = _load_optional_object(resolutions_json)
     profile_configs = _load_optional_object(profile_configs_json)
+    promoted_profiles = _load_optional_object(promoted_profiles_json)
     enriched = enrich_shadow_dataset_features(dataset, orderbooks=orderbooks, forecasts=forecasts, historical_forecasts=historical_forecasts, resolutions=resolutions)
-    result = build_shadow_profile_paper_orders(enriched, run_id=run_id, max_order_usdc=max_order_usdc, profile_configs=profile_configs)
+    result = build_shadow_profile_paper_orders(enriched, run_id=run_id, max_order_usdc=max_order_usdc, profile_configs=profile_configs, promoted_profiles=promoted_profiles)
     output_path = Path(output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.setdefault("artifacts", {})["output_json"] = str(output_path)

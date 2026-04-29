@@ -320,6 +320,55 @@ def test_build_shadow_profile_paper_orders_applies_promoted_profile_configuratio
     assert result["summary"]["profile_counts"] == {"jey_threshold": 1}
 
 
+def test_cli_shadow_paper_runner_accepts_promoted_profiles_json(tmp_path: Path) -> None:
+    dataset = _dataset()
+    dataset["examples"][0]["wallet"] = "0xJey"
+    dataset_in = tmp_path / "dataset.json"
+    orderbooks_in = tmp_path / "orderbooks.json"
+    forecasts_in = tmp_path / "forecasts.json"
+    promoted_profiles_in = tmp_path / "promoted_profiles.json"
+    output = tmp_path / "paper_orders.json"
+    dataset_in.write_text(json.dumps(dataset), encoding="utf-8")
+    orderbooks_in.write_text(json.dumps({"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}}), encoding="utf-8")
+    forecasts_in.write_text(json.dumps({"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}}), encoding="utf-8")
+    promoted_profiles_in.write_text(
+        json.dumps({"profiles": [{"profile_id": "jey_threshold", "wallets": ["0xJey"], "recommendation": "promote_to_paper_profile", "suggested_max_order_usdc": 1.5, "suggested_min_edge": 0.12}]}),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-paper-runner",
+            "--dataset-json",
+            str(dataset_in),
+            "--orderbooks-json",
+            str(orderbooks_in),
+            "--forecasts-json",
+            str(forecasts_in),
+            "--promoted-profiles-json",
+            str(promoted_profiles_in),
+            "--run-id",
+            "shadow-promoted",
+            "--output-json",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["orders"][0]["profile_id"] == "jey_threshold"
+    assert payload["orders"][0]["requested_notional_usdc"] == 1.5
+    assert payload["orders"][0]["metadata"]["profile_config"]["source_recommendation"] == "promote_to_paper_profile"
+    assert payload["live_order_allowed"] is False
+
+
 def test_cli_shadow_paper_runner_writes_artifact(tmp_path: Path) -> None:
     dataset_in = tmp_path / "dataset.json"
     orderbooks_in = tmp_path / "orderbooks.json"
