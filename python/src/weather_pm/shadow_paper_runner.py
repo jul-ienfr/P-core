@@ -754,11 +754,14 @@ def _skip_reason(row: dict[str, Any], *, profile_config: dict[str, Any] | None =
     features = row.get("features") if isinstance(row.get("features"), dict) else {}
     orderbook = features.get("orderbook") if isinstance(features.get("orderbook"), dict) else {}
     forecast = features.get("forecast") if isinstance(features.get("forecast"), dict) else {}
+    forecast_context = features.get("forecast_context") if isinstance(features.get("forecast_context"), dict) else {}
     if not orderbook.get("available"):
         return "missing_orderbook_features"
     if not forecast.get("available"):
         return "missing_forecast_features"
-    model_edge = _to_float(row.get("model_probability")) - _to_float(row.get("yes_price"))
+    replay_probability = _to_float(forecast_context.get("model_probability_at_trade")) if forecast_context.get("available") else 0.0
+    model_probability = replay_probability or _to_float(row.get("model_probability"))
+    model_edge = model_probability - _to_float(row.get("yes_price"))
     if model_edge <= 0:
         return "no_independent_model_edge"
     min_edge = _to_float((profile_config or {}).get("min_edge"))

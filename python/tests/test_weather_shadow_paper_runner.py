@@ -217,6 +217,27 @@ def test_build_shadow_profile_paper_orders_skips_when_profile_min_edge_not_met()
     assert result["summary"] == {"paper_orders": 0, "skipped": 2, "paper_only": True, "live_order_allowed": False}
 
 
+def test_build_shadow_profile_paper_orders_uses_forecast_context_probability_for_replay_edge() -> None:
+    dataset = _dataset()
+    dataset["examples"][0]["model_probability"] = 0.80
+    enriched = enrich_shadow_dataset_features(
+        dataset,
+        orderbooks={"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}},
+        forecasts={"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}},
+        historical_forecasts={"m-london-20": {"source": "replay_archive", "freshness_minutes": 17, "model_probability_at_trade": 0.35}},
+    )
+
+    result = build_shadow_profile_paper_orders(
+        enriched,
+        run_id="shadow-smoke",
+        max_order_usdc=5.0,
+        profile_configs={"0xcold": {"profile_id": "cold_replay", "min_edge": 0.10}},
+    )
+
+    assert result["orders"] == []
+    assert result["skipped"][0] == {"market_id": "m-london-20", "wallet": "0xCold", "reason": "profile_min_edge_not_met"}
+
+
 def test_build_shadow_profile_paper_orders_preserves_resolution_and_forecast_context_metadata() -> None:
     enriched = enrich_shadow_dataset_features(
         _dataset(),
