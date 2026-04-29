@@ -45,7 +45,8 @@ def write_decision_weather_context(
 
 
 def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolutions: list[dict[str, Any]]) -> dict[str, Any]:
-    decision_ts = _parse_timestamp(row.get("timestamp") or row.get("timestamp_bucket"))
+    row = _with_question_surface(row)
+    decision_ts = _parse_timestamp(row.get("timestamp") or row.get("timestamp_bucket") or row.get("active_timestamp"))
     forecast = _select_forecast(row, forecasts, decision_ts)
     resolution = _select_resolution(row, resolutions)
     base = dict(row)
@@ -57,9 +58,7 @@ def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolution
         }
     forecast_ts = _parse_timestamp(_forecast_timestamp(forecast))
     forecast_value = _forecast_value(forecast)
-    forecast_age = None
-    if decision_ts is not None and forecast_ts is not None:
-        forecast_age = int((decision_ts - forecast_ts).total_seconds() // 60)
+    forecast_age = _forecast_age_minutes(forecast, decision_ts, forecast_ts)
     threshold = _to_float(row.get("threshold") if row.get("threshold") is not None else forecast.get("threshold"))
     bin_center = _to_float(row.get("bin_center") if row.get("bin_center") is not None else forecast.get("bin_center"))
     official_available = bool(forecast.get("official_source_available") or (resolution or {}).get("official_source_available"))
@@ -79,6 +78,8 @@ def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolution
         "official_source_available": official_available,
         "weather_context_available": True,
         "missing_reason": None,
+        "paper_only": True,
+        "live_order_allowed": False,
         **_resolution_fields(resolution),
     }
 
@@ -98,6 +99,8 @@ def _empty_context(reason: str) -> dict[str, Any]:
         "official_source_available": False,
         "weather_context_available": False,
         "missing_reason": reason,
+        "paper_only": True,
+        "live_order_allowed": False,
     }
 
 
@@ -161,6 +164,44 @@ def _forecast_timestamp(row: dict[str, Any]) -> Any:
         if row.get(key):
             return row.get(key)
     return None
+
+
+def _with_question_surface(row: dict[str, Any]) -> dict[str, Any]:
+    question = str(row.get("question") or row.get("title") or "")
+    if not question:
+        return dict(row)
+    out = dict(row)
+    if not out.get("city"):
+        city = _city_from_question(question)
+        if city:
+            out["city"] = city
+    if not out.get("date"):
+        date = _date_from_question(question)
+        if date:
+            out["date"] = date
+    return out
+
+
+def _city_from_question(question: str) -> str | None:
+    marker = " in "
+    lower = question.lower()
+    start = lower.find(marker)
+    if start < 0:
+        return None
+    after = question[start + len(marker) :]
+    end_positions = [pos for token in (" be ", " on ", "?") if (pos := after.lower().find(token)) >= 0]
+    city = after[: min(end_positions) if end_positions else len(after)].strip(" ?.,")
+    return city or None
+
+
+def _date_from_question(question: str) -> str | None:
+    lower = question.lower()
+    marker = " on "
+    start = lower.rfind(marker)
+    if start < 0:
+        return None
+    date = question[start + len(marker) :].strip(" ?.,")
+    return date or None
 
 
 def _parse_timestamp(raw: Any) -> datetime | None:
@@ -234,6 +275,13 @@ def _forecast_value(row: dict[str, Any]) -> float | None:
         if value is not None:
             return value
     return None
+
+
+def _forecast_age_minutes(forecast: dict[str, Any], decision_ts: datetime | None, forecast_ts: datetime | None) -> int | None:
+    if decision_ts is not None and forecast_ts is not None:
+        return int((decision_ts - forecast_ts).total_seconds() // 60)
+    freshness = _to_float(forecast.get("freshness_minutes"))
+    return None if freshness is None else int(freshness)
 
 
 def _to_float(value: Any) -> float | None:

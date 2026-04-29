@@ -181,6 +181,58 @@ def test_sparse_forecast_mapping_matches_primary_key_market_id_and_city() -> Non
     assert all(row["decision_context_leakage_allowed"] is False for row in rows)
 
 
+def test_live_market_question_fallback_matches_sparse_city_forecast() -> None:
+    from weather_pm.weather_decision_context import enrich_decision_weather_context
+
+    decisions = {
+        "examples": [
+            {
+                "label": "no_trade",
+                "id": "2112228",
+                "market_id": "2112228",
+                "question": "Will the highest temperature in Seoul be 10°C or below on May 1?",
+                "timestamp": "2026-04-29T10:00:00Z",
+                "active_timestamp": "2026-04-29T10:00:00Z",
+                "forecast_source_provider": "open_meteo",
+                "market_type": "highest_temperature",
+                "side": "Yes",
+            },
+            {
+                "label": "no_trade",
+                "id": "2112238",
+                "market_id": "2112238",
+                "question": "Will the highest temperature in Seoul be 20°C or higher on May 1?",
+                "timestamp": "2026-04-29T10:00:00Z",
+                "active_timestamp": "2026-04-29T10:00:00Z",
+                "forecast_source_provider": "open_meteo",
+                "market_type": "highest_temperature",
+                "side": "Yes",
+            },
+        ]
+    }
+    forecasts = {
+        "seoul": {
+            "forecast_high_c": 18.7,
+            "freshness_minutes": 42,
+            "source": "open_meteo_runtime_city_snapshot",
+        }
+    }
+
+    payload = enrich_decision_weather_context(decisions, forecasts)
+
+    assert payload["summary"]["with_weather_context"] == 2
+    for row in payload["examples"]:
+        assert row["city"] == "Seoul"
+        assert row["date"] == "May 1"
+        assert row["weather_context_available"] is True
+        assert row["forecast_value_at_decision"] == 18.7
+        assert row["forecast_source"] == "open_meteo_runtime_city_snapshot"
+        assert row["forecast_age_minutes"] == 42
+        assert row["decision_context_leakage_allowed"] is False
+        assert row["paper_only"] is True
+        assert row["live_order_allowed"] is False
+
+
 def test_cli_enrich_decision_weather_context_writes_artifact_and_compact_summary(tmp_path: Path) -> None:
     decisions_path = tmp_path / "decisions.json"
     forecasts_path = tmp_path / "forecasts.json"
