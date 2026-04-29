@@ -604,10 +604,19 @@ def _profile_recommendation(profile: dict[str, Any]) -> str:
 
 
 def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
-    lines = ["# Shadow profile evaluation", "", "paper_only: true", "live_order_allowed: false", "", "| profile | orders | resolved | winrate | pnl | recommendation |", "|---|---:|---:|---:|---:|---|"]
+    lines = [
+        "# Shadow profile evaluation",
+        "",
+        "paper_only: true",
+        "live_order_allowed: false",
+        "",
+        "| profile | orders | resolved | winrate | pnl | historical trades | trade winrate | historical pnl | recommendation |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
     for profile in result.get("profiles", []):
         lines.append(
-            f"| {profile['profile_id']} | {profile['orders']} | {profile['resolved_orders']} | {profile['winrate']:.2f} | {profile['estimated_pnl_usdc']:.4f} | {profile['recommendation']} |"
+            f"| {profile['profile_id']} | {profile['orders']} | {profile['resolved_orders']} | {profile['winrate']:.2f} | {profile['estimated_pnl_usdc']:.4f} | "
+            f"{profile.get('historical_trades', 0)} | {profile.get('trade_winrate', 0.0):.2f} | {profile.get('historical_estimated_pnl_usdc', 0.0):.4f} | {profile['recommendation']} |"
         )
     return "\n".join(lines) + "\n"
 

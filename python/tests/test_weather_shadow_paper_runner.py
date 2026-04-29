@@ -1002,3 +1002,73 @@ def test_cli_shadow_profile_evaluator_writes_json_and_markdown(tmp_path: Path) -
     payload = json.loads(output_json.read_text(encoding="utf-8"))
     assert payload["profiles"][0]["profile_id"] == "hotcold_weather_native"
     assert "hotcold_weather_native" in output_md.read_text(encoding="utf-8")
+
+
+def test_cli_shadow_profile_evaluator_markdown_includes_historical_trade_metrics(tmp_path: Path) -> None:
+    paper_orders_in = tmp_path / "paper_orders.json"
+    trade_resolution_in = tmp_path / "trade_resolution.json"
+    output_json = tmp_path / "evaluation.json"
+    output_md = tmp_path / "evaluation.md"
+    paper_orders_in.write_text(
+        json.dumps(
+            {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "orders": [
+                    {
+                        "profile_id": "jey_threshold",
+                        "profile_role": "clean_threshold_reference",
+                        "wallet_signal": "0xJey",
+                        "requested_notional_usdc": 3.0,
+                        "strict_limit_price": 0.40,
+                        "features": {"resolution": {"available": False}},
+                    }
+                ],
+                "skipped": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    trade_resolution_in.write_text(
+        json.dumps(
+            {
+                "trades": [
+                    {
+                        "wallet": "0xJey",
+                        "handle": "jey",
+                        "trade_result": "win",
+                        "estimated_pnl_usdc": 1.0,
+                        "notional_usd": 9.0,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-profile-evaluator",
+            "--paper-orders-json",
+            str(paper_orders_in),
+            "--trade-resolution-json",
+            str(trade_resolution_in),
+            "--output-json",
+            str(output_json),
+            "--output-md",
+            str(output_md),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    markdown = output_md.read_text(encoding="utf-8")
+    assert "historical trades" in markdown
+    assert "jey_threshold" in markdown
+    assert "| jey_threshold | 1 | 0 | 0.00 | 0.0000 | 1 | 1.00 | 1.0000 | needs_resolution_data |" in markdown
