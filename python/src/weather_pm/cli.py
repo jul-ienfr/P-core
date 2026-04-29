@@ -63,6 +63,7 @@ from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
 from weather_pm.shadow_paper_runner import (
     run_account_trade_resolution_artifact,
+    run_historical_profile_rule_candidates_artifact,
     run_market_metadata_resolution_artifact,
     run_shadow_paper_runner_artifact,
     run_shadow_profile_evaluator_artifact,
@@ -232,6 +233,12 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_profile_evaluator.add_argument("--output-md", required=False, help="Optional Markdown operator report")
     shadow_profile_evaluator.add_argument("--handoff-dataset-json", required=False, help="Dataset path to show in promoted opportunity replay handoff")
     shadow_profile_evaluator.add_argument("--handoff-orderbooks-json", required=False, help="Orderbooks path to show in promoted opportunity replay handoff")
+
+    historical_profile_rules = subparsers.add_parser("historical-profile-rules", help="Build paper-only profile gating rules from resolved historical account trades")
+    historical_profile_rules.add_argument("--trade-resolution-json", required=True, help="Resolved account trade dataset JSON")
+    historical_profile_rules.add_argument("--output-json", required=True, help="Output historical profile rule candidates JSON")
+    historical_profile_rules.add_argument("--output-md", required=False, help="Optional Markdown operator rule report")
+
     shadow_profile_evaluator.add_argument("--handoff-forecasts-json", required=False, help="Forecasts path to show in promoted opportunity replay handoff")
     shadow_profile_evaluator.add_argument("--handoff-stress-overlay-json", required=False, help="Stress overlay path to show in promoted opportunity replay handoff")
     shadow_profile_evaluator.add_argument("--handoff-run-id", required=False, help="Run id to show in promoted opportunity replay handoff")
@@ -787,6 +794,18 @@ def main() -> int:
                         "exposure_json": args.handoff_exposure_json,
                         "exposure_md": args.handoff_exposure_md,
                     },
+                )
+            )
+        )
+        return 0
+
+    if args.command == "historical-profile-rules":
+        print(
+            json.dumps(
+                run_historical_profile_rule_candidates_artifact(
+                    trade_resolution_json=args.trade_resolution_json,
+                    output_json=args.output_json,
+                    output_md=args.output_md,
                 )
             )
         )

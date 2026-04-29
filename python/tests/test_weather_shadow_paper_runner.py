@@ -195,6 +195,69 @@ def test_build_shadow_profile_paper_orders_applies_profile_specific_sizing_and_r
     assert result["summary"]["profile_counts"] == {"marchyel_like_capped": 1}
 
 
+def test_build_shadow_profile_paper_orders_applies_historical_profile_rule_gates() -> None:
+    dataset = _dataset()
+    dataset["examples"][0].update({"wallet": "0xCold", "handle": "ColdMath", "city": "London", "weather_market_type": "exact_value"})
+    dataset["examples"][1].update({"label": "trade", "wallet": "0xCold", "handle": "ColdMath", "city": "Seoul", "weather_market_type": "exact_value"})
+    enriched = enrich_shadow_dataset_features(
+        dataset,
+        orderbooks={
+            "m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750},
+            "m-paris-18": {"best_bid": 0.20, "best_ask": 0.21, "depth_usd": 750},
+        },
+        forecasts={
+            "london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+            "paris|april 25": {"forecast_high_c": 18.4, "source": "fixture_ecmwf", "freshness_minutes": 45},
+        },
+    )
+    gates = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "rules": [
+            {
+                "action": "paper_candidate_allow",
+                "handle": "ColdMath",
+                "slice_type": "handle_city_weather_type_position",
+                "city": "London",
+                "weather_market_type": "exact_value",
+                "effective_position": "Yes",
+                "trades": 9,
+                "estimated_pnl_usdc": 90.0,
+                "roi": 0.32,
+                "confidence": "high",
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "action": "avoid_or_invert_filter",
+                "handle": "ColdMath",
+                "slice_type": "handle_city_weather_type_position",
+                "city": "Seoul",
+                "weather_market_type": "exact_value",
+                "effective_position": "Yes",
+                "trades": 5,
+                "estimated_pnl_usdc": -60.0,
+                "roi": -0.48,
+                "confidence": "low",
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        ],
+    }
+
+    result = build_shadow_profile_paper_orders(enriched, run_id="shadow-gated", max_order_usdc=5.0, historical_profile_rules=gates)
+
+    assert len(result["orders"]) == 1
+    assert result["orders"][0]["market_id"] == "m-london-20"
+    assert result["orders"][0]["metadata"]["historical_profile_rule"]["action"] == "paper_candidate_allow"
+    assert result["skipped"] == [{"market_id": "m-paris-18", "wallet": "0xCold", "reason": "historical_profile_avoid_or_invert_filter"}]
+    assert result["summary"]["historical_profile_allow_orders"] == 1
+    assert result["summary"]["historical_profile_avoid_skips"] == 1
+    assert result["paper_only"] is True
+    assert result["live_order_allowed"] is False
+
+
+
 def test_build_shadow_profile_paper_orders_skips_when_profile_min_edge_not_met() -> None:
     dataset = _dataset()
     dataset["examples"][0]["wallet"] = "0xJey"
@@ -1757,3 +1820,132 @@ def test_cli_shadow_profile_evaluator_markdown_includes_historical_trade_metrics
     assert "historical trades" in markdown
     assert "jey_threshold" in markdown
     assert "| jey_threshold | 1 | 0 | 0.00 | 0.0000 | 1 | 1.00 | 1.0000 | needs_resolution_data |" in markdown
+
+
+def _historical_rule_candidate_sample_trades() -> list[dict[str, object]]:
+    trades: list[dict[str, object]] = []
+    for index in range(9):
+        trades.append({
+            "wallet": "0xCold",
+            "handle": "ColdMath",
+            "city": "London",
+            "weather_market_type": "exact_value",
+            "effective_position": "Yes",
+            "trade_result": "win",
+            "estimated_pnl_usdc": 10.0,
+            "notional_usd": 31.0,
+            "price": 0.31,
+            "side": "BUY",
+            "title": f"London exact value winner {index}",
+            "resolution": {"available": True},
+            "paper_only": True,
+            "live_order_allowed": False,
+        })
+    for index in range(5):
+        trades.append({
+            "wallet": "0xCold",
+            "handle": "ColdMath",
+            "city": "Seoul",
+            "weather_market_type": "exact_value",
+            "effective_position": "Yes",
+            "trade_result": "loss",
+            "estimated_pnl_usdc": -12.0,
+            "notional_usd": 25.0,
+            "price": 0.48,
+            "side": "BUY",
+            "title": f"Seoul exact value loser {index}",
+            "resolution": {"available": True},
+            "paper_only": True,
+            "live_order_allowed": False,
+        })
+    trades.append({
+        "wallet": "0xCold",
+        "handle": "ColdMath",
+        "city": "Paris",
+        "weather_market_type": "threshold",
+        "effective_position": "No",
+        "trade_result": "unresolved",
+        "estimated_pnl_usdc": 0.0,
+        "notional_usd": 100.0,
+        "resolution": {"available": False},
+    })
+    return trades
+
+
+def test_build_historical_profile_rule_candidates_slices_profitable_and_negative_patterns() -> None:
+    from weather_pm.shadow_paper_runner import build_historical_profile_rule_candidates
+
+    result = build_historical_profile_rule_candidates({"paper_only": True, "live_order_allowed": False, "trades": _historical_rule_candidate_sample_trades()})
+
+    assert result["paper_only"] is True
+    assert result["live_order_allowed"] is False
+    assert result["summary"]["input_trades"] == 15
+    assert result["summary"]["resolved_trades"] == 14
+    assert result["summary"]["allow_rules"] >= 1
+    assert result["summary"]["avoid_rules"] >= 1
+
+    allow_rule = next(rule for rule in result["rules"] if rule["action"] == "paper_candidate_allow" and rule["slice_type"] == "handle_weather_type_position")
+    assert allow_rule["handle"] == "ColdMath"
+    assert allow_rule["weather_market_type"] == "exact_value"
+    assert allow_rule["effective_position"] == "Yes"
+    assert allow_rule["trades"] == 14
+    assert allow_rule["estimated_pnl_usdc"] == 30.0
+    assert allow_rule["roi"] == 0.074257
+    assert allow_rule["confidence"] == "medium"
+    assert allow_rule["paper_only"] is True
+    assert allow_rule["live_order_allowed"] is False
+
+    avoid_rule = next(rule for rule in result["rules"] if rule["action"] == "avoid_or_invert_filter" and rule["slice_type"] == "handle_city_weather_type_position")
+    assert avoid_rule["city"] == "Seoul"
+    assert avoid_rule["trades"] == 5
+    assert avoid_rule["estimated_pnl_usdc"] == -60.0
+    assert avoid_rule["roi"] == -0.48
+
+    profile = result["profile_rule_configs"]["ColdMath"]
+    assert profile["handle"] == "ColdMath"
+    assert len(profile["allow_rules"]) >= 1
+    assert len(profile["avoid_rules"]) >= 1
+    assert all(rule["paper_only"] is True and rule["live_order_allowed"] is False for rule in result["rules"])
+
+
+def test_cli_historical_profile_rules_writes_json_and_markdown(tmp_path: Path) -> None:
+    trade_resolution_in = tmp_path / "trade_resolution.json"
+    output_json = tmp_path / "historical_rules.json"
+    output_md = tmp_path / "historical_rules.md"
+    trade_resolution_in.write_text(
+        json.dumps({"paper_only": True, "live_order_allowed": False, "trades": _historical_rule_candidate_sample_trades()}),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "historical-profile-rules",
+            "--trade-resolution-json",
+            str(trade_resolution_in),
+            "--output-json",
+            str(output_json),
+            "--output-md",
+            str(output_md),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    assert compact["summary"]["allow_rules"] >= 1
+    assert compact["summary"]["avoid_rules"] >= 1
+    payload = json.loads(output_json.read_text(encoding="utf-8"))
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+    assert payload["artifacts"]["output_json"] == str(output_json)
+    assert payload["artifacts"]["output_md"] == str(output_md)
+    markdown = output_md.read_text(encoding="utf-8")
+    assert "# Historical profile rule candidates" in markdown
+    assert "| paper_candidate_allow | ColdMath | handle_weather_type_position" in markdown
+    assert "Safety: paper_only=true, live_order_allowed=false" in markdown

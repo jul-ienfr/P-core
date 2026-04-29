@@ -51,6 +51,7 @@ def build_shadow_profile_paper_orders(
     max_order_usdc: float = 5.0,
     profile_configs: dict[str, Any] | None = None,
     promoted_profiles: dict[str, Any] | None = None,
+    historical_profile_rules: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     profile_configs = _merge_promoted_profile_configs(profile_configs or {}, promoted_profiles or {})
     promoted_profile_ids = sorted(
@@ -60,6 +61,9 @@ def build_shadow_profile_paper_orders(
             if isinstance(config, dict) and config.get("source_recommendation") == "promote_to_paper_profile" and config.get("profile_id")
         }
     )
+    historical_rule_rows = [rule for rule in (historical_profile_rules or {}).get("rules", []) if isinstance(rule, dict)]
+    historical_allow_orders = 0
+    historical_avoid_skips = 0
     orders: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     profile_counts: dict[str, int] = {}
@@ -67,6 +71,11 @@ def build_shadow_profile_paper_orders(
         if not isinstance(row, dict):
             continue
         profile_config = _profile_config_for_row(row, profile_configs) or _promoted_opportunity_profile_config(row)
+        historical_rule = _historical_profile_rule_for_row(row, historical_rule_rows)
+        if historical_rule and historical_rule.get("action") == "avoid_or_invert_filter":
+            historical_avoid_skips += 1
+            skipped.append({"market_id": row.get("market_id"), "wallet": row.get("wallet"), "reason": "historical_profile_avoid_or_invert_filter"})
+            continue
         reason = _skip_reason(row, profile_config=profile_config)
         if reason:
             skipped.append({"market_id": row.get("market_id"), "wallet": row.get("wallet"), "reason": reason})
@@ -95,14 +104,21 @@ def build_shadow_profile_paper_orders(
                 "resolution": row.get("features", {}).get("resolution", {}) if isinstance(row.get("features"), dict) else {},
                 "forecast_context": row.get("features", {}).get("forecast_context", {}) if isinstance(row.get("features"), dict) else {},
                 "profile_config": dict(profile_config) if profile_config else {},
+                "historical_profile_rule": _compact_historical_profile_rule(historical_rule) if historical_rule else {},
             },
             "paper_only": True,
             "live_order_allowed": False,
         }
         if profile_config:
             profile_counts[profile_id] = profile_counts.get(profile_id, 0) + 1
+        if historical_rule and historical_rule.get("action") == "paper_candidate_allow":
+            historical_allow_orders += 1
         orders.append(order)
     summary = {"paper_orders": len(orders), "skipped": len(skipped), "paper_only": True, "live_order_allowed": False}
+    if historical_rule_rows:
+        summary["historical_profile_rules"] = len(historical_rule_rows)
+        summary["historical_profile_allow_orders"] = historical_allow_orders
+        summary["historical_profile_avoid_skips"] = historical_avoid_skips
     if promoted_profile_ids:
         summary["promoted_profile_configs"] = len(promoted_profile_ids)
         summary["promoted_profile_ids"] = promoted_profile_ids
@@ -485,6 +501,90 @@ def build_shadow_profile_evaluation(paper_orders: dict[str, Any], *, trade_resol
     return {"paper_only": True, "live_order_allowed": False, "summary": summary, "profiles": profiles}
 
 
+
+
+def build_historical_profile_rule_candidates(trade_resolution_dataset: dict[str, Any]) -> dict[str, Any]:
+    """Aggregate resolved account trades into paper-only profile gating rules."""
+    rows = [row for row in trade_resolution_dataset.get("trades", []) if isinstance(row, dict)]
+    resolved_rows = [row for row in rows if _trade_row_is_resolved(row)]
+    buckets: dict[tuple[str, str, str, str, str], dict[str, Any]] = {}
+    for row in resolved_rows:
+        handle = str(row.get("handle") or row.get("wallet") or "unknown")
+        city = str(row.get("city") or "").strip()
+        market_type = str(row.get("weather_market_type") or "unknown")
+        position = str(row.get("effective_position") or _effective_trade_position(row) or "").strip().title()
+        slice_specs = [("handle_weather_type_position", "", 8)]
+        if city:
+            slice_specs.append(("handle_city_weather_type_position", city, 5))
+        for slice_type, slice_city, min_trades in slice_specs:
+            key = (handle, slice_type, slice_city, market_type, position)
+            bucket = buckets.setdefault(
+                key,
+                {
+                    "handle": handle,
+                    "wallets": set(),
+                    "slice_type": slice_type,
+                    "city": slice_city,
+                    "weather_market_type": market_type,
+                    "effective_position": position,
+                    "min_trades": min_trades,
+                    "trades": 0,
+                    "wins": 0,
+                    "losses": 0,
+                    "estimated_pnl_usdc": 0.0,
+                    "notional_usd": 0.0,
+                    "examples": [],
+                },
+            )
+            _accumulate_rule_bucket(bucket, row)
+    rules = [_finalize_rule_bucket(bucket) for bucket in buckets.values()]
+    rules = [rule for rule in rules if _rule_action(rule)]
+    for rule in rules:
+        rule["action"] = _rule_action(rule)
+        rule["confidence"] = _rule_confidence(rule)
+        rule["paper_only"] = True
+        rule["live_order_allowed"] = False
+    rules.sort(key=lambda rule: (rule["action"] != "paper_candidate_allow", rule["handle"], rule["slice_type"], rule.get("city") or "", -abs(rule["estimated_pnl_usdc"])))
+    profile_rule_configs = _profile_rule_configs_from_rules(rules)
+    summary = {
+        "input_trades": len(rows),
+        "resolved_trades": len(resolved_rows),
+        "rules": len(rules),
+        "allow_rules": sum(1 for rule in rules if rule["action"] == "paper_candidate_allow"),
+        "avoid_rules": sum(1 for rule in rules if rule["action"] == "avoid_or_invert_filter"),
+        "profile_count": len(profile_rule_configs),
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    return {
+        "source": "historical_profile_rule_candidates",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "rules": rules,
+        "profile_rule_configs": profile_rule_configs,
+    }
+
+
+def run_historical_profile_rule_candidates_artifact(
+    *,
+    trade_resolution_json: str | Path,
+    output_json: str | Path,
+    output_md: str | Path | None = None,
+) -> dict[str, Any]:
+    payload = json.loads(Path(trade_resolution_json).read_text(encoding="utf-8"))
+    result = build_historical_profile_rule_candidates(payload)
+    output_path = Path(output_json)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result.setdefault("artifacts", {})["output_json"] = str(output_path)
+    if output_md:
+        md_path = Path(output_md)
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(_historical_profile_rule_candidates_markdown(result), encoding="utf-8")
+        result["artifacts"]["output_md"] = str(md_path)
+    output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"summary": result["summary"], "artifacts": result["artifacts"]}
+
 def run_account_trade_resolution_artifact(
     *,
     trades_json: str | Path,
@@ -525,6 +625,138 @@ def run_shadow_profile_evaluator_artifact(
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {"summary": result["summary"], "artifacts": result["artifacts"]}
 
+
+
+def _trade_row_is_resolved(row: dict[str, Any]) -> bool:
+    result = str(row.get("trade_result") or "").strip().lower()
+    if result in {"win", "loss"}:
+        return True
+    resolution = row.get("resolution") if isinstance(row.get("resolution"), dict) else {}
+    return bool(resolution.get("available")) and result != "unresolved"
+
+
+def _accumulate_rule_bucket(bucket: dict[str, Any], row: dict[str, Any]) -> None:
+    bucket["trades"] += 1
+    result = str(row.get("trade_result") or "").strip().lower()
+    if result == "win":
+        bucket["wins"] += 1
+    elif result == "loss":
+        bucket["losses"] += 1
+    bucket["estimated_pnl_usdc"] += _to_float(row.get("estimated_pnl_usdc"))
+    bucket["notional_usd"] += _to_float(row.get("notional_usd") or row.get("account_trade_notional_usd"))
+    wallet = str(row.get("wallet") or "").strip()
+    if wallet:
+        bucket["wallets"].add(wallet)
+    if len(bucket["examples"]) < 3:
+        bucket["examples"].append(
+            {
+                "title": row.get("title") or row.get("question") or "",
+                "price": _to_float(row.get("price") or row.get("account_trade_price")),
+                "side": row.get("side") or "",
+                "effective_position": row.get("effective_position") or _effective_trade_position(row),
+                "trade_result": row.get("trade_result") or "",
+                "estimated_pnl_usdc": round(_to_float(row.get("estimated_pnl_usdc")), 6),
+            }
+        )
+
+
+def _finalize_rule_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
+    notional = round(float(bucket["notional_usd"]), 6)
+    pnl = round(float(bucket["estimated_pnl_usdc"]), 6)
+    trades = int(bucket["trades"])
+    wins = int(bucket["wins"])
+    rule = {
+        "handle": bucket["handle"],
+        "wallets": sorted(bucket["wallets"]),
+        "slice_type": bucket["slice_type"],
+        "weather_market_type": bucket["weather_market_type"],
+        "effective_position": bucket["effective_position"],
+        "trades": trades,
+        "wins": wins,
+        "losses": int(bucket["losses"]),
+        "winrate": round(wins / trades, 6) if trades else 0.0,
+        "estimated_pnl_usdc": pnl,
+        "notional_usd": notional,
+        "roi": round(pnl / notional, 6) if notional else 0.0,
+        "examples": bucket["examples"],
+        "min_trades": int(bucket["min_trades"]),
+    }
+    if bucket.get("city"):
+        rule["city"] = bucket["city"]
+    return rule
+
+
+def _rule_action(rule: dict[str, Any]) -> str:
+    enough_sample = int(rule.get("trades") or 0) >= int(rule.get("min_trades") or 0)
+    enough_notional = _to_float(rule.get("notional_usd")) >= 50.0
+    pnl = _to_float(rule.get("estimated_pnl_usdc"))
+    roi = _to_float(rule.get("roi"))
+    if enough_sample and enough_notional and pnl > 20.0 and roi > 0.03:
+        return "paper_candidate_allow"
+    if enough_sample and enough_notional and pnl < -20.0 and roi < -0.03:
+        return "avoid_or_invert_filter"
+    return ""
+
+
+def _rule_confidence(rule: dict[str, Any]) -> str:
+    if rule.get("action") == "avoid_or_invert_filter":
+        return "medium" if int(rule.get("trades") or 0) >= 8 else "low"
+    if int(rule.get("trades") or 0) >= 15 and _to_float(rule.get("roi")) >= 0.10 and _to_float(rule.get("estimated_pnl_usdc")) >= 100.0:
+        return "high"
+    return "medium"
+
+
+def _profile_rule_configs_from_rules(rules: list[dict[str, Any]]) -> dict[str, Any]:
+    profiles: dict[str, dict[str, Any]] = {}
+    for rule in rules:
+        handle = str(rule.get("handle") or "unknown")
+        profile = profiles.setdefault(
+            handle,
+            {
+                "handle": handle,
+                "wallets": [],
+                "allow_rules": [],
+                "avoid_rules": [],
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        )
+        profile["wallets"] = sorted(set(profile["wallets"]) | set(rule.get("wallets") or []))
+        compact = {key: rule[key] for key in ("slice_type", "weather_market_type", "effective_position", "trades", "winrate", "estimated_pnl_usdc", "roi", "confidence") if key in rule}
+        if rule.get("city"):
+            compact["city"] = rule["city"]
+        compact["paper_only"] = True
+        compact["live_order_allowed"] = False
+        if rule.get("action") == "paper_candidate_allow":
+            profile["allow_rules"].append(compact)
+        elif rule.get("action") == "avoid_or_invert_filter":
+            profile["avoid_rules"].append(compact)
+    return profiles
+
+
+def _historical_profile_rule_candidates_markdown(result: dict[str, Any]) -> str:
+    summary = result.get("summary", {})
+    lines = [
+        "# Historical profile rule candidates",
+        "",
+        "Paper-only profile gates from resolved account trade slices.",
+        "",
+        f"- Resolved trades: {summary.get('resolved_trades', 0)} / {summary.get('input_trades', 0)}",
+        f"- Allow rules: {summary.get('allow_rules', 0)}",
+        f"- Avoid / invert filters: {summary.get('avoid_rules', 0)}",
+        "",
+        "| Action | Handle | Slice | City | Type | Side | Trades | Winrate | PnL | ROI | Confidence |",
+        "|---|---|---|---|---|---:|---:|---:|---:|---:|---|",
+    ]
+    for rule in result.get("rules", []):
+        lines.append(
+            f"| {rule.get('action')} | {rule.get('handle')} | {rule.get('slice_type')} | {rule.get('city', '')} | "
+            f"{rule.get('weather_market_type')} | {rule.get('effective_position')} | {rule.get('trades')} | "
+            f"{rule.get('winrate'):.2f} | {rule.get('estimated_pnl_usdc'):.2f} | {rule.get('roi'):.3f} | {rule.get('confidence')} |"
+        )
+    lines.append("")
+    lines.append("Safety: paper_only=true, live_order_allowed=false. These gates do not authorize live orders.")
+    return "\n".join(lines) + "\n"
 
 def _extract_market_metadata_rows(payload: dict[str, Any] | list[Any]) -> list[dict[str, Any]]:
     if isinstance(payload, list):
@@ -1088,6 +1320,42 @@ def _trade_result_and_pnl(trade: dict[str, Any], effective_position: str, resolu
         size = _to_float(trade.get("size") or trade.get("account_trade_size"))
         return "loss", round(notional - size, 6)
     return "loss", -notional
+
+
+def _historical_profile_rule_for_row(row: dict[str, Any], rules: list[dict[str, Any]]) -> dict[str, Any]:
+    handle = str(row.get("handle") or "").strip().lower()
+    wallet = str(row.get("wallet") or "").strip().lower()
+    city = str(row.get("city") or "").strip().lower()
+    market_type = str(row.get("weather_market_type") or "").strip().lower()
+    position = str(row.get("effective_position") or _effective_trade_position(row) or "Yes").strip().title()
+    candidates: list[tuple[int, dict[str, Any]]] = []
+    for rule in rules:
+        if rule.get("action") not in {"paper_candidate_allow", "avoid_or_invert_filter"}:
+            continue
+        rule_handle = str(rule.get("handle") or "").strip().lower()
+        rule_wallets = {str(value or "").strip().lower() for value in rule.get("wallets", []) if value}
+        if rule_handle and rule_handle != handle and wallet not in rule_wallets:
+            continue
+        if str(rule.get("weather_market_type") or "").strip().lower() != market_type:
+            continue
+        if str(rule.get("effective_position") or "").strip().title() != position:
+            continue
+        score = 1
+        if rule.get("slice_type") == "handle_city_weather_type_position":
+            if str(rule.get("city") or "").strip().lower() != city:
+                continue
+            score = 2
+        candidates.append((score, rule))
+    candidates.sort(key=lambda item: (item[0], item[1].get("confidence") == "high", _to_float(item[1].get("trades"))), reverse=True)
+    return dict(candidates[0][1]) if candidates else {}
+
+
+def _compact_historical_profile_rule(rule: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: rule[key]
+        for key in ("action", "handle", "slice_type", "city", "weather_market_type", "effective_position", "trades", "winrate", "estimated_pnl_usdc", "roi", "confidence")
+        if key in rule
+    }
 
 
 def _profile_config_for_row(row: dict[str, Any], profile_configs: dict[str, Any]) -> dict[str, Any]:
