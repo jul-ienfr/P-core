@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,7 @@ def build_winner_pattern_operator_report(
     candidate_summary = paper_candidates.get("summary", {}) if isinstance(paper_candidates.get("summary"), dict) else {}
     research_only_matches = int(candidate_summary.get("research_only_matches", 0)) if isinstance(candidate_summary, dict) else 0
     top_blockers = _top_promotion_blockers(all_patterns)
+    blocker_gaps = _promotion_blocker_gaps(all_patterns)
     closest_research = _closest_research_only_patterns(
         winner_patterns.get("research_only_patterns", []) if isinstance(winner_patterns.get("research_only_patterns"), list) else []
     )
@@ -57,6 +59,7 @@ def build_winner_pattern_operator_report(
             "promotion_blocked_patterns": promotion_blocked,
             "promotion_gate_version": (winner_patterns.get("summary", {}) if isinstance(winner_patterns.get("summary"), dict) else {}).get("promotion_gate_version"),
             "top_promotion_blockers": top_blockers,
+            "promotion_blocker_gaps": blocker_gaps,
             "closest_research_only_patterns": closest_research,
             "resolved_pct": coverage_summary.get("resolved_pct") if isinstance(coverage_summary, dict) else None,
             "capturability_gaps": missing_books,
@@ -75,6 +78,109 @@ def _top_promotion_blockers(patterns: list[dict[str, Any]]) -> list[dict[str, An
         {"blocker": blocker, "patterns": count}
         for blocker, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:10]
     ]
+
+
+def _as_float(value: Any) -> float | None:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_int(value: Any) -> int | None:
+    number = _as_float(value)
+    return int(number) if number is not None else None
+
+
+def _count_gap(pattern_id: Any, blocker: str, current: int | None, required: int) -> dict[str, Any] | None:
+    if current is None:
+        return None
+    return {
+        "pattern_id": pattern_id,
+        "blocker": blocker,
+        "current": current,
+        "required": required,
+        "missing": max(0, required - current),
+    }
+
+
+def _pct_gap(pattern_id: Any, blocker: str, pct_value: Any, denominator: int | None, required_pct: float) -> dict[str, Any] | None:
+    pct = _as_float(pct_value)
+    if pct is None or denominator is None or denominator <= 0:
+        return None
+    current = min(denominator, max(0, int(math.floor((pct / 100.0) * denominator + 1e-9))))
+    required = min(denominator, int(math.ceil((required_pct / 100.0) * denominator)))
+    return {
+        "pattern_id": pattern_id,
+        "blocker": blocker,
+        "current": f"{current}/{denominator}",
+        "required": f"{required}/{denominator}",
+        "missing": max(0, required - current),
+    }
+
+
+def _ratio_gap(pattern_id: Any, blocker: str, ratio_value: Any, denominator: int | None, required_ratio: float) -> dict[str, Any] | None:
+    ratio = _as_float(ratio_value)
+    if ratio is None or denominator is None or denominator <= 0:
+        return None
+    current = min(denominator, max(0, int(math.floor(ratio * denominator + 1e-9))))
+    required = min(denominator, int(math.ceil(required_ratio * denominator)))
+    return {
+        "pattern_id": pattern_id,
+        "blocker": blocker,
+        "current": f"{current}/{denominator}",
+        "required": f"{required}/{denominator}",
+        "missing": max(0, required - current),
+    }
+
+
+def _promotion_blocker_gap(pattern: dict[str, Any], blocker: str) -> dict[str, Any] | None:
+    metrics = pattern.get("promotion_metrics") if isinstance(pattern.get("promotion_metrics"), dict) else {}
+    pattern_id = pattern.get("pattern_id")
+    resolved = _as_int(metrics.get("resolved_trades", pattern.get("resolved_trades")))
+    if blocker == "insufficient_resolved_sample":
+        return _count_gap(pattern_id, blocker, resolved, 20)
+    if blocker == "insufficient_capturable_resolved_sample":
+        current = _as_int(metrics.get("capturable_resolved_trades"))
+        return _count_gap(pattern_id, blocker, current, 16) or _ratio_gap(pattern_id, blocker, metrics.get("capturable_ratio"), resolved, 0.80)
+    if blocker == "insufficient_independent_wallets":
+        return _count_gap(pattern_id, blocker, _as_int(metrics.get("unique_wallets")), 4)
+    if blocker == "insufficient_positive_wallets":
+        return _count_gap(pattern_id, blocker, _as_int(metrics.get("positive_wallets")), 3)
+    if blocker == "insufficient_out_of_sample_sample":
+        return _count_gap(pattern_id, blocker, _as_int(metrics.get("oos_resolved_trades")), 8)
+    if blocker == "insufficient_oos_capturable_sample":
+        return _count_gap(pattern_id, blocker, _as_int(metrics.get("oos_capturable_trades")), 6)
+    if blocker == "insufficient_historical_orderbook_coverage":
+        return _ratio_gap(pattern_id, blocker, metrics.get("historical_orderbook_coverage_ratio"), resolved, 0.80)
+    if blocker == "insufficient_historical_capturable_ratio":
+        return _ratio_gap(pattern_id, blocker, metrics.get("historical_capturable_ratio"), resolved, 0.70)
+    if blocker == "missing_weather_context":
+        return _pct_gap(pattern_id, blocker, metrics.get("weather_context_coverage_pct"), resolved, 100.0)
+    if blocker == "incomplete_forecast_context":
+        return _pct_gap(pattern_id, blocker, metrics.get("forecast_complete_pct"), resolved, 95.0)
+    if blocker == "stale_forecast":
+        return _pct_gap(pattern_id, blocker, metrics.get("forecast_fresh_pct"), resolved, 90.0)
+    if blocker == "unverified_resolution":
+        return _pct_gap(pattern_id, blocker, metrics.get("resolution_verified_pct"), resolved, 95.0)
+    return None
+
+
+def _promotion_blocker_gaps(patterns: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    gaps: list[dict[str, Any]] = []
+    for pattern in patterns:
+        blockers = pattern.get("promotion_blockers") if isinstance(pattern.get("promotion_blockers"), list) else []
+        for blocker in blockers:
+            gap = _promotion_blocker_gap(pattern, str(blocker))
+            if gap is not None:
+                gaps.append(gap)
+    return gaps[:25]
+
+
+def _format_blocker_gap(gap: dict[str, Any]) -> str:
+    return f"{gap['pattern_id']} / {gap['blocker']}: {gap['current']}, need {gap['required']} (+{gap['missing']})"
 
 
 def _readiness_score(pattern: dict[str, Any]) -> float:
@@ -146,6 +252,7 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
         if isinstance(row, dict) and row.get("promotion_eligible") is False and row.get("promotion_blockers")
     ]
     top_blockers = _top_promotion_blockers(blocked_patterns)
+    blocker_gaps = _promotion_blocker_gaps(blocked_patterns)
     closest_research = _closest_research_only_patterns(research)
     lines.extend(["", "## Capturability gaps", ""])
     lines.append(f"- Historical/current orderbook gaps: {orderbook.get('missing_orderbook_context', orderbook.get('missing_current_orderbook', 'unknown'))}")
@@ -161,6 +268,8 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
         lines.append("- none")
     lines.extend(["", "### Top promotion blockers", ""])
     lines.extend([f"- {row['blocker']}: {row['patterns']}" for row in top_blockers] or ["- none"])
+    lines.extend(["", "### Promotion blocker gaps", ""])
+    lines.extend([f"- {_format_blocker_gap(row)}" for row in blocker_gaps] or ["- none"])
     lines.extend(["", "### Closest research-only patterns", ""])
     for row in closest_research[:10]:
         blockers = row.get("promotion_blockers") if isinstance(row.get("promotion_blockers"), list) else []

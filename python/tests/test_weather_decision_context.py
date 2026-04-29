@@ -80,6 +80,7 @@ def _resolution_payload() -> dict[str, object]:
                 "observation_timestamp": "2026-05-05T06:00:00Z",
                 "observation_value": 21.7,
                 "resolution_value": 21.7,
+                "resolution_timestamp": "2026-05-05T07:30:00Z",
                 "official_source_available": True,
             }
         ]
@@ -97,7 +98,9 @@ def test_forecast_at_time_separates_decision_features_from_resolution_observatio
     assert row["forecast_timestamp"] == "2026-05-04T11:00:00Z"
     assert row["forecast_age_minutes"] == 95
     assert row["observation_value"] == 21.7
+    assert row["observation_timestamp"] == "2026-05-05T06:00:00Z"
     assert row["resolution_value"] == 21.7
+    assert row["time_to_resolution_minutes"] == 1135
     assert row["decision_context_leakage_allowed"] is False
     assert row["resolution_source"] == "official_station_history"
     assert row["station_id"] == "LFPG"
@@ -231,6 +234,38 @@ def test_live_market_question_fallback_matches_sparse_city_forecast() -> None:
         assert row["decision_context_leakage_allowed"] is False
         assert row["paper_only"] is True
         assert row["live_order_allowed"] is False
+
+
+def test_sparse_title_backfills_threshold_distance_and_forecast_timestamp() -> None:
+    from weather_pm.weather_decision_context import enrich_decision_weather_context
+
+    decisions = {
+        "examples": [
+            {
+                "market_id": "2082355",
+                "title": "Will the highest temperature in Toronto be 20°F or higher on April 30?",
+                "timestamp": "1777285464",
+                "market_type": "threshold",
+                "side": "BUY",
+            }
+        ]
+    }
+    forecasts = {"toronto": {"forecast_high_c": 21.5, "freshness_minutes": 30, "source": "fixture_city_snapshot"}}
+
+    payload = enrich_decision_weather_context(decisions, forecasts)
+
+    row = payload["examples"][0]
+    assert row["weather_context_available"] is True
+    assert row["city"] == "Toronto"
+    assert row["date"] == "April 30"
+    assert row["threshold"] == 20.0
+    assert row["forecast_value_at_decision"] == 21.5
+    assert row["forecast_age_minutes"] == 30
+    assert row["forecast_timestamp"] == "2026-04-27T09:54:24Z"
+    assert row["distance_to_threshold"] == 1.5
+    assert row["decision_context_leakage_allowed"] is False
+    assert row["paper_only"] is True
+    assert row["live_order_allowed"] is False
 
 
 def test_cli_enrich_decision_weather_context_writes_artifact_and_compact_summary(tmp_path: Path) -> None:

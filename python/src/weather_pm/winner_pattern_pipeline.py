@@ -170,6 +170,8 @@ def _merge_weather_context(decision_dataset: dict[str, Any], weather_context: di
             "observation_value",
             "observation_timestamp",
             "resolution_value",
+            "resolution_timestamp",
+            "time_to_resolution_minutes",
         ):
             if key in source:
                 target[key] = source[key]

@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from weather_pm.market_parser import parse_market_question
+
 
 def enrich_decision_weather_context(
     decision_dataset_payload: dict[str, Any],
@@ -54,7 +56,7 @@ def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolution
         return {
             **base,
             **_empty_context("no_forecast_at_or_before_decision"),
-            **_resolution_fields(resolution),
+            **_resolution_fields(resolution, decision_ts),
         }
     forecast_ts = _parse_timestamp(_forecast_timestamp(forecast))
     forecast_value = _forecast_value(forecast)
@@ -62,13 +64,17 @@ def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolution
     threshold = _to_float(row.get("threshold") if row.get("threshold") is not None else forecast.get("threshold"))
     bin_center = _to_float(row.get("bin_center") if row.get("bin_center") is not None else forecast.get("bin_center"))
     official_available = bool(forecast.get("official_source_available") or (resolution or {}).get("official_source_available"))
+    derived_fields = _derived_market_fields(row, threshold, bin_center)
+    threshold = _to_float(derived_fields.get("threshold"))
+    bin_center = _to_float(derived_fields.get("bin_center"))
     return {
         **base,
+        **derived_fields,
         "decision_context_leakage_allowed": False,
         "resolution_source": (resolution or {}).get("resolution_source") or forecast.get("resolution_source"),
         "station_id": (resolution or {}).get("station_id") or forecast.get("station_id") or forecast.get("station_code"),
         "station_name": (resolution or {}).get("station_name") or forecast.get("station_name"),
-        "forecast_timestamp": _format_timestamp(forecast_ts) or _forecast_timestamp(forecast),
+        "forecast_timestamp": _decision_forecast_timestamp(forecast, decision_ts, forecast_ts, forecast_age),
         "forecast_value": forecast_value,
         "forecast_value_at_decision": forecast_value,
         "forecast_age_minutes": forecast_age,
@@ -80,7 +86,7 @@ def _enrich_row(row: dict[str, Any], forecasts: list[dict[str, Any]], resolution
         "missing_reason": None,
         "paper_only": True,
         "live_order_allowed": False,
-        **_resolution_fields(resolution),
+        **_resolution_fields(resolution, decision_ts),
     }
 
 
@@ -104,13 +110,24 @@ def _empty_context(reason: str) -> dict[str, Any]:
     }
 
 
-def _resolution_fields(resolution: dict[str, Any] | None) -> dict[str, Any]:
+def _resolution_fields(resolution: dict[str, Any] | None, decision_ts: datetime | None = None) -> dict[str, Any]:
     resolution = resolution or {}
+    resolution_timestamp = _resolution_timestamp(resolution)
+    resolution_ts = _parse_timestamp(resolution_timestamp)
     return {
         "observation_value": _to_float(resolution.get("observation_value") if resolution.get("observation_value") is not None else resolution.get("observed_value")),
         "observation_timestamp": resolution.get("observation_timestamp") or resolution.get("observed_at") or resolution.get("timestamp"),
         "resolution_value": _to_float(resolution.get("resolution_value") if resolution.get("resolution_value") is not None else resolution.get("value")),
+        "resolution_timestamp": _format_timestamp(resolution_ts) or resolution_timestamp,
+        "time_to_resolution_minutes": _minutes_between(decision_ts, resolution_ts),
     }
+
+
+def _resolution_timestamp(resolution: dict[str, Any]) -> Any:
+    for key in ("resolution_timestamp", "resolved_at", "resolvedAt", "updated_at", "updatedAt", "closed_at", "closedAt", "closed_time", "endDate", "end_date"):
+        if resolution.get(key):
+            return resolution.get(key)
+    return None
 
 
 def _select_forecast(row: dict[str, Any], forecasts: list[dict[str, Any]], decision_ts: datetime | None) -> dict[str, Any] | None:
@@ -177,15 +194,45 @@ def _with_question_surface(row: dict[str, Any]) -> dict[str, Any]:
     if not question:
         return dict(row)
     out = dict(row)
+    parsed = _parse_market_structure(question)
     if not out.get("city"):
-        city = _city_from_question(question)
+        city = getattr(parsed, "city", None) or _city_from_question(question)
         if city:
             out["city"] = city
     if not out.get("date"):
-        date = _date_from_question(question)
+        date = getattr(parsed, "date_local", None) or _date_from_question(question)
         if date:
             out["date"] = date
     return out
+
+
+def _derived_market_fields(row: dict[str, Any], threshold: float | None, bin_center: float | None) -> dict[str, Any]:
+    derived: dict[str, Any] = {}
+    if threshold is not None:
+        derived["threshold"] = threshold
+    if bin_center is not None:
+        derived["bin_center"] = bin_center
+    question = str(row.get("question") or row.get("title") or "")
+    parsed = _parse_market_structure(question) if question else None
+    if parsed is None:
+        return derived
+    if "threshold" not in derived and getattr(parsed, "target_value", None) is not None:
+        derived["threshold"] = float(parsed.target_value)
+    if "bin_center" not in derived:
+        range_low = getattr(parsed, "range_low", None)
+        range_high = getattr(parsed, "range_high", None)
+        if range_low is not None and range_high is not None:
+            derived["bin_center"] = round((float(range_low) + float(range_high)) / 2, 4)
+        elif getattr(parsed, "target_value", None) is not None and not getattr(parsed, "is_threshold", False):
+            derived["bin_center"] = float(parsed.target_value)
+    return derived
+
+
+def _parse_market_structure(question: str) -> Any | None:
+    try:
+        return parse_market_question(question)
+    except ValueError:
+        return None
 
 
 def _city_from_question(question: str) -> str | None:
@@ -216,6 +263,11 @@ def _parse_timestamp(raw: Any) -> datetime | None:
     text = str(raw).strip()
     if not text:
         return None
+    if text.isdigit():
+        try:
+            return datetime.fromtimestamp(int(text), tz=timezone.utc)
+        except (OSError, OverflowError, ValueError):
+            return None
     try:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError:
@@ -229,6 +281,12 @@ def _format_timestamp(value: datetime | None) -> str | None:
     if value is None:
         return None
     return value.isoformat().replace("+00:00", "Z")
+
+
+def _minutes_between(start: datetime | None, end: datetime | None) -> int | None:
+    if start is None or end is None:
+        return None
+    return int((end - start).total_seconds() // 60)
 
 
 def _rows_from_payload(payload: dict[str, Any], preferred_key: str) -> list[dict[str, Any]]:
@@ -280,6 +338,23 @@ def _forecast_value(row: dict[str, Any]) -> float | None:
         value = _to_float(row.get(key))
         if value is not None:
             return value
+    return None
+
+
+def _decision_forecast_timestamp(
+    forecast: dict[str, Any],
+    decision_ts: datetime | None,
+    forecast_ts: datetime | None,
+    forecast_age_minutes: int | None,
+) -> str | None:
+    formatted = _format_timestamp(forecast_ts)
+    if formatted is not None:
+        return formatted
+    raw_timestamp = _forecast_timestamp(forecast)
+    if raw_timestamp is not None:
+        return raw_timestamp
+    if decision_ts is not None and forecast_age_minutes is not None:
+        return _format_timestamp(datetime.fromtimestamp(decision_ts.timestamp() - (forecast_age_minutes * 60), tz=timezone.utc))
     return None
 
 

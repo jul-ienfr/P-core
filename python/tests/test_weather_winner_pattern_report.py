@@ -169,6 +169,74 @@ def test_report_markdown_surfaces_research_only_matches_as_watch_not_probe() -> 
     assert payload["live_order_allowed"] is False
 
 
+def test_report_surfaces_actionable_blocker_gaps_when_metrics_available() -> None:
+    from weather_pm.winner_pattern_report import build_winner_pattern_operator_report
+
+    patterns = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "robust_patterns": [],
+        "research_only_patterns": [
+            {
+                "pattern_id": "threshold|toronto|buy|unclear",
+                "promotion_eligible": False,
+                "promotion_blockers": ["incomplete_forecast_context", "stale_forecast"],
+                "promotion_metrics": {
+                    "resolved_trades": 29,
+                    "forecast_complete_pct": 0.0,
+                    "forecast_fresh_pct": 0.0,
+                },
+            }
+        ],
+        "anti_patterns": [
+            {
+                "pattern_id": "threshold|toronto|sell|unclear",
+                "promotion_eligible": False,
+                "promotion_blockers": [
+                    "insufficient_resolved_sample",
+                    "insufficient_independent_wallets",
+                ],
+                "promotion_metrics": {"resolved_trades": 15, "unique_wallets": 2},
+            }
+        ],
+    }
+
+    payload = build_winner_pattern_operator_report(patterns, _paper_candidates())
+
+    gaps = payload["summary"]["promotion_blocker_gaps"]
+    assert gaps[0] == {
+        "pattern_id": "threshold|toronto|buy|unclear",
+        "blocker": "incomplete_forecast_context",
+        "current": "0/29",
+        "required": "28/29",
+        "missing": 28,
+    }
+    assert {
+        "pattern_id": "threshold|toronto|buy|unclear",
+        "blocker": "stale_forecast",
+        "current": "0/29",
+        "required": "27/29",
+        "missing": 27,
+    } in gaps
+    assert {
+        "pattern_id": "threshold|toronto|sell|unclear",
+        "blocker": "insufficient_resolved_sample",
+        "current": 15,
+        "required": 20,
+        "missing": 5,
+    } in gaps
+    assert {
+        "pattern_id": "threshold|toronto|sell|unclear",
+        "blocker": "insufficient_independent_wallets",
+        "current": 2,
+        "required": 4,
+        "missing": 2,
+    } in gaps
+    assert "Promotion blocker gaps" in payload["markdown"]
+    assert "threshold|toronto|buy|unclear / incomplete_forecast_context: 0/29, need 28/29 (+28)" in payload["markdown"]
+    assert "threshold|toronto|sell|unclear / insufficient_resolved_sample: 15, need 20 (+5)" in payload["markdown"]
+
+
 def test_cli_winner_pattern_report_writes_json_md_and_compact_stdout(tmp_path: Path) -> None:
     patterns_path = tmp_path / "patterns.json"
     candidates_path = tmp_path / "candidates.json"
