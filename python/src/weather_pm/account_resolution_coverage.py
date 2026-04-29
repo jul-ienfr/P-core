@@ -14,6 +14,9 @@ def match_trade_resolution(trade: dict[str, Any], resolutions_payload: dict[str,
     rows = _resolution_rows(resolutions_payload)
     if not isinstance(trade, dict):
         return _unresolved("invalid_trade")
+    embedded = _embedded_trade_resolution(trade)
+    if embedded is not None:
+        return _resolved_result(trade, embedded, "embedded_trade_resolution")
     if not rows:
         return _unresolved("no_resolutions_available")
 
@@ -174,6 +177,17 @@ def _unresolved(reason: str) -> dict[str, Any]:
     }
 
 
+def _embedded_trade_resolution(trade: dict[str, Any]) -> dict[str, Any] | None:
+    resolution = trade.get("resolution")
+    if not isinstance(resolution, dict):
+        return None
+    if resolution.get("available") is False:
+        return None
+    if not _winning_side(resolution):
+        return None
+    return dict(resolution)
+
+
 def _resolution_rows(payload: dict[str, Any] | list[Any]) -> list[dict[str, Any]]:
     if isinstance(payload, list):
         return [row for row in payload if isinstance(row, dict)]
@@ -321,5 +335,5 @@ def _to_float(value: Any) -> float:
 
 
 def _compact_resolution(row: dict[str, Any]) -> dict[str, Any]:
-    keys = ("market_id", "marketId", "condition_id", "conditionId", "token_id", "tokenId", "slug", "event_slug", "winning_side", "resolved_outcome", "source", "status")
+    keys = ("market_id", "marketId", "condition_id", "conditionId", "token_id", "tokenId", "slug", "event_slug", "primary_key", "matched_key", "winning_side", "resolved_outcome", "source", "status")
     return {key: row[key] for key in keys if key in row}

@@ -18,11 +18,24 @@ LIMITATIONS = "\n".join(
 
 def enrich_trade_with_orderbook_context(
     trade: dict[str, Any],
-    snapshots: Iterable[dict[str, Any]],
+    snapshots: Iterable[dict[str, Any]] | dict[str, Any],
     *,
     max_staleness_seconds: int = 3600,
 ) -> dict[str, Any]:
     base = dict(trade)
+    latest = _latest_snapshot_for_trade(trade, snapshots)
+    if latest is not None:
+        features = compute_orderbook_features(latest, trade=trade)
+        return {
+            **base,
+            "paper_only": True,
+            "live_order_allowed": False,
+            "orderbook_context_available": True,
+            "missing_reason": None,
+            "snapshot_timestamp": _snapshot_timestamp(latest) or "latest",
+            "staleness_seconds": 0,
+            **features,
+        }
     nearest = find_nearest_snapshot(trade, snapshots)
     if nearest is None:
         return {**base, **_missing_context("no_snapshot_within_max_staleness")}
@@ -43,12 +56,12 @@ def enrich_trade_with_orderbook_context(
     return {**base, **context}
 
 
-def find_nearest_snapshot(trade: dict[str, Any], snapshots: Iterable[dict[str, Any]]) -> tuple[dict[str, Any], int] | None:
+def find_nearest_snapshot(trade: dict[str, Any], snapshots: Iterable[dict[str, Any]] | dict[str, Any]) -> tuple[dict[str, Any], int] | None:
     trade_ts = _parse_timestamp(trade.get("timestamp") or trade.get("created_at") or trade.get("createdAt"))
     if trade_ts is None:
         return None
     candidates: list[tuple[int, int, dict[str, Any]]] = []
-    for index, snapshot in enumerate(snapshots):
+    for index, snapshot in enumerate(_snapshot_rows(snapshots)):
         if not isinstance(snapshot, dict) or not _snapshot_matches_trade(trade, snapshot):
             continue
         snapshot_ts = _parse_timestamp(_snapshot_timestamp(snapshot))
@@ -72,6 +85,8 @@ def compute_orderbook_features(snapshot: dict[str, Any], *, trade: dict[str, Any
 
     near_touch_bps = _to_float(snapshot.get("near_touch_bps")) or 100.0
     depth_near_touch = _depth_near_touch(bids, asks, best_bid, best_ask, near_touch_bps=near_touch_bps)
+    if depth_near_touch is None:
+        depth_near_touch = _to_float(snapshot.get("depth_usd") or snapshot.get("depth") or snapshot.get("liquidity"))
     side = str((trade or {}).get("side") or "BUY").upper()
     trade_price = _to_float((trade or {}).get("price"))
     available = _available_at_or_better(side, trade_price, bids, asks)
@@ -115,7 +130,7 @@ def build_orderbook_context_report(
     max_staleness_seconds: int = 3600,
 ) -> dict[str, Any]:
     trades = _rows_from_payload(trades_payload, "trades")
-    snapshots = _rows_from_payload(snapshots_payload, "snapshots")
+    snapshots = _snapshots_payload_for_matching(snapshots_payload)
     enriched: list[dict[str, Any]] = []
     for trade in trades:
         row = enrich_trade_with_orderbook_context(trade, snapshots, max_staleness_seconds=max_staleness_seconds)
@@ -166,6 +181,38 @@ def write_orderbook_context_report(
     }
 
 
+def _latest_snapshot_for_trade(trade: dict[str, Any], snapshots: Iterable[dict[str, Any]] | dict[str, Any]) -> dict[str, Any] | None:
+    if not isinstance(snapshots, dict):
+        return None
+    wanted = _trade_snapshot_keys(trade)
+    for key in wanted:
+        value = snapshots.get(key)
+        if isinstance(value, dict):
+            row = dict(value)
+            row.setdefault("market_id", key)
+            return row
+    return None
+
+
+def _trade_snapshot_keys(trade: dict[str, Any]) -> list[str]:
+    keys: list[str] = []
+    for key in ("market_id", "id", "condition_id", "token_id", "asset", "slug"):
+        value = trade.get(key)
+        if value is not None:
+            text = str(value).strip()
+            if text and text not in keys:
+                keys.append(text)
+    resolution = trade.get("resolution")
+    if isinstance(resolution, dict):
+        for key in ("primary_key", "market_id", "marketId", "condition_id", "conditionId", "token_id", "tokenId", "matched_key", "slug"):
+            value = resolution.get(key)
+            if value is not None:
+                text = str(value).strip()
+                if text and text not in keys:
+                    keys.append(text)
+    return keys
+
+
 def _missing_context(reason: str) -> dict[str, Any]:
     keys = (
         "snapshot_timestamp",
@@ -208,6 +255,18 @@ def _snapshot_timestamp(snapshot: dict[str, Any]) -> Any:
     return None
 
 
+def _snapshots_payload_for_matching(payload: dict[str, Any]) -> list[dict[str, Any]] | dict[str, Any]:
+    for key in ("snapshots", "orderbook_snapshots", "books", "orderbooks"):
+        rows = payload.get(key)
+        if isinstance(rows, dict):
+            return rows
+        if isinstance(rows, list):
+            return [dict(row) for row in rows if isinstance(row, dict)]
+    if payload and all(isinstance(value, dict) for value in payload.values()):
+        return payload
+    return []
+
+
 def _rows_from_payload(payload: dict[str, Any], preferred_key: str) -> list[dict[str, Any]]:
     rows = payload.get(preferred_key)
     if rows is None and preferred_key == "snapshots":
@@ -216,7 +275,21 @@ def _rows_from_payload(payload: dict[str, Any], preferred_key: str) -> list[dict
         rows = payload.get("data")
     if isinstance(rows, list):
         return [dict(row) for row in rows if isinstance(row, dict)]
+    if isinstance(rows, dict) and preferred_key == "snapshots":
+        return _snapshot_rows(rows)
     return []
+
+
+def _snapshot_rows(snapshots: Iterable[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
+    if isinstance(snapshots, dict):
+        rows: list[dict[str, Any]] = []
+        for key, value in snapshots.items():
+            if isinstance(value, dict):
+                row = dict(value)
+                row.setdefault("market_id", key)
+                rows.append(row)
+        return rows
+    return [dict(row) for row in snapshots if isinstance(row, dict)]
 
 
 def _levels(snapshot: dict[str, Any], key: str) -> list[tuple[float, float]]:

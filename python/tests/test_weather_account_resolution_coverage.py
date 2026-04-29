@@ -100,6 +100,41 @@ def test_event_slug_and_outcome_side_match_only_when_unique() -> None:
     assert result["outcome"] == "win"
 
 
+def test_embedded_trade_resolution_beats_ambiguous_slug_backfill_rows() -> None:
+    from weather_pm.account_resolution_coverage import match_trade_resolution
+
+    trade = {
+        "slug": "highest-temperature-in-paris-on-april-15-2026-18c",
+        "outcome": "No",
+        "side": "SELL",
+        "price": 0.999,
+        "size": 510,
+        "notional_usd": 509.49,
+        "resolution": {
+            "available": True,
+            "primary_key": "1965242",
+            "matched_key": "highest-temperature-in-paris-on-april-15-2026-18c",
+            "resolved_outcome": "No",
+            "source": "gamma_closed_outcomePrices_proxy",
+            "status": "closed_price_resolved_proxy",
+        },
+    }
+    resolutions_payload = {
+        "resolutions": {
+            "a": {"slug": "highest-temperature-in-paris-on-april-15-2026-18c", "primary_key": "1965242", "resolved_outcome": "No"},
+            "b": {"slug": "highest-temperature-in-paris-on-april-15-2026-18c", "primary_key": "1965243", "resolved_outcome": "Yes"},
+        }
+    }
+
+    result = match_trade_resolution(trade, resolutions_payload)
+
+    assert result["resolved"] is True
+    assert result["match_key"] == "embedded_trade_resolution"
+    assert result["winning_side"] == "No"
+    assert result["outcome"] == "loss"
+    assert result["resolution"]["primary_key"] == "1965242"
+
+
 def test_cli_account_resolution_coverage_writes_artifact_and_prints_compact_summary(tmp_path: Path) -> None:
     trades_path = tmp_path / "trades.json"
     resolutions_path = tmp_path / "resolutions.json"

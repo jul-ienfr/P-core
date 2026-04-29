@@ -77,6 +77,35 @@ def test_stale_snapshot_marks_missing_reason_explicitly() -> None:
     assert enriched["live_order_allowed"] is False
 
 
+def test_latest_snapshot_mapping_by_embedded_resolution_primary_key() -> None:
+    from weather_pm.orderbook_context import enrich_trade_with_orderbook_context
+
+    trade = {
+        "slug": "highest-temperature-in-paris-on-april-15-2026-18c",
+        "timestamp": "1776282196",
+        "side": "SELL",
+        "price": 0.999,
+        "size": 510,
+        "resolution": {"primary_key": "1965242", "matched_key": "highest-temperature-in-paris-on-april-15-2026-18c"},
+    }
+    snapshots = {
+        "1965242": {"best_bid": 0.001, "best_ask": 0.0175, "depth_usd": 1000},
+        "1965243": {"best_bid": 0.4, "best_ask": 0.5, "depth_usd": 10},
+    }
+
+    enriched = enrich_trade_with_orderbook_context(trade, snapshots, max_staleness_seconds=3600)
+
+    assert enriched["orderbook_context_available"] is True
+    assert enriched["missing_reason"] is None
+    assert enriched["snapshot_timestamp"] == "latest"
+    assert enriched["staleness_seconds"] == 0
+    assert enriched["best_bid"] == 0.001
+    assert enriched["best_ask"] == 0.0175
+    assert enriched["depth_near_touch"] == 1000.0
+    assert enriched["paper_only"] is True
+    assert enriched["live_order_allowed"] is False
+
+
 def test_cli_enrich_trades_orderbook_context_writes_artifact_and_compact_summary(tmp_path: Path) -> None:
     trades_path = tmp_path / "trades.json"
     snapshots_path = tmp_path / "snapshots.json"
