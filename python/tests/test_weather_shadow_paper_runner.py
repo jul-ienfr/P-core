@@ -1334,6 +1334,11 @@ def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_sum
     assert "jey_threshold" in markdown
     assert "promoted_profile_opportunity_watch" in markdown
     assert "profile_min_edge_not_met" in markdown
+    assert "Suggested paper replay command" in markdown
+    assert "weather_pm.cli shadow-paper-runner" in markdown
+    assert f"--promoted-profiles-json {output_json}" in markdown
+    assert "--run-id <next-promoted-opportunity-run>" in markdown
+    assert "--output-json <next-paper-orders.json>" in markdown
 
 
 def test_cli_shadow_profile_evaluator_writes_json_and_markdown(tmp_path: Path) -> None:

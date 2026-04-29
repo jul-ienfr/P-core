@@ -713,6 +713,18 @@ def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
             lines.append(
                 f"| {profile['profile_id']} | {profile.get('source_recommendation', '')} | {skipped_counts} | {profile['recommendation']} |"
             )
+        output_json = str(result.get("artifacts", {}).get("output_json") or "<shadow-profile-evaluation.json>")
+        lines.extend(
+            [
+                "",
+                "Suggested paper replay command:",
+                "",
+                "```bash",
+                "python -m weather_pm.cli shadow-paper-runner --dataset-json <trade-no-trade-dataset.json> --orderbooks-json <orderbooks.json> --forecasts-json <forecasts.json> "
+                f"--promoted-profiles-json {output_json} --run-id <next-promoted-opportunity-run> --output-json <next-paper-orders.json>",
+                "```",
+            ]
+        )
     if promoted:
         lines.extend(
             [
