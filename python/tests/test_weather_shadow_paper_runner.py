@@ -217,6 +217,27 @@ def test_build_shadow_profile_paper_orders_skips_when_profile_min_edge_not_met()
     assert result["summary"] == {"paper_orders": 0, "skipped": 2, "paper_only": True, "live_order_allowed": False}
 
 
+def test_build_shadow_profile_paper_orders_preserves_handle_signal_for_profile_mapping() -> None:
+    dataset = _dataset()
+    dataset["examples"][0]["wallet"] = ""
+    dataset["examples"][0]["handle"] = "jey"
+    enriched = enrich_shadow_dataset_features(
+        dataset,
+        orderbooks={"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}},
+        forecasts={"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}},
+    )
+
+    result = build_shadow_profile_paper_orders(
+        enriched,
+        run_id="shadow-smoke",
+        max_order_usdc=5.0,
+        profile_configs={"jey": {"profile_id": "jey_threshold", "max_order_usdc": 3.0}},
+    )
+
+    assert result["orders"][0]["profile_id"] == "jey_threshold"
+    assert result["orders"][0]["handle_signal"] == "jey"
+
+
 def test_build_shadow_profile_paper_orders_uses_forecast_context_probability_for_replay_edge() -> None:
     dataset = _dataset()
     dataset["examples"][0]["model_probability"] = 0.80

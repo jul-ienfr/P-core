@@ -71,6 +71,7 @@ def build_shadow_profile_paper_orders(
             "run_id": run_id,
             "source": "shadow_profile_replay",
             "wallet_signal": row.get("wallet"),
+            "handle_signal": row.get("handle"),
             "market_id": row.get("market_id"),
             "question": row.get("question"),
             "side": "BUY",
