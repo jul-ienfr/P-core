@@ -1662,6 +1662,8 @@ def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_sum
             "artifacts/current_forecasts.json",
             "--handoff-stress-overlay-json",
             "artifacts/candidate_stress_overlay.json",
+            "--handoff-historical-profile-rules-json",
+            "artifacts/historical_profile_rules.json",
             "--handoff-run-id",
             "promoted-opportunity-20260429",
             "--handoff-paper-orders-json",
@@ -1694,6 +1696,9 @@ def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_sum
     assert "--orderbooks-json artifacts/current_orderbooks.json" in markdown
     assert "--forecasts-json artifacts/current_forecasts.json" in markdown
     assert "--stress-overlay-json artifacts/candidate_stress_overlay.json" in markdown
+    assert "--historical-profile-rules-json artifacts/historical_profile_rules.json" in markdown
+    assert "weather_pm.cli historical-profile-rules" in markdown
+    assert "--output-json artifacts/historical_profile_rules.json" in markdown
     assert "--output-json artifacts/stress_overlay_paper_orders.json" in markdown
     assert "Suggested exposure preview command" in markdown
     assert "weather_pm.cli shadow-profile-exposure-preview" in markdown

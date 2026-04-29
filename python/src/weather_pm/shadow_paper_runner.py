@@ -1161,6 +1161,7 @@ def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
         orderbooks_json = str(handoff.get("orderbooks_json") or "<orderbooks.json>")
         forecasts_json = str(handoff.get("forecasts_json") or "<forecasts.json>")
         stress_overlay_json = str(handoff.get("stress_overlay_json") or "<candidate-stress-overlay.json>")
+        historical_profile_rules_json = str(handoff.get("historical_profile_rules_json") or "<historical-profile-rules.json>")
         run_id = str(handoff.get("run_id") or "<next-promoted-opportunity-run>")
         paper_orders_json = str(handoff.get("paper_orders_json") or "<stress-overlay-paper-orders.json>")
         exposure_json = str(handoff.get("exposure_json") or "<paper-exposure-preview.json>")
@@ -1168,11 +1169,17 @@ def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
         lines.extend(
             [
                 "",
+                "Suggested historical profile rule command:",
+                "",
+                "```bash",
+                f"python -m weather_pm.cli historical-profile-rules --trade-resolution-json <resolved-account-trades.json> --output-json {historical_profile_rules_json}",
+                "```",
+                "",
                 "Suggested paper replay command:",
                 "",
                 "```bash",
                 f"python -m weather_pm.cli shadow-paper-runner --dataset-json {dataset_json} --orderbooks-json {orderbooks_json} --forecasts-json {forecasts_json} "
-                f"--promoted-profiles-json {output_json} --stress-overlay-json {stress_overlay_json} --run-id {run_id} --output-json {paper_orders_json}",
+                f"--promoted-profiles-json {output_json} --historical-profile-rules-json {historical_profile_rules_json} --stress-overlay-json {stress_overlay_json} --run-id {run_id} --output-json {paper_orders_json}",
                 "```",
                 "",
                 "Suggested exposure preview command:",

@@ -242,6 +242,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     shadow_profile_evaluator.add_argument("--handoff-forecasts-json", required=False, help="Forecasts path to show in promoted opportunity replay handoff")
     shadow_profile_evaluator.add_argument("--handoff-stress-overlay-json", required=False, help="Stress overlay path to show in promoted opportunity replay handoff")
+    shadow_profile_evaluator.add_argument("--handoff-historical-profile-rules-json", required=False, help="Historical profile rules path to show in promoted opportunity replay handoff")
     shadow_profile_evaluator.add_argument("--handoff-run-id", required=False, help="Run id to show in promoted opportunity replay handoff")
     shadow_profile_evaluator.add_argument("--handoff-paper-orders-json", required=False, help="Paper orders output path to show in replay and exposure handoff")
     shadow_profile_evaluator.add_argument("--handoff-exposure-json", required=False, help="Exposure preview JSON path to show in promoted opportunity handoff")
@@ -791,6 +792,7 @@ def main() -> int:
                         "orderbooks_json": args.handoff_orderbooks_json,
                         "forecasts_json": args.handoff_forecasts_json,
                         "stress_overlay_json": args.handoff_stress_overlay_json,
+                        "historical_profile_rules_json": args.handoff_historical_profile_rules_json,
                         "run_id": args.handoff_run_id,
                         "paper_orders_json": args.handoff_paper_orders_json,
                         "exposure_json": args.handoff_exposure_json,
