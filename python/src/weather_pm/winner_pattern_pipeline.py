@@ -80,7 +80,7 @@ def run_winner_pattern_pipeline(
     resolution_coverage["watchlist_capture_mode"] = build_winner_pattern_watchlist_capture_payload(source="winner_pattern_pipeline")
     resolution_path = _write_json(out_dir / "resolution_coverage.json", resolution_coverage)
 
-    orderbook_context = build_orderbook_context_report(trades_payload, orderbook_payload)
+    orderbook_context = build_orderbook_context_report(resolution_coverage, orderbook_payload)
     orderbook_path = _write_json(out_dir / "orderbook_context.json", orderbook_context)
 
     decision_dataset = build_account_decision_dataset(orderbook_context, markets_payload)

@@ -180,6 +180,97 @@ def test_cli_winner_pattern_pipeline_runs_fixture_only_end_to_end(tmp_path: Path
     assert candidates_payload["summary"]["paper_candidates"] == 1
 
 
+def test_pipeline_uses_resolution_match_primary_key_for_orderbook_context(tmp_path: Path) -> None:
+    from weather_pm.winner_pattern_pipeline import run_winner_pattern_pipeline
+
+    trades_path = tmp_path / "slug_only_trades.json"
+    resolutions_path = tmp_path / "resolutions.json"
+    orderbooks_path = tmp_path / "orderbooks.json"
+    markets_path = tmp_path / "markets.json"
+    forecasts_path = tmp_path / "forecasts.json"
+    output_dir = tmp_path / "run-resolution-bridge"
+
+    _write_json(
+        trades_path,
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "trades": [
+                {
+                    "slug": "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+                    "title": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                    "outcome": "Yes",
+                    "side": "BUY",
+                    "price": 0.35,
+                    "size": 20,
+                    "notional_usd": 7,
+                    "timestamp": "2026-04-29T10:00:00Z",
+                    "city": "Toronto",
+                    "date": "April 30",
+                    "market_type": "threshold",
+                }
+            ],
+        },
+    )
+    _write_json(
+        resolutions_path,
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "resolutions": {
+                "2112614": {
+                    "primary_key": "2112614",
+                    "matched_key": "2112614",
+                    "aliases": [
+                        "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+                        "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                    ],
+                    "question": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                    "resolved_outcome": "Yes",
+                }
+            },
+        },
+    )
+    _write_json(orderbooks_path, {"2112614": {"best_bid": 0.31, "best_ask": 0.37, "depth_usd": 2500}})
+    _write_json(
+        markets_path,
+        {
+            "markets": [
+                {
+                    "market_id": "2112614",
+                    "question": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+                    "observable": True,
+                    "active_timestamp": "2026-04-29T10:00:00Z",
+                    "city": "Toronto",
+                    "date": "April 30",
+                    "market_type": "threshold",
+                    "side": "BUY",
+                    "price": 0.35,
+                }
+            ]
+        },
+    )
+    _write_json(forecasts_path, {"toronto": {"forecast_high_c": 17, "freshness_minutes": 30}})
+
+    payload = run_winner_pattern_pipeline(
+        trades_json=trades_path,
+        resolutions_json=resolutions_path,
+        orderbook_snapshots_json=orderbooks_path,
+        market_snapshots_json=markets_path,
+        forecast_snapshots_json=forecasts_path,
+        output_dir=output_dir,
+    )
+
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+    assert payload["artifact_counts"]["resolution_coverage"] == 1
+    assert payload["artifact_counts"]["orderbook_context"] == 1
+    orderbook_payload = json.loads((output_dir / "orderbook_context.json").read_text(encoding="utf-8"))
+    assert orderbook_payload["trades"][0]["orderbook_context_available"] is True
+    assert orderbook_payload["trades"][0]["snapshot_timestamp"] == "latest"
+    assert orderbook_payload["trades"][0]["live_order_allowed"] is False
+
+
 def test_winner_pattern_pipeline_rejects_allow_network(tmp_path: Path) -> None:
     paths = _fixtures(tmp_path)
     env = dict(os.environ)
