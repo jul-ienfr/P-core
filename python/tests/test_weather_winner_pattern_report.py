@@ -58,12 +58,55 @@ def test_report_markdown_summarizes_required_operator_sections() -> None:
         "Coverage",
         "Robust patterns",
         "Anti-patterns",
+        "Research-only patterns",
         "Capturability gaps",
         "Paper candidates / watch-only",
         "Next data gaps",
     ]:
         assert section in md
     assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+
+
+def test_report_markdown_surfaces_research_only_matches_as_watch_not_probe() -> None:
+    from weather_pm.winner_pattern_report import build_winner_pattern_operator_report
+
+    patterns = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "robust_patterns": [],
+        "anti_patterns": [],
+        "research_only_patterns": [
+            {"pattern_id": "threshold|seoul|buy|unclear", "reason": "concentrated_or_small_sample", "examples": 8}
+        ],
+        "operator_next_actions": ["Expand sample size and reduce wallet concentration before promotion."],
+    }
+    candidates = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "paper_candidates": [],
+        "watch_only": [
+            {
+                "market_id": "2112238",
+                "decision": "watch_only",
+                "reason": "research_only_pattern_match",
+                "matched_pattern_id": "threshold|seoul|buy|unclear",
+                "matched_pattern_status": "research_only",
+                "paper_probe_authorized": False,
+            }
+        ],
+        "summary": {"research_only_matches": 1},
+    }
+
+    payload = build_winner_pattern_operator_report(patterns, candidates)
+
+    md = payload["markdown"]
+    assert "Research-only patterns" in md
+    assert "threshold|seoul|buy|unclear: concentrated_or_small_sample" in md
+    assert "Research-only matches: 1" in md
+    assert "2112238: research_only_pattern_match -> threshold|seoul|buy|unclear" in md
+    assert "Paper candidates: 0" in md
+    assert payload["summary"]["research_only_matches"] == 1
     assert payload["live_order_allowed"] is False
 
 

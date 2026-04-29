@@ -58,6 +58,7 @@ def build_winner_pattern_paper_candidates(
 ) -> dict[str, Any]:
     robust = _list(winner_patterns, ("robust_patterns",))
     anti = _list(winner_patterns, ("anti_patterns",))
+    research = _list(winner_patterns, ("research_only_patterns",))
     markets = _list(current_markets, ("markets", "current_markets", "rows"))
     books = _by_market(current_orderbooks, ("orderbooks", "books", "markets", "snapshots"))
     weather = _by_market(current_weather_context, ("contexts", "examples", "markets", "weather_context"))
@@ -65,17 +66,21 @@ def build_winner_pattern_paper_candidates(
     paper_candidates: list[dict[str, Any]] = []
     watch_only: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
+    research_only_matches = 0
 
     for market in markets:
         mid = _market_id(market)
         anti_match = next((p for p in anti if p.get("block_live_radar") is True and _matches(p, market)), None)
         robust_match = next((p for p in robust if _matches(p, market)), None)
+        research_match = next((p for p in research if _matches(p, market)), None)
+        matched_pattern = robust_match or research_match
         book = books.get(mid)
         ctx = weather.get(mid)
         base = {
             "market_id": mid,
             "question": market.get("question") or market.get("title"),
-            "matched_pattern_id": robust_match.get("pattern_id") if robust_match else None,
+            "matched_pattern_id": matched_pattern.get("pattern_id") if matched_pattern else None,
+            "matched_pattern_status": matched_pattern.get("pattern_status") if matched_pattern else None,
             "paper_only": True,
             "live_order_allowed": False,
         }
@@ -83,7 +88,11 @@ def build_winner_pattern_paper_candidates(
             row = {**base, "decision": "blocked", "reason": "anti_pattern_conflict", "conflicting_pattern_id": anti_match.get("pattern_id"), "paper_probe_authorized": False}
             blocked.append(row)
         elif robust_match is None:
-            row = {**base, "decision": "watch_only", "reason": "no_robust_pattern_match", "paper_probe_authorized": False}
+            if research_match is not None:
+                research_only_matches += 1
+                row = {**base, "decision": "watch_only", "reason": "research_only_pattern_match", "paper_probe_authorized": False}
+            else:
+                row = {**base, "decision": "watch_only", "reason": "no_robust_pattern_match", "paper_probe_authorized": False}
             watch_only.append(row)
         elif not book:
             row = {**base, "decision": "watch_only", "reason": "missing_current_orderbook", "paper_probe_authorized": False}
@@ -102,7 +111,13 @@ def build_winner_pattern_paper_candidates(
     return {
         "paper_only": True,
         "live_order_allowed": False,
-        "summary": {"considered_markets": len(considered), "paper_candidates": len(paper_candidates), "watch_only": len(watch_only), "blocked": len(blocked)},
+        "summary": {
+            "considered_markets": len(considered),
+            "paper_candidates": len(paper_candidates),
+            "watch_only": len(watch_only),
+            "blocked": len(blocked),
+            "research_only_matches": research_only_matches,
+        },
         "paper_candidates": paper_candidates,
         "watch_only": watch_only,
         "blocked": blocked,

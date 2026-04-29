@@ -23,6 +23,8 @@ def build_winner_pattern_operator_report(
     candidates = _count(paper_candidates, "paper_candidates")
     watch = _count(paper_candidates, "watch_only")
     blocked = _count(paper_candidates, "blocked")
+    candidate_summary = paper_candidates.get("summary", {}) if isinstance(paper_candidates.get("summary"), dict) else {}
+    research_only_matches = int(candidate_summary.get("research_only_matches", 0)) if isinstance(candidate_summary, dict) else 0
     coverage_summary = resolution_coverage.get("summary", resolution_coverage) if isinstance(resolution_coverage, dict) else {}
     orderbook_summary = orderbook_context.get("summary", orderbook_context) if isinstance(orderbook_context, dict) else {}
     missing_books = orderbook_summary.get("missing_orderbook_context", orderbook_summary.get("missing_current_orderbook")) if isinstance(orderbook_summary, dict) else None
@@ -37,6 +39,7 @@ def build_winner_pattern_operator_report(
             "paper_candidates": candidates,
             "watch_only": watch,
             "blocked": blocked,
+            "research_only_matches": research_only_matches,
             "resolved_pct": coverage_summary.get("resolved_pct") if isinstance(coverage_summary, dict) else None,
             "capturability_gaps": missing_books,
         },
@@ -48,8 +51,10 @@ def build_winner_pattern_operator_report(
 def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any], coverage: dict[str, Any], orderbook: dict[str, Any]) -> str:
     robust = winner_patterns.get("robust_patterns", []) if isinstance(winner_patterns.get("robust_patterns"), list) else []
     anti = winner_patterns.get("anti_patterns", []) if isinstance(winner_patterns.get("anti_patterns"), list) else []
+    research = winner_patterns.get("research_only_patterns", []) if isinstance(winner_patterns.get("research_only_patterns"), list) else []
     watch = paper_candidates.get("watch_only", []) if isinstance(paper_candidates.get("watch_only"), list) else []
     candidates = paper_candidates.get("paper_candidates", []) if isinstance(paper_candidates.get("paper_candidates"), list) else []
+    candidate_summary = paper_candidates.get("summary", {}) if isinstance(paper_candidates.get("summary"), dict) else {}
     lines = [
         "# Weather Winner Pattern Engine",
         "",
@@ -68,6 +73,8 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
         "",
     ]
     lines.extend([f"- {row.get('pattern_id', 'pattern')} ({row.get('archetype', 'unclear')})" for row in robust[:10] if isinstance(row, dict)] or ["- none"])
+    lines.extend(["", "## Research-only patterns", ""])
+    lines.extend([f"- {row.get('pattern_id', 'pattern')}: {row.get('reason', 'research_only')} ({row.get('examples', 0)} examples)" for row in research[:10] if isinstance(row, dict)] or ["- none"])
     lines.extend(["", "## Anti-patterns", ""])
     lines.extend([f"- {row.get('pattern_id', 'pattern')}: {row.get('reason', 'blocked')}" for row in anti[:10] if isinstance(row, dict)] or ["- none"])
     lines.extend(["", "## Capturability gaps", ""])
@@ -75,9 +82,11 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
     lines.extend(["", "## Paper candidates / watch-only", ""])
     lines.append(f"- Paper candidates: {len(candidates)}")
     lines.append(f"- Watch-only: {len(watch)}")
+    lines.append(f"- Research-only matches: {candidate_summary.get('research_only_matches', 0)}")
     for row in watch[:10]:
         if isinstance(row, dict):
-            lines.append(f"  - {row.get('market_id')}: {row.get('reason')}")
+            suffix = f" -> {row.get('matched_pattern_id')}" if row.get("matched_pattern_id") else ""
+            lines.append(f"  - {row.get('market_id')}: {row.get('reason')}{suffix}")
     lines.extend(["", "## Next data gaps", ""])
     for action in winner_patterns.get("operator_next_actions", []) if isinstance(winner_patterns.get("operator_next_actions"), list) else []:
         lines.append(f"- {action}")

@@ -49,6 +49,43 @@ def test_robust_match_missing_current_book_stays_watch_only() -> None:
     assert row["paper_probe_authorized"] is False
 
 
+def test_research_only_pattern_match_is_labeled_for_operator_without_authorizing_probe() -> None:
+    from weather_pm.paper_candidate_gate import build_winner_pattern_paper_candidates
+
+    patterns = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "robust_patterns": [],
+        "anti_patterns": [],
+        "research_only_patterns": [
+            {
+                "pattern_id": "research-threshold-paris-yes",
+                "market_type": "high_temperature",
+                "city": "Paris",
+                "side": "YES",
+                "pattern_status": "research_only",
+                "reason": "concentrated_or_small_sample",
+            }
+        ],
+    }
+
+    payload = build_winner_pattern_paper_candidates(
+        patterns,
+        {"markets": [_market()]},
+        {"orderbooks": [{"market_id": "m1", "best_bid": 0.4, "best_ask": 0.42, "spread": 0.02}]},
+        {"contexts": [{"market_id": "m1", "weather_context_available": True}]},
+    )
+
+    row = payload["considered_markets"][0]
+    assert row["decision"] == "watch_only"
+    assert row["reason"] == "research_only_pattern_match"
+    assert row["matched_pattern_id"] == "research-threshold-paris-yes"
+    assert row["matched_pattern_status"] == "research_only"
+    assert row["paper_probe_authorized"] is False
+    assert payload["summary"]["research_only_matches"] == 1
+    assert payload["live_order_allowed"] is False
+
+
 def test_anti_pattern_conflict_blocks_candidate() -> None:
     from weather_pm.paper_candidate_gate import build_winner_pattern_paper_candidates
 
