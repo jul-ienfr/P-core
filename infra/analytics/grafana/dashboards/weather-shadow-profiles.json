@@ -1,0 +1,309 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "paper_only=true\nlive_order_allowed=false\nno wallet\nno signing\nno real order\nno cancellation\n\nThis dashboard is an operator cockpit over paper/research artifacts only. It must never expose a live order button or execution credential.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "query": "SELECT count() AS paper_rows FROM profile_decisions WHERE paper_only = 1 AND live_order_allowed = 0"
+        }
+      ],
+      "title": "Paper-only guardrails",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 2,
+      "targets": [
+        {
+          "query": "SELECT profile_id, count() AS decisions, avg(edge) AS avg_edge FROM profile_decisions WHERE paper_only = 1 AND live_order_allowed = 0 GROUP BY profile_id ORDER BY decisions DESC LIMIT 20"
+        }
+      ],
+      "title": "Top shadow profiles",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 3,
+      "targets": [
+        {
+          "query": "SELECT observed_at, profile_id, market_id, token_id, decision_status, limit_price, capped_spend_usdc, skip_reason FROM profile_decisions WHERE paper_only = 1 AND live_order_allowed = 0 AND decision_status IN ('trade','trade_small','paper_candidate','watch_only') ORDER BY observed_at DESC LIMIT 100"
+        }
+      ],
+      "title": "Profiles that would trade now",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 4,
+      "targets": [
+        {
+          "query": "SELECT market_id, countDistinct(profile_id) AS agreeing_profiles, any(decision_status) AS status FROM profile_decisions WHERE paper_only = 1 AND live_order_allowed = 0 AND decision_status IN ('trade','trade_small','paper_candidate','watch_only') GROUP BY market_id ORDER BY agreeing_profiles DESC LIMIT 50"
+        }
+      ],
+      "title": "Converging markets",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 5,
+      "targets": [
+        {
+          "query": "SELECT observed_at, strategy_id, profile_id, market_id, side, market_price, edge, confidence FROM strategy_signals WHERE paper_only = 1 AND live_order_allowed = 0 ORDER BY observed_at DESC LIMIT 100"
+        }
+      ],
+      "title": "Recent profitable-account moves",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "id": 6,
+      "targets": [
+        {
+          "query": "SELECT observed_at, profile_id, market_id, decision_status, skip_reason, blocker FROM debug_decisions WHERE paper_only = 1 AND live_order_allowed = 0 AND skip_reason != '' ORDER BY observed_at DESC LIMIT 100"
+        }
+      ],
+      "title": "Important abstentions",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "id": 7,
+      "targets": [
+        {
+          "query": "SELECT profile_id, sum(net_pnl_usdc) AS net_pnl_usdc, sum(filled_usdc) AS filled_usdc FROM paper_pnl_snapshots WHERE paper_only = 1 AND live_order_allowed = 0 GROUP BY profile_id ORDER BY net_pnl_usdc DESC"
+        }
+      ],
+      "title": "Paper PnL by profile",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "id": 8,
+      "targets": [
+        {
+          "query": "SELECT JSONExtractString(raw, 'city') AS city, avg(toFloat64OrZero(JSONExtractString(raw, 'hit'))) AS hit_rate, count() AS samples FROM strategy_signals WHERE paper_only = 1 AND live_order_allowed = 0 GROUP BY city HAVING city != '' ORDER BY samples DESC LIMIT 50"
+        }
+      ],
+      "title": "Hit rate by city",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "id": 9,
+      "targets": [
+        {
+          "query": "SELECT JSONExtractString(raw, 'market_type') AS market_type, avg(toFloat64OrZero(JSONExtractString(raw, 'hit'))) AS hit_rate, count() AS samples FROM strategy_signals WHERE paper_only = 1 AND live_order_allowed = 0 GROUP BY market_type HAVING market_type != '' ORDER BY samples DESC LIMIT 50"
+        }
+      ],
+      "title": "Hit rate by market type",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "id": 10,
+      "targets": [
+        {
+          "query": "SELECT observed_at, profile_id, market_id, source_ok, JSONExtractString(raw, 'source_freshness_minutes') AS source_freshness_minutes, JSONExtractString(raw, 'forecast_age_minutes') AS forecast_age_minutes FROM profile_decisions WHERE paper_only = 1 AND live_order_allowed = 0 ORDER BY observed_at DESC LIMIT 100"
+        }
+      ],
+      "title": "Weather source freshness",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "id": 11,
+      "targets": [
+        {
+          "query": "SELECT observed_at, profile_id, market_id, orderbook_ok, JSONExtractString(raw, 'spread') AS spread, JSONExtractString(raw, 'depth_near_touch') AS depth_near_touch FROM profile_decisions WHERE paper_only = 1 AND live_order_allowed = 0 ORDER BY observed_at DESC LIMIT 100"
+        }
+      ],
+      "title": "Orderbook spread and depth",
+      "type": "table"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": [
+    "polymarket",
+    "weather",
+    "shadow-profiles",
+    "paper-only"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "ClickHouse datasource",
+        "name": "DS_CLICKHOUSE",
+        "query": "grafana-clickhouse-datasource",
+        "refresh": 1,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Weather Shadow Profiles — Paper Only",
+  "uid": "weather-shadow-profiles",
+  "version": 1
+}
