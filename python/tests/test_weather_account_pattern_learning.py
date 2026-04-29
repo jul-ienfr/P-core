@@ -114,7 +114,9 @@ def test_account_pattern_learning_digest_turns_validation_and_radar_into_guardra
     assert result["summary"]["radar_candidates"] == 2
     assert result["summary"]["blocked_by_conflict"] == 1
     assert result["summary"]["watch_only"] == 2
-    assert result["summary"]["paper_probe_authorized"] == 0
+    assert result["summary"]["paper_shadow_probe_authorized"] == 0
+    assert result["summary"]["real_order_authorized"] == 0
+    assert "paper_probe_authorized" not in result["summary"]
     assert result["summary"]["paper_only"] is True
     assert result["summary"]["live_order_allowed"] is False
 
@@ -123,4 +125,8 @@ def test_account_pattern_learning_digest_turns_validation_and_radar_into_guardra
     assert payload["live_order_allowed"] is False
     assert payload["guardrails"][0]["rule"] == "block_conflicting_anti_patterns"
     assert payload["radar_lessons"][0]["operator_action"] == "watch_only_conflict_visible"
-    assert output_md.read_text(encoding="utf-8").startswith("# Account Pattern Learning Digest")
+    markdown = output_md.read_text(encoding="utf-8")
+    assert markdown.startswith("# Account Pattern Learning Digest")
+    assert "paper_shadow_probe_authorized=0" in markdown
+    assert "real_order_authorized=0" in markdown
+    assert "paper_probe_authorized" not in markdown

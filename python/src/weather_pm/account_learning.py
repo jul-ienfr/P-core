@@ -216,7 +216,8 @@ def build_account_pattern_learning_digest(validation_payload: dict[str, Any], li
         "radar_candidates": len(candidates),
         "blocked_by_conflict": blocked_by_conflict,
         "watch_only": watch_only,
-        "paper_probe_authorized": 0,
+        "paper_shadow_probe_authorized": 0,
+        "real_order_authorized": 0,
     }
     return {
         "artifact": "account_pattern_learning_digest",
@@ -285,7 +286,7 @@ def account_pattern_learning_digest_markdown(digest: dict[str, Any]) -> str:
     lines = [
         "# Account Pattern Learning Digest",
         "",
-        f"Safety: paper_only={summary.get('paper_only', True)}, live_order_allowed={summary.get('live_order_allowed', False)}, paper_probe_authorized={summary.get('paper_probe_authorized', 0)}.",
+        f"Safety: paper_only={summary.get('paper_only', True)}, live_order_allowed={summary.get('live_order_allowed', False)}, paper_shadow_probe_authorized={summary.get('paper_shadow_probe_authorized', 0)}, real_order_authorized={summary.get('real_order_authorized', 0)}.",
         "",
         "## Summary",
         "",
