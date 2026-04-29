@@ -1609,7 +1609,13 @@ def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_sum
     assert "weather_pm.cli shadow-paper-runner" in markdown
     assert f"--promoted-profiles-json {output_json}" in markdown
     assert "--run-id <next-promoted-opportunity-run>" in markdown
-    assert "--output-json <next-paper-orders.json>" in markdown
+    assert "--stress-overlay-json <candidate-stress-overlay.json>" in markdown
+    assert "--output-json <stress-overlay-paper-orders.json>" in markdown
+    assert "Suggested exposure preview command" in markdown
+    assert "weather_pm.cli shadow-profile-exposure-preview" in markdown
+    assert "--paper-orders-json <stress-overlay-paper-orders.json>" in markdown
+    assert "--output-json <paper-exposure-preview.json>" in markdown
+    assert "--output-md <paper-exposure-preview.md>" in markdown
 
 
 def test_cli_shadow_profile_evaluator_writes_json_and_markdown(tmp_path: Path) -> None:

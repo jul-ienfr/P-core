@@ -919,7 +919,14 @@ def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
                 "",
                 "```bash",
                 "python -m weather_pm.cli shadow-paper-runner --dataset-json <trade-no-trade-dataset.json> --orderbooks-json <orderbooks.json> --forecasts-json <forecasts.json> "
-                f"--promoted-profiles-json {output_json} --run-id <next-promoted-opportunity-run> --output-json <next-paper-orders.json>",
+                f"--promoted-profiles-json {output_json} --stress-overlay-json <candidate-stress-overlay.json> --run-id <next-promoted-opportunity-run> --output-json <stress-overlay-paper-orders.json>",
+                "```",
+                "",
+                "Suggested exposure preview command:",
+                "",
+                "```bash",
+                "python -m weather_pm.cli shadow-profile-exposure-preview --paper-orders-json <stress-overlay-paper-orders.json> "
+                "--output-json <paper-exposure-preview.json> --output-md <paper-exposure-preview.md>",
                 "```",
             ]
         )
