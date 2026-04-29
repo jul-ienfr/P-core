@@ -1,0 +1,41 @@
+{
+  "accounts": [
+    {
+      "wallet": "0xalpha",
+      "handle": "WeatherAlpha"
+    },
+    {
+      "wallet": "0xquiet",
+      "handle": "QuietWatcher"
+    }
+  ],
+  "account_trades": [
+    {
+      "wallet": "0xalpha",
+      "title": "Will the highest temperature in Denver be 64F or higher?",
+      "side": "YES",
+      "price": 0.43,
+      "size": 250,
+      "timestamp": "2026-04-24T12:00:00Z",
+      "hours_to_resolution": 18
+    },
+    {
+      "wallet": "0xalpha",
+      "title": "Will the low temperature in Paris be 7C or below?",
+      "side": "NO",
+      "price": 0.82,
+      "usdc": 41,
+      "timestamp": "2026-04-24T20:00:00Z",
+      "hours_to_resolution": 4
+    },
+    {
+      "wallet": "0xbeta",
+      "handle": "BucketBeta",
+      "title": "Will the highest temperature in Austin be between 80F and 84F?",
+      "outcome": "YES",
+      "avgPrice": 0.18,
+      "amount": 1250,
+      "lead_time_hours": 96
+    }
+  ]
+}

@@ -15,6 +15,13 @@ from prediction_core.analytics.clickhouse_writer import create_clickhouse_writer
 from prediction_core.analytics.events import serialize_event
 from prediction_core.analytics.metrics import build_profile_metric_events, build_strategy_metric_events
 from prediction_core.strategies.config_store import StrategyConfigStore
+from weather_pm.account_learning import (
+    load_account_trade_backfill,
+    write_account_learning_backfill_pipeline,
+    write_account_trade_import,
+    write_shadow_profile_deep_dive,
+    write_shadow_profile_report,
+)
 from weather_pm.analytics_adapter import (
     debug_decision_events_from_shortlist,
     execution_events_from_payload,
@@ -29,9 +36,15 @@ from weather_pm.event_surface import build_weather_event_surface
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
 from weather_pm.history_client import StationHistoryClient, _latency_operational_fields, _parse_observation_timestamp, build_station_history_bundle
+from weather_pm.live_storage import assert_not_unmounted_truenas_path, write_live_observer_payload_to_storage
 from weather_pm.market_parser import parse_market_question
 from weather_pm.miro_seed import build_miro_seed_markdown
 from weather_pm.models import ForecastBundle
+from weather_pm.multi_profile_paper_runner import (
+    load_shortlist_payload,
+    run_multi_profile_paper_batch,
+    write_multi_profile_paper_artifacts,
+)
 from weather_pm.neighbor_context import build_neighbor_context
 from weather_pm.operator_summary import write_profitable_accounts_operator_summary
 from weather_pm.paper_ledger import load_candidate, load_paper_ledger, load_refresh_payload, paper_ledger_place, paper_ledger_refresh, write_paper_ledger_artifacts
@@ -123,6 +136,29 @@ def build_parser() -> argparse.ArgumentParser:
     trader_profile_parser.add_argument("--wallet", required=True, help="Polymarket user wallet/address")
     trader_profile_parser.add_argument("--page-size", required=False, type=int, default=50, help="Closed-position page size")
 
+    account_learning_backfill = subparsers.add_parser("account-learning-backfill", help="Run backfill-first account learning into trades/profile artifacts")
+    account_learning_backfill.add_argument("--input-json", required=True, help="Public account trade/backfill JSON")
+    account_learning_backfill.add_argument("--output-dir", required=True, help="Output directory for account_trades and shadow_profiles artifacts")
+    account_learning_backfill.add_argument("--run-id", required=False, help="Optional deterministic artifact run id")
+
+    account_trades_backfill = subparsers.add_parser("account-trades-backfill", help="Normalize public Polymarket weather account trade backfill JSON")
+    account_trades_backfill.add_argument("--input-json", required=True, help="Public account trade/backfill JSON")
+
+    account_trades_import = subparsers.add_parser("account-trades-import", help="Import normalized public account trades into a local JSON artifact")
+    account_trades_import.add_argument("--input-json", required=True, help="Public account trade/backfill JSON")
+    account_trades_import.add_argument("--output-json", required=True, help="Output account_trades JSON artifact")
+
+    shadow_profiles_report = subparsers.add_parser("shadow-profiles-report", help="Build historical shadow profiles from imported account trades")
+    shadow_profiles_report.add_argument("--trades-json", required=True, help="account_trades JSON artifact")
+    shadow_profiles_report.add_argument("--output-json", required=True, help="Output shadow_profiles JSON artifact")
+    shadow_profiles_report.add_argument("--output-md", required=False, help="Optional Markdown operator report")
+
+    shadow_profiles_deep_dive = subparsers.add_parser("shadow-profiles-deep-dive", help="Render one account shadow-profile deep dive")
+    shadow_profiles_deep_dive.add_argument("--profiles-json", required=True, help="shadow_profiles JSON artifact")
+    shadow_profiles_deep_dive.add_argument("--wallet", required=False, help="Wallet to inspect")
+    shadow_profiles_deep_dive.add_argument("--handle", required=False, help="Handle to inspect")
+    shadow_profiles_deep_dive.add_argument("--output-md", required=False, help="Optional Markdown deep dive")
+
     strategy_report = subparsers.add_parser("strategy-report", help="Extract reusable weather strategy rules from a reverse-engineering report")
     strategy_report.add_argument("--reverse-engineering-json", required=True, help="Reverse-engineering JSON produced by import-weather-traders")
 
@@ -153,6 +189,8 @@ def build_parser() -> argparse.ArgumentParser:
     operator_refresh.add_argument("--resolution-date", required=False, help="Reference resolution date YYYY-MM-DD for direct/latest status refresh")
     operator_refresh.add_argument("--operator-limit", required=False, type=int, default=10, help="Maximum refreshed operator watchlist rows to include")
     operator_refresh.add_argument("--output-json", required=False, help="Optional path to write the full refreshed operator artifact")
+    operator_refresh.add_argument("--storage-backend", choices=("auto", "noop", "postgres", "clickhouse", "all"), default="noop", help="Optional abstract storage sink for live observer rows")
+    operator_refresh.add_argument("--storage-dry-run", action="store_true", help="Build storage rows without writing")
     operator_refresh.add_argument("--skip-resolution-status", action="store_true", help="Do not refresh direct/latest resolution status")
     operator_refresh.add_argument("--skip-orderbook", action="store_true", help="Do not refresh Polymarket order book metrics")
     operator_refresh.add_argument("--iterations", required=False, type=int, default=1, help="Number of refresh iterations to run")
@@ -236,6 +274,13 @@ def build_parser() -> argparse.ArgumentParser:
     paper_ledger_report_parser = subparsers.add_parser("paper-ledger-report", help="Write strict-limit paper ledger JSON/CSV/Markdown artifacts")
     paper_ledger_report_parser.add_argument("--ledger-json", required=True, help="Ledger JSON to report")
     paper_ledger_report_parser.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for ledger JSON/CSV/Markdown artifacts")
+
+    multi_profile_paper = subparsers.add_parser("multi-profile-paper-runner", help="Run the same weather shortlist through separate paper ledgers per StrategyProfile")
+    multi_profile_paper.add_argument("--shortlist-json", required=True, help="Strategy shortlist JSON to replay across profiles")
+    multi_profile_paper.add_argument("--run-id", required=False, help="Parent run id for the batch")
+    multi_profile_paper.add_argument("--mode", choices=("shadow", "paper", "live_dry_run"), default="paper", help="Guarded read-only runner mode; live_dry_run never submits live orders")
+    multi_profile_paper.add_argument("--profile-id", action="append", dest="profile_ids", help="Profile id to include; repeat for multiple profiles")
+    multi_profile_paper.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for multi-profile paper artifacts")
 
     miro_seed_export_parser = subparsers.add_parser("miro-seed-export", help="Export a fact-only Miro/MiroFish seed markdown from a saved market/research payload")
     miro_seed_export_parser.add_argument("--input-json", required=False, help="JSON containing market and optional research_items")
@@ -345,6 +390,28 @@ def main() -> int:
 
     if args.command == "trader-profile":
         print(json.dumps(trader_profile(args.wallet, page_size=args.page_size)))
+        return 0
+
+    if args.command == "account-learning-backfill":
+        print(json.dumps(write_account_learning_backfill_pipeline(args.input_json, args.output_dir, run_id=args.run_id)))
+        return 0
+
+    if args.command == "account-trades-backfill":
+        print(json.dumps(load_account_trade_backfill(args.input_json)))
+        return 0
+
+    if args.command == "account-trades-import":
+        print(json.dumps(write_account_trade_import(args.input_json, args.output_json)))
+        return 0
+
+    if args.command == "shadow-profiles-report":
+        print(json.dumps(write_shadow_profile_report(args.trades_json, args.output_json, output_md=args.output_md)))
+        return 0
+
+    if args.command == "shadow-profiles-deep-dive":
+        if not args.wallet and not args.handle:
+            parser.error("shadow-profiles-deep-dive requires --wallet or --handle")
+        print(json.dumps(write_shadow_profile_deep_dive(args.profiles_json, wallet=args.wallet, handle=args.handle, output_md=args.output_md)))
         return 0
 
     if args.command == "strategy-report":
@@ -469,6 +536,8 @@ def main() -> int:
             refresh_orderbook=not bool(args.skip_orderbook),
             iterations=args.iterations,
             poll_interval_seconds=args.poll_interval_seconds,
+            storage_backend=args.storage_backend,
+            storage_dry_run=args.storage_dry_run,
         )
         print(json.dumps(compact_operator_refresh_report(payload) if args.output_json else payload))
         return 0
@@ -584,6 +653,16 @@ def main() -> int:
     if args.command == "paper-ledger-report":
         payload = write_paper_ledger_artifacts(load_paper_ledger(args.ledger_json), output_dir=args.output_dir)
         print(json.dumps(payload))
+        return 0
+
+    if args.command == "multi-profile-paper-runner":
+        result = run_multi_profile_paper_batch(
+            load_shortlist_payload(args.shortlist_json),
+            profile_ids=args.profile_ids,
+            run_id=args.run_id,
+            mode=args.mode,
+        )
+        print(json.dumps(write_multi_profile_paper_artifacts(result, output_dir=args.output_dir)))
         return 0
 
     if args.command == "miro-seed-export":
@@ -1149,6 +1228,8 @@ def poll_live_operator_artifact(
     refresh_orderbook: bool = True,
     iterations: int = 1,
     poll_interval_seconds: float = 0.0,
+    storage_backend: str = "noop",
+    storage_dry_run: bool = False,
 ) -> dict[str, Any]:
     input_path = Path(input_json)
     last_payload: dict[str, Any] | None = None
@@ -1185,8 +1266,19 @@ def poll_live_operator_artifact(
                 "operator": operator,
                 "artifacts": {"source_operator_refresh_input": str(input_path)},
             }
+        if storage_backend != "noop" or storage_dry_run:
+            storage_summary = write_live_observer_payload_to_storage(
+                last_payload,
+                backend=storage_backend,
+                dry_run=storage_dry_run,
+            )
+        else:
+            storage_summary = write_live_observer_payload_to_storage(last_payload, backend="noop", dry_run=False)
+        last_payload["storage"] = storage_summary
+        last_payload.setdefault("summary", {}).update(storage_summary)
         if output_json:
             output_path = Path(output_json)
+            assert_not_unmounted_truenas_path(output_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             last_payload.setdefault("artifacts", {})["output_json"] = str(output_path)
             output_path.write_text(json.dumps(last_payload, indent=2, sort_keys=True))

@@ -30,21 +30,8 @@
       "type": "link",
       "uid": "prediction-core-paper-ledger",
       "url": "/d/prediction-core-paper-ledger/ledger-paper?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
-    },
-    {
-      "asDropdown": false,
-      "includeVars": true,
-      "keepTime": true,
-      "tags": [],
-      "targetBlank": false,
-      "title": "Pilotage paper/live",
-      "tooltip": "Ouvrir la console stratégie",
-      "type": "link",
-      "uid": "prediction-core-strategy-control",
-      "url": "/d/prediction-core-strategy-control/pilotage-paper-live?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
     }
   ],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
@@ -331,7 +318,7 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  JSONExtractString(raw, 'city') AS `Ville`,\n  JSONExtractString(raw, 'date') AS `Date météo`,\n  JSONExtractString(raw, 'source') AS `Source météo`,\n  probability AS `Probabilité modèle`,\n  market_price AS `Prix marché`,\n  edge AS `Edge`,\n  if(live_order_allowed, 'LIVE_INTERDIT_A_VERIFIER', 'PAPER_ONLY') AS `Mode sécurité`\nFROM prediction_core.strategy_signals\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(strategy_id, 'weather') > 0 OR positionCaseInsensitive(raw, 'weather') > 0 OR positionCaseInsensitive(raw, 'city') > 0)\nORDER BY observed_at DESC\nLIMIT 200",
+          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  JSONExtractString(raw, 'city') AS `Ville`,\n  JSONExtractString(raw, 'date') AS `Date météo`,\n  JSONExtractString(raw, 'source') AS `Source météo`,\n  probability AS `Probabilité modèle`,\n  market_price AS `Prix marché`,\n  edge AS `Edge`,\n  'PAPER_ONLY' AS `Mode sécurité`\nFROM prediction_core.strategy_signals\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(strategy_id, 'weather') > 0 OR positionCaseInsensitive(raw, 'weather') > 0 OR positionCaseInsensitive(raw, 'city') > 0)\nORDER BY observed_at DESC\nLIMIT 200",
           "refId": "A"
         }
       ],
@@ -382,11 +369,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  decision_status AS `Action opérateur`,\n  skip_reason AS `Blocage`,\n  capped_spend_usdc AS `Risk cap USDC`,\n  source_ok AS `Source OK`,\n  orderbook_ok AS `Carnet OK`,\n  risk_ok AS `Risque OK`,\n  paper_only AS `Paper only`,\n  live_order_allowed AS `Live autorisé`\nFROM prediction_core.profile_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(strategy_id, 'weather') > 0 OR positionCaseInsensitive(raw, 'weather') > 0 OR positionCaseInsensitive(raw, 'risk_caps') > 0)\nORDER BY observed_at DESC\nLIMIT 100",
+          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  profile_id AS `Profil`,\n  decision_status AS `Décision`,\n  skip_reason AS `Raison abstention`,\n  capped_spend_usdc AS `Risk cap USDC`,\n  source_ok AS `Source OK`,\n  orderbook_ok AS `Carnet OK`,\n  risk_ok AS `Risque OK`,\n  paper_only AS `Paper only`\nFROM prediction_core.profile_decisions\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(strategy_id, 'weather') > 0 OR positionCaseInsensitive(raw, 'weather') > 0 OR positionCaseInsensitive(raw, 'risk_caps') > 0)\nORDER BY observed_at DESC\nLIMIT 100",
           "refId": "A"
         }
       ],
-      "title": "Risk cap et action paper",
+      "title": "Profil qui aurait tradé et abstentions",
       "type": "table"
     },
     {
@@ -433,11 +420,11 @@
           },
           "format": 1,
           "queryType": "sql",
-          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  side AS `Côté`,\n  price AS `Prix paper`,\n  size AS `Taille`,\n  spend_usdc AS `Spend USDC`,\n  status AS `Statut paper`,\n  paper_only AS `Paper only`,\n  live_order_allowed AS `Live autorisé`\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(strategy_id, 'weather') > 0 OR positionCaseInsensitive(raw, 'weather') > 0 OR positionCaseInsensitive(raw, 'source_latency_tier') > 0)\nORDER BY observed_at DESC\nLIMIT 100",
+          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  side AS `Côté`,\n  price AS `Prix paper`,\n  size AS `Taille`,\n  spend_usdc AS `Spend USDC`,\n  status AS `Statut paper`,\n  paper_only AS `Paper only`\nFROM prediction_core.paper_orders\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(strategy_id, 'weather') > 0 OR positionCaseInsensitive(raw, 'weather') > 0 OR positionCaseInsensitive(raw, 'source_latency_tier') > 0)\nORDER BY observed_at DESC\nLIMIT 100",
           "refId": "A"
         }
       ],
-      "title": "Position et ordres paper météo",
+      "title": "Ordre paper simulé et position météo",
       "type": "table"
     },
     {
@@ -490,6 +477,108 @@
       ],
       "title": "Settlement officiel météo",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  strategy_id AS `Stratégie`,\n  profile_id AS `Profil`,\n  market_id AS `Marché`,\n  gross_pnl_usdc AS `PnL brut paper USDC`,\n  net_pnl_usdc AS `PnL net paper USDC`,\n  costs_usdc AS `Coûts paper USDC`,\n  exposure_usdc AS `Exposition paper USDC`,\n  roi AS `ROI paper`\nFROM prediction_core.paper_pnl_snapshots\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(strategy_id, 'weather') > 0 OR positionCaseInsensitive(raw, 'weather') > 0 OR positionCaseInsensitive(raw, 'city') > 0)\nORDER BY observed_at DESC\nLIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "title": "PnL paper météo",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "prediction-core-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 11,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "prediction-core-clickhouse"
+          },
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  observed_at AS `Observation (Paris)`,\n  market_id AS `Marché`,\n  source AS `Source résolution`,\n  resolved_at AS `Résolu à`,\n  outcome AS `Résolution`,\n  outcome_price AS `Prix résolution`,\n  dateDiff('minute', observed_at, now()) AS `Fraîcheur résolution minutes`,\n  JSONExtractString(raw, 'provider') AS `Provider`,\n  JSONExtractString(raw, 'station_code') AS `Station`,\n  JSONExtractString(raw, 'observed_value') AS `Valeur observée`\nFROM prediction_core.resolution_events\nWHERE $__timeFilter(observed_at)\n  AND match(run_id, '${run_id:regex}')\n  AND match(strategy_id, '${strategy:regex}')\n  AND match(profile_id, '${profile:regex}')\n  AND match(market_id, '${market:regex}')\n  AND match(mode, '${mode:regex}')\n  AND (positionCaseInsensitive(source, 'weather') > 0 OR positionCaseInsensitive(source, 'noaa') > 0 OR positionCaseInsensitive(source, 'wunderground') > 0 OR positionCaseInsensitive(source, 'hko') > 0 OR positionCaseInsensitive(raw, 'official') > 0)\nORDER BY observed_at DESC\nLIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Source, résolution et fraîcheur",
+      "type": "table"
     }
   ],
   "refresh": "5m",
@@ -497,7 +586,8 @@
   "tags": [
     "prediction-core",
     "weather",
-    "paper-only"
+    "paper-only",
+    "dry-run"
   ],
   "templating": {
     "list": [

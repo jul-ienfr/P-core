@@ -13,6 +13,7 @@ from .paper_strategies import run_paper_strategy_fixture
 from .summary import build_panoptique_summary
 from .github_repos import DEFAULT_SEARCH_TERMS, GitHubRepoMetadata, run_github_repo_crawl
 from .storage_exports import EXPORTABLE_TABLES, StorageCommandResult, export_table_to_parquet, write_db_health_report
+from .timescale_diagnostic import build_timescale_runtime_diagnostic
 
 DEFAULT_OUTPUT_DIR = Path("/home/jul/prediction_core/data/panoptique/snapshots")
 DEFAULT_SHADOW_OUTPUT_DIR = Path("/home/jul/prediction_core/data/panoptique/shadow_predictions")
@@ -106,6 +107,9 @@ def build_parser() -> argparse.ArgumentParser:
     health.add_argument("--output-dir", default=str(DEFAULT_HEALTH_OUTPUT_DIR))
     health.add_argument("--sqlite-db", default=None, help="Local SQLite fixture DB for tests/local validation.")
     health.add_argument("--migration-version", default=None)
+
+    timescale = subparsers.add_parser("timescale-diagnostic", help="Emit read-only PostgreSQL/TimescaleDB runtime diagnostics as JSON; no migrations or writes.")
+    timescale.add_argument("--database-url", default=None, help="Optional sync PostgreSQL URL; defaults to PANOPTIQUE/PREDICTION_CORE sync env or local dev default.")
     return parser
 
 
@@ -172,6 +176,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("artifact=")
         print(f"report={Path(args.output_dir)}")
         print(json.dumps(report.to_dict(), sort_keys=True))
+        return 0
+    if args.command == "timescale-diagnostic":
+        print(json.dumps(build_timescale_runtime_diagnostic(database_url=args.database_url), sort_keys=True))
         return 0
     if args.command == "snapshot-markets":
         result = run_market_snapshot(source=args.source, limit=args.limit, output_dir=args.output_dir, repository=repository)

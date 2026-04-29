@@ -193,18 +193,23 @@ def test_weather_operator_cockpit_dashboard_is_provisioned() -> None:
         "Probabilité modèle vs prix marché",
         "Fraîcheur source météo minutes",
         "Alertes intraday",
-        "Risk cap et action paper",
-        "Position et ordres paper météo",
+        "Profil qui aurait tradé et abstentions",
+        "Raison abstention",
+        "Risk cap USDC",
+        "Ordre paper simulé et position météo",
+        "PnL paper météo",
+        "PnL net paper USDC",
         "Settlement officiel météo",
         "Statut settlement officiel",
+        "Source, résolution et fraîcheur",
+        "Fraîcheur résolution minutes",
         "Paper only",
-        "Live autorisé",
         "PAPER_ONLY",
     ]:
         assert label in text
     for label in ["run_id", "strategy", "profile", "market", "mode", "business_time"]:
         assert label in text
-    for source in ["strategy_signals", "profile_decisions", "paper_orders", "resolution_events", "debug_decisions"]:
+    for source in ["strategy_signals", "profile_decisions", "paper_orders", "paper_pnl_snapshots", "resolution_events", "debug_decisions"]:
         assert source in text
     for weather_field in ["city", "date", "source", "provider", "station_code", "observed_value", "intraday", "risk_caps"]:
         assert weather_field in text
@@ -212,6 +217,10 @@ def test_weather_operator_cockpit_dashboard_is_provisioned() -> None:
     assert dashboard["timezone"] == "Europe/Paris"
     assert dashboard["time"]["from"] == "now-48h"
     assert "prediction-core-clickhouse" in text
+    forbidden_terms = ["live", "secret", "wallet", "signature", "place_order", "cancel_order", "api_key"]
+    lower_text = text.lower()
+    for term in forbidden_terms:
+        assert term not in lower_text
 
 
 def test_existing_dashboards_link_to_strategy_console() -> None:

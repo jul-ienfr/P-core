@@ -119,6 +119,21 @@ PYTHONPATH=python/src python3 -m weather_pm.cli export-analytics-clickhouse \
 
 A combined export can pass both `--shortlist-json` and `--paper-ledger-json` to feed decision, debug, paper order, position, PnL, and metric tables in one run.
 
+## Weather live observer storage bridge
+
+`operator-refresh` keeps JSON output as the operator artifact and can also emit refreshed live observer rows to an abstract storage sink. Without storage environment variables it is a safe no-op; dry-run builds rows without opening database connections.
+
+```bash
+cd /home/jul/P-core
+PYTHONPATH=python/src python3 -m weather_pm.cli operator-refresh \
+  --input-json data/polymarket/latest/weather_operator_shortlist.json \
+  --source live \
+  --storage-backend all \
+  --storage-dry-run
+```
+
+The printed/written summary includes `storage_backend`, `rows_attempted`, `rows_written`, `dry_run`, `paper_only=true`, and `live_order_allowed=false`. Postgres/Timescale uses `PREDICTION_CORE_SYNC_DATABASE_URL` or `PANOPTIQUE_SYNC_DATABASE_URL`; ClickHouse uses the analytics variables below. Paths under `/mnt/truenas` are rejected unless `/mnt/truenas` is an actual mountpoint.
+
 Real configured export requires ClickHouse to be reachable and analytics environment variables to be set:
 
 ```bash
@@ -161,7 +176,9 @@ Grafana provisions these dashboards from `infra/analytics/grafana/dashboards`:
 - **Strategy vs Profile** — compares strategy/profile metrics such as PnL, trade count, skip count, and average edge.
 - **Decision Debug** — inspects decision statuses, blockers, skip reasons, source/orderbook/risk gates, and debug rows.
 - **Paper Ledger** — monitors paper PnL snapshots, paper positions, paper orders, and net PnL.
-- **Weather Operator Cockpit** (`weather-operator-cockpit.json`) — weather-specific operator view for city/date/source, model probability vs market price, source freshness, intraday alerts, risk cap, paper position/action, and official settlement status.
+- **Weather Operator Cockpit** (`weather-operator-cockpit.json`) — weather-specific operator view for tracked markets, profile that would have traded, abstentions, edge, simulated paper orders, paper PnL, city/date/source rows, model probability vs market price, source freshness, and official settlement status.
+
+Operator note: open Grafana from the LAN at `http://<host-lan-ip>:3000` (for Julien's current ubuntuserver setup, `http://192.168.31.101:3000`). ClickHouse stays the backend analytics store and should normally remain reachable only from localhost/container networking; operators should use Grafana, not direct ClickHouse access.
 
 ## Environment variables
 

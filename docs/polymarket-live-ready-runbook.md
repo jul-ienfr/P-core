@@ -185,6 +185,22 @@ Operational rules:
 
 Audit events currently include decision-seen, blocked, submitted, and failed execution events. The idempotency key is derived from market id, token id, side, limit price, and notional.
 
+## Live observer storage bridge
+
+`weather-pm operator-refresh` always preserves the JSON payload path. Optional storage sinks mirror the refreshed live observer rows into abstract storage for Postgres/Timescale and ClickHouse/Grafana. Missing storage configuration is safe: `auto` falls back to `noop`, and explicit dry-runs build row counts without opening database connections.
+
+```bash
+PYTHONPATH=python/src python -m weather_pm.cli operator-refresh \
+  --input-json data/polymarket/operator/shortlist.json \
+  --source fixture \
+  --skip-resolution-status \
+  --skip-orderbook \
+  --storage-backend auto \
+  --storage-dry-run
+```
+
+The emitted `summary` includes `storage_backend`, `rows_attempted`, `rows_written`, `dry_run`, `paper_only=true`, and `live_order_allowed=false`. Do not write outputs under `/mnt/truenas` unless `/mnt/truenas` is a mounted filesystem; the CLI refuses unmounted TrueNAS paths.
+
 ## Storage launch gate
 
 Complete this storage gate before any operator approval to move beyond read-only preflight. These checks materialize the production storage prerequisites but do not provision cloud services or enable live orders:

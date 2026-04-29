@@ -79,6 +79,9 @@ def paper_ledger_place(candidate: dict[str, Any], *, ledger: dict[str, Any] | No
         "order_id": str(candidate.get("order_id") or _default_order_id(candidate)),
         "created_at": str(candidate.get("created_at") or _utc_now()),
         "updated_at": str(candidate.get("updated_at") or _utc_now()),
+        "run_id": candidate.get("run_id"),
+        "strategy_id": candidate.get("strategy_id"),
+        "profile_id": candidate.get("profile_id") or candidate.get("strategy_profile_id"),
         "order_type": "limit_only_paper",
         "paper_only": True,
         "live_order_allowed": False,
@@ -482,7 +485,7 @@ def _copy_ledger(ledger: dict[str, Any] | None) -> dict[str, Any]:
 
 
 def _default_order_id(candidate: dict[str, Any]) -> str:
-    pieces = [candidate.get("surface_id"), candidate.get("market_id"), candidate.get("token_id"), candidate.get("side")]
+    pieces = [candidate.get("run_id"), candidate.get("strategy_id"), candidate.get("profile_id"), candidate.get("surface_id"), candidate.get("market_id"), candidate.get("token_id"), candidate.get("side")]
     return ":".join(str(piece) for piece in pieces if piece is not None)
 
 

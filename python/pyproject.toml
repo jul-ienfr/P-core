@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 
 [project.scripts]
 prediction-core = "prediction_core.app:main"
+panoptique = "panoptique.cli:main"
 
 [project.optional-dependencies]
 analytics = ["clickhouse-connect>=0.8.0"]

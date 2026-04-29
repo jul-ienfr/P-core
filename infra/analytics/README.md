@@ -32,4 +32,4 @@ For the full local storage backup/restore preflight and non-destructive MinIO li
 
 ## Weather operator cockpit
 
-Grafana provisions `weather-operator-cockpit.json` as the weather-specific paper operator cockpit. It reads existing ClickHouse analytics tables (`strategy_signals`, `profile_decisions`, `debug_decisions`, `paper_orders`, and `resolution_events`) to show city/date/source context, model probability vs market price, source freshness, intraday alerts, risk caps, paper position/action state, and official settlement status without adding live trading controls.
+Grafana provisions `weather-operator-cockpit.json` as the weather-specific paper operator cockpit. It reads existing ClickHouse analytics tables (`strategy_signals`, `profile_decisions`, `debug_decisions`, `paper_orders`, `paper_pnl_snapshots`, and `resolution_events`) to show tracked markets, profile decisions, abstentions, edge, simulated paper orders, paper PnL, source freshness, and official resolution status without wallet, signature, or real-order controls.
