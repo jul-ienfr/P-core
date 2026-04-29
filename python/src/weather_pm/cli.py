@@ -57,6 +57,7 @@ from weather_pm.multi_profile_paper_runner import (
 )
 from weather_pm.neighbor_context import build_neighbor_context
 from weather_pm.operator_summary import write_profitable_accounts_operator_summary
+from weather_pm.official_observation_backfill import write_official_observation_backfill
 from weather_pm.orderbook_context import write_orderbook_context_report
 from weather_pm.paper_ledger import load_candidate, load_paper_ledger, load_refresh_payload, paper_ledger_place, paper_ledger_refresh, write_paper_ledger_artifacts
 from weather_pm.paper_watchlist import compact_paper_watchlist_report, write_paper_watchlist_csv, write_paper_watchlist_markdown, write_paper_watchlist_report
@@ -198,6 +199,10 @@ def build_parser() -> argparse.ArgumentParser:
     enrich_decision_weather_context.add_argument("--forecast-snapshots-json", required=True, help="Input forecast snapshots JSON")
     enrich_decision_weather_context.add_argument("--resolution-sources-json", required=False, help="Optional resolution/source observations JSON")
     enrich_decision_weather_context.add_argument("--output-json", required=True, help="Output weather decision context JSON")
+
+    official_observation_backfill = subparsers.add_parser("official-observation-backfill", help="Validate local official weather observations into backfill-ready resolution rows")
+    official_observation_backfill.add_argument("--input-json", required=True, help="Input official observation JSON")
+    official_observation_backfill.add_argument("--output-json", required=True, help="Output validated backfill JSON")
 
     winner_pattern_engine = subparsers.add_parser("winner-pattern-engine", help="Learn robust, capturable weather winner patterns in paper-only mode")
     winner_pattern_engine.add_argument("--decision-context-json", required=True, help="Input enriched decision/weather context JSON")
@@ -789,6 +794,10 @@ def main() -> int:
 
     if args.command == "enrich-decision-weather-context":
         print(json.dumps(write_decision_weather_context(args.decision_dataset_json, args.forecast_snapshots_json, args.output_json, resolution_sources_json=args.resolution_sources_json)))
+        return 0
+
+    if args.command == "official-observation-backfill":
+        print(json.dumps(write_official_observation_backfill(args.input_json, args.output_json)))
         return 0
 
     if args.command == "winner-pattern-engine":

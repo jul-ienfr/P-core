@@ -237,6 +237,52 @@ def test_report_surfaces_actionable_blocker_gaps_when_metrics_available() -> Non
     assert "threshold|toronto|sell|unclear / insufficient_resolved_sample: 15, need 20 (+5)" in payload["markdown"]
 
 
+def test_report_surfaces_top_wallet_independent_gap_for_research_only_patterns() -> None:
+    from weather_pm.winner_pattern_report import build_winner_pattern_operator_report
+
+    patterns = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "robust_patterns": [],
+        "research_only_patterns": [
+            {
+                "pattern_id": "threshold|toronto|buy|unclear",
+                "promotion_eligible": False,
+                "promotion_blockers": ["wallet_concentrated_pnl", "top_wallet_dependent_pnl"],
+                "promotion_metrics": {
+                    "resolved_trades": 29,
+                    "max_wallet_positive_pnl_share": 0.837547,
+                    "pnl_without_top_wallet": -33.817683,
+                    "positive_wallets": 3,
+                    "unique_wallets": 10,
+                },
+            }
+        ],
+        "anti_patterns": [],
+    }
+
+    payload = build_winner_pattern_operator_report(patterns, _paper_candidates())
+
+    gaps = payload["summary"]["top_wallet_independent_gaps"]
+    assert gaps == [
+        {
+            "pattern_id": "threshold|toronto|buy|unclear",
+            "max_wallet_positive_pnl_share": 0.837547,
+            "max_wallet_positive_pnl_share_gate_max": 0.45,
+            "pnl_without_top_wallet": -33.817683,
+            "additional_non_top_wallet_net_pnl_needed": 33.817684,
+            "positive_wallets": 3,
+            "unique_wallets": 10,
+            "paper_only": True,
+            "live_order_allowed": False,
+        }
+    ]
+    md = payload["markdown"]
+    assert "Top-wallet independent evidence gaps" in md
+    assert "threshold|toronto|buy|unclear: pnl_without_top_wallet=-33.817683; need +33.817684 non-top-wallet net PnL" in md
+    assert "paper_only=true; live_order_allowed=false" in md
+
+
 def test_cli_winner_pattern_report_writes_json_md_and_compact_stdout(tmp_path: Path) -> None:
     patterns_path = tmp_path / "patterns.json"
     candidates_path = tmp_path / "candidates.json"

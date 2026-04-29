@@ -60,6 +60,63 @@ def test_positive_weather_trades_become_trade_examples() -> None:
     assert row["price"] == 0.37
 
 
+def test_examples_preserve_question_title_threshold_and_bin_center_metadata() -> None:
+    from weather_pm.decision_dataset import build_account_decision_dataset
+
+    question = "Will the highest temperature in Toronto be 20°F or higher on April 30?"
+    payload = build_account_decision_dataset(
+        {
+            "trades": [
+                {
+                    "account": "alice",
+                    "wallet": "0xabc",
+                    "market_id": "m-toronto-hi-20",
+                    "timestamp": "2026-04-29T12:35:00Z",
+                    "city": "Toronto",
+                    "date": "2026-04-30",
+                    "market_type": "threshold",
+                    "side": "BUY",
+                    "price": 0.37,
+                    "question": question,
+                    "title": question,
+                    "threshold": 20.0,
+                    "bin_center": 20.5,
+                }
+            ]
+        },
+        {
+            "markets": [
+                {
+                    "market_id": "m-toronto-hi-21",
+                    "active_timestamp": "2026-04-29T12:40:00Z",
+                    "observable": True,
+                    "city": "Toronto",
+                    "date": "2026-04-30",
+                    "market_type": "threshold",
+                    "question": "Will the highest temperature in Toronto be 21°F or higher on April 30?",
+                    "title": "Will the highest temperature in Toronto be 21°F or higher on April 30?",
+                    "threshold": 21.0,
+                    "bin_center": 21.5,
+                }
+            ]
+        },
+        bucket_minutes=60,
+        no_trade_per_trade=1,
+    )
+
+    rows = {row["label"]: row for row in payload["examples"]}
+    assert rows["trade"]["question"] == question
+    assert rows["trade"]["title"] == question
+    assert rows["trade"]["threshold"] == 20.0
+    assert rows["trade"]["bin_center"] == 20.5
+    assert rows["no_trade"]["question"] == "Will the highest temperature in Toronto be 21°F or higher on April 30?"
+    assert rows["no_trade"]["title"] == "Will the highest temperature in Toronto be 21°F or higher on April 30?"
+    assert rows["no_trade"]["threshold"] == 21.0
+    assert rows["no_trade"]["bin_center"] == 21.5
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+
+
 def test_no_trade_examples_require_observable_active_same_surface_and_ratio_cap() -> None:
     from weather_pm.decision_dataset import build_account_decision_dataset
 

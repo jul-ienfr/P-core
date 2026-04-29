@@ -95,7 +95,7 @@ def _trade_example(row: dict[str, Any], *, bucket_minutes: int) -> dict[str, Any
         "market_type": row.get("market_type") or row.get("weather_market_type") or row.get("type"),
         "side": row.get("side") or row.get("outcome"),
         "price": _to_float(row.get("price")),
-        **_copy_optional(row, ("threshold", "bin_center", "condition_id", "token_id", "slug")),
+        **_copy_optional(row, ("question", "title", "threshold", "bin_center", "condition_id", "token_id", "slug")),
     }
 
 
@@ -114,7 +114,7 @@ def _no_trade_example(trade: dict[str, Any], market: dict[str, Any], market_buck
         "market_type": market.get("market_type") or market.get("weather_market_type") or market.get("type") or trade.get("market_type"),
         "side": market.get("side") or market.get("outcome"),
         "price": _to_float(market.get("price") or market.get("yes_price")),
-        **_copy_optional(market, ("threshold", "bin_center", "condition_id", "token_id", "slug")),
+        **_copy_optional(market, ("question", "title", "threshold", "bin_center", "condition_id", "token_id", "slug")),
     }
 
 

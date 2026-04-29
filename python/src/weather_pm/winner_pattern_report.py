@@ -37,6 +37,7 @@ def build_winner_pattern_operator_report(
     research_only_matches = int(candidate_summary.get("research_only_matches", 0)) if isinstance(candidate_summary, dict) else 0
     top_blockers = _top_promotion_blockers(all_patterns)
     blocker_gaps = _promotion_blocker_gaps(all_patterns)
+    top_wallet_independent_gaps = _top_wallet_independent_gaps(all_patterns)
     closest_research = _closest_research_only_patterns(
         winner_patterns.get("research_only_patterns", []) if isinstance(winner_patterns.get("research_only_patterns"), list) else []
     )
@@ -60,6 +61,7 @@ def build_winner_pattern_operator_report(
             "promotion_gate_version": (winner_patterns.get("summary", {}) if isinstance(winner_patterns.get("summary"), dict) else {}).get("promotion_gate_version"),
             "top_promotion_blockers": top_blockers,
             "promotion_blocker_gaps": blocker_gaps,
+            "top_wallet_independent_gaps": top_wallet_independent_gaps,
             "closest_research_only_patterns": closest_research,
             "resolved_pct": coverage_summary.get("resolved_pct") if isinstance(coverage_summary, dict) else None,
             "capturability_gaps": missing_books,
@@ -183,6 +185,52 @@ def _format_blocker_gap(gap: dict[str, Any]) -> str:
     return f"{gap['pattern_id']} / {gap['blocker']}: {gap['current']}, need {gap['required']} (+{gap['missing']})"
 
 
+def _top_wallet_independent_gaps(patterns: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    gaps: list[dict[str, Any]] = []
+    for pattern in patterns:
+        blockers = pattern.get("promotion_blockers") if isinstance(pattern.get("promotion_blockers"), list) else []
+        if "top_wallet_dependent_pnl" not in blockers and "wallet_concentrated_pnl" not in blockers:
+            continue
+        metrics = pattern.get("promotion_metrics") if isinstance(pattern.get("promotion_metrics"), dict) else {}
+        pnl_without_top_wallet = _as_float(metrics.get("pnl_without_top_wallet"))
+        max_wallet_positive_pnl_share = _as_float(metrics.get("max_wallet_positive_pnl_share"))
+        if pnl_without_top_wallet is None and max_wallet_positive_pnl_share is None:
+            continue
+        additional_net = None if pnl_without_top_wallet is None or pnl_without_top_wallet > 0 else round(abs(pnl_without_top_wallet) + 0.000001, 6)
+        gaps.append(
+            {
+                "pattern_id": pattern.get("pattern_id"),
+                "max_wallet_positive_pnl_share": max_wallet_positive_pnl_share,
+                "max_wallet_positive_pnl_share_gate_max": 0.45,
+                "pnl_without_top_wallet": pnl_without_top_wallet,
+                "additional_non_top_wallet_net_pnl_needed": additional_net,
+                "positive_wallets": _as_int(metrics.get("positive_wallets")),
+                "unique_wallets": _as_int(metrics.get("unique_wallets")),
+                "paper_only": True,
+                "live_order_allowed": False,
+            }
+        )
+    gaps.sort(
+        key=lambda row: (
+            float(row.get("additional_non_top_wallet_net_pnl_needed") or 0.0),
+            float(row.get("max_wallet_positive_pnl_share") or 0.0),
+        ),
+        reverse=True,
+    )
+    return gaps[:10]
+
+
+def _format_top_wallet_independent_gap(gap: dict[str, Any]) -> str:
+    net_gap = gap.get("additional_non_top_wallet_net_pnl_needed")
+    need = f"need +{net_gap} non-top-wallet net PnL" if net_gap is not None else "non-top-wallet net PnL already positive"
+    return (
+        f"{gap.get('pattern_id')}: pnl_without_top_wallet={gap.get('pnl_without_top_wallet')}; {need}; "
+        f"top_wallet_positive_pnl_share={gap.get('max_wallet_positive_pnl_share')} "
+        f"(gate <= {gap.get('max_wallet_positive_pnl_share_gate_max')}); "
+        "paper_only=true; live_order_allowed=false"
+    )
+
+
 def _readiness_score(pattern: dict[str, Any]) -> float:
     metrics = pattern.get("promotion_metrics") if isinstance(pattern.get("promotion_metrics"), dict) else {}
     resolved = min(float(metrics.get("resolved_trades") or pattern.get("resolved_trades") or 0) / 20.0, 1.0)
@@ -253,6 +301,7 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
     ]
     top_blockers = _top_promotion_blockers(blocked_patterns)
     blocker_gaps = _promotion_blocker_gaps(blocked_patterns)
+    top_wallet_independent_gaps = _top_wallet_independent_gaps(blocked_patterns)
     closest_research = _closest_research_only_patterns(research)
     lines.extend(["", "## Capturability gaps", ""])
     lines.append(f"- Historical/current orderbook gaps: {orderbook.get('missing_orderbook_context', orderbook.get('missing_current_orderbook', 'unknown'))}")
@@ -270,6 +319,8 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
     lines.extend([f"- {row['blocker']}: {row['patterns']}" for row in top_blockers] or ["- none"])
     lines.extend(["", "### Promotion blocker gaps", ""])
     lines.extend([f"- {_format_blocker_gap(row)}" for row in blocker_gaps] or ["- none"])
+    lines.extend(["", "### Top-wallet independent evidence gaps", ""])
+    lines.extend([f"- {_format_top_wallet_independent_gap(row)}" for row in top_wallet_independent_gaps] or ["- none"])
     lines.extend(["", "### Closest research-only patterns", ""])
     for row in closest_research[:10]:
         blockers = row.get("promotion_blockers") if isinstance(row.get("promotion_blockers"), list) else []
