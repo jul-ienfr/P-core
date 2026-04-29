@@ -135,6 +135,55 @@ def run_shadow_paper_runner_artifact(
     return {"summary": result["summary"], "artifacts": {"output_json": str(output_path)}}
 
 
+def build_market_metadata_resolution_dataset(markets_payload: dict[str, Any] | list[Any]) -> dict[str, Any]:
+    markets = _extract_market_metadata_rows(markets_payload)
+    resolutions: dict[str, dict[str, Any]] = {}
+    unresolved = 0
+    for market in markets:
+        if not isinstance(market, dict):
+            continue
+        resolution = _resolution_from_market_metadata(market)
+        if not resolution:
+            unresolved += 1
+            continue
+        market_id = str(market.get("id") or market.get("market_id") or market.get("conditionId") or market.get("slug") or "").strip()
+        if not market_id:
+            unresolved += 1
+            continue
+        aliases = _market_resolution_aliases(market, market_id=market_id, resolution=resolution)
+        resolution["primary_key"] = market_id
+        resolution["matched_key"] = market_id
+        resolution["aliases"] = aliases
+        for alias in aliases:
+            alias_resolution = dict(resolution)
+            alias_resolution["matched_key"] = alias
+            resolutions[alias] = alias_resolution
+    summary = {
+        "markets": len(markets),
+        "resolved_markets": len({item.get("primary_key") for item in resolutions.values() if isinstance(item, dict) and item.get("primary_key")}),
+        "unresolved_markets": unresolved,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    return {
+        "source": "market_metadata_resolution_dataset",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "resolutions": resolutions,
+    }
+
+
+def run_market_metadata_resolution_artifact(*, markets_json: str | Path, output_json: str | Path) -> dict[str, Any]:
+    markets_payload = json.loads(Path(markets_json).read_text(encoding="utf-8"))
+    result = build_market_metadata_resolution_dataset(markets_payload)
+    output_path = Path(output_json)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result.setdefault("artifacts", {})["output_json"] = str(output_path)
+    output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"summary": result["summary"], "artifacts": result["artifacts"]}
+
+
 def build_account_trade_resolution_dataset(trades_payload: dict[str, Any], *, resolutions: dict[str, Any] | None = None) -> dict[str, Any]:
     resolutions = resolutions or {}
     rows: list[dict[str, Any]] = []
@@ -285,6 +334,133 @@ def run_shadow_profile_evaluator_artifact(
         result["artifacts"]["output_md"] = str(md_path)
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {"summary": result["summary"], "artifacts": result["artifacts"]}
+
+
+def _extract_market_metadata_rows(payload: dict[str, Any] | list[Any]) -> list[dict[str, Any]]:
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if not isinstance(payload, dict):
+        return []
+    for key in ("markets", "events", "data", "results"):
+        rows = payload.get(key)
+        if isinstance(rows, list):
+            return [item for item in rows if isinstance(item, dict)]
+    return [payload]
+
+
+def _resolution_from_market_metadata(market: dict[str, Any]) -> dict[str, Any] | None:
+    explicit_outcome = _explicit_resolved_outcome(market)
+    outcome_prices = [_to_float(value) for value in _jsonish_list(market.get("outcomePrices") or market.get("outcome_prices"))]
+    outcomes = [str(value).strip().title() for value in _jsonish_list(market.get("outcomes"))]
+    is_closed = _truthy(market.get("closed")) or _truthy(market.get("archived")) or not _truthy(market.get("active"), default=True)
+    question = str(market.get("question") or market.get("title") or "")
+    slug = str(market.get("slug") or "")
+    base = {
+        "question": question,
+        "title": question,
+        "slug": slug,
+        "observed_value": 0.0,
+    }
+    source_hint = str(market.get("source") or "")
+    status_hint = str(market.get("status") or "")
+    has_proxy_hint = "proxy" in source_hint.lower() or "proxy" in status_hint.lower()
+    if explicit_outcome in {"Yes", "No"} and (is_closed or has_proxy_hint):
+        return {
+            **base,
+            "resolved_outcome": explicit_outcome,
+            "status": "resolved" if is_closed else status_hint or "market_metadata_proxy_unfinalized",
+            "source": "gamma_closed_market_metadata" if is_closed else source_hint or "gamma_market_metadata_proxy",
+            "confidence": _to_float(market.get("confidence")) or 1.0,
+            "outcome_prices": outcome_prices,
+            "outcomes": outcomes,
+            "market_closed": is_closed,
+        }
+    if not is_closed or not outcome_prices or not outcomes or len(outcome_prices) != len(outcomes):
+        return None
+    best_idx = max(range(len(outcome_prices)), key=lambda idx: outcome_prices[idx])
+    confidence = outcome_prices[best_idx]
+    inferred = outcomes[best_idx] if best_idx < len(outcomes) else ""
+    if inferred not in {"Yes", "No"} or confidence < 0.99:
+        return None
+    return {
+        **base,
+        "resolved_outcome": inferred,
+        "status": "closed_price_resolved_proxy",
+        "source": "gamma_closed_outcomePrices_proxy",
+        "confidence": round(confidence, 6),
+        "outcome_prices": outcome_prices,
+        "outcomes": outcomes,
+        "market_closed": True,
+    }
+
+
+def _market_resolution_aliases(market: dict[str, Any], *, market_id: str, resolution: dict[str, Any]) -> list[str]:
+    aliases: list[str] = []
+    for value in (
+        market_id,
+        market.get("market_id"),
+        market.get("conditionId"),
+        market.get("condition_id"),
+        market.get("clobTokenId"),
+        market.get("token_id"),
+        market.get("slug"),
+        resolution.get("slug"),
+        market.get("question"),
+        market.get("title"),
+        resolution.get("question"),
+        resolution.get("title"),
+    ):
+        raw = str(value or "").strip()
+        if raw and raw not in aliases:
+            aliases.append(raw)
+        normalized = _normalize_resolution_lookup_key(raw)
+        if normalized and normalized not in aliases:
+            aliases.append(normalized)
+    return aliases
+
+
+def _explicit_resolved_outcome(market: dict[str, Any]) -> str:
+    for key in ("resolvedOutcome", "resolved_outcome", "resolution", "winner", "winningOutcome", "winning_outcome"):
+        value = str(market.get(key) or "").strip().title()
+        if value in {"Yes", "No"}:
+            return value
+    return ""
+
+
+def _jsonish_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return []
+        try:
+            parsed = json.loads(stripped)
+        except json.JSONDecodeError:
+            return []
+        if isinstance(parsed, list):
+            return parsed
+    return []
+
+
+def _truthy(value: Any, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "y"}:
+            return True
+        if lowered in {"false", "0", "no", "n", ""}:
+            return False
+    return bool(value)
 
 
 def _resolved_outcome(order: dict[str, Any]) -> str:
@@ -466,7 +642,7 @@ def _forecast_context_features(payload: Any) -> dict[str, Any]:
 def _resolution_features(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return {"available": False, "resolved_outcome": "", "status": "", "observed_value": 0.0, "source": "", "confidence": 0.0}
-    return {
+    result = {
         "available": True,
         "resolved_outcome": str(payload.get("resolved_outcome") or payload.get("outcome") or ""),
         "status": str(payload.get("status") or ""),
@@ -474,6 +650,11 @@ def _resolution_features(payload: Any) -> dict[str, Any]:
         "source": str(payload.get("source") or ""),
         "confidence": _to_float(payload.get("confidence")),
     }
+    if payload.get("matched_key"):
+        result["matched_key"] = str(payload.get("matched_key") or "")
+    if payload.get("primary_key"):
+        result["primary_key"] = str(payload.get("primary_key") or "")
+    return result
 
 
 def _match_context_payload(mapping: dict[str, Any], row: dict[str, Any]) -> Any:
@@ -485,19 +666,32 @@ def _match_context_payload(mapping: dict[str, Any], row: dict[str, Any]) -> Any:
 
 
 def _match_trade_resolution(mapping: dict[str, Any], trade: dict[str, Any]) -> Any:
-    for key_name in ("market_id", "slug", "surface_key", "title"):
-        key = str(trade.get(key_name) or "")
-        if key and key in mapping:
-            return mapping[key]
+    resolution_mapping = mapping.get("resolutions") if isinstance(mapping.get("resolutions"), dict) else mapping
+    direct_keys: list[str] = []
+    for key_name in ("market_id", "conditionId", "condition_id", "token_id", "clobTokenId", "slug", "surface_key", "title", "question"):
+        raw = str(trade.get(key_name) or "").strip()
+        if not raw:
+            continue
+        direct_keys.append(raw)
+        normalized = _normalize_resolution_lookup_key(raw)
+        if normalized:
+            direct_keys.append(normalized)
+    for key in direct_keys:
+        if key in resolution_mapping:
+            return resolution_mapping[key]
     trade_question_key = _normalize_resolution_lookup_key(trade.get("question") or trade.get("title"))
     trade_slug_key = _normalize_resolution_lookup_key(trade.get("slug"))
-    for payload in mapping.values():
+    trade_keys = {key for key in [*direct_keys, trade_question_key, trade_slug_key] if key}
+    for payload in resolution_mapping.values():
         if not isinstance(payload, dict):
             continue
-        for value_name in ("question", "title", "slug"):
+        aliases = [_normalize_resolution_lookup_key(alias) for alias in payload.get("aliases", []) if alias]
+        if trade_keys.intersection(alias for alias in aliases if alias):
+            return payload
+        for value_name in ("question", "title", "slug", "primary_key", "matched_key"):
             payload_key = _normalize_resolution_lookup_key(payload.get(value_name))
-            if payload_key and payload_key in {trade_question_key, trade_slug_key}:
-                return payload
+            if payload_key and payload_key in trade_keys:
+                return {**payload, "matched_key": value_name if value_name not in {"question", "title", "slug"} else str(payload.get(value_name) or "")}
     return None
 
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from weather_pm.account_trades import classify_weather_trade
 from weather_pm.shadow_paper_runner import (
     build_account_trade_resolution_dataset,
+    build_market_metadata_resolution_dataset,
     build_shadow_profile_evaluation,
     build_shadow_profile_paper_orders,
     enrich_shadow_dataset_features,
@@ -367,6 +368,68 @@ def test_cli_shadow_paper_runner_accepts_profile_configs_json(tmp_path: Path) ->
     assert payload["orders"][0]["metadata"]["profile_config"]["profile_id"] == "marchyel_like_capped"
 
 
+def test_build_market_metadata_resolution_dataset_uses_closed_resolved_outcome_prices() -> None:
+    result = build_market_metadata_resolution_dataset(
+        {
+            "markets": [
+                {
+                    "id": "m-toronto-19",
+                    "question": "Will the highest temperature in Toronto be 19°C or higher on April 28?",
+                    "slug": "highest-temperature-in-toronto-on-april-28-2026-19c-or-higher",
+                    "closed": True,
+                    "active": False,
+                    "outcomes": '["Yes", "No"]',
+                    "outcomePrices": '["0", "1"]',
+                    "resolvedOutcome": "No",
+                },
+                {
+                    "id": "m-open",
+                    "question": "Will the highest temperature in Paris be 18°C on April 29?",
+                    "closed": False,
+                    "active": True,
+                    "outcomes": '["Yes", "No"]',
+                    "outcomePrices": '["0.49", "0.51"]',
+                },
+            ]
+        }
+    )
+
+    assert result["paper_only"] is True
+    assert result["live_order_allowed"] is False
+    assert result["summary"] == {"markets": 2, "resolved_markets": 1, "unresolved_markets": 1, "paper_only": True, "live_order_allowed": False}
+    resolved = result["resolutions"]["m-toronto-19"]
+    assert resolved["resolved_outcome"] == "No"
+    assert resolved["status"] == "resolved"
+    assert resolved["source"] == "gamma_closed_market_metadata"
+    assert resolved["confidence"] == 1.0
+    assert resolved["question"] == "Will the highest temperature in Toronto be 19°C or higher on April 28?"
+    assert "m-open" not in result["resolutions"]
+
+
+def test_build_market_metadata_resolution_dataset_infers_from_final_outcome_prices() -> None:
+    result = build_market_metadata_resolution_dataset(
+        [
+            {
+                "id": "m-london-20",
+                "title": "Will the highest temperature in London be exactly 20°C on April 25?",
+                "slug": "highest-temperature-in-london-on-april-25-2026-20c",
+                "closed": True,
+                "active": False,
+                "outcomes": ["Yes", "No"],
+                "outcomePrices": ["0.998", "0.002"],
+            }
+        ]
+    )
+
+    assert result["summary"]["resolved_markets"] == 1
+    resolved = result["resolutions"]["m-london-20"]
+    assert resolved["resolved_outcome"] == "Yes"
+    assert resolved["status"] == "closed_price_resolved_proxy"
+    assert resolved["source"] == "gamma_closed_outcomePrices_proxy"
+    assert resolved["confidence"] == 0.998
+    assert resolved["outcome_prices"] == [0.998, 0.002]
+
+
 def test_build_account_trade_resolution_dataset_matches_resolution_by_question_when_trade_has_no_market_id() -> None:
     trades = {
         "trades": [
@@ -402,6 +465,58 @@ def test_build_account_trade_resolution_dataset_matches_resolution_by_question_w
     assert result["trades"][0]["resolution"]["source"] == "gamma_outcomePrices_current_proxy"
     assert result["trades"][0]["trade_result"] == "win"
     assert result["trades"][0]["estimated_pnl_usdc"] == 1.0
+
+
+def test_build_account_trade_resolution_dataset_matches_resolution_from_enriched_metadata_aliases() -> None:
+    metadata = build_market_metadata_resolution_dataset(
+        {
+            "markets": [
+                {
+                    "id": "gamma-123",
+                    "conditionId": "0xcondition",
+                    "question": "Will the highest temperature in Toronto be 19°C or higher on April 28?",
+                    "slug": "highest-temperature-in-toronto-on-april-28-2026-19c-or-higher",
+                    "closed": True,
+                    "active": False,
+                    "outcomes": ["Yes", "No"],
+                    "outcomePrices": ["0", "1"],
+                }
+            ]
+        }
+    )
+    trades = {
+        "trades": [
+            {
+                "wallet": "0xJey",
+                "market_id": "0xcondition",
+                "title": "Toronto high temp trade",
+                "side": "BUY",
+                "outcome": "No",
+                "price": 0.90,
+                "size": 10,
+                "notional_usd": 9.0,
+            },
+            {
+                "wallet": "0xSlug",
+                "slug": "highest-temperature-in-toronto-on-april-28-2026-19c-or-higher",
+                "side": "BUY",
+                "outcome": "Yes",
+                "price": 0.10,
+                "size": 10,
+                "notional_usd": 1.0,
+            },
+        ]
+    }
+
+    result = build_account_trade_resolution_dataset(trades, resolutions=metadata)
+
+    assert result["summary"]["resolved_trades"] == 2
+    assert result["summary"]["wins"] == 1
+    assert result["summary"]["losses"] == 1
+    assert result["trades"][0]["trade_result"] == "win"
+    assert result["trades"][0]["resolution"]["matched_key"] == "0xcondition"
+    assert result["trades"][1]["trade_result"] == "loss"
+    assert result["trades"][1]["resolution"]["matched_key"] == "highest-temperature-in-toronto-on-april-28-2026-19c-or-higher"
 
 
 def test_build_account_trade_resolution_dataset_scores_buy_sell_yes_no_trades() -> None:
@@ -598,6 +713,54 @@ def test_build_shadow_profile_evaluation_scores_profiles_from_resolved_paper_ord
     }
     assert result["profiles"][1]["profile_id"] == "marchyel_like_capped"
     assert result["profiles"][1]["recommendation"] == "needs_resolution_data"
+
+
+def test_cli_market_metadata_resolution_writes_paper_only_resolution_artifact(tmp_path: Path) -> None:
+    markets_in = tmp_path / "markets.json"
+    output_json = tmp_path / "resolutions.json"
+    markets_in.write_text(
+        json.dumps(
+            {
+                "markets": [
+                    {
+                        "id": "m-toronto-19",
+                        "question": "Will the highest temperature in Toronto be 19°C or higher on April 28?",
+                        "closed": True,
+                        "active": False,
+                        "outcomes": '["Yes", "No"]',
+                        "outcomePrices": '["0", "1"]',
+                        "resolvedOutcome": "No",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "market-metadata-resolution",
+            "--markets-json",
+            str(markets_in),
+            "--output-json",
+            str(output_json),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    assert compact["summary"]["resolved_markets"] == 1
+    payload = json.loads(output_json.read_text(encoding="utf-8"))
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+    assert payload["resolutions"]["m-toronto-19"]["resolved_outcome"] == "No"
 
 
 def test_cli_shadow_profile_evaluator_writes_json_and_markdown(tmp_path: Path) -> None:

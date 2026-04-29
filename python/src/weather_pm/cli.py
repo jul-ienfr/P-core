@@ -61,7 +61,12 @@ from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_monitor import write_paper_resolution_monitor
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
-from weather_pm.shadow_paper_runner import run_account_trade_resolution_artifact, run_shadow_paper_runner_artifact, run_shadow_profile_evaluator_artifact
+from weather_pm.shadow_paper_runner import (
+    run_account_trade_resolution_artifact,
+    run_market_metadata_resolution_artifact,
+    run_shadow_paper_runner_artifact,
+    run_shadow_profile_evaluator_artifact,
+)
 from weather_pm.shadow_profiles import write_learned_shadow_patterns_artifacts, write_shadow_profile_artifacts
 from weather_pm.source_coverage import build_weather_source_coverage_report
 from weather_pm.source_routing import build_resolution_source_route
@@ -201,6 +206,10 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_paper_runner.add_argument("--run-id", required=True, help="Shadow paper replay run id")
     shadow_paper_runner.add_argument("--output-json", required=True, help="Output paper-only shadow orders JSON")
     shadow_paper_runner.add_argument("--max-order-usdc", required=False, type=float, default=5.0, help="Maximum simulated notional per shadow order")
+
+    market_metadata_resolution = subparsers.add_parser("market-metadata-resolution", help="Extract closed/resolved market metadata into a paper-only resolution JSON")
+    market_metadata_resolution.add_argument("--markets-json", required=True, help="Input Gamma market metadata JSON")
+    market_metadata_resolution.add_argument("--output-json", required=True, help="Output market-id keyed resolution JSON")
 
     account_trade_resolution = subparsers.add_parser("account-trade-resolution", help="Score imported account trades against resolved outcomes in paper-only mode")
     account_trade_resolution.add_argument("--trades-json", required=True, help="Input classified account trades JSON")
@@ -713,6 +722,10 @@ def main() -> int:
                 )
             )
         )
+        return 0
+
+    if args.command == "market-metadata-resolution":
+        print(json.dumps(run_market_metadata_resolution_artifact(markets_json=args.markets_json, output_json=args.output_json)))
         return 0
 
     if args.command == "account-trade-resolution":
