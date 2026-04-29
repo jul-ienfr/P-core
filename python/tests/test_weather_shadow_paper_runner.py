@@ -278,6 +278,48 @@ def test_build_shadow_profile_paper_orders_preserves_resolution_and_forecast_con
     assert order["live_order_allowed"] is False
 
 
+def test_build_shadow_profile_paper_orders_applies_promoted_profile_configuration() -> None:
+    dataset = _dataset()
+    dataset["examples"][0]["wallet"] = "0xJey"
+    enriched = enrich_shadow_dataset_features(
+        dataset,
+        orderbooks={"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}},
+        forecasts={"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}},
+    )
+    evaluation = {
+        "profiles": [
+            {
+                "profile_id": "jey_threshold",
+                "wallets": ["0xJey"],
+                "recommendation": "promote_to_paper_profile",
+                "historical_roi": 0.17,
+                "trade_winrate": 0.8,
+                "resolved_trades": 5,
+                "suggested_max_order_usdc": 1.75,
+                "suggested_min_edge": 0.12,
+            }
+        ]
+    }
+
+    result = build_shadow_profile_paper_orders(
+        enriched,
+        run_id="shadow-smoke",
+        max_order_usdc=5.0,
+        promoted_profiles=evaluation,
+    )
+
+    assert result["orders"][0]["requested_notional_usdc"] == 1.75
+    assert result["orders"][0]["profile_id"] == "jey_threshold"
+    assert result["orders"][0]["metadata"]["profile_config"] == {
+        "profile_id": "jey_threshold",
+        "role": "promoted_historical_shadow_profile",
+        "max_order_usdc": 1.75,
+        "min_edge": 0.12,
+        "source_recommendation": "promote_to_paper_profile",
+    }
+    assert result["summary"]["profile_counts"] == {"jey_threshold": 1}
+
+
 def test_cli_shadow_paper_runner_writes_artifact(tmp_path: Path) -> None:
     dataset_in = tmp_path / "dataset.json"
     orderbooks_in = tmp_path / "orderbooks.json"
@@ -924,6 +966,29 @@ def test_build_shadow_profile_evaluation_scores_profiles_from_resolved_paper_ord
     }
     assert result["profiles"][1]["profile_id"] == "marchyel_like_capped"
     assert result["profiles"][1]["recommendation"] == "needs_resolution_data"
+
+
+def test_build_shadow_profile_evaluation_reports_promoted_historical_profile_aliases() -> None:
+    trade_resolution_dataset = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "trades": [
+            {"wallet": "0xAlpha", "handle": "alpha-weather", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0, "weather_market_type": "exact_range", "city": "NYC"},
+            {"wallet": "0xAlpha", "handle": "alpha-weather", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0, "weather_market_type": "exact_range", "city": "NYC"},
+            {"wallet": "0xAlpha", "handle": "alpha-weather", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0, "weather_market_type": "threshold", "city": "London"},
+            {"wallet": "0xAlpha", "handle": "alpha-weather", "trade_result": "win", "estimated_pnl_usdc": 1.0, "notional_usd": 4.0, "weather_market_type": "threshold", "city": "London"},
+            {"wallet": "0xAlpha", "handle": "alpha-weather", "trade_result": "loss", "estimated_pnl_usdc": -0.5, "notional_usd": 4.0, "weather_market_type": "threshold", "city": "London"},
+        ],
+    }
+
+    result = build_shadow_profile_evaluation({"orders": [], "skipped": []}, trade_resolution_dataset=trade_resolution_dataset)
+
+    profile = result["profiles"][0]
+    assert profile["profile_id"] == "0xAlpha"
+    assert profile["handle"] == "alpha-weather"
+    assert profile["top_cities"] == {"London": 3, "NYC": 2}
+    assert profile["weather_market_type_counts"] == {"exact_range": 2, "threshold": 3}
+    assert profile["recommendation"] == "promote_to_paper_profile"
 
 
 def test_build_shadow_profile_evaluation_recommends_promising_historical_profiles_for_paper() -> None:

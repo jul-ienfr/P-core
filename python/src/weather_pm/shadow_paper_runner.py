@@ -50,8 +50,9 @@ def build_shadow_profile_paper_orders(
     run_id: str,
     max_order_usdc: float = 5.0,
     profile_configs: dict[str, Any] | None = None,
+    promoted_profiles: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    profile_configs = profile_configs or {}
+    profile_configs = _merge_promoted_profile_configs(profile_configs or {}, promoted_profiles or {})
     orders: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     profile_counts: dict[str, int] = {}
@@ -529,6 +530,18 @@ def _merge_trade_resolution_dataset(
         handle = str(trade.get("handle") or "")
         profile_id = str(trade.get("profile_id") or wallet_to_profile.get(wallet.lower()) or wallet_to_profile.get(handle.lower()) or wallet or handle or "shadow_profile_default")
         bucket = buckets.setdefault(profile_id, _empty_profile_bucket(profile_id, str(trade.get("profile_role") or "")))
+        if wallet:
+            wallets = bucket.setdefault("wallets", [])
+            if wallet not in wallets:
+                wallets.append(wallet)
+        if handle:
+            handles = bucket.setdefault("handles", [])
+            if handle not in handles:
+                handles.append(handle)
+        if handle and not bucket.get("handle"):
+            bucket["handle"] = handle
+        if wallet and not bucket.get("wallet"):
+            bucket["wallet"] = wallet
         bucket["historical_trades"] = bucket.get("historical_trades", 0) + 1
         bucket["historical_notional_usdc"] = bucket.get("historical_notional_usdc", 0.0) + _to_float(trade.get("notional_usd") or trade.get("account_trade_notional_usd"))
         bucket["historical_estimated_pnl_usdc"] = bucket.get("historical_estimated_pnl_usdc", 0.0) + _to_float(trade.get("estimated_pnl_usdc"))
@@ -596,6 +609,14 @@ def _finalize_profile_evaluation(bucket: dict[str, Any]) -> dict[str, Any]:
         resolved_trades = int(bucket.get("resolved_trades", 0))
         trade_wins = int(bucket.get("trade_wins", 0))
         historical_notional = round(float(bucket.get("historical_notional_usdc", 0.0)), 6)
+        if bucket.get("handle"):
+            result["handle"] = bucket["handle"]
+        if bucket.get("wallet"):
+            result["wallet"] = bucket["wallet"]
+        if bucket.get("handles"):
+            result["handles"] = list(bucket["handles"])
+        if bucket.get("wallets"):
+            result["wallets"] = list(bucket["wallets"])
         historical_pnl = round(float(bucket.get("historical_estimated_pnl_usdc", 0.0)), 6)
         result.update(
             {
@@ -787,6 +808,48 @@ def _profile_config_for_row(row: dict[str, Any], profile_configs: dict[str, Any]
         if isinstance(config, dict):
             return dict(config)
     return {}
+
+
+def _merge_promoted_profile_configs(profile_configs: dict[str, Any], promoted_profiles: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(profile_configs)
+    profiles = promoted_profiles.get("profiles") if isinstance(promoted_profiles.get("profiles"), list) else []
+    for profile in profiles:
+        if not isinstance(profile, dict) or profile.get("recommendation") != "promote_to_paper_profile":
+            continue
+        config = _config_from_promoted_profile(profile)
+        for key in _promoted_profile_keys(profile):
+            merged.setdefault(key, config)
+    return merged
+
+
+def _config_from_promoted_profile(profile: dict[str, Any]) -> dict[str, Any]:
+    profile_id = str(profile.get("profile_id") or "promoted_shadow_profile")
+    max_order = _to_float(profile.get("suggested_max_order_usdc")) or 1.0
+    min_edge = _to_float(profile.get("suggested_min_edge"))
+    if min_edge <= 0:
+        min_edge = 0.10
+    return {
+        "profile_id": profile_id,
+        "role": "promoted_historical_shadow_profile",
+        "max_order_usdc": max_order,
+        "min_edge": min_edge,
+        "source_recommendation": "promote_to_paper_profile",
+    }
+
+
+def _promoted_profile_keys(profile: dict[str, Any]) -> list[str]:
+    keys: list[str] = []
+    for name in ("wallet", "handle"):
+        raw = str(profile.get(name) or "").strip().lower()
+        if raw:
+            keys.append(raw)
+    for name in ("wallets", "handles"):
+        values = profile.get(name) if isinstance(profile.get(name), list) else []
+        for value in values:
+            raw = str(value or "").strip().lower()
+            if raw:
+                keys.append(raw)
+    return keys
 
 
 def _profile_order_notional(max_order_usdc: float, profile_config: dict[str, Any]) -> float:
