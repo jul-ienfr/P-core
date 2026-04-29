@@ -39,6 +39,7 @@ from weather_pm.decision import build_decision
 from weather_pm.event_surface import build_weather_event_surface
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
+from weather_pm.hf_polymarket_dataset import write_hf_account_trades_sample
 from weather_pm.history_client import StationHistoryClient, _latency_operational_fields, _parse_observation_timestamp, build_station_history_bundle
 from weather_pm.live_observer import run_live_observer_fast_collector, run_live_observer_once
 from weather_pm.live_observer_config import load_live_observer_config
@@ -158,6 +159,13 @@ def build_parser() -> argparse.ArgumentParser:
     account_learning_backfill.add_argument("--run-id", required=False, help="Optional deterministic artifact run id")
 
     subparsers.add_parser("account-data-source-manifest", help="Summarize read-only data sources for account pattern learning")
+
+    hf_account_trades_sample = subparsers.add_parser("hf-account-trades-sample", help="Normalize a local Hugging Face Polymarket_data trade sample in paper-only mode")
+    hf_account_trades_sample.add_argument("--input", required=True, help="Local .json/.jsonl/.parquet sample path")
+    hf_account_trades_sample.add_argument("--wallet", action="append", dest="wallets", help="Wallet to include; repeat for multiple wallets")
+    hf_account_trades_sample.add_argument("--wallets-json", required=False, help="Optional JSON array or object with wallets/accounts array")
+    hf_account_trades_sample.add_argument("--output-json", required=True, help="Output normalized sample artifact")
+    hf_account_trades_sample.add_argument("--limit", required=False, type=int, default=1000, help="Maximum local sample rows to scan")
 
     legacy_account_trades_backfill = subparsers.add_parser("backfill-account-trades", help="Backfill public Polymarket account trades from a followlist CSV")
     legacy_account_trades_backfill.add_argument("--followlist", required=True, help="CSV followlist with wallet/handle columns")
@@ -686,6 +694,20 @@ def main() -> int:
 
     if args.command == "account-data-source-manifest":
         print(json.dumps(compact_account_data_source_manifest(build_account_data_source_manifest())))
+        return 0
+
+    if args.command == "hf-account-trades-sample":
+        print(
+            json.dumps(
+                write_hf_account_trades_sample(
+                    args.input,
+                    args.output_json,
+                    wallets=args.wallets,
+                    wallets_json=args.wallets_json,
+                    limit=args.limit,
+                )
+            )
+        )
         return 0
 
     if args.command == "backfill-account-trades":
