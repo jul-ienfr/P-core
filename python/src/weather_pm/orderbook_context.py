@@ -196,20 +196,30 @@ def _latest_snapshot_for_trade(trade: dict[str, Any], snapshots: Iterable[dict[s
 
 def _trade_snapshot_keys(trade: dict[str, Any]) -> list[str]:
     keys: list[str] = []
+
+    def add(value: Any) -> None:
+        if value is None:
+            return
+        text = str(value).strip()
+        if text and text not in keys:
+            keys.append(text)
+
     for key in ("market_id", "id", "condition_id", "token_id", "asset", "slug"):
-        value = trade.get(key)
-        if value is not None:
-            text = str(value).strip()
-            if text and text not in keys:
-                keys.append(text)
+        add(trade.get(key))
+
+    resolution_sources: list[dict[str, Any]] = []
     resolution = trade.get("resolution")
     if isinstance(resolution, dict):
+        resolution_sources.append(resolution)
+    resolution_match = trade.get("resolution_match")
+    if isinstance(resolution_match, dict):
+        matched_resolution = resolution_match.get("resolution")
+        if isinstance(matched_resolution, dict):
+            resolution_sources.append(matched_resolution)
+
+    for source in resolution_sources:
         for key in ("primary_key", "market_id", "marketId", "condition_id", "conditionId", "token_id", "tokenId", "matched_key", "slug"):
-            value = resolution.get(key)
-            if value is not None:
-                text = str(value).strip()
-                if text and text not in keys:
-                    keys.append(text)
+            add(source.get(key))
     return keys
 
 
