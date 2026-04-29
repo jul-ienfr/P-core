@@ -1598,6 +1598,8 @@ def test_cli_shadow_profile_exposure_preview_writes_json_and_markdown(tmp_path: 
 
     assert result.returncode == 0, result.stderr
     compact = json.loads(result.stdout)
+    assert compact["paper_only"] is True
+    assert compact["live_order_allowed"] is False
     assert compact["summary"]["max_profit_if_true_usdc"] == 99.0
     payload = json.loads(output_json.read_text(encoding="utf-8"))
     assert payload["paper_only"] is True

@@ -305,7 +305,7 @@ def run_shadow_profile_exposure_preview_artifact(
         md_path.write_text(_shadow_profile_exposure_preview_markdown(result), encoding="utf-8")
         result["artifacts"]["output_md"] = str(md_path)
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return {"summary": result["summary"], "artifacts": result["artifacts"]}
+    return {"paper_only": True, "live_order_allowed": False, "summary": result["summary"], "artifacts": result["artifacts"]}
 
 
 
