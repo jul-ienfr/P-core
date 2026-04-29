@@ -1,0 +1,136 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Weather Operator Cockpit",
+      "tooltip": "Open weather operator cockpit",
+      "type": "link",
+      "uid": "prediction-core-weather-operator-cockpit",
+      "url": "/d/prediction-core-weather-operator-cockpit/weather-operator-cockpit?orgId=1&${__url_time_range}&timezone=Europe%2FParis&${__all_variables}"
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "pluginVersion": "10.4.0",
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT anyLast(active_scenario) AS active_scenario FROM weather_live_observer_config_state", "refId": "A"}],
+      "title": "Active scenario",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"unit": "decgbytes"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "id": 2,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT anyLast(estimated_gb_month) AS estimated_gb_month FROM weather_live_observer_config_state", "refId": "A"}],
+      "title": "Estimated GB/month",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "id": 3,
+      "options": {"colorMode": "none", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT concat(storage_primary, ' / ', storage_analytics, ' / archive=', storage_archive) AS backend FROM weather_live_observer_config_state", "refId": "A"}],
+      "title": "Storage primary/backend",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "id": 4,
+      "options": {"colorMode": "none", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT concat(base_dir, ' / ', archive_target) AS target FROM weather_live_observer_config_state", "refId": "A"}],
+      "title": "Base directory / archive target",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"custom": {"align": "auto", "cellOptions": {"type": "auto"}, "inspect": false}}, "overrides": []},
+      "gridPos": {"h": 7, "w": 8, "x": 0, "y": 4},
+      "id": 5,
+      "options": {"showHeader": true},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT compact_market_snapshot_interval_seconds, bin_surface_snapshot_interval_seconds, forecast_snapshot_interval_seconds, trade_trigger_poll_interval_seconds FROM weather_live_observer_config_state ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
+      "title": "Snapshot intervals",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"custom": {"align": "auto", "cellOptions": {"type": "auto"}, "inspect": false}}, "overrides": []},
+      "gridPos": {"h": 7, "w": 8, "x": 8, "y": 4},
+      "id": 6,
+      "options": {"showHeader": true},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT market_limit, surface_limit, followed_account_limit FROM weather_live_observer_config_state ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
+      "title": "Market/surface/account limits",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"custom": {"align": "auto", "cellOptions": {"type": "auto"}, "inspect": false}}, "overrides": []},
+      "gridPos": {"h": 7, "w": 8, "x": 16, "y": 4},
+      "id": 7,
+      "options": {"showHeader": true},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT run_id, source, status, collection_enabled AS `collection.enabled`, dry_run, paper_only, live_order_allowed FROM weather_live_observer_runs ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
+      "title": "Last run status",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"unit": "m"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 11},
+      "id": 8,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT dateDiff('minute', max(observed_at), now()) AS snapshot_freshness_minutes FROM weather_live_observer_snapshots", "refId": "A"}],
+      "title": "Snapshot freshness",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"custom": {"align": "auto", "cellOptions": {"type": "auto"}, "inspect": false}}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 11},
+      "id": 9,
+      "options": {"showHeader": true},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT source, count() AS errors FROM weather_live_observer_errors WHERE observed_at >= now() - INTERVAL 7 DAY GROUP BY source ORDER BY errors DESC", "refId": "A"}],
+      "title": "Error count by source",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"},
+      "fieldConfig": {"defaults": {"custom": {"align": "auto", "cellOptions": {"type": "auto"}, "inspect": false}}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 11},
+      "id": 10,
+      "options": {"showHeader": true},
+      "targets": [{"datasource": {"type": "grafana-clickhouse-datasource", "uid": "prediction-core-clickhouse"}, "format": 1, "query": "SELECT paper_only, live_order_allowed, allow_wallet, allow_signing, collection_enabled AS `collection.enabled` FROM weather_live_observer_config_state ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
+      "title": "Paper-only guardrails",
+      "type": "table"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": ["prediction-core", "weather", "live-observer", "config"],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timepicker": {},
+  "timezone": "Europe/Paris",
+  "title": "Weather Live Observer Config",
+  "uid": "prediction-core-weather-live-observer-config",
+  "version": 1,
+  "weekStart": "monday"
+}

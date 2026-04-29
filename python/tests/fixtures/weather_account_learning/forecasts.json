@@ -1,0 +1,12 @@
+{
+  "london|april 25": {
+    "forecast_high_c": 20.4,
+    "source": "fixture_ecmwf_blend",
+    "freshness_minutes": 45
+  },
+  "paris|april 25": {
+    "forecast_high_c": 18.2,
+    "source": "fixture_ecmwf_blend",
+    "freshness_minutes": 50
+  }
+}

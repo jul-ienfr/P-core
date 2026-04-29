@@ -1,0 +1,59 @@
+{
+  "source": "polymarket_data_api_account_trades_fixture",
+  "paper_only": true,
+  "live_order_allowed": false,
+  "accounts": [
+    {
+      "wallet": "0xCold",
+      "handle": "ColdMath",
+      "bucket": "weather_top10",
+      "rank": "1",
+      "score": "98.5"
+    },
+    {
+      "wallet": "0xQuiet",
+      "handle": "QuietWeather",
+      "bucket": "weather_top10",
+      "rank": "2",
+      "score": "91.0"
+    }
+  ],
+  "raw_trades": [
+    {
+      "transactionHash": "0xsmoke01",
+      "proxyWallet": "0xCold",
+      "userName": "ColdMath",
+      "title": "Will the highest temperature in London be exactly 20°C on April 25?",
+      "slug": "london-high-temp-20c-apr-25",
+      "side": "BUY",
+      "outcome": "Yes",
+      "price": 0.31,
+      "size": 100,
+      "timestamp": "2026-04-24T10:00:00Z"
+    },
+    {
+      "transactionHash": "0xsmoke02",
+      "proxyWallet": "0xCold",
+      "userName": "ColdMath",
+      "title": "Will the highest temperature in London be 21°C or higher on April 25?",
+      "slug": "london-high-temp-21c-or-higher-apr-25",
+      "side": "BUY",
+      "outcome": "Yes",
+      "price": 0.73,
+      "size": 20,
+      "timestamp": "2026-04-24T11:00:00Z"
+    },
+    {
+      "transactionHash": "0xignored",
+      "proxyWallet": "0xCold",
+      "userName": "ColdMath",
+      "title": "Will Arsenal win the Premier League?",
+      "slug": "arsenal-premier-league",
+      "side": "BUY",
+      "outcome": "Yes",
+      "price": 0.12,
+      "size": 50,
+      "timestamp": "2026-04-24T12:00:00Z"
+    }
+  ]
+}

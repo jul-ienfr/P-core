@@ -1,0 +1,25 @@
+{
+  "source": "fixture_resolution_metadata",
+  "paper_only": true,
+  "live_order_allowed": false,
+  "markets": {
+    "m-london-20": {
+      "resolution_status": "open",
+      "resolution_source": "fixture_noaa_daily_climate_report",
+      "station": "EGLL",
+      "date": "2026-04-25"
+    },
+    "m-london-21": {
+      "resolution_status": "open",
+      "resolution_source": "fixture_noaa_daily_climate_report",
+      "station": "EGLL",
+      "date": "2026-04-25"
+    },
+    "m-paris-18": {
+      "resolution_status": "open",
+      "resolution_source": "fixture_station_daily_high",
+      "station": "LFPG",
+      "date": "2026-04-25"
+    }
+  }
+}

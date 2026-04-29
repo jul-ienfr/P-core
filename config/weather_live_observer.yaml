@@ -1,0 +1,125 @@
+version: 1
+active_scenario: minimal      # prepared scenario; collection.enabled is the true ON/OFF switch
+
+collection:
+  enabled: true               # bounded read-only live observation is explicitly enabled
+  dry_run: false              # run-once may persist paper-only observation rows
+  reason: bounded_read_only_weather_shadow_profiles
+
+streams:
+  market_snapshots:
+    enabled: true
+  bin_surfaces:
+    enabled: true
+  forecasts:
+    enabled: true
+  account_trades:
+    enabled: true
+  full_books:
+    enabled: true
+  microstructure:
+    enabled: true
+
+profiles:
+  shadow_coldmath_v0:
+    enabled: true
+    source_account: ColdMath
+  shadow_poligarch_v0:
+    enabled: true
+    source_account: Poligarch
+  shadow_railbird_v0:
+    enabled: true
+    source_account: Railbird
+
+followed_accounts:
+  ColdMath:
+    enabled: true
+  Poligarch:
+    enabled: true
+  Railbird:
+    enabled: true
+  xX25Xx:
+    enabled: true
+  syacxxa:
+    enabled: true
+  0xhana:
+    enabled: true
+  Maskache2:
+    enabled: true
+  Amano-Hina:
+    enabled: true
+  mjf02:
+    enabled: true
+  dpnd:
+    enabled: true
+
+scenarios:
+  minimal:
+    market_limit: 100
+    surface_limit: 25
+    followed_account_limit: 10
+    compact_market_snapshot_interval_seconds: 300
+    bin_surface_snapshot_interval_seconds: 300
+    forecast_snapshot_interval_seconds: 1800
+    trade_trigger_poll_interval_seconds: 300
+    full_book_policy: event_only
+    retention:
+      raw_days: 30
+      compact_days: 180
+      aggregate_days: 365
+
+  realistic:
+    market_limit: 300
+    surface_limit: 60
+    followed_account_limit: 25
+    compact_market_snapshot_interval_seconds: 180
+    bin_surface_snapshot_interval_seconds: 300
+    forecast_snapshot_interval_seconds: 1800
+    trade_trigger_poll_interval_seconds: 180
+    full_book_policy: event_only
+    retention:
+      raw_days: 45
+      compact_days: 180
+      aggregate_days: 730
+
+  aggressive:
+    market_limit: 1000
+    surface_limit: 150
+    followed_account_limit: 80
+    compact_market_snapshot_interval_seconds: 60
+    bin_surface_snapshot_interval_seconds: 120
+    forecast_snapshot_interval_seconds: 900
+    trade_trigger_poll_interval_seconds: 60
+    full_book_policy: event_plus_high_movement
+    retention:
+      raw_days: 30
+      compact_days: 120
+      aggregate_days: 730
+
+storage:
+  enabled: true
+  primary: local_jsonl
+  analytics: null
+  archive: local_jsonl
+  mirror: []
+
+paths:
+  base_dir: /mnt/truenas/p-core/polymarket/live_observer
+  jsonl_dir: /mnt/truenas/p-core/polymarket/live_observer/jsonl
+  parquet_dir: /mnt/truenas/p-core/polymarket/live_observer/parquet
+  reports_dir: /mnt/truenas/p-core/polymarket/live_observer/reports
+  manifests_dir: /mnt/truenas/p-core/polymarket/live_observer/manifests
+
+s3:
+  enabled: false
+  bucket_env: PREDICTION_CORE_S3_BUCKET
+  prefix: polymarket/live_observer
+
+safety:
+  paper_only: true
+  live_order_allowed: false
+  allow_wallet: false
+  allow_signing: false
+  require_mountpoint: /mnt/truenas
+  refuse_if_not_mounted: true
+  max_full_book_markets_per_run: 25

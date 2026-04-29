@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import json
 import os
 import shlex
@@ -31,11 +32,15 @@ from weather_pm.analytics_adapter import (
     profile_decision_events_from_shortlist,
     strategy_signal_events_from_shortlist,
 )
+from weather_pm.account_trades import backfill_account_trades_from_followlist, import_account_trades
 from weather_pm.decision import build_decision
 from weather_pm.event_surface import build_weather_event_surface
 from weather_pm.execution_features import build_execution_features
 from weather_pm.forecast_client import build_forecast_bundle
 from weather_pm.history_client import StationHistoryClient, _latency_operational_fields, _parse_observation_timestamp, build_station_history_bundle
+from weather_pm.live_observer import run_live_observer_fast_collector, run_live_observer_once
+from weather_pm.live_observer_config import load_live_observer_config
+from weather_pm.live_observer_storage_estimator import estimate_live_observer_storage
 from weather_pm.live_storage import assert_not_unmounted_truenas_path, write_live_observer_payload_to_storage
 from weather_pm.market_parser import parse_market_question
 from weather_pm.miro_seed import build_miro_seed_markdown
@@ -56,6 +61,8 @@ from weather_pm.probability_model import build_model_output
 from weather_pm.resolution_monitor import write_paper_resolution_monitor
 from weather_pm.resolution_parser import parse_resolution_metadata
 from weather_pm.scoring import score_market
+from weather_pm.shadow_paper_runner import run_account_trade_resolution_artifact, run_shadow_paper_runner_artifact, run_shadow_profile_evaluator_artifact
+from weather_pm.shadow_profiles import write_learned_shadow_patterns_artifacts, write_shadow_profile_artifacts
 from weather_pm.source_coverage import build_weather_source_coverage_report
 from weather_pm.source_routing import build_resolution_source_route
 from weather_pm.station_binding import build_station_binding
@@ -141,6 +148,17 @@ def build_parser() -> argparse.ArgumentParser:
     account_learning_backfill.add_argument("--output-dir", required=True, help="Output directory for account_trades and shadow_profiles artifacts")
     account_learning_backfill.add_argument("--run-id", required=False, help="Optional deterministic artifact run id")
 
+    legacy_account_trades_backfill = subparsers.add_parser("backfill-account-trades", help="Backfill public Polymarket account trades from a followlist CSV")
+    legacy_account_trades_backfill.add_argument("--followlist", required=True, help="CSV followlist with wallet/handle columns")
+    legacy_account_trades_backfill.add_argument("--out-json", required=True, help="Output raw public trades JSON")
+    legacy_account_trades_backfill.add_argument("--limit-accounts", required=False, type=int, default=20, help="Maximum accounts to backfill")
+    legacy_account_trades_backfill.add_argument("--trades-per-account", required=False, type=int, default=100, help="Maximum public trades per account")
+
+    legacy_import_account_trades = subparsers.add_parser("import-account-trades", help="Classify raw public account trades into weather trades and profiles")
+    legacy_import_account_trades.add_argument("--trades-json", required=True, help="Input raw public account trades JSON")
+    legacy_import_account_trades.add_argument("--trades-out", required=True, help="Output classified weather trades JSON")
+    legacy_import_account_trades.add_argument("--profiles-out", required=True, help="Output historical account profiles JSON")
+
     account_trades_backfill = subparsers.add_parser("account-trades-backfill", help="Normalize public Polymarket weather account trade backfill JSON")
     account_trades_backfill.add_argument("--input-json", required=True, help="Public account trade/backfill JSON")
 
@@ -153,11 +171,47 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_profiles_report.add_argument("--output-json", required=True, help="Output shadow_profiles JSON artifact")
     shadow_profiles_report.add_argument("--output-md", required=False, help="Optional Markdown operator report")
 
+    legacy_shadow_patterns = subparsers.add_parser("shadow-patterns-report", help="Write learned shadow-pattern JSON/Markdown from a trade/no-trade dataset")
+    legacy_shadow_patterns.add_argument("--dataset-json", required=True, help="Input trade/no-trade dataset JSON")
+    legacy_shadow_patterns.add_argument("--output-json", required=True, help="Output learned patterns JSON")
+    legacy_shadow_patterns.add_argument("--output-md", required=False, help="Optional Markdown operator report")
+    legacy_shadow_patterns.add_argument("--limit", required=False, type=int, default=20, help="Maximum learned patterns")
+
+    legacy_shadow_profile = subparsers.add_parser("shadow-profile-report", help="Build trade/no-trade dataset and operator shadow profile report")
+    legacy_shadow_profile.add_argument("--weather-trades-json", required=True, help="Input classified weather trades JSON")
+    legacy_shadow_profile.add_argument("--markets-json", required=True, help="Input weather markets JSON")
+    legacy_shadow_profile.add_argument("--dataset-out", required=True, help="Output trade/no-trade dataset JSON")
+    legacy_shadow_profile.add_argument("--report-out", required=True, help="Output operator report JSON")
+    legacy_shadow_profile.add_argument("--limit", required=False, type=int, default=10, help="Maximum profiles in report")
+    legacy_shadow_profile.add_argument("--accounts-csv", required=False, help="Optional followlist CSV for no-trade expansion")
+    legacy_shadow_profile.add_argument("--limit-accounts", required=False, type=int, help="Maximum followlist accounts")
+
     shadow_profiles_deep_dive = subparsers.add_parser("shadow-profiles-deep-dive", help="Render one account shadow-profile deep dive")
     shadow_profiles_deep_dive.add_argument("--profiles-json", required=True, help="shadow_profiles JSON artifact")
     shadow_profiles_deep_dive.add_argument("--wallet", required=False, help="Wallet to inspect")
     shadow_profiles_deep_dive.add_argument("--handle", required=False, help="Handle to inspect")
     shadow_profiles_deep_dive.add_argument("--output-md", required=False, help="Optional Markdown deep dive")
+
+    shadow_paper_runner = subparsers.add_parser("shadow-paper-runner", help="Build paper-only shadow orders from account trade/no-trade profiles plus orderbook/forecast features")
+    shadow_paper_runner.add_argument("--dataset-json", required=True, help="Trade/no-trade dataset JSON")
+    shadow_paper_runner.add_argument("--orderbooks-json", required=False, help="Optional market-id keyed orderbook feature JSON")
+    shadow_paper_runner.add_argument("--forecasts-json", required=False, help="Optional surface-key keyed forecast feature JSON")
+    shadow_paper_runner.add_argument("--resolutions-json", required=False, help="Optional market-id/surface-key historical resolution JSON")
+    shadow_paper_runner.add_argument("--profile-configs-json", required=False, help="Optional wallet/handle keyed shadow profile replay config JSON")
+    shadow_paper_runner.add_argument("--run-id", required=True, help="Shadow paper replay run id")
+    shadow_paper_runner.add_argument("--output-json", required=True, help="Output paper-only shadow orders JSON")
+    shadow_paper_runner.add_argument("--max-order-usdc", required=False, type=float, default=5.0, help="Maximum simulated notional per shadow order")
+
+    account_trade_resolution = subparsers.add_parser("account-trade-resolution", help="Score imported account trades against resolved outcomes in paper-only mode")
+    account_trade_resolution.add_argument("--trades-json", required=True, help="Input classified account trades JSON")
+    account_trade_resolution.add_argument("--resolutions-json", required=True, help="Market/slug keyed resolution JSON")
+    account_trade_resolution.add_argument("--output-json", required=True, help="Output resolved trade dataset JSON")
+
+    shadow_profile_evaluator = subparsers.add_parser("shadow-profile-evaluator", help="Evaluate shadow profile paper orders and historical resolved account trades")
+    shadow_profile_evaluator.add_argument("--paper-orders-json", required=True, help="Input shadow paper orders JSON")
+    shadow_profile_evaluator.add_argument("--trade-resolution-json", required=False, help="Optional resolved account trade dataset JSON")
+    shadow_profile_evaluator.add_argument("--output-json", required=True, help="Output shadow profile evaluation JSON")
+    shadow_profile_evaluator.add_argument("--output-md", required=False, help="Optional Markdown operator report")
 
     strategy_report = subparsers.add_parser("strategy-report", help="Extract reusable weather strategy rules from a reverse-engineering report")
     strategy_report.add_argument("--reverse-engineering-json", required=True, help="Reverse-engineering JSON produced by import-weather-traders")
@@ -290,7 +344,51 @@ def build_parser() -> argparse.ArgumentParser:
     miro_seed_export_parser.add_argument("--output-manifest", required=False, help="Optional JSON manifest with MiroFish/MiroShark upload metadata")
     miro_seed_export_parser.add_argument("--target", choices=("mirofish", "miroshark", "both"), default="mirofish", help="Which simulation runtime recipe to prioritize")
     miro_seed_export_parser.add_argument("--base-url", default="http://localhost:5001", help="Local MiroFish/MiroShark base URL for generated curl commands")
+
+    live_observer_config = subparsers.add_parser("live-observer-config", help="Inspect or update the paper-only live observer config")
+    live_observer_config_sub = live_observer_config.add_subparsers(dest="live_observer_config_action")
+    _add_config_arg(live_observer_config_sub.add_parser("show", help="Show redacted config and estimate"))
+    live_observer_config_sub.choices["show"].add_argument("--json", action="store_true", help="Emit JSON")
+    _add_config_arg(live_observer_config_sub.add_parser("estimate", help="Estimate live-observer storage"))
+    set_scenario = live_observer_config_sub.add_parser("set-scenario", help="Set active observer scenario")
+    set_scenario.add_argument("scenario", choices=("minimal", "realistic", "aggressive"))
+    _add_config_arg(set_scenario)
+    set_storage = live_observer_config_sub.add_parser("set-storage", help="Set observer storage backends")
+    set_storage.add_argument("--primary", required=False)
+    set_storage.add_argument("--analytics", required=False)
+    set_storage.add_argument("--archive", required=False)
+    _add_config_arg(set_storage)
+    set_path = live_observer_config_sub.add_parser("set-path", help="Set observer base path")
+    set_path.add_argument("--base-dir", required=True)
+    _add_config_arg(set_path)
+    enable_cmd = live_observer_config_sub.add_parser("enable", help="Enable collection/stream/profile")
+    enable_cmd.add_argument("target", choices=("collection", "stream", "profile"))
+    enable_cmd.add_argument("name", nargs="?")
+    enable_cmd.add_argument("--reason", required=False)
+    _add_config_arg(enable_cmd)
+    disable_cmd = live_observer_config_sub.add_parser("disable", help="Disable collection/stream/profile")
+    disable_cmd.add_argument("target", choices=("collection", "stream", "profile"))
+    disable_cmd.add_argument("name", nargs="?")
+    disable_cmd.add_argument("--reason", required=False)
+    _add_config_arg(disable_cmd)
+
+    live_observer = subparsers.add_parser("live-observer", help="Run the paper-only live observer")
+    live_observer_sub = live_observer.add_subparsers(dest="live_observer_action")
+    run_once = live_observer_sub.add_parser("run-once", help="Run one observer pass")
+    run_once.add_argument("--source", choices=("fixture", "live"), default="fixture")
+    run_once.add_argument("--dry-run", action="store_true")
+    _add_config_arg(run_once)
+    fast_collector = live_observer_sub.add_parser("fast-collector", help="Run fast event-trigger collector without reporting")
+    fast_collector.add_argument("--source", choices=("fixture", "live"), default="live")
+    fast_collector.add_argument("--dry-run", action="store_true")
+    fast_collector.add_argument("--max-iterations", type=int, default=1)
+    fast_collector.add_argument("--poll-interval-seconds", type=int, required=False)
+    _add_config_arg(fast_collector)
     return parser
+
+
+def _add_config_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--config", default="config/weather_live_observer.yaml", help="Weather live observer YAML config path")
 
 
 def _add_paper_cycle_arguments(parser: argparse.ArgumentParser) -> None:
@@ -307,9 +405,149 @@ def _print_analytics_export_counts(rows_by_table: dict[str, list[dict[str, Any]]
         print(f"analytics.{table}.rows={len(rows_by_table[table])}")
 
 
+def _config_payload(config_path: str | Path) -> dict[str, Any]:
+    config = load_live_observer_config(config_path)
+    return {"config": asdict(config), "estimate": estimate_live_observer_storage(config).to_dict()}
+
+
+def _handle_live_observer_config(args: argparse.Namespace) -> dict[str, Any]:
+    action = args.live_observer_config_action
+    config_path = Path(args.config)
+    if action == "show":
+        return _config_payload(config_path)
+    if action == "estimate":
+        config = load_live_observer_config(config_path)
+        return estimate_live_observer_storage(config).to_dict()
+    if action == "set-scenario":
+        _replace_line_prefix(config_path, "active_scenario:", f"active_scenario: {args.scenario:<11} # prepared scenario; collection.enabled is the true ON/OFF switch")
+        return {"active_scenario": args.scenario}
+    if action == "set-storage":
+        updates = {key: value for key, value in {"primary": args.primary, "analytics": args.analytics, "archive": args.archive}.items() if value is not None}
+        _update_yaml_block(config_path, "storage", updates)
+        return {"storage": updates}
+    if action == "set-path":
+        base = args.base_dir.rstrip("/")
+        paths = {"base_dir": base, "jsonl_dir": f"{base}/jsonl", "parquet_dir": f"{base}/parquet", "reports_dir": f"{base}/reports", "manifests_dir": f"{base}/manifests"}
+        _update_yaml_block(config_path, "paths", paths)
+        return {"paths": paths}
+    if action in {"enable", "disable"}:
+        enabled = action == "enable"
+        if args.target == "collection":
+            _update_yaml_block(config_path, "collection", {"enabled": enabled, "reason": args.reason or action})
+            return {"collection": {"enabled": enabled, "reason": args.reason or action}}
+        block = "streams" if args.target == "stream" else "profiles"
+        if not args.name:
+            raise SystemExit(f"live-observer-config {action} {args.target} requires a name")
+        _update_nested_yaml_block(config_path, block, args.name, {"enabled": enabled, "reason": args.reason or action})
+        return {args.target: args.name, "enabled": enabled, "reason": args.reason or action}
+    raise SystemExit(f"unknown live-observer-config action: {action}")
+
+
+def _handle_live_observer(args: argparse.Namespace) -> dict[str, Any]:
+    config = load_live_observer_config(args.config)
+    if args.live_observer_action == "run-once":
+        return run_live_observer_once(config, source=args.source, dry_run=args.dry_run).to_dict()
+    if args.live_observer_action == "fast-collector":
+        return run_live_observer_fast_collector(
+            config,
+            source=args.source,
+            dry_run=args.dry_run,
+            max_iterations=args.max_iterations,
+            poll_interval_seconds=args.poll_interval_seconds,
+        ).to_dict()
+    raise SystemExit(f"unknown live-observer action: {args.live_observer_action}")
+
+
+def _replace_line_prefix(path: Path, prefix: str, replacement: str) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith(prefix):
+            lines[index] = replacement
+            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            return
+    raise ValueError(f"missing YAML line prefix: {prefix}")
+
+
+def _update_yaml_block(path: Path, block: str, updates: dict[str, Any]) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    start = _find_yaml_block(lines, block)
+    end = _find_yaml_block_end(lines, start)
+    for key, value in updates.items():
+        rendered = _yaml_scalar(value)
+        prefix = f"  {key}:"
+        for index in range(start + 1, end):
+            if lines[index].startswith(prefix):
+                comment = f"  #{lines[index].split('#', 1)[1]}" if "#" in lines[index] else ""
+                lines[index] = f"  {key}: {rendered}{comment}"
+                break
+        else:
+            lines.insert(end, f"  {key}: {rendered}")
+            end += 1
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _update_nested_yaml_block(path: Path, block: str, name: str, updates: dict[str, Any]) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    parent = _find_yaml_block(lines, block)
+    parent_end = _find_yaml_block_end(lines, parent)
+    nested = None
+    for index in range(parent + 1, parent_end):
+        if lines[index].startswith(f"  {name}:"):
+            nested = index
+            break
+    if nested is None:
+        raise ValueError(f"missing YAML block: {block}.{name}")
+    end = nested + 1
+    while end < parent_end and (lines[end].startswith("    ") or not lines[end].strip()):
+        end += 1
+    for key, value in updates.items():
+        rendered = _yaml_scalar(value)
+        prefix = f"    {key}:"
+        for index in range(nested + 1, end):
+            if lines[index].startswith(prefix):
+                comment = f"  #{lines[index].split('#', 1)[1]}" if "#" in lines[index] else ""
+                lines[index] = f"    {key}: {rendered}{comment}"
+                break
+        else:
+            lines.insert(end, f"    {key}: {rendered}")
+            end += 1
+            parent_end += 1
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _find_yaml_block(lines: list[str], block: str) -> int:
+    for index, line in enumerate(lines):
+        if line.startswith(f"{block}:"):
+            return index
+    raise ValueError(f"missing YAML block: {block}")
+
+
+def _find_yaml_block_end(lines: list[str], start: int) -> int:
+    end = start + 1
+    while end < len(lines) and (lines[end].startswith(" ") or not lines[end].strip()):
+        end += 1
+    return end
+
+
+def _yaml_scalar(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "null"
+    return str(value)
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.command == "live-observer-config":
+        print(json.dumps(_handle_live_observer_config(args)))
+        return 0
+
+    if args.command == "live-observer":
+        print(json.dumps(_handle_live_observer(args)))
+        return 0
 
     if args.command == "fetch-markets":
         markets = [normalize_market_record(market) for market in list_weather_markets(source=args.source, limit=args.limit)]
@@ -396,6 +634,23 @@ def main() -> int:
         print(json.dumps(write_account_learning_backfill_pipeline(args.input_json, args.output_dir, run_id=args.run_id)))
         return 0
 
+    if args.command == "backfill-account-trades":
+        print(
+            json.dumps(
+                backfill_account_trades_from_followlist(
+                    args.followlist,
+                    args.out_json,
+                    limit_accounts=args.limit_accounts,
+                    trades_per_account=args.trades_per_account,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "import-account-trades":
+        print(json.dumps(import_account_trades(args.trades_json, trades_out=args.trades_out, profiles_out=args.profiles_out)))
+        return 0
+
     if args.command == "account-trades-backfill":
         print(json.dumps(load_account_trade_backfill(args.input_json)))
         return 0
@@ -408,10 +663,73 @@ def main() -> int:
         print(json.dumps(write_shadow_profile_report(args.trades_json, args.output_json, output_md=args.output_md)))
         return 0
 
+    if args.command == "shadow-patterns-report":
+        print(
+            json.dumps(
+                write_learned_shadow_patterns_artifacts(
+                    dataset_json=args.dataset_json,
+                    output_json=args.output_json,
+                    output_md=args.output_md,
+                    limit=args.limit,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "shadow-profile-report":
+        print(
+            json.dumps(
+                write_shadow_profile_artifacts(
+                    weather_trades_json=args.weather_trades_json,
+                    markets_json=args.markets_json,
+                    dataset_out=args.dataset_out,
+                    report_out=args.report_out,
+                    limit=args.limit,
+                    accounts_csv=args.accounts_csv,
+                    limit_accounts=args.limit_accounts,
+                )
+            )
+        )
+        return 0
+
     if args.command == "shadow-profiles-deep-dive":
         if not args.wallet and not args.handle:
             parser.error("shadow-profiles-deep-dive requires --wallet or --handle")
         print(json.dumps(write_shadow_profile_deep_dive(args.profiles_json, wallet=args.wallet, handle=args.handle, output_md=args.output_md)))
+        return 0
+
+    if args.command == "shadow-paper-runner":
+        print(
+            json.dumps(
+                run_shadow_paper_runner_artifact(
+                    dataset_json=args.dataset_json,
+                    orderbooks_json=args.orderbooks_json,
+                    forecasts_json=args.forecasts_json,
+                    run_id=args.run_id,
+                    output_json=args.output_json,
+                    resolutions_json=args.resolutions_json,
+                    profile_configs_json=args.profile_configs_json,
+                    max_order_usdc=args.max_order_usdc,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "account-trade-resolution":
+        print(json.dumps(run_account_trade_resolution_artifact(trades_json=args.trades_json, resolutions_json=args.resolutions_json, output_json=args.output_json)))
+        return 0
+
+    if args.command == "shadow-profile-evaluator":
+        print(
+            json.dumps(
+                run_shadow_profile_evaluator_artifact(
+                    paper_orders_json=args.paper_orders_json,
+                    trade_resolution_json=args.trade_resolution_json,
+                    output_json=args.output_json,
+                    output_md=args.output_md,
+                )
+            )
+        )
         return 0
 
     if args.command == "strategy-report":
