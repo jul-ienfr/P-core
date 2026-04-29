@@ -25,10 +25,27 @@ def _winner_patterns() -> dict[str, object]:
     return {
         "paper_only": True,
         "live_order_allowed": False,
-        "robust_patterns": [{"pattern_id": "p1", "archetype": "threshold_harvester", "resolved_trades": 8}],
+        "robust_patterns": [
+            {
+                "pattern_id": "p1",
+                "archetype": "threshold_harvester",
+                "resolved_trades": 20,
+                "promotion_eligible": True,
+                "promotion_blockers": [],
+                "promotion_metrics": {"oos_resolved_trades": 8, "historical_capturable_ratio": 0.9},
+            }
+        ],
         "anti_patterns": [{"pattern_id": "bad", "reason": "negative_out_of_sample_pnl"}],
-        "research_only_patterns": [],
-        "summary": {"capturability_gaps": 2},
+        "research_only_patterns": [
+            {
+                "pattern_id": "blocked",
+                "reason": "insufficient_resolved_sample",
+                "promotion_eligible": False,
+                "promotion_blockers": ["insufficient_resolved_sample", "stale_forecast"],
+                "promotion_metrics": {"resolved_trades": 12, "forecast_fresh_pct": 50.0},
+            }
+        ],
+        "summary": {"capturability_gaps": 2, "promotion_gate_version": "weather_winner_pattern_v2_2026_04"},
         "operator_next_actions": ["expand historical orderbook coverage"],
     }
 
@@ -61,9 +78,14 @@ def test_report_markdown_summarizes_required_operator_sections() -> None:
         "Research-only patterns",
         "Capturability gaps",
         "Paper candidates / watch-only",
+        "Promotion readiness",
+        "Promotion blockers",
         "Next data gaps",
     ]:
         assert section in md
+    assert "Promotion gate: weather_winner_pattern_v2_2026_04" in md
+    assert "Eligible robust patterns: 1" in md
+    assert "blocked: insufficient_resolved_sample, stale_forecast" in md
     assert payload["paper_only"] is True
     assert payload["live_order_allowed"] is False
 

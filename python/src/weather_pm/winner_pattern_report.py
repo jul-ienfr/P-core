@@ -23,6 +23,14 @@ def build_winner_pattern_operator_report(
     candidates = _count(paper_candidates, "paper_candidates")
     watch = _count(paper_candidates, "watch_only")
     blocked = _count(paper_candidates, "blocked")
+    all_patterns = [
+        row
+        for key in ("robust_patterns", "research_only_patterns", "anti_patterns")
+        for row in (winner_patterns.get(key, []) if isinstance(winner_patterns.get(key), list) else [])
+        if isinstance(row, dict)
+    ]
+    promotion_eligible = sum(1 for row in all_patterns if row.get("promotion_eligible") is True)
+    promotion_blocked = sum(1 for row in all_patterns if row.get("promotion_eligible") is False and row.get("promotion_blockers"))
     candidate_summary = paper_candidates.get("summary", {}) if isinstance(paper_candidates.get("summary"), dict) else {}
     research_only_matches = int(candidate_summary.get("research_only_matches", 0)) if isinstance(candidate_summary, dict) else 0
     coverage_summary = resolution_coverage.get("summary", resolution_coverage) if isinstance(resolution_coverage, dict) else {}
@@ -40,6 +48,9 @@ def build_winner_pattern_operator_report(
             "watch_only": watch,
             "blocked": blocked,
             "research_only_matches": research_only_matches,
+            "promotion_eligible_patterns": promotion_eligible,
+            "promotion_blocked_patterns": promotion_blocked,
+            "promotion_gate_version": (winner_patterns.get("summary", {}) if isinstance(winner_patterns.get("summary"), dict) else {}).get("promotion_gate_version"),
             "resolved_pct": coverage_summary.get("resolved_pct") if isinstance(coverage_summary, dict) else None,
             "capturability_gaps": missing_books,
         },
@@ -77,8 +88,25 @@ def _markdown(winner_patterns: dict[str, Any], paper_candidates: dict[str, Any],
     lines.extend([f"- {row.get('pattern_id', 'pattern')}: {row.get('reason', 'research_only')} ({row.get('examples', 0)} examples)" for row in research[:10] if isinstance(row, dict)] or ["- none"])
     lines.extend(["", "## Anti-patterns", ""])
     lines.extend([f"- {row.get('pattern_id', 'pattern')}: {row.get('reason', 'blocked')}" for row in anti[:10] if isinstance(row, dict)] or ["- none"])
+    summary = winner_patterns.get("summary", {}) if isinstance(winner_patterns.get("summary"), dict) else {}
+    eligible = sum(1 for row in robust if isinstance(row, dict) and row.get("promotion_eligible") is True)
+    blocked_patterns = [
+        row
+        for row in [*robust, *research, *anti]
+        if isinstance(row, dict) and row.get("promotion_eligible") is False and row.get("promotion_blockers")
+    ]
     lines.extend(["", "## Capturability gaps", ""])
     lines.append(f"- Historical/current orderbook gaps: {orderbook.get('missing_orderbook_context', orderbook.get('missing_current_orderbook', 'unknown'))}")
+    lines.extend(["", "## Promotion readiness", ""])
+    lines.append(f"- Promotion gate: {summary.get('promotion_gate_version', 'unknown')}")
+    lines.append(f"- Eligible robust patterns: {eligible}")
+    lines.append(f"- Blocked patterns with explicit blockers: {len(blocked_patterns)}")
+    lines.extend(["", "## Promotion blockers", ""])
+    for row in blocked_patterns[:10]:
+        blockers = row.get("promotion_blockers") if isinstance(row.get("promotion_blockers"), list) else []
+        lines.append(f"- {row.get('pattern_id', 'pattern')}: {', '.join(str(blocker) for blocker in blockers) or row.get('reason', 'blocked')}")
+    if not blocked_patterns:
+        lines.append("- none")
     lines.extend(["", "## Paper candidates / watch-only", ""])
     lines.append(f"- Paper candidates: {len(candidates)}")
     lines.append(f"- Watch-only: {len(watch)}")

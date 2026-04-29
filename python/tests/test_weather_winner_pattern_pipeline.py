@@ -168,8 +168,14 @@ def test_cli_winner_pattern_pipeline_runs_fixture_only_end_to_end(tmp_path: Path
     for filename in expected:
         assert (output_dir / filename).is_file()
     assert payload["artifact_counts"]["resolution_coverage"] == 6
-    assert payload["artifact_counts"]["winner_patterns"] >= 1
+    assert payload["artifact_counts"]["research_only_patterns"] >= 1
+    assert payload["artifact_counts"]["winner_patterns"] == 0
     assert payload["artifact_counts"]["weather_context"] == 1
+    winner_payload = json.loads((output_dir / "winner_patterns.json").read_text(encoding="utf-8"))
+    research_pattern = winner_payload["research_only_patterns"][0]
+    assert research_pattern["promotion_gate_version"] == "weather_winner_pattern_v2_2026_04"
+    assert research_pattern["promotion_eligible"] is False
+    assert "insufficient_resolved_sample" in research_pattern["promotion_blockers"]
     resolution_payload = json.loads((output_dir / "resolution_coverage.json").read_text(encoding="utf-8"))
     watchlist_mode = resolution_payload["watchlist_capture_mode"]
     assert watchlist_mode["paper_only"] is True
@@ -177,7 +183,9 @@ def test_cli_winner_pattern_pipeline_runs_fixture_only_end_to_end(tmp_path: Path
     for key in ("retention_policy", "compressed", "source", "captured_at"):
         assert key in watchlist_mode
     candidates_payload = json.loads((output_dir / "paper_candidates.json").read_text(encoding="utf-8"))
-    assert candidates_payload["summary"]["paper_candidates"] == 1
+    assert candidates_payload["summary"]["paper_candidates"] == 0
+    assert candidates_payload["summary"]["research_only_matches"] == 1
+    assert candidates_payload["watch_only"][0]["paper_probe_authorized"] is False
 
 
 def test_pipeline_uses_resolution_match_primary_key_for_orderbook_context(tmp_path: Path) -> None:

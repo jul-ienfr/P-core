@@ -92,6 +92,146 @@ def test_archetype_labels_cover_initial_pattern_families() -> None:
     assert classify_archetype({}) == "unclear"
 
 
+
+def _v2_example(
+    idx: int,
+    *,
+    pnl: float = 1.0,
+    wallet: str | None = None,
+    sample_split: str | None = None,
+    capturability: str = "capturable",
+    forecast_age_minutes: int = 60,
+    distance_to_threshold: float = 1.5,
+    resolution_verified: bool = True,
+    time_to_resolution_minutes: int = 120,
+    spread: float = 0.04,
+    depth_near_touch: float = 50.0,
+    estimated_slippage_bps: float = 100.0,
+) -> dict[str, object]:
+    row = _example(
+        wallet or f"0x{idx % 4}",
+        f"v2-{idx}",
+        pnl=pnl,
+        capturable=capturability,
+        distance_to_threshold=distance_to_threshold,
+        forecast_age_minutes=forecast_age_minutes,
+    )
+    row.update(
+        {
+            "timestamp": f"2026-04-{idx + 1:02d}T10:00:00Z",
+            "sample_split": sample_split or ("train" if idx < 12 else "out_of_sample"),
+            "notional": 10.0,
+            "forecast_value_at_decision": 21.5,
+            "threshold": 20.0,
+            "forecast_source": "official",
+            "resolution_verified": resolution_verified,
+            "resolution_source": "official_station",
+            "resolution_value": 22.0,
+            "observation_timestamp": "2026-05-01T23:59:00Z",
+            "time_to_resolution_minutes": time_to_resolution_minutes,
+            "spread": spread,
+            "depth_near_touch": depth_near_touch,
+            "estimated_slippage_bps": estimated_slippage_bps,
+        }
+    )
+    return row
+
+
+def _passing_v2_examples() -> list[dict[str, object]]:
+    # 20 trades, 4 wallets, OOS 8/8 positive, top trade/wallet concentration below v2 caps.
+    return [_v2_example(i, pnl=1.0, wallet=f"0x{i % 4}") for i in range(20)]
+
+
+def test_v2_gate_blocks_small_sample_with_explicit_promotion_blocker() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    payload = build_winner_pattern_engine({"examples": _passing_v2_examples()[:19]}, {"trades": []}, min_resolved_trades=5)
+
+    assert payload["robust_patterns"] == []
+    pattern = payload["research_only_patterns"][0]
+    assert pattern["pattern_status"] == "research_only"
+    assert pattern["promotion_gate_version"] == "weather_winner_pattern_v2_2026_04"
+    assert pattern["promotion_eligible"] is False
+    assert "insufficient_resolved_sample" in pattern["promotion_blockers"]
+    assert pattern["promotion_metrics"]["resolved_trades"] == 19
+    assert pattern["paper_only"] is True
+    assert pattern["live_order_allowed"] is False
+
+
+def test_v2_gate_blocks_wallet_concentration_even_with_positive_pnl() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    rows = [_v2_example(i, pnl=1.0, wallet="0xwhale" if i < 11 else f"0x{i % 4}") for i in range(20)]
+    payload = build_winner_pattern_engine({"examples": rows}, {"trades": []}, min_resolved_trades=5, max_top1_pnl_share=0.95)
+
+    assert payload["robust_patterns"] == []
+    pattern = payload["research_only_patterns"][0]
+    assert "wallet_concentrated_pnl" in pattern["promotion_blockers"]
+    assert pattern["promotion_metrics"]["max_wallet_trade_share"] > 0.5
+    assert pattern["promotion_eligible"] is False
+
+
+def test_v2_gate_blocks_missing_out_of_sample_split() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    rows = [_v2_example(i, sample_split="train") for i in range(20)]
+    payload = build_winner_pattern_engine({"examples": rows}, {"trades": []}, min_resolved_trades=5)
+
+    pattern = payload["research_only_patterns"][0]
+    assert "insufficient_out_of_sample_sample" in pattern["promotion_blockers"]
+    assert pattern["promotion_metrics"]["oos_resolved_trades"] == 0
+
+
+def test_v2_gate_blocks_available_orderbook_that_is_not_capturable() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    rows = [
+        _v2_example(i, capturability="not_capturable", spread=0.15, depth_near_touch=2.0, estimated_slippage_bps=400.0)
+        for i in range(20)
+    ]
+    for row in rows:
+        row["orderbook_context_available"] = True
+    payload = build_winner_pattern_engine({"examples": rows}, {"trades": []}, min_resolved_trades=5)
+
+    pattern = payload["research_only_patterns"][0]
+    assert "insufficient_historical_capturable_ratio" in pattern["promotion_blockers"]
+    assert "historical_spread_too_wide" in pattern["promotion_blockers"]
+    assert pattern["promotion_metrics"]["historical_capturable_ratio"] == 0.0
+
+
+def test_v2_gate_blocks_stale_forecast_and_unverified_resolution() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    rows = [_v2_example(i, forecast_age_minutes=360, resolution_verified=False) for i in range(20)]
+    payload = build_winner_pattern_engine({"examples": rows}, {"trades": []}, min_resolved_trades=5)
+
+    pattern = payload["research_only_patterns"][0]
+    assert "stale_forecast" in pattern["promotion_blockers"]
+    assert "unverified_resolution" in pattern["promotion_blockers"]
+    assert pattern["promotion_metrics"]["forecast_fresh_pct"] == 0.0
+    assert pattern["promotion_metrics"]["resolution_verified_pct"] == 0.0
+
+
+def test_v2_gate_promotes_only_when_all_promotion_criteria_pass() -> None:
+    from weather_pm.winner_pattern_engine import build_winner_pattern_engine
+
+    payload = build_winner_pattern_engine({"examples": _passing_v2_examples()}, {"trades": []}, min_resolved_trades=5)
+
+    assert payload["research_only_patterns"] == []
+    pattern = payload["robust_patterns"][0]
+    assert pattern["pattern_status"] == "robust_candidate"
+    assert pattern["reason"] == "passed_weather_winner_pattern_v2_promotion_gate"
+    assert pattern["promotion_eligible"] is True
+    assert pattern["promotion_blockers"] == []
+    assert pattern["promotion_metrics"]["resolved_trades"] == 20
+    assert pattern["promotion_metrics"]["oos_resolved_trades"] == 8
+    assert pattern["promotion_metrics"]["unique_wallets"] == 4
+    assert payload["summary"]["promotion_gate_version"] == "weather_winner_pattern_v2_2026_04"
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+    assert pattern["paper_only"] is True
+    assert pattern["live_order_allowed"] is False
+
 def test_cli_winner_pattern_engine_writes_json_md_and_compact_stdout(tmp_path: Path) -> None:
     decision_path = tmp_path / "decision_context.json"
     trades_path = tmp_path / "resolved_trades.json"

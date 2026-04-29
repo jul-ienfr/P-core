@@ -125,6 +125,8 @@ def run_winner_pattern_pipeline(
         "decision_dataset": len(decision_dataset.get("examples", [])) if isinstance(decision_dataset.get("examples"), list) else 0,
         "weather_context": int(weather_context.get("summary", {}).get("with_weather_context", 0)),
         "winner_patterns": len(winner_patterns.get("robust_patterns", [])) if isinstance(winner_patterns.get("robust_patterns"), list) else 0,
+        "research_only_patterns": len(winner_patterns.get("research_only_patterns", [])) if isinstance(winner_patterns.get("research_only_patterns"), list) else 0,
+        "promotion_blocked_patterns": int(winner_patterns.get("summary", {}).get("promotion_blocked_patterns", 0)) if isinstance(winner_patterns.get("summary"), dict) else 0,
         "paper_candidates": len(paper_candidates.get("paper_candidates", [])) if isinstance(paper_candidates.get("paper_candidates"), list) else 0,
     }
     return {
