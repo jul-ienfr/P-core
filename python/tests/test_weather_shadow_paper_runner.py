@@ -1112,6 +1112,45 @@ def test_build_shadow_profile_evaluation_reports_promoted_historical_profile_ali
     assert profile["recommendation"] == "promote_to_paper_profile"
 
 
+def test_build_shadow_profile_evaluation_summarizes_promoted_opportunity_watch_profiles() -> None:
+    result = build_shadow_profile_evaluation(
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "orders": [
+                {
+                    "profile_id": "jey_threshold",
+                    "profile_role": "promoted_opportunity_watch",
+                    "wallet_signal": "0xJey",
+                    "requested_notional_usdc": 1.75,
+                    "strict_limit_price": 0.32,
+                    "metadata": {"profile_config": {"source_recommendation": "promoted_profile_opportunity_watch"}},
+                    "features": {"resolution": {"available": False}},
+                }
+            ],
+            "skipped": [
+                {
+                    "market_id": "m-paris-18",
+                    "wallet": "0xJey",
+                    "reason": "profile_min_edge_not_met",
+                    "profile_id": "jey_threshold",
+                    "profile_role": "promoted_opportunity_watch",
+                }
+            ],
+        }
+    )
+
+    assert result["summary"]["promoted_opportunity_profiles"] == 1
+    assert result["summary"]["promoted_opportunity_orders"] == 1
+    assert result["summary"]["promoted_opportunity_skipped"] == 1
+    profile = result["profiles"][0]
+    assert profile["profile_id"] == "jey_threshold"
+    assert profile["profile_role"] == "promoted_opportunity_watch"
+    assert profile["source_recommendation"] == "promoted_profile_opportunity_watch"
+    assert profile["skipped_counts"] == {"profile_min_edge_not_met": 1}
+    assert profile["recommendation"] == "needs_resolution_data"
+
+
 def test_build_shadow_profile_evaluation_recommends_promising_historical_profiles_for_paper() -> None:
     trade_resolution_dataset = {
         "paper_only": True,

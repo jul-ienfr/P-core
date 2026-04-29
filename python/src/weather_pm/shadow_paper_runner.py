@@ -260,21 +260,12 @@ def build_shadow_profile_evaluation(paper_orders: dict[str, Any], *, trade_resol
             wallet_to_profile[wallet.lower()] = profile_id
         if handle:
             wallet_to_profile[handle.lower()] = profile_id
-        bucket = buckets.setdefault(
-            profile_id,
-            {
-                "profile_id": profile_id,
-                "profile_role": str(order.get("profile_role") or ""),
-                "orders": 0,
-                "resolved_orders": 0,
-                "wins": 0,
-                "losses": 0,
-                "unresolved_orders": 0,
-                "requested_notional_usdc": 0.0,
-                "estimated_pnl_usdc": 0.0,
-                "skipped_counts": {},
-            },
-        )
+        bucket = buckets.setdefault(profile_id, _empty_profile_bucket(profile_id, str(order.get("profile_role") or "")))
+        metadata = order.get("metadata") if isinstance(order.get("metadata"), dict) else {}
+        profile_config = metadata.get("profile_config") if isinstance(metadata.get("profile_config"), dict) else {}
+        source_recommendation = str(profile_config.get("source_recommendation") or "")
+        if source_recommendation:
+            bucket["source_recommendation"] = source_recommendation
         bucket["orders"] += 1
         notional = _to_float(order.get("requested_notional_usdc"))
         price = _to_float(order.get("strict_limit_price"))
@@ -296,25 +287,18 @@ def build_shadow_profile_evaluation(paper_orders: dict[str, Any], *, trade_resol
         wallet = str(skipped.get("wallet") or "").lower()
         profile_id = wallet_to_profile.get(wallet, "shadow_profile_default")
         reason = str(skipped.get("reason") or "unknown")
-        bucket = buckets.setdefault(
-            profile_id,
-            {
-                "profile_id": profile_id,
-                "profile_role": "",
-                "orders": 0,
-                "resolved_orders": 0,
-                "wins": 0,
-                "losses": 0,
-                "unresolved_orders": 0,
-                "requested_notional_usdc": 0.0,
-                "estimated_pnl_usdc": 0.0,
-                "skipped_counts": {},
-            },
-        )
+        bucket = buckets.setdefault(profile_id, _empty_profile_bucket(profile_id))
+        if skipped.get("profile_role") and not bucket.get("profile_role"):
+            bucket["profile_role"] = str(skipped.get("profile_role") or "")
         bucket["skipped_counts"][reason] = bucket["skipped_counts"].get(reason, 0) + 1
     trade_summary = _merge_trade_resolution_dataset(buckets, trade_resolution_dataset, wallet_to_profile=wallet_to_profile) if trade_resolution_dataset else {}
     profiles = [_finalize_profile_evaluation(bucket) for bucket in buckets.values() if bucket["orders"] or bucket["skipped_counts"] or bucket.get("historical_trades")]
     profiles.sort(key=lambda item: (item["estimated_pnl_usdc"] + item.get("historical_estimated_pnl_usdc", 0.0), item.get("resolved_trades", 0), item["resolved_orders"], item["orders"]), reverse=True)
+    promoted_opportunity_profiles = [
+        profile
+        for profile in profiles
+        if profile.get("profile_role") == "promoted_opportunity_watch" or profile.get("source_recommendation") == "promoted_profile_opportunity_watch"
+    ]
     summary = {
         "profiles": len(profiles),
         "orders": sum(profile["orders"] for profile in profiles),
@@ -323,6 +307,14 @@ def build_shadow_profile_evaluation(paper_orders: dict[str, Any], *, trade_resol
         "losses": sum(profile["losses"] for profile in profiles),
         "unresolved_orders": sum(profile["unresolved_orders"] for profile in profiles),
     }
+    if promoted_opportunity_profiles:
+        summary.update(
+            {
+                "promoted_opportunity_profiles": len(promoted_opportunity_profiles),
+                "promoted_opportunity_orders": sum(profile["orders"] for profile in promoted_opportunity_profiles),
+                "promoted_opportunity_skipped": sum(sum(profile.get("skipped_counts", {}).values()) for profile in promoted_opportunity_profiles),
+            }
+        )
     summary.update(trade_summary)
     return {"paper_only": True, "live_order_allowed": False, "summary": summary, "profiles": profiles}
 
@@ -627,6 +619,8 @@ def _finalize_profile_evaluation(bucket: dict[str, Any]) -> dict[str, Any]:
         "roi": round(pnl / notional, 6) if notional else 0.0,
         "skipped_counts": dict(sorted(bucket["skipped_counts"].items())),
     }
+    if bucket.get("source_recommendation"):
+        result["source_recommendation"] = bucket["source_recommendation"]
     if bucket.get("historical_trades"):
         resolved_trades = int(bucket.get("resolved_trades", 0))
         trade_wins = int(bucket.get("trade_wins", 0))
