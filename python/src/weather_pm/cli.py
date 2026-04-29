@@ -66,6 +66,7 @@ from weather_pm.shadow_paper_runner import (
     run_market_metadata_resolution_artifact,
     run_shadow_paper_runner_artifact,
     run_shadow_profile_evaluator_artifact,
+    run_shadow_profile_exposure_preview_artifact,
 )
 from weather_pm.shadow_profiles import write_learned_shadow_patterns_artifacts, write_promoted_profile_opportunity_dataset_artifact, write_shadow_profile_artifacts
 from weather_pm.source_coverage import build_weather_source_coverage_report
@@ -229,6 +230,11 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_profile_evaluator.add_argument("--trade-resolution-json", required=False, help="Optional resolved account trade dataset JSON")
     shadow_profile_evaluator.add_argument("--output-json", required=True, help="Output shadow profile evaluation JSON")
     shadow_profile_evaluator.add_argument("--output-md", required=False, help="Optional Markdown operator report")
+
+    exposure_preview = subparsers.add_parser("shadow-profile-exposure-preview", help="Build a paper-only exposure preview from stress-overlay shadow paper orders")
+    exposure_preview.add_argument("--paper-orders-json", required=True, help="Input stress-overlay paper orders JSON")
+    exposure_preview.add_argument("--output-json", required=True, help="Output exposure preview JSON")
+    exposure_preview.add_argument("--output-md", required=False, help="Optional Markdown operator exposure preview")
 
     strategy_report = subparsers.add_parser("strategy-report", help="Extract reusable weather strategy rules from a reverse-engineering report")
     strategy_report.add_argument("--reverse-engineering-json", required=True, help="Reverse-engineering JSON produced by import-weather-traders")
@@ -761,6 +767,18 @@ def main() -> int:
                 run_shadow_profile_evaluator_artifact(
                     paper_orders_json=args.paper_orders_json,
                     trade_resolution_json=args.trade_resolution_json,
+                    output_json=args.output_json,
+                    output_md=args.output_md,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "shadow-profile-exposure-preview":
+        print(
+            json.dumps(
+                run_shadow_profile_exposure_preview_artifact(
+                    paper_orders_json=args.paper_orders_json,
                     output_json=args.output_json,
                     output_md=args.output_md,
                 )

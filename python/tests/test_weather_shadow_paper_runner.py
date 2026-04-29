@@ -1484,6 +1484,66 @@ def test_cli_market_metadata_resolution_writes_paper_only_resolution_artifact(tm
     assert payload["resolutions"]["m-toronto-19"]["resolved_outcome"] == "No"
 
 
+def test_cli_shadow_profile_exposure_preview_writes_json_and_markdown(tmp_path: Path) -> None:
+    paper_orders_in = tmp_path / "stress_orders.json"
+    output_json = tmp_path / "exposure_preview.json"
+    output_md = tmp_path / "exposure_preview.md"
+    paper_orders_in.write_text(
+        json.dumps(
+            {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "orders": [
+                    {
+                        "market_id": "m-busan-hot",
+                        "profile_id": "jey_threshold",
+                        "question": "Will Busan be 23°C or higher?",
+                        "strict_limit_price": 0.01,
+                        "requested_notional_usdc": 1.0,
+                        "paper_only": True,
+                        "live_order_allowed": False,
+                        "stress_overlay": {"risk_bucket": "robust"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-profile-exposure-preview",
+            "--paper-orders-json",
+            str(paper_orders_in),
+            "--output-json",
+            str(output_json),
+            "--output-md",
+            str(output_md),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    compact = json.loads(result.stdout)
+    assert compact["summary"]["max_profit_if_true_usdc"] == 99.0
+    payload = json.loads(output_json.read_text(encoding="utf-8"))
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+    assert payload["orders"][0]["shares_if_filled"] == 100.0
+    markdown = output_md.read_text(encoding="utf-8")
+    assert "# Shadow profile exposure preview" in markdown
+    assert "theoretical exposure" in markdown
+    assert "fill realism" in markdown
+    assert "m-busan-hot" in markdown
+    assert "99.0000" in markdown
+
+
 def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_summary(tmp_path: Path) -> None:
     paper_orders_in = tmp_path / "paper_orders.json"
     output_json = tmp_path / "evaluation.json"

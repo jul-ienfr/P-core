@@ -272,6 +272,27 @@ def apply_stress_overlay_to_paper_orders(paper_orders: dict[str, Any], stress_ov
     }
 
 
+def run_shadow_profile_exposure_preview_artifact(
+    *,
+    paper_orders_json: str | Path,
+    output_json: str | Path,
+    output_md: str | Path | None = None,
+) -> dict[str, Any]:
+    payload = json.loads(Path(paper_orders_json).read_text(encoding="utf-8"))
+    result = build_shadow_profile_exposure_preview(payload)
+    output_path = Path(output_json)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result.setdefault("artifacts", {})["output_json"] = str(output_path)
+    if output_md:
+        md_path = Path(output_md)
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(_shadow_profile_exposure_preview_markdown(result), encoding="utf-8")
+        result["artifacts"]["output_md"] = str(md_path)
+    output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"summary": result["summary"], "artifacts": result["artifacts"]}
+
+
+
 def run_shadow_paper_runner_artifact(
     *,
     dataset_json: str | Path,
@@ -813,6 +834,38 @@ def _profile_recommendation(profile: dict[str, Any]) -> str:
     if profile["roi"] < -0.05:
         return "reduce_or_disable"
     return "observe_more"
+
+
+def _shadow_profile_exposure_preview_markdown(result: dict[str, Any]) -> str:
+    summary = result.get("summary", {}) if isinstance(result.get("summary"), dict) else {}
+    lines = [
+        "# Shadow profile exposure preview",
+        "",
+        "paper_only: true",
+        "live_order_allowed: false",
+        "",
+        "This is theoretical exposure, not expected value or executable profit; fill realism matters, especially for ultra-cheap convexity tickets.",
+        "",
+        f"orders: {summary.get('orders', 0)}",
+        f"markets: {summary.get('markets', 0)}",
+        f"max_loss_usdc: {float(summary.get('max_loss_usdc', 0.0)):.4f}",
+        f"shares_if_filled: {float(summary.get('shares_if_filled', 0.0)):.4f}",
+        f"max_profit_if_true_usdc: {float(summary.get('max_profit_if_true_usdc', 0.0)):.4f}",
+        "",
+        "| market | orders | notional | shares_if_filled | max_profit_if_true | risk_buckets | questions |",
+        "|---|---:|---:|---:|---:|---|---|",
+    ]
+    markets = result.get("markets", {}) if isinstance(result.get("markets"), dict) else {}
+    for market_id, market in markets.items():
+        if not isinstance(market, dict):
+            continue
+        lines.append(
+            f"| {market_id} | {market.get('orders', 0)} | {float(market.get('total_notional_usdc', 0.0)):.4f} | "
+            f"{float(market.get('shares_if_filled', 0.0)):.4f} | {float(market.get('max_profit_if_true_usdc', 0.0)):.4f} | "
+            f"{', '.join(market.get('risk_buckets', []))} | {'; '.join(market.get('questions', []))} |"
+        )
+    return "\n".join(lines) + "\n"
+
 
 
 def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
