@@ -507,6 +507,7 @@ def run_shadow_profile_evaluator_artifact(
     output_json: str | Path,
     output_md: str | Path | None = None,
     trade_resolution_json: str | Path | None = None,
+    handoff_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = json.loads(Path(paper_orders_json).read_text(encoding="utf-8"))
     trade_resolution_dataset = _load_optional_object(trade_resolution_json)
@@ -514,6 +515,8 @@ def run_shadow_profile_evaluator_artifact(
     output_path = Path(output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.setdefault("artifacts", {})["output_json"] = str(output_path)
+    if handoff_overrides:
+        result["handoff"] = {key: value for key, value in handoff_overrides.items() if value}
     if output_md:
         md_path = Path(output_md)
         md_path.parent.mkdir(parents=True, exist_ok=True)
@@ -911,22 +914,31 @@ def _shadow_profile_evaluation_markdown(result: dict[str, Any]) -> str:
             lines.append(
                 f"| {profile['profile_id']} | {profile.get('source_recommendation', '')} | {skipped_counts} | {profile['recommendation']} |"
             )
+        handoff = result.get("handoff", {}) if isinstance(result.get("handoff"), dict) else {}
         output_json = str(result.get("artifacts", {}).get("output_json") or "<shadow-profile-evaluation.json>")
+        dataset_json = str(handoff.get("dataset_json") or "<trade-no-trade-dataset.json>")
+        orderbooks_json = str(handoff.get("orderbooks_json") or "<orderbooks.json>")
+        forecasts_json = str(handoff.get("forecasts_json") or "<forecasts.json>")
+        stress_overlay_json = str(handoff.get("stress_overlay_json") or "<candidate-stress-overlay.json>")
+        run_id = str(handoff.get("run_id") or "<next-promoted-opportunity-run>")
+        paper_orders_json = str(handoff.get("paper_orders_json") or "<stress-overlay-paper-orders.json>")
+        exposure_json = str(handoff.get("exposure_json") or "<paper-exposure-preview.json>")
+        exposure_md = str(handoff.get("exposure_md") or "<paper-exposure-preview.md>")
         lines.extend(
             [
                 "",
                 "Suggested paper replay command:",
                 "",
                 "```bash",
-                "python -m weather_pm.cli shadow-paper-runner --dataset-json <trade-no-trade-dataset.json> --orderbooks-json <orderbooks.json> --forecasts-json <forecasts.json> "
-                f"--promoted-profiles-json {output_json} --stress-overlay-json <candidate-stress-overlay.json> --run-id <next-promoted-opportunity-run> --output-json <stress-overlay-paper-orders.json>",
+                f"python -m weather_pm.cli shadow-paper-runner --dataset-json {dataset_json} --orderbooks-json {orderbooks_json} --forecasts-json {forecasts_json} "
+                f"--promoted-profiles-json {output_json} --stress-overlay-json {stress_overlay_json} --run-id {run_id} --output-json {paper_orders_json}",
                 "```",
                 "",
                 "Suggested exposure preview command:",
                 "",
                 "```bash",
-                "python -m weather_pm.cli shadow-profile-exposure-preview --paper-orders-json <stress-overlay-paper-orders.json> "
-                "--output-json <paper-exposure-preview.json> --output-md <paper-exposure-preview.md>",
+                f"python -m weather_pm.cli shadow-profile-exposure-preview --paper-orders-json {paper_orders_json} "
+                f"--output-json {exposure_json} --output-md {exposure_md}",
                 "```",
             ]
         )

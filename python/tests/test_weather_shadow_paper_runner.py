@@ -1589,6 +1589,22 @@ def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_sum
             str(output_json),
             "--output-md",
             str(output_md),
+            "--handoff-dataset-json",
+            "artifacts/promoted_profile_opportunity_dataset.json",
+            "--handoff-orderbooks-json",
+            "artifacts/current_orderbooks.json",
+            "--handoff-forecasts-json",
+            "artifacts/current_forecasts.json",
+            "--handoff-stress-overlay-json",
+            "artifacts/candidate_stress_overlay.json",
+            "--handoff-run-id",
+            "promoted-opportunity-20260429",
+            "--handoff-paper-orders-json",
+            "artifacts/stress_overlay_paper_orders.json",
+            "--handoff-exposure-json",
+            "artifacts/paper_exposure_preview.json",
+            "--handoff-exposure-md",
+            "artifacts/paper_exposure_preview.md",
         ],
         capture_output=True,
         text=True,
@@ -1608,14 +1624,17 @@ def test_cli_shadow_profile_evaluator_markdown_includes_promoted_opportunity_sum
     assert "Suggested paper replay command" in markdown
     assert "weather_pm.cli shadow-paper-runner" in markdown
     assert f"--promoted-profiles-json {output_json}" in markdown
-    assert "--run-id <next-promoted-opportunity-run>" in markdown
-    assert "--stress-overlay-json <candidate-stress-overlay.json>" in markdown
-    assert "--output-json <stress-overlay-paper-orders.json>" in markdown
+    assert "--run-id promoted-opportunity-20260429" in markdown
+    assert "--dataset-json artifacts/promoted_profile_opportunity_dataset.json" in markdown
+    assert "--orderbooks-json artifacts/current_orderbooks.json" in markdown
+    assert "--forecasts-json artifacts/current_forecasts.json" in markdown
+    assert "--stress-overlay-json artifacts/candidate_stress_overlay.json" in markdown
+    assert "--output-json artifacts/stress_overlay_paper_orders.json" in markdown
     assert "Suggested exposure preview command" in markdown
     assert "weather_pm.cli shadow-profile-exposure-preview" in markdown
-    assert "--paper-orders-json <stress-overlay-paper-orders.json>" in markdown
-    assert "--output-json <paper-exposure-preview.json>" in markdown
-    assert "--output-md <paper-exposure-preview.md>" in markdown
+    assert "--paper-orders-json artifacts/stress_overlay_paper_orders.json" in markdown
+    assert "--output-json artifacts/paper_exposure_preview.json" in markdown
+    assert "--output-md artifacts/paper_exposure_preview.md" in markdown
 
 
 def test_cli_shadow_profile_evaluator_writes_json_and_markdown(tmp_path: Path) -> None:

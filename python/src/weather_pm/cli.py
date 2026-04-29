@@ -230,6 +230,14 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_profile_evaluator.add_argument("--trade-resolution-json", required=False, help="Optional resolved account trade dataset JSON")
     shadow_profile_evaluator.add_argument("--output-json", required=True, help="Output shadow profile evaluation JSON")
     shadow_profile_evaluator.add_argument("--output-md", required=False, help="Optional Markdown operator report")
+    shadow_profile_evaluator.add_argument("--handoff-dataset-json", required=False, help="Dataset path to show in promoted opportunity replay handoff")
+    shadow_profile_evaluator.add_argument("--handoff-orderbooks-json", required=False, help="Orderbooks path to show in promoted opportunity replay handoff")
+    shadow_profile_evaluator.add_argument("--handoff-forecasts-json", required=False, help="Forecasts path to show in promoted opportunity replay handoff")
+    shadow_profile_evaluator.add_argument("--handoff-stress-overlay-json", required=False, help="Stress overlay path to show in promoted opportunity replay handoff")
+    shadow_profile_evaluator.add_argument("--handoff-run-id", required=False, help="Run id to show in promoted opportunity replay handoff")
+    shadow_profile_evaluator.add_argument("--handoff-paper-orders-json", required=False, help="Paper orders output path to show in replay and exposure handoff")
+    shadow_profile_evaluator.add_argument("--handoff-exposure-json", required=False, help="Exposure preview JSON path to show in promoted opportunity handoff")
+    shadow_profile_evaluator.add_argument("--handoff-exposure-md", required=False, help="Exposure preview Markdown path to show in promoted opportunity handoff")
 
     exposure_preview = subparsers.add_parser("shadow-profile-exposure-preview", help="Build a paper-only exposure preview from stress-overlay shadow paper orders")
     exposure_preview.add_argument("--paper-orders-json", required=True, help="Input stress-overlay paper orders JSON")
@@ -769,6 +777,16 @@ def main() -> int:
                     trade_resolution_json=args.trade_resolution_json,
                     output_json=args.output_json,
                     output_md=args.output_md,
+                    handoff_overrides={
+                        "dataset_json": args.handoff_dataset_json,
+                        "orderbooks_json": args.handoff_orderbooks_json,
+                        "forecasts_json": args.handoff_forecasts_json,
+                        "stress_overlay_json": args.handoff_stress_overlay_json,
+                        "run_id": args.handoff_run_id,
+                        "paper_orders_json": args.handoff_paper_orders_json,
+                        "exposure_json": args.handoff_exposure_json,
+                        "exposure_md": args.handoff_exposure_md,
+                    },
                 )
             )
         )
