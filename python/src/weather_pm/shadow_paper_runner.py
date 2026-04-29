@@ -132,6 +132,72 @@ def build_shadow_profile_paper_orders(
     }
 
 
+def build_shadow_profile_exposure_preview(paper_orders: dict[str, Any]) -> dict[str, Any]:
+    preview_orders: list[dict[str, Any]] = []
+    markets: dict[str, dict[str, Any]] = {}
+    for order in paper_orders.get("orders", []):
+        if not isinstance(order, dict):
+            continue
+        notional = _to_float(order.get("requested_notional_usdc"))
+        price = _to_float(order.get("strict_limit_price"))
+        shares = round(notional / price, 6) if price > 0 else 0.0
+        max_profit = round(shares - notional, 6)
+        risk_bucket = str((order.get("stress_overlay") or {}).get("risk_bucket") or "") if isinstance(order.get("stress_overlay"), dict) else ""
+        preview_order = {
+            **order,
+            "shares_if_filled": shares,
+            "max_loss_usdc": notional,
+            "max_profit_if_true_usdc": max_profit,
+            "risk_bucket": risk_bucket,
+            "paper_only": True,
+            "live_order_allowed": False,
+        }
+        preview_orders.append(preview_order)
+        market_id = str(order.get("market_id") or "")
+        bucket = markets.setdefault(
+            market_id,
+            {
+                "market_id": market_id,
+                "orders": 0,
+                "total_notional_usdc": 0.0,
+                "max_loss_usdc": 0.0,
+                "shares_if_filled": 0.0,
+                "max_profit_if_true_usdc": 0.0,
+                "risk_buckets": [],
+                "questions": [],
+            },
+        )
+        bucket["orders"] += 1
+        bucket["total_notional_usdc"] = round(bucket["total_notional_usdc"] + notional, 6)
+        bucket["max_loss_usdc"] = round(bucket["max_loss_usdc"] + notional, 6)
+        bucket["shares_if_filled"] = round(bucket["shares_if_filled"] + shares, 6)
+        bucket["max_profit_if_true_usdc"] = round(bucket["max_profit_if_true_usdc"] + max_profit, 6)
+        if risk_bucket and risk_bucket not in bucket["risk_buckets"]:
+            bucket["risk_buckets"].append(risk_bucket)
+        question = str(order.get("question") or "")
+        if question and question not in bucket["questions"]:
+            bucket["questions"].append(question)
+    summary = {
+        "orders": len(preview_orders),
+        "markets": len(markets),
+        "total_notional_usdc": round(sum(order["max_loss_usdc"] for order in preview_orders), 6),
+        "max_loss_usdc": round(sum(order["max_loss_usdc"] for order in preview_orders), 6),
+        "shares_if_filled": round(sum(order["shares_if_filled"] for order in preview_orders), 6),
+        "max_profit_if_true_usdc": round(sum(order["max_profit_if_true_usdc"] for order in preview_orders), 6),
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    return {
+        "source": "shadow_profile_paper_exposure_preview",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "markets": markets,
+        "orders": preview_orders,
+    }
+
+
+
 def apply_stress_overlay_to_paper_orders(paper_orders: dict[str, Any], stress_overlay: dict[str, Any]) -> dict[str, Any]:
     allowed = {
         str(row.get("market_id")): row

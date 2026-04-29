@@ -12,6 +12,7 @@ from weather_pm.shadow_paper_runner import (
     build_shadow_profile_evaluation,
     build_shadow_profile_paper_orders,
     apply_stress_overlay_to_paper_orders,
+    build_shadow_profile_exposure_preview,
     enrich_shadow_dataset_features,
 )
 
@@ -351,6 +352,64 @@ def test_apply_stress_overlay_filters_orders_and_tightens_limits() -> None:
     assert result["orders"][0]["paper_only"] is True
     assert result["orders"][0]["live_order_allowed"] is False
     assert result["rejected"] == [{"market_id": "m-reject", "profile_id": "p1", "reason": "not_in_stressed_micro_candidates", "question": "Will Busan be 17°C or below?"}]
+
+
+def test_build_shadow_profile_exposure_preview_summarizes_convexity_without_live_authority() -> None:
+    stress_orders = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "orders": [
+            {
+                "market_id": "m-busan-hot",
+                "profile_id": "jey_threshold",
+                "question": "Will Busan be 23°C or higher?",
+                "strict_limit_price": 0.01,
+                "requested_notional_usdc": 1.0,
+                "paper_only": True,
+                "live_order_allowed": False,
+                "stress_overlay": {"risk_bucket": "robust"},
+            },
+            {
+                "market_id": "m-busan-cool",
+                "profile_id": "cold_threshold",
+                "question": "Will Busan be 17°C or lower?",
+                "strict_limit_price": 0.05,
+                "requested_notional_usdc": 0.5,
+                "paper_only": True,
+                "live_order_allowed": False,
+                "stress_overlay": {"risk_bucket": "medium"},
+            },
+        ],
+    }
+
+    result = build_shadow_profile_exposure_preview(stress_orders)
+
+    assert result["paper_only"] is True
+    assert result["live_order_allowed"] is False
+    assert result["summary"] == {
+        "orders": 2,
+        "markets": 2,
+        "total_notional_usdc": 1.5,
+        "max_loss_usdc": 1.5,
+        "shares_if_filled": 110.0,
+        "max_profit_if_true_usdc": 108.5,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    assert result["markets"]["m-busan-hot"] == {
+        "market_id": "m-busan-hot",
+        "orders": 1,
+        "total_notional_usdc": 1.0,
+        "max_loss_usdc": 1.0,
+        "shares_if_filled": 100.0,
+        "max_profit_if_true_usdc": 99.0,
+        "risk_buckets": ["robust"],
+        "questions": ["Will Busan be 23°C or higher?"],
+    }
+    assert result["orders"][0]["shares_if_filled"] == 100.0
+    assert result["orders"][0]["max_loss_usdc"] == 1.0
+    assert result["orders"][0]["max_profit_if_true_usdc"] == 99.0
+    assert result["orders"][0]["risk_bucket"] == "robust"
 
 
 def test_build_shadow_profile_paper_orders_reports_promoted_opportunity_watch_orders() -> None:
