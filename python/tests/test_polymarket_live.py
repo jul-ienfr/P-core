@@ -109,6 +109,30 @@ def test_normalize_gamma_market_uses_gamma_quote_when_clob_yes_book_has_only_exp
     assert normalized["asks"] == [{"price": 0.999, "size": 2243.99}]
 
 
+def test_normalize_gamma_market_tolerates_clob_network_failures() -> None:
+    from weather_pm import polymarket_live
+
+    original_fetch_clob_book = polymarket_live._fetch_clob_book
+    polymarket_live._fetch_clob_book = lambda token_id: (_ for _ in ()).throw(RuntimeError("CLOB request failed for https://clob.polymarket.com/book: <urlopen error [Errno 101] Network is unreachable>"))
+    try:
+        normalized = _normalize_gamma_market(
+            _sample_gamma_market(
+                clobTokenIds='["yes-token", "no-token"]',
+                bestBids=None,
+                bestAsks=None,
+                bestBid="0.12",
+                bestAsk="0.14",
+            )
+        )
+    finally:
+        polymarket_live._fetch_clob_book = original_fetch_clob_book
+
+    assert normalized["clob_token_id"] == "yes-token"
+    assert normalized["book_depth_source"] == "top_of_book_unavailable"
+    assert normalized["best_bid"] == 0.12
+    assert normalized["best_ask"] == 0.14
+
+
 def test_normalize_gamma_market_falls_back_to_description_when_live_market_lacks_resolution_source_and_rules() -> None:
     normalized = _normalize_gamma_market(
         _sample_gamma_market(
@@ -356,6 +380,7 @@ def test_list_live_weather_markets_includes_highest_temperature_series_events_wh
     from weather_pm import polymarket_live
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: [
         {
@@ -364,6 +389,7 @@ def test_list_live_weather_markets_includes_highest_temperature_series_events_wh
             "category": "politics",
         }
     ]
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
 
     def fake_fetch_json(path: str, params: dict[str, object] | None = None) -> object:
         calls.append((path, params))
@@ -378,6 +404,7 @@ def test_list_live_weather_markets_includes_highest_temperature_series_events_wh
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert len(markets) == 1
@@ -386,6 +413,56 @@ def test_list_live_weather_markets_includes_highest_temperature_series_events_wh
     assert markets[0]["resolution_source"] == "https://www.weather.gov.hk/en/cis/climat.htm"
     assert markets[0]["yes_price"] == 0.0
     assert [path for path, _ in calls] == ["/series", "/events/322442"]
+
+
+def test_list_live_weather_markets_prefers_weather_tag_events_before_series_fallback() -> None:
+    from weather_pm import polymarket_live
+
+    calls: list[tuple[str, object]] = []
+    original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
+    original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
+
+    def fake_fetch_events_by_tag_slug(tag_slug: str, limit: int, active: bool, closed: bool):
+        calls.append(("events", tag_slug, limit, active, closed))
+        return [
+            {
+                "id": "event-weather-seattle",
+                "title": "Highest temperature in Seattle on April 29?",
+                "slug": "highest-temperature-in-seattle-on-april-29-2026",
+                "description": "Weather event",
+                "active": True,
+                "closed": False,
+                "markets": [
+                    {
+                        "id": "seattle-53-or-below",
+                        "question": "Will the highest temperature in Seattle be 53°F or below on April 29?",
+                        "outcomes": '["Yes", "No"]',
+                        "outcomePrices": '["0.41", "0.59"]',
+                        "bestBid": 0.40,
+                        "bestAsk": 0.42,
+                        "volume": 1000,
+                        "active": True,
+                        "closed": False,
+                    }
+                ],
+            }
+        ]
+
+    polymarket_live._fetch_gamma_events_by_tag_slug = fake_fetch_events_by_tag_slug
+    polymarket_live._fetch_gamma_json = lambda path, params=None: (_ for _ in ()).throw(AssertionError(path))
+    try:
+        markets = list_live_weather_markets(limit=1)
+    finally:
+        polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
+        polymarket_live._fetch_gamma_json = original_fetch_json
+
+    assert calls == [("events", "weather", 1, True, False)]
+    assert [market["id"] for market in markets] == ["seattle-53-or-below"]
+    assert markets[0]["question"] == "Will the highest temperature in Seattle be 53°F or below on April 29?"
+    assert markets[0]["yes_price"] == 0.41
 
 
 def test_list_live_weather_markets_paginates_series_until_limit_is_reached_without_event_lookups_for_non_weather_rows() -> None:
@@ -424,7 +501,9 @@ def test_list_live_weather_markets_paginates_series_until_limit_is_reached_witho
     calls: list[tuple[str, dict[str, object] | None]] = []
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
 
     def fake_fetch_json(path: str, params: dict[str, object] | None = None) -> object:
@@ -443,6 +522,7 @@ def test_list_live_weather_markets_paginates_series_until_limit_is_reached_witho
         markets = list_live_weather_markets(limit=1)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert len(markets) == 1
@@ -483,7 +563,9 @@ def test_list_live_weather_markets_filters_closed_series_events_even_when_series
     calls: list[tuple[str, dict[str, object] | None]] = []
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
 
     def fake_fetch_json(path: str, params: dict[str, object] | None = None) -> object:
@@ -497,6 +579,7 @@ def test_list_live_weather_markets_filters_closed_series_events_even_when_series
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["open-weather-1"]
@@ -556,13 +639,16 @@ def test_list_live_weather_markets_prefers_series_child_markets_over_parent_even
     ]
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
     polymarket_live._fetch_gamma_json = lambda path, params=None: series_payload if path == "/series" else (_ for _ in ()).throw(AssertionError(path))
     try:
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["child-open-1", "child-open-2"]
@@ -630,7 +716,9 @@ def test_list_live_weather_markets_fetches_event_details_for_numeric_weather_eve
     calls: list[tuple[str, dict[str, object] | None]] = []
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
 
     def fake_fetch_json(path: str, params: dict[str, object] | None = None) -> object:
@@ -646,6 +734,7 @@ def test_list_live_weather_markets_fetches_event_details_for_numeric_weather_eve
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["2040371", "2040372"]
@@ -710,13 +799,16 @@ def test_list_live_weather_markets_fills_remaining_slots_from_series_child_marke
     ]
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: [live_market]
     polymarket_live._fetch_gamma_json = lambda path, params=None: series_payload if path == "/series" else (_ for _ in ()).throw(AssertionError(path))
     try:
         markets = list_live_weather_markets(limit=3)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["gamma-weather-1", "child-fill-1", "child-fill-2"]
@@ -790,13 +882,16 @@ def test_list_live_weather_markets_filters_series_child_markets_by_child_state()
     ]
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
     polymarket_live._fetch_gamma_json = lambda path, params=None: series_payload if path == "/series" else (_ for _ in ()).throw(AssertionError(path))
     try:
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["child-open"]
@@ -839,13 +934,16 @@ def test_list_live_weather_markets_inherits_weather_context_from_parent_event_fo
     ]
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
     polymarket_live._fetch_gamma_json = lambda path, params=None: series_payload if path == "/series" else (_ for _ in ()).throw(AssertionError(path))
     try:
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["child-inherit-1"]
@@ -914,7 +1012,9 @@ def test_list_live_weather_markets_fetches_child_markets_from_event_when_series_
     }
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
 
     def fake_fetch_json(path: str, params=None):
@@ -929,6 +1029,7 @@ def test_list_live_weather_markets_fetches_child_markets_from_event_when_series_
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["hk-child-1", "hk-child-2"]
@@ -975,7 +1076,9 @@ def test_list_live_weather_markets_falls_back_to_event_row_when_event_lookup_has
     }
 
     original_fetch_markets = polymarket_live._fetch_gamma_markets
+    original_fetch_events_by_tag_slug = polymarket_live._fetch_gamma_events_by_tag_slug
     original_fetch_json = polymarket_live._fetch_gamma_json
+    polymarket_live._fetch_gamma_events_by_tag_slug = lambda tag_slug, limit, active, closed: []
     polymarket_live._fetch_gamma_markets = lambda limit, active, closed: []
 
     def fake_fetch_json(path: str, params=None):
@@ -990,6 +1093,7 @@ def test_list_live_weather_markets_falls_back_to_event_row_when_event_lookup_has
         markets = list_live_weather_markets(limit=5)
     finally:
         polymarket_live._fetch_gamma_markets = original_fetch_markets
+        polymarket_live._fetch_gamma_events_by_tag_slug = original_fetch_events_by_tag_slug
         polymarket_live._fetch_gamma_json = original_fetch_json
 
     assert [market["id"] for market in markets] == ["event-405178"]

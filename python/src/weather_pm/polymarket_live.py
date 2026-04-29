@@ -120,6 +120,21 @@ def _fetch_gamma_market(market_id: str) -> dict[str, Any]:
     return payload
 
 
+def _fetch_gamma_events_by_tag_slug(*, tag_slug: str, limit: int, active: bool, closed: bool) -> list[dict[str, Any]]:
+    payload = _fetch_gamma_json(
+        "/events",
+        params={
+            "limit": max(int(limit), 1),
+            "active": str(bool(active)).lower(),
+            "closed": str(bool(closed)).lower(),
+            "tag_slug": tag_slug,
+        },
+    )
+    if not isinstance(payload, list):
+        raise RuntimeError("Gamma /events response was not a list")
+    return [item for item in payload if isinstance(item, dict)]
+
+
 def _parse_jsonish_list(value: Any) -> list[Any]:
     if value is None:
         return []
@@ -356,9 +371,7 @@ def _extract_clob_book_metrics(raw: dict[str, Any], yes_index: int) -> dict[str,
 
     try:
         book = _fetch_clob_book(token_id)
-    except (RuntimeError, TimeoutError, OSError) as exc:
-        if isinstance(exc, RuntimeError) and "HTTP 404" not in str(exc) and "timed out" not in str(exc).lower():
-            raise
+    except (RuntimeError, TimeoutError, OSError):
         return _empty_book_metrics(clob_token_id=token_id)
 
     bids = _normalize_book_levels(book.get("bids"))
@@ -487,6 +500,68 @@ def _should_fetch_event_details(raw_event: dict[str, Any]) -> bool:
     return False
 
 
+def _normalized_event_child_markets(raw_event: dict[str, Any], *, active: bool, closed: bool) -> list[dict[str, Any]]:
+    child_markets = raw_event.get("markets") or []
+    if not child_markets and _should_fetch_event_details(raw_event) and raw_event.get("id") not in (None, ""):
+        try:
+            event_payload = _fetch_gamma_json(f"/events/{raw_event['id']}")
+        except RuntimeError:
+            event_payload = None
+        if isinstance(event_payload, dict):
+            child_markets = event_payload.get("markets") or []
+
+    normalized: list[dict[str, Any]] = []
+    for child_market in child_markets:
+        if not isinstance(child_market, dict):
+            continue
+        if not _matches_requested_state(child_market, active=active, closed=closed):
+            continue
+        contextual_child_market = _merge_market_with_event_context(child_market, raw_event)
+        if not _looks_like_weather_market(contextual_child_market):
+            continue
+        normalized.append(_normalize_gamma_market(contextual_child_market))
+    return normalized
+
+
+def _append_event_weather_markets(
+    normalized: list[dict[str, Any]],
+    seen_ids: set[str],
+    raw_event: dict[str, Any],
+    *,
+    limit: int,
+    active: bool,
+    closed: bool,
+) -> bool:
+    """Append event-derived weather markets and return True when the caller should stop."""
+    if not _matches_requested_state(raw_event, active=active, closed=closed):
+        return False
+    if not _looks_like_weather_market(raw_event):
+        return False
+
+    emitted_child_market = False
+    for normalized_market in _normalized_event_child_markets(raw_event, active=active, closed=closed):
+        market_id = str(normalized_market.get("id") or "")
+        if market_id and market_id in seen_ids:
+            continue
+        if market_id:
+            seen_ids.add(market_id)
+        normalized.append(normalized_market)
+        emitted_child_market = True
+        if len(normalized) >= limit:
+            return True
+    if emitted_child_market:
+        return False
+
+    normalized_event = _normalize_gamma_series_event(raw_event)
+    event_id = str(normalized_event.get("id") or "")
+    if event_id and event_id in seen_ids:
+        return False
+    if event_id:
+        seen_ids.add(event_id)
+    normalized.append(normalized_event)
+    return len(normalized) >= limit
+
+
 def _normalize_gamma_series_event(raw: dict[str, Any]) -> dict[str, Any]:
     description = raw.get("description") or raw.get("marketDescription") or raw.get("descriptionMarkdown")
     resolution_source = raw.get("resolutionSource") or raw.get("resolution_source") or description
@@ -539,6 +614,15 @@ def list_live_weather_markets(limit: int = 100, active: bool = True, closed: boo
         if len(normalized) >= limit:
             break
 
+    if len(normalized) < limit:
+        weather_events = _fetch_gamma_events_by_tag_slug(tag_slug="weather", limit=limit, active=active, closed=closed)
+        for event in weather_events:
+            before_count = len(normalized)
+            if _append_event_weather_markets(normalized, seen_ids, event, limit=limit, active=active, closed=closed):
+                return normalized[:limit]
+            if len(normalized) > before_count:
+                continue
+
     page_size = max(int(limit), 1)
     offset = 0
     while len(normalized) < limit:
@@ -551,49 +635,7 @@ def list_live_weather_markets(limit: int = 100, active: bool = True, closed: boo
             for event in series.get("events") or []:
                 if not isinstance(event, dict):
                     continue
-                if not _matches_requested_state(event, active=active, closed=closed):
-                    continue
-                if not _looks_like_weather_market(event):
-                    continue
-
-                child_markets = event.get("markets") or []
-                if not child_markets and _should_fetch_event_details(event) and event.get("id") not in (None, ""):
-                    try:
-                        event_payload = _fetch_gamma_json(f"/events/{event['id']}")
-                    except RuntimeError:
-                        event_payload = None
-                    if isinstance(event_payload, dict):
-                        child_markets = event_payload.get("markets") or []
-                emitted_child_market = False
-                for child_market in child_markets:
-                    if not isinstance(child_market, dict):
-                        continue
-                    if not _matches_requested_state(child_market, active=active, closed=closed):
-                        continue
-                    contextual_child_market = _merge_market_with_event_context(child_market, event)
-                    if not _looks_like_weather_market(contextual_child_market):
-                        continue
-                    normalized_market = _normalize_gamma_market(contextual_child_market)
-                    market_id = str(normalized_market.get("id") or "")
-                    if market_id and market_id in seen_ids:
-                        continue
-                    if market_id:
-                        seen_ids.add(market_id)
-                    normalized.append(normalized_market)
-                    emitted_child_market = True
-                    if len(normalized) >= limit:
-                        return normalized[:limit]
-                if emitted_child_market:
-                    continue
-
-                normalized_event = _normalize_gamma_series_event(event)
-                event_id = str(normalized_event.get("id") or "")
-                if event_id and event_id in seen_ids:
-                    continue
-                if event_id:
-                    seen_ids.add(event_id)
-                normalized.append(normalized_event)
-                if len(normalized) >= limit:
+                if _append_event_weather_markets(normalized, seen_ids, event, limit=limit, active=active, closed=closed):
                     return normalized[:limit]
         if len(series_payload) < page_size:
             break
