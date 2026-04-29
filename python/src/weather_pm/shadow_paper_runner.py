@@ -66,7 +66,7 @@ def build_shadow_profile_paper_orders(
     for row in enriched_dataset.get("examples", []):
         if not isinstance(row, dict):
             continue
-        profile_config = _profile_config_for_row(row, profile_configs)
+        profile_config = _profile_config_for_row(row, profile_configs) or _promoted_opportunity_profile_config(row)
         reason = _skip_reason(row, profile_config=profile_config)
         if reason:
             skipped.append({"market_id": row.get("market_id"), "wallet": row.get("wallet"), "reason": reason})
@@ -111,6 +111,13 @@ def build_shadow_profile_paper_orders(
         promoted_order_count = sum(profile_counts.get(profile_id, 0) for profile_id in promoted_profile_ids)
         if promoted_order_count:
             summary["promoted_profile_orders"] = promoted_order_count
+        promoted_opportunity_order_count = sum(
+            1
+            for order in orders
+            if order.get("metadata", {}).get("profile_config", {}).get("source_recommendation") == "promoted_profile_opportunity_watch"
+        )
+        if promoted_opportunity_order_count:
+            summary["promoted_opportunity_orders"] = promoted_opportunity_order_count
     resolved_orders = sum(1 for order in orders if order.get("features", {}).get("resolution", {}).get("available"))
     if resolved_orders:
         summary["resolved_orders"] = resolved_orders
@@ -843,6 +850,23 @@ def _profile_config_for_row(row: dict[str, Any], profile_configs: dict[str, Any]
         if isinstance(config, dict):
             return dict(config)
     return {}
+
+
+def _promoted_opportunity_profile_config(row: dict[str, Any]) -> dict[str, Any]:
+    if row.get("shadow_signal_source") != "promoted_profile_opportunity_watch":
+        return {}
+    profile_id = str(row.get("profile_id") or row.get("wallet") or row.get("handle") or "promoted_opportunity_watch")
+    max_order = _to_float(row.get("suggested_max_order_usdc")) or 1.0
+    min_edge = _to_float(row.get("suggested_min_edge"))
+    if min_edge <= 0:
+        min_edge = 0.10
+    return {
+        "profile_id": profile_id,
+        "role": "promoted_opportunity_watch",
+        "max_order_usdc": max_order,
+        "min_edge": min_edge,
+        "source_recommendation": "promoted_profile_opportunity_watch",
+    }
 
 
 def _merge_promoted_profile_configs(profile_configs: dict[str, Any], promoted_profiles: dict[str, Any]) -> dict[str, Any]:

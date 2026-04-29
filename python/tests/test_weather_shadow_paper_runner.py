@@ -278,6 +278,38 @@ def test_build_shadow_profile_paper_orders_preserves_resolution_and_forecast_con
     assert order["live_order_allowed"] is False
 
 
+def test_build_shadow_profile_paper_orders_reports_promoted_opportunity_watch_orders() -> None:
+    dataset = _dataset()
+    dataset["source"] = "polymarket_weather_promoted_profile_opportunities"
+    dataset["examples"][0].update(
+        {
+            "wallet": "0xJey",
+            "profile_id": "jey_threshold",
+            "shadow_signal_source": "promoted_profile_opportunity_watch",
+            "suggested_min_edge": 0.12,
+            "suggested_max_order_usdc": 1.75,
+        }
+    )
+    enriched = enrich_shadow_dataset_features(
+        dataset,
+        orderbooks={"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}},
+        forecasts={"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}},
+    )
+
+    result = build_shadow_profile_paper_orders(enriched, run_id="shadow-opportunities", max_order_usdc=5.0)
+
+    assert result["summary"]["promoted_opportunity_orders"] == 1
+    assert result["orders"][0]["profile_id"] == "jey_threshold"
+    assert result["orders"][0]["profile_role"] == "promoted_opportunity_watch"
+    assert result["orders"][0]["requested_notional_usdc"] == 1.75
+    assert result["orders"][0]["metadata"]["profile_config"]["source_recommendation"] == "promoted_profile_opportunity_watch"
+    assert result["orders"][0]["metadata"]["profile_config"]["min_edge"] == 0.12
+    assert result["orders"][0]["paper_only"] is True
+    assert result["orders"][0]["live_order_allowed"] is False
+
+
+
+
 def test_build_shadow_profile_paper_orders_reports_promoted_profile_coverage() -> None:
     dataset = _dataset()
     dataset["examples"][0]["wallet"] = "0xJey"
