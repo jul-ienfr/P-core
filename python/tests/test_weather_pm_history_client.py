@@ -71,3 +71,35 @@ def test_build_station_history_bundle_fallback_exposes_reason_and_source_health(
     assert bundle.source_health == "failed"
     assert bundle.latency_diagnostics()["fallback_reason"] == "history_fetch_failed:ValueError"
     assert bundle.to_dict()["summary"] == {"fallback_reason": "history_fetch_failed:ValueError", "source_health": "failed"}
+
+
+def test_hko_daily_extract_parses_list_rows_from_official_opendata_payload() -> None:
+    structure = parse_market_question("Will the highest temperature in Hong Kong be 23C or higher on April 26?")
+    resolution = parse_resolution_metadata(
+        resolution_source="https://www.weather.gov.hk/en/cis/climat.htm",
+        description="This market resolves according to the Daily Maximum Temperature at the Hong Kong Observatory.",
+        rules="Use the official Hong Kong Observatory climate extract for the relevant day.",
+    )
+    client = _FakeStationHistoryClient(
+        [
+            {
+                "type": ["Daily Maximum Temperature (°C) at the Hong Kong Observatory"],
+                "fields": ["年/Year", "月/Month", "日/Day", "數值/Value", "數據完整性/data Completeness"],
+                "data": [["2026", "4", "25", "22.8", "C"], ["2026", "4", "26", "24.6", "C"]],
+            }
+        ]
+    )
+
+    bundle = build_station_history_bundle(structure, resolution, start_date="2026-04-26", end_date="2026-04-26", client=client)
+
+    assert client.requested_urls == [
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=CLMMAXT&rformat=json&station=HKO&year=2026&month=4"
+    ]
+    assert bundle.source_provider == "hong_kong_observatory"
+    assert bundle.station_code == "HKO"
+    assert bundle.latency_tier == "direct_history"
+    assert bundle.source_health == "healthy"
+    assert bundle.latest() is not None
+    assert bundle.latest().timestamp == "2026-04-26"
+    assert bundle.latest().value == 24.6
+    assert bundle.to_dict()["summary"]["max"] == 24.6

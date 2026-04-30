@@ -126,6 +126,48 @@ def _normal_size_gate(row: dict[str, Any]) -> dict[str, Any]:
     return gate if isinstance(gate, dict) else {}
 
 
+def _quote_depth_diagnostic(row: dict[str, Any]) -> str:
+    snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
+    if not snapshot:
+        return ""
+    parts: list[str] = []
+    quote_parts: list[str] = []
+    yes_bid = snapshot.get("best_bid_yes")
+    yes_ask = snapshot.get("best_ask_yes")
+    no_bid = snapshot.get("best_bid_no")
+    no_ask = snapshot.get("best_ask_no")
+    if yes_bid is not None or yes_ask is not None:
+        quote_parts.append(f"yes bid {_format_quote(yes_bid)} / ask {_format_quote(yes_ask)}")
+    if no_bid is not None or no_ask is not None:
+        quote_parts.append(f"no bid {_format_quote(no_bid)} / ask {_format_quote(no_ask)}")
+    if quote_parts:
+        parts.append("quote=" + "; ".join(quote_parts))
+    depth_parts: list[str] = []
+    yes_bid_depth = snapshot.get("yes_bid_depth_usd")
+    yes_ask_depth = snapshot.get("yes_ask_depth_usd")
+    no_bid_depth = snapshot.get("no_bid_depth_usd")
+    no_ask_depth = snapshot.get("no_ask_depth_usd")
+    if yes_bid_depth is not None or yes_ask_depth is not None:
+        depth_parts.append(f"yes bid ${_format_money(yes_bid_depth)} / ask ${_format_money(yes_ask_depth)}")
+    if no_bid_depth is not None or no_ask_depth is not None:
+        depth_parts.append(f"no bid ${_format_money(no_bid_depth)} / ask ${_format_money(no_ask_depth)}")
+    if depth_parts:
+        parts.append("depth=" + "; ".join(depth_parts))
+    return "; ".join(parts)
+
+
+def _format_quote(value: Any) -> str:
+    if value is None:
+        return "n/a"
+    return f"{float(value):.4f}"
+
+
+def _format_money(value: Any) -> str:
+    if value is None:
+        return "n/a"
+    return f"{float(value):.2f}"
+
+
 def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchlist: dict[str, Any]) -> dict[str, Any]:
     rollup = account_summary.get("daily_operator_rollup") if isinstance(account_summary.get("daily_operator_rollup"), dict) else {}
     not_ready = rollup.get("not_ready_reason_counts") if isinstance(rollup.get("not_ready_reason_counts"), dict) else {}
@@ -153,6 +195,7 @@ def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchli
                     "label": _market_label(row),
                     "reasons": [str(reason) for reason in reasons],
                     "verdict": gate.get("verdict") or row.get("normal_size_verdict") or "blocked",
+                    "quote_depth_diagnostic": _quote_depth_diagnostic(row),
                 }
             )
     for row in live_watchlist:
@@ -168,6 +211,7 @@ def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchli
                     "label": _market_label(row),
                     "reasons": [str(reason) for reason in reasons],
                     "verdict": gate.get("recommended_action") or row.get("decision_status") or "blocked",
+                    "quote_depth_diagnostic": _quote_depth_diagnostic(row),
                 }
             )
     diag = account_summary.get("shadow_skip_diagnostics") if isinstance(account_summary.get("shadow_skip_diagnostics"), dict) else {}
@@ -215,7 +259,9 @@ def render_actionable_only_markdown(summary: dict[str, Any]) -> str:
         for row in why_not[:8]:
             reasons = row.get("reasons") if isinstance(row.get("reasons"), list) else []
             reasons_text = ", ".join(str(reason) for reason in reasons) or "manual_review_required"
-            lines.append(f"- `{row.get('market_id', '')}` — {row.get('label', '')} — {row.get('verdict', 'blocked')} — {reasons_text}")
+            diagnostic = str(row.get("quote_depth_diagnostic") or "").strip()
+            diagnostic_suffix = f" — {diagnostic}" if diagnostic else ""
+            lines.append(f"- `{row.get('market_id', '')}` — {row.get('label', '')} — {row.get('verdict', 'blocked')} — {reasons_text}{diagnostic_suffix}")
     lines.append("")
     return "\n".join(lines)
 

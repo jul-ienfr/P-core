@@ -130,6 +130,28 @@ def test_render_daily_markdown_explains_why_markets_are_not_actionable(tmp_path:
                 "not_ready_reason_counts": {"missing_tradeable_quote": 1, "insufficient_depth": 2},
             },
             "daily_operator_markdown": "- no ready markets",
+            "live_watchlist": [
+                {
+                    "market_id": "2074350",
+                    "city": "Dallas",
+                    "temp": 35,
+                    "unit": "C",
+                    "side": "YES",
+                    "normal_size_gate": {
+                        "live_ready": False,
+                        "reasons": ["missing_tradeable_quote", "insufficient_depth"],
+                        "recommended_action": "paper_strict_limit_only",
+                    },
+                    "execution_snapshot": {
+                        "best_bid_yes": 0.0,
+                        "best_ask_yes": 0.001,
+                        "best_bid_no": 0.999,
+                        "best_ask_no": 1.0,
+                        "yes_bid_depth_usd": 0.0,
+                        "yes_ask_depth_usd": 0.0,
+                    },
+                },
+            ],
         },
     )
     paper_watchlist = _write_json(
@@ -185,6 +207,7 @@ def test_render_daily_markdown_explains_why_markets_are_not_actionable(tmp_path:
     assert "Dallas 35C YES" in markdown
     assert "missing_tradeable_quote, insufficient_depth" in markdown
     assert "paper_strict_limit_only" in markdown
+    assert "quote=yes bid 0.0000 / ask 0.0010; no bid 0.9990 / ask 1.0000; depth=yes bid $0.00 / ask $0.00" in markdown
 
 
 

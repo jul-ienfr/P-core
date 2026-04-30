@@ -444,15 +444,20 @@ class StationHistoryClient:
             raise ValueError("HKO daily extract payload missing data rows")
         points: list[StationHistoryPoint] = []
         for row in raw_rows:
-            if not isinstance(row, dict):
+            normalized_row = _normalize_hko_daily_extract_row(row, payload)
+            if normalized_row is None:
                 continue
-            row_date = _parse_hko_row_date(row.get("date") or row.get("Date") or row.get("recordDate") or row.get("day"), year=target.year, month=target.month)
+            row_date = _parse_hko_row_date(
+                normalized_row.get("date") or normalized_row.get("Date") or normalized_row.get("recordDate") or normalized_row.get("day"),
+                year=int(normalized_row.get("year") or normalized_row.get("Year") or target.year),
+                month=int(normalized_row.get("month") or normalized_row.get("Month") or target.month),
+            )
             if row_date != target.date().isoformat():
                 continue
-            value = _extract_hko_row_value(row, structure)
+            value = _extract_hko_row_value(normalized_row, structure)
             if value is None:
                 continue
-            converted = _convert_temperature(value, from_unit=str(row.get("unit") or row.get("Unit") or "C").lower(), to_unit=structure.unit)
+            converted = _convert_temperature(value, from_unit=str(normalized_row.get("unit") or normalized_row.get("Unit") or "C").lower(), to_unit=structure.unit)
             points.append(StationHistoryPoint(timestamp=row_date, value=round(converted, 2), unit=structure.unit))
         return points
 
@@ -738,6 +743,39 @@ def _extract_accuweather_temperature(raw_value: Any, structure: MarketStructure)
     for candidate in raw_value.values():
         if isinstance(candidate, dict) and candidate.get("Value") is not None:
             return float(candidate["Value"]), str(candidate.get("Unit") or structure.unit).lower()
+    return None
+
+
+def _normalize_hko_daily_extract_row(row: Any, payload: dict[str, Any]) -> dict[str, Any] | None:
+    if isinstance(row, dict):
+        return row
+    if not isinstance(row, list):
+        return None
+    fields = payload.get("fields")
+    if not isinstance(fields, list):
+        return None
+    normalized: dict[str, Any] = {}
+    for raw_field, value in zip(fields, row):
+        field = _normalize_hko_field_name(raw_field)
+        if field:
+            normalized[field] = value
+    return normalized
+
+
+def _normalize_hko_field_name(raw_field: Any) -> str | None:
+    text = str(raw_field or "").strip().lower().replace("\ufeff", "")
+    if "year" in text or "年" in text:
+        return "year"
+    if "month" in text or "月" in text:
+        return "month"
+    if "day" in text or "日" in text:
+        return "day"
+    if "value" in text or "數值" in text:
+        return "value"
+    if "completeness" in text or "完整" in text:
+        return "completeness"
+    if "unit" in text or "單位" in text:
+        return "unit"
     return None
 
 
