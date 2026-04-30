@@ -311,6 +311,7 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_paper_runner.add_argument("--stress-overlay-json", required=False, help="Optional paper-only stress overlay JSON to filter and cap generated paper orders")
     shadow_paper_runner.add_argument("--run-id", required=True, help="Shadow paper replay run id")
     shadow_paper_runner.add_argument("--output-json", required=True, help="Output paper-only shadow orders JSON")
+    shadow_paper_runner.add_argument("--skip-diagnostics-json", required=False, help="Optional output JSON explaining skipped paper replay candidates and unlock conditions")
     shadow_paper_runner.add_argument("--max-order-usdc", required=False, type=float, default=5.0, help="Maximum simulated notional per shadow order")
 
     market_metadata_resolution = subparsers.add_parser("market-metadata-resolution", help="Extract closed/resolved market metadata into a paper-only resolution JSON")
@@ -937,6 +938,7 @@ def main() -> int:
                     forecasts_json=args.forecasts_json,
                     run_id=args.run_id,
                     output_json=args.output_json,
+                    skip_diagnostics_json=args.skip_diagnostics_json,
                     resolutions_json=args.resolutions_json,
                     historical_forecasts_json=args.historical_forecasts_json,
                     profile_configs_json=args.profile_configs_json,

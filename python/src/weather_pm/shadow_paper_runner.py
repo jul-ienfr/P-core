@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -145,6 +146,66 @@ def build_shadow_profile_paper_orders(
         "summary": summary,
         "orders": orders,
         "skipped": skipped,
+    }
+
+
+def build_shadow_profile_skip_diagnostics(dataset: dict[str, Any], paper_orders: dict[str, Any]) -> dict[str, Any]:
+    examples = [row for row in dataset.get("examples", []) if isinstance(row, dict)]
+    by_key = {(str(row.get("wallet") or ""), str(row.get("market_id") or "")): row for row in examples}
+    skipped = [row for row in paper_orders.get("skipped", []) if isinstance(row, dict)]
+    reason_counts = Counter(str(row.get("reason") or "unknown") for row in skipped)
+    market_rows: dict[str, dict[str, Any]] = {}
+    market_reason_counts: dict[str, Counter[str]] = defaultdict(Counter)
+    market_handles: dict[str, set[str]] = defaultdict(set)
+    unlock_counts: Counter[str] = Counter()
+    for row in skipped:
+        wallet = str(row.get("wallet") or "")
+        market_id = str(row.get("market_id") or "")
+        example = by_key.get((wallet, market_id), {})
+        reason = str(row.get("reason") or "unknown")
+        unlock = _skip_unlock_condition(reason)
+        unlock_counts[unlock] += 1
+        market_reason_counts[market_id][reason] += 1
+        handle = str(example.get("handle") or row.get("handle") or wallet)
+        if handle:
+            market_handles[market_id].add(handle)
+        market_rows.setdefault(
+            market_id,
+            {
+                "market_id": market_id,
+                "question": example.get("question") or row.get("question") or "",
+                "city": example.get("city") or row.get("city") or "",
+                "skipped": 0,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        )["skipped"] += 1
+    market_unlocks: list[dict[str, Any]] = []
+    for market_id, payload in market_rows.items():
+        reasons = dict(sorted(market_reason_counts[market_id].items()))
+        primary_reason = max(reasons.items(), key=lambda item: item[1])[0] if reasons else "unknown"
+        payload = dict(payload)
+        payload["skip_reasons"] = reasons
+        payload["handles"] = sorted(market_handles.get(market_id, set()))
+        payload["unlock_condition"] = _skip_unlock_condition(primary_reason)
+        payload["operator_action"] = _skip_operator_action(primary_reason)
+        market_unlocks.append(payload)
+    market_unlocks.sort(key=lambda row: (-int(row.get("skipped") or 0), str(row.get("market_id") or "")))
+    summary = {
+        "paper_orders": len([row for row in paper_orders.get("orders", []) if isinstance(row, dict)]),
+        "skipped": len(skipped),
+        "skip_reasons": dict(sorted(reason_counts.items())),
+        "unlock_reasons": dict(sorted(unlock_counts.items())),
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    return {
+        "source": "shadow_profile_skip_diagnostics",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "market_unlocks": market_unlocks,
+        "operator_next_actions": _skip_operator_next_actions(summary),
     }
 
 
@@ -316,6 +377,7 @@ def run_shadow_paper_runner_artifact(
     forecasts_json: str | Path | None,
     run_id: str,
     output_json: str | Path,
+    skip_diagnostics_json: str | Path | None = None,
     resolutions_json: str | Path | None = None,
     historical_forecasts_json: str | Path | None = None,
     profile_configs_json: str | Path | None = None,
@@ -348,8 +410,20 @@ def run_shadow_paper_runner_artifact(
     output_path = Path(output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.setdefault("artifacts", {})["output_json"] = str(output_path)
+    artifacts = {"output_json": str(output_path)}
+    if skip_diagnostics_json:
+        diagnostics = build_shadow_profile_skip_diagnostics(enriched, result)
+        diagnostics_path = Path(skip_diagnostics_json)
+        diagnostics_path.parent.mkdir(parents=True, exist_ok=True)
+        diagnostics.setdefault("artifacts", {})["output_json"] = str(diagnostics_path)
+        diagnostics.setdefault("artifacts", {})["paper_orders_json"] = str(output_path)
+        diagnostics.setdefault("artifacts", {})["dataset_json"] = str(dataset_json)
+        diagnostics_path.write_text(json.dumps(diagnostics, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        result["artifacts"]["skip_diagnostics_json"] = str(diagnostics_path)
+        artifacts["skip_diagnostics_json"] = str(diagnostics_path)
+        result["summary"]["skip_diagnostics"] = diagnostics["summary"]
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return {"summary": result["summary"], "artifacts": {"output_json": str(output_path)}}
+    return {"summary": result["summary"], "artifacts": artifacts}
 
 
 def build_market_metadata_resolution_dataset(markets_payload: dict[str, Any] | list[Any]) -> dict[str, Any]:
@@ -1475,6 +1549,43 @@ def _skip_reason(row: dict[str, Any], *, profile_config: dict[str, Any] | None =
     if min_edge > 0 and model_edge < min_edge:
         return "profile_min_edge_not_met"
     return None
+
+
+def _skip_unlock_condition(reason: str) -> str:
+    return {
+        "account_no_trade_label": "wait_for_target_account_trade_or_promote_signal_only",
+        "missing_orderbook_features": "refresh_tradeable_orderbook_snapshot",
+        "missing_forecast_features": "refresh_independent_forecast_features",
+        "no_independent_model_edge": "wait_for_positive_independent_model_edge",
+        "profile_min_edge_not_met": "lower_profile_min_edge_or_wait_for_stronger_edge",
+        "historical_profile_avoid_or_invert_filter": "respect_historical_avoid_rule_or_build_inversion_test",
+    }.get(reason, "manual_review_required")
+
+
+def _skip_operator_action(reason: str) -> str:
+    return {
+        "account_no_trade_label": "Keep CPR as signal-only until one target account actually trades this market; do not synthesize a copy-trade paper order from abstention.",
+        "missing_orderbook_features": "Refresh CLOB/orderbook context and retry paper replay only if a tradeable quote appears.",
+        "missing_forecast_features": "Refresh independent forecast context before allowing paper replay.",
+        "no_independent_model_edge": "Keep on watchlist until independent forecast probability beats the entry price.",
+        "profile_min_edge_not_met": "Keep skipped unless this profile's paper-only min-edge gate is intentionally loosened.",
+        "historical_profile_avoid_or_invert_filter": "Respect historical avoid filter; only test inversion through a separate paper-only hypothesis.",
+    }.get(reason, "Manual paper-only review required before any replay action.")
+
+
+def _skip_operator_next_actions(summary: dict[str, Any]) -> list[str]:
+    reasons = summary.get("skip_reasons") if isinstance(summary.get("skip_reasons"), dict) else {}
+    actions: list[str] = []
+    if reasons and set(reasons) == {"account_no_trade_label"}:
+        actions.append("treat_all_no_trade_cpr_replay_as_signal_only_not_orderable")
+    actions.extend(
+        [
+            "do_not_promote_to_live_from_skipped_replay",
+            "rerun_paper_replay_after_target_account_trade_or_feature_refresh",
+            "keep paper_only=true and live_order_allowed=false",
+        ]
+    )
+    return actions
 
 
 def _load_optional_object(path: str | Path | None) -> dict[str, Any]:

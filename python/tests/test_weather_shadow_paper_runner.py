@@ -13,6 +13,7 @@ from weather_pm.shadow_paper_runner import (
     build_shadow_profile_paper_orders,
     apply_stress_overlay_to_paper_orders,
     build_shadow_profile_exposure_preview,
+    build_shadow_profile_skip_diagnostics,
     enrich_shadow_dataset_features,
 )
 
@@ -157,6 +158,73 @@ def test_build_shadow_profile_paper_orders_only_places_independently_confirmed_s
     assert result["orders"][0]["paper_only"] is True
     assert result["orders"][0]["live_order_allowed"] is False
     assert result["skipped"][0]["reason"] == "account_no_trade_label"
+
+
+def test_build_shadow_profile_skip_diagnostics_explains_all_no_trade_cpr_replay() -> None:
+    dataset = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "examples": [
+            {
+                "wallet": "0xCold",
+                "handle": "ColdMath",
+                "market_id": "m-kuala-26",
+                "question": "Will Kuala Lumpur be 26°C or below?",
+                "city": "Kuala Lumpur",
+                "label": "no_trade",
+                "abstention_reason": "no_account_trade_on_surface",
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "wallet": "0xPoli",
+                "handle": "Poligarch",
+                "market_id": "m-kuala-26",
+                "question": "Will Kuala Lumpur be 26°C or below?",
+                "city": "Kuala Lumpur",
+                "label": "no_trade",
+                "abstention_reason": "no_account_trade_on_surface",
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        ],
+    }
+    paper_orders = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": {"paper_orders": 0, "skipped": 2, "paper_only": True, "live_order_allowed": False},
+        "orders": [],
+        "skipped": [
+            {"wallet": "0xCold", "market_id": "m-kuala-26", "reason": "account_no_trade_label"},
+            {"wallet": "0xPoli", "market_id": "m-kuala-26", "reason": "account_no_trade_label"},
+        ],
+    }
+
+    diagnostics = build_shadow_profile_skip_diagnostics(dataset, paper_orders)
+
+    assert diagnostics["summary"] == {
+        "paper_orders": 0,
+        "skipped": 2,
+        "skip_reasons": {"account_no_trade_label": 2},
+        "unlock_reasons": {"wait_for_target_account_trade_or_promote_signal_only": 2},
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    assert diagnostics["market_unlocks"] == [
+        {
+            "market_id": "m-kuala-26",
+            "question": "Will Kuala Lumpur be 26°C or below?",
+            "city": "Kuala Lumpur",
+            "skipped": 2,
+            "skip_reasons": {"account_no_trade_label": 2},
+            "handles": ["ColdMath", "Poligarch"],
+            "unlock_condition": "wait_for_target_account_trade_or_promote_signal_only",
+            "operator_action": "Keep CPR as signal-only until one target account actually trades this market; do not synthesize a copy-trade paper order from abstention.",
+            "paper_only": True,
+            "live_order_allowed": False,
+        }
+    ]
+    assert diagnostics["operator_next_actions"][0] == "treat_all_no_trade_cpr_replay_as_signal_only_not_orderable"
 
 
 def test_build_shadow_profile_paper_orders_applies_profile_specific_sizing_and_role_metadata() -> None:
@@ -589,6 +657,56 @@ def test_build_shadow_profile_paper_orders_applies_promoted_profile_configuratio
         "source_recommendation": "promote_to_paper_profile",
     }
     assert result["summary"]["profile_counts"] == {"jey_threshold": 1}
+
+
+def test_cli_shadow_paper_runner_writes_skip_diagnostics_when_requested(tmp_path: Path) -> None:
+    dataset = _dataset()
+    dataset["examples"][0]["label"] = "no_trade"
+    dataset["examples"][0]["handle"] = "ColdMath"
+    dataset["examples"][0]["abstention_reason"] = "no_account_trade_on_surface"
+    dataset_in = tmp_path / "dataset.json"
+    orderbooks_in = tmp_path / "orderbooks.json"
+    forecasts_in = tmp_path / "forecasts.json"
+    output = tmp_path / "paper_orders.json"
+    diagnostics = tmp_path / "skip_diagnostics.json"
+    dataset_in.write_text(json.dumps(dataset), encoding="utf-8")
+    orderbooks_in.write_text(json.dumps({"m-london-20": {"best_bid": 0.30, "best_ask": 0.32, "depth_usd": 750}}), encoding="utf-8")
+    forecasts_in.write_text(json.dumps({"london|april 25": {"forecast_high_c": 20.4, "source": "fixture_ecmwf", "freshness_minutes": 45}}), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "weather_pm.cli",
+            "shadow-paper-runner",
+            "--dataset-json",
+            str(dataset_in),
+            "--orderbooks-json",
+            str(orderbooks_in),
+            "--forecasts-json",
+            str(forecasts_in),
+            "--run-id",
+            "shadow-diagnostics",
+            "--output-json",
+            str(output),
+            "--skip-diagnostics-json",
+            str(diagnostics),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+
+    assert result.returncode == 0, result.stderr
+    stdout = json.loads(result.stdout)
+    assert stdout["artifacts"]["skip_diagnostics_json"] == str(diagnostics)
+    payload = json.loads(diagnostics.read_text(encoding="utf-8"))
+    assert payload["summary"]["skip_reasons"] == {"account_no_trade_label": 2}
+    assert payload["market_unlocks"][0]["unlock_condition"] == "wait_for_target_account_trade_or_promote_signal_only"
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+
 
 
 def test_cli_shadow_paper_runner_accepts_stress_overlay_json(tmp_path: Path) -> None:
