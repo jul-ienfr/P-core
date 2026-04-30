@@ -75,6 +75,7 @@ from weather_pm.shadow_paper_runner import (
     run_shadow_paper_runner_artifact,
     run_shadow_profile_evaluator_artifact,
     run_shadow_profile_exposure_preview_artifact,
+    run_shadow_profile_learning_report_artifact,
 )
 from weather_pm.shadow_profiles import write_learned_shadow_patterns_artifacts, write_promoted_profile_opportunity_dataset_artifact, write_shadow_profile_artifacts
 from weather_pm.smoke_comparison import write_smoke_comparison
@@ -335,6 +336,12 @@ def build_parser() -> argparse.ArgumentParser:
     historical_profile_rules.add_argument("--trade-resolution-json", required=True, help="Resolved account trade dataset JSON")
     historical_profile_rules.add_argument("--output-json", required=True, help="Output historical profile rule candidates JSON")
     historical_profile_rules.add_argument("--output-md", required=False, help="Optional Markdown operator rule report")
+
+    learning_report = subparsers.add_parser("shadow-profile-learning-report", help="Build a paper-only learning report from profile evaluation and optional paper orders")
+    learning_report.add_argument("--evaluation-json", required=True, help="Shadow profile evaluation JSON")
+    learning_report.add_argument("--paper-orders-json", required=False, help="Optional shadow paper orders JSON for high-information case selection")
+    learning_report.add_argument("--output-json", required=True, help="Output learning report JSON")
+    learning_report.add_argument("--output-md", required=False, help="Optional Markdown learning report")
 
     shadow_profile_evaluator.add_argument("--handoff-forecasts-json", required=False, help="Forecasts path to show in promoted opportunity replay handoff")
     shadow_profile_evaluator.add_argument("--handoff-stress-overlay-json", required=False, help="Stress overlay path to show in promoted opportunity replay handoff")
@@ -988,6 +995,19 @@ def main() -> int:
             json.dumps(
                 run_historical_profile_rule_candidates_artifact(
                     trade_resolution_json=args.trade_resolution_json,
+                    output_json=args.output_json,
+                    output_md=args.output_md,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "shadow-profile-learning-report":
+        print(
+            json.dumps(
+                run_shadow_profile_learning_report_artifact(
+                    evaluation_json=args.evaluation_json,
+                    paper_orders_json=args.paper_orders_json,
                     output_json=args.output_json,
                     output_md=args.output_md,
                 )

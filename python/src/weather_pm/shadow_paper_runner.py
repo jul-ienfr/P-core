@@ -586,6 +586,124 @@ def build_shadow_profile_evaluation(paper_orders: dict[str, Any], *, trade_resol
 
 
 
+def build_shadow_profile_learning_report(
+    evaluation: dict[str, Any],
+    *,
+    paper_orders: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Summarize which shadow profiles and cases accelerate paper-only learning."""
+    profiles = [profile for profile in evaluation.get("profiles", []) if isinstance(profile, dict)]
+    profile_actions = [_learning_profile_action(profile) for profile in profiles]
+    high_information_cases = _learning_high_information_cases(paper_orders or {})
+    next_experiments = _learning_next_experiments(profile_actions, high_information_cases)
+    summary = {
+        "profiles": len(profiles),
+        "resolved_orders": sum(int(profile.get("resolved_orders") or 0) for profile in profiles),
+        "promote_profiles": sum(1 for action in profile_actions if action["action"] == "promote_candidate_paper_only"),
+        "disable_profiles": sum(1 for action in profile_actions if action["action"] == "disable_or_reduce_shadow_profile"),
+        "need_more_resolution_profiles": sum(1 for action in profile_actions if action["action"] == "collect_more_resolutions"),
+        "high_information_cases": len(high_information_cases),
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    return {
+        "source": "shadow_profile_learning_report",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "profile_actions": profile_actions,
+        "high_information_cases": high_information_cases,
+        "next_experiments": next_experiments,
+    }
+
+
+def _learning_profile_action(profile: dict[str, Any]) -> dict[str, Any]:
+    recommendation = str(profile.get("recommendation") or "")
+    resolved_orders = int(profile.get("resolved_orders") or 0)
+    roi = round(_to_float(profile.get("roi")), 6)
+    winrate = round(_to_float(profile.get("winrate")), 6)
+    if recommendation == "promote_to_paper_profile":
+        action = "promote_candidate_paper_only"
+        reason = "positive_resolved_edge"
+    elif recommendation == "reduce_or_disable":
+        action = "disable_or_reduce_shadow_profile"
+        reason = "negative_resolved_edge"
+    elif recommendation == "needs_resolution_data" or resolved_orders < 5:
+        action = "collect_more_resolutions"
+        reason = "insufficient_resolved_feedback"
+    else:
+        action = "continue_shadow_observation"
+        reason = "profile_still_calibrating"
+    return {
+        "profile_id": str(profile.get("profile_id") or "shadow_profile_default"),
+        "action": action,
+        "reason": reason,
+        "resolved_orders": resolved_orders,
+        "roi": roi,
+        "winrate": winrate,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+
+
+def _learning_high_information_cases(paper_orders: dict[str, Any]) -> list[dict[str, Any]]:
+    cases: list[dict[str, Any]] = []
+    for order in paper_orders.get("orders", []):
+        if not isinstance(order, dict):
+            continue
+        features = order.get("features") if isinstance(order.get("features"), dict) else {}
+        forecast_context = features.get("forecast_context") if isinstance(features.get("forecast_context"), dict) else {}
+        resolution = features.get("resolution") if isinstance(features.get("resolution"), dict) else {}
+        probability = _to_float(forecast_context.get("model_probability_at_trade") or order.get("model_probability"))
+        price = _to_float(order.get("strict_limit_price") or order.get("yes_price"))
+        learning_reason = ""
+        if probability and price and abs(probability - price) <= 0.03:
+            learning_reason = "near_probability_threshold"
+        elif _case_has_official_source_gap(forecast_context, resolution):
+            learning_reason = "official_source_gap"
+        elif resolution.get("available") is False:
+            learning_reason = "pending_resolution_feedback"
+        if not learning_reason:
+            continue
+        cases.append(
+            {
+                "market_id": order.get("market_id"),
+                "profile_id": order.get("profile_id"),
+                "question": order.get("question"),
+                "learning_reason": learning_reason,
+                "price": round(price, 6),
+                "model_probability": round(probability, 6),
+                "paper_only": True,
+                "live_order_allowed": False,
+            }
+        )
+    reason_rank = {"near_probability_threshold": 0, "official_source_gap": 1, "pending_resolution_feedback": 2}
+    cases.sort(key=lambda row: (reason_rank.get(str(row.get("learning_reason")), 99), str(row.get("market_id") or "")))
+    return cases[:20]
+
+
+def _case_has_official_source_gap(forecast_context: dict[str, Any], resolution: dict[str, Any]) -> bool:
+    values = [forecast_context.get("source_health"), forecast_context.get("source"), resolution.get("source_health"), resolution.get("fallback_reason")]
+    lowered = " ".join(str(value).lower() for value in values if value)
+    return "fallback" in lowered or "official_source_empty" in lowered or "official" in lowered and resolution.get("available") is False
+
+
+def _learning_next_experiments(profile_actions: list[dict[str, Any]], high_information_cases: list[dict[str, Any]]) -> list[str]:
+    experiments: list[str] = []
+    for action in profile_actions:
+        profile_id = str(action.get("profile_id") or "")
+        if action.get("action") == "promote_candidate_paper_only" and profile_id:
+            experiments.append(f"spawn_profile_variants_for_{profile_id}")
+        elif action.get("action") == "disable_or_reduce_shadow_profile" and profile_id:
+            experiments.append(f"stop_or_tighten_{profile_id}")
+        elif action.get("action") == "collect_more_resolutions" and profile_id:
+            experiments.append(f"prioritize_resolution_feedback_for_{profile_id}")
+    if high_information_cases:
+        experiments.append("replay_high_information_cases_after_resolution")
+    return experiments
+
+
+
 def build_historical_profile_rule_candidates(trade_resolution_dataset: dict[str, Any]) -> dict[str, Any]:
     """Aggregate resolved account trades into paper-only profile gating rules."""
     rows = [row for row in trade_resolution_dataset.get("trades", []) if isinstance(row, dict)]
@@ -709,6 +827,28 @@ def run_shadow_profile_evaluator_artifact(
         md_path = Path(output_md)
         md_path.parent.mkdir(parents=True, exist_ok=True)
         md_path.write_text(_shadow_profile_evaluation_markdown(result), encoding="utf-8")
+        result["artifacts"]["output_md"] = str(md_path)
+    output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"summary": result["summary"], "artifacts": result["artifacts"]}
+
+
+def run_shadow_profile_learning_report_artifact(
+    *,
+    evaluation_json: str | Path,
+    output_json: str | Path,
+    paper_orders_json: str | Path | None = None,
+    output_md: str | Path | None = None,
+) -> dict[str, Any]:
+    evaluation = json.loads(Path(evaluation_json).read_text(encoding="utf-8"))
+    paper_orders = _load_optional_object(paper_orders_json)
+    result = build_shadow_profile_learning_report(evaluation, paper_orders=paper_orders)
+    output_path = Path(output_json)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result.setdefault("artifacts", {})["output_json"] = str(output_path)
+    if output_md:
+        md_path = Path(output_md)
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(_shadow_profile_learning_report_markdown(result), encoding="utf-8")
         result["artifacts"]["output_md"] = str(md_path)
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {"summary": result["summary"], "artifacts": result["artifacts"]}
@@ -1187,6 +1327,46 @@ def _shadow_profile_exposure_preview_markdown(result: dict[str, Any]) -> str:
             f"{float(market.get('shares_if_filled', 0.0)):.4f} | {float(market.get('max_profit_if_true_usdc', 0.0)):.4f} | "
             f"{', '.join(market.get('risk_buckets', []))} | {'; '.join(market.get('questions', []))} |"
         )
+    return "\n".join(lines) + "\n"
+
+
+
+def _shadow_profile_learning_report_markdown(result: dict[str, Any]) -> str:
+    summary = result.get("summary", {}) if isinstance(result.get("summary"), dict) else {}
+    lines = [
+        "# Shadow profile learning report",
+        "",
+        "paper_only: true",
+        "live_order_allowed: false",
+        "",
+        f"profiles: {summary.get('profiles', 0)}",
+        f"resolved_orders: {summary.get('resolved_orders', 0)}",
+        f"high_information_cases: {summary.get('high_information_cases', 0)}",
+        "",
+        "## Profile actions",
+        "",
+        "| profile | action | reason | resolved | roi | winrate |",
+        "|---|---|---|---:|---:|---:|",
+    ]
+    for action in result.get("profile_actions", []):
+        if not isinstance(action, dict):
+            continue
+        lines.append(
+            f"| {action.get('profile_id', '')} | {action.get('action', '')} | {action.get('reason', '')} | "
+            f"{action.get('resolved_orders', 0)} | {float(action.get('roi', 0.0)):.4f} | {float(action.get('winrate', 0.0)):.4f} |"
+        )
+    lines.extend(["", "## High-information cases", "", "| market | reason | profile | price | probability | question |", "|---|---|---|---:|---:|---|"])
+    for case in result.get("high_information_cases", []):
+        if not isinstance(case, dict):
+            continue
+        lines.append(
+            f"| {case.get('market_id', '')} | {case.get('learning_reason', '')} | {case.get('profile_id', '')} | "
+            f"{float(case.get('price', 0.0)):.4f} | {float(case.get('model_probability', 0.0)):.4f} | {case.get('question', '')} |"
+        )
+    if result.get("next_experiments"):
+        lines.extend(["", "## Next experiments", ""])
+        for experiment in result.get("next_experiments", []):
+            lines.append(f"- {experiment}")
     return "\n".join(lines) + "\n"
 
 

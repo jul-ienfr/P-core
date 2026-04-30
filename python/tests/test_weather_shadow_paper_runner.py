@@ -10,6 +10,7 @@ from weather_pm.shadow_paper_runner import (
     build_account_trade_resolution_dataset,
     build_market_metadata_resolution_dataset,
     build_shadow_profile_evaluation,
+    build_shadow_profile_learning_report,
     build_shadow_profile_paper_orders,
     apply_stress_overlay_to_paper_orders,
     build_shadow_profile_exposure_preview,
@@ -543,6 +544,145 @@ def test_build_shadow_profile_exposure_preview_summarizes_convexity_without_live
     assert result["orders"][0]["max_loss_usdc"] == 1.0
     assert result["orders"][0]["max_profit_if_true_usdc"] == 99.0
     assert result["orders"][0]["risk_bucket"] == "robust"
+
+
+def test_build_shadow_profile_learning_report_prioritizes_feedback_loops_and_profile_actions() -> None:
+    evaluation = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "profiles": [
+            {
+                "profile_id": "promote_fast",
+                "orders": 9,
+                "resolved_orders": 9,
+                "wins": 7,
+                "losses": 2,
+                "winrate": 0.777778,
+                "requested_notional_usdc": 18.0,
+                "estimated_pnl_usdc": 5.4,
+                "roi": 0.3,
+                "recommendation": "promote_to_paper_profile",
+                "trade_winrate": 0.7,
+                "historical_roi": 0.18,
+                "resolved_trades": 10,
+            },
+            {
+                "profile_id": "kill_bad",
+                "orders": 8,
+                "resolved_orders": 8,
+                "wins": 2,
+                "losses": 6,
+                "winrate": 0.25,
+                "requested_notional_usdc": 16.0,
+                "estimated_pnl_usdc": -3.2,
+                "roi": -0.2,
+                "recommendation": "reduce_or_disable",
+                "skipped_counts": {"profile_min_edge_not_met": 2},
+            },
+            {
+                "profile_id": "needs_more",
+                "orders": 4,
+                "resolved_orders": 1,
+                "wins": 1,
+                "losses": 0,
+                "winrate": 1.0,
+                "requested_notional_usdc": 8.0,
+                "estimated_pnl_usdc": 1.0,
+                "roi": 0.125,
+                "recommendation": "needs_resolution_data",
+                "skipped_counts": {"account_no_trade_label": 3},
+            },
+        ],
+    }
+    paper_orders = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "orders": [
+            {
+                "profile_id": "promote_fast",
+                "market_id": "m-threshold-close",
+                "question": "Will Dallas be 90°F or above?",
+                "strict_limit_price": 0.49,
+                "requested_notional_usdc": 2.0,
+                "features": {
+                    "forecast_context": {"model_probability_at_trade": 0.51, "available": True},
+                    "orderbook": {"available": True, "best_ask": 0.49, "depth_usd": 650},
+                    "resolution": {"available": False, "source": "official_pending"},
+                },
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "profile_id": "needs_more",
+                "market_id": "m-source-gap",
+                "question": "Will Hong Kong be 25°C or below?",
+                "strict_limit_price": 0.20,
+                "requested_notional_usdc": 1.0,
+                "features": {
+                    "forecast_context": {"model_probability_at_trade": 0.66, "available": True, "source_health": "fallback_final"},
+                    "orderbook": {"available": True, "best_ask": 0.20, "depth_usd": 80},
+                    "resolution": {"available": False, "source_health": "fallback_final"},
+                },
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        ],
+        "skipped": [{"profile_id": "needs_more", "market_id": "m-no-trade", "reason": "account_no_trade_label"}],
+    }
+
+    report = build_shadow_profile_learning_report(evaluation, paper_orders=paper_orders)
+
+    assert report["paper_only"] is True
+    assert report["live_order_allowed"] is False
+    assert report["summary"] == {
+        "profiles": 3,
+        "resolved_orders": 18,
+        "promote_profiles": 1,
+        "disable_profiles": 1,
+        "need_more_resolution_profiles": 1,
+        "high_information_cases": 2,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    assert report["profile_actions"] == [
+        {
+            "profile_id": "promote_fast",
+            "action": "promote_candidate_paper_only",
+            "reason": "positive_resolved_edge",
+            "resolved_orders": 9,
+            "roi": 0.3,
+            "winrate": 0.777778,
+            "paper_only": True,
+            "live_order_allowed": False,
+        },
+        {
+            "profile_id": "kill_bad",
+            "action": "disable_or_reduce_shadow_profile",
+            "reason": "negative_resolved_edge",
+            "resolved_orders": 8,
+            "roi": -0.2,
+            "winrate": 0.25,
+            "paper_only": True,
+            "live_order_allowed": False,
+        },
+        {
+            "profile_id": "needs_more",
+            "action": "collect_more_resolutions",
+            "reason": "insufficient_resolved_feedback",
+            "resolved_orders": 1,
+            "roi": 0.125,
+            "winrate": 1.0,
+            "paper_only": True,
+            "live_order_allowed": False,
+        },
+    ]
+    assert report["high_information_cases"][0]["market_id"] == "m-threshold-close"
+    assert report["high_information_cases"][0]["learning_reason"] == "near_probability_threshold"
+    assert report["high_information_cases"][1]["learning_reason"] == "official_source_gap"
+    assert report["next_experiments"][:2] == [
+        "spawn_profile_variants_for_promote_fast",
+        "stop_or_tighten_kill_bad",
+    ]
 
 
 def test_build_shadow_profile_paper_orders_reports_promoted_opportunity_watch_orders() -> None:
