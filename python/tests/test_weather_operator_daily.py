@@ -49,6 +49,119 @@ def test_latest_shadow_skip_diagnostics_ignores_unsafe_payloads(tmp_path: Path) 
 
 
 
+def test_latest_safe_learning_cycle_ignores_newer_unsafe_nested_live_payload(tmp_path: Path) -> None:
+    safe_old = _write_json(
+        tmp_path / "learning-cycles" / "20260430T010000Z" / "learning_cycle_result.json",
+        {
+            "ok": True,
+            "paper_only": True,
+            "live_order_allowed": False,
+            "no_real_order_placed": True,
+            "summary": {"policy_count": 1, "backfill_count": 2},
+            "policy": {"actions": [{"policy_action": "request_resolution_backfill", "live_order_allowed": False}]},
+        },
+    )
+    unsafe_new = _write_json(
+        tmp_path / "learning-cycles" / "20260430T020000Z" / "learning_cycle_result.json",
+        {
+            "ok": True,
+            "paper_only": True,
+            "live_order_allowed": False,
+            "no_real_order_placed": True,
+            "summary": {"policy_count": 99, "backfill_count": 99},
+            "policy": {"actions": [{"policy_action": "place_live_order", "live_order_allowed": True}]},
+        },
+    )
+    safe_old.touch()
+    unsafe_new.touch()
+
+    selected = weather_operator_daily.latest_safe_learning_cycle(tmp_path)
+
+    assert selected is not None
+    path, payload = selected
+    assert path == safe_old
+    assert payload["summary"]["policy_count"] == 1
+    assert payload["paper_only"] is True
+    assert payload["live_order_allowed"] is False
+
+
+
+def test_render_learning_cycle_markdown_summarizes_safe_cycle() -> None:
+    markdown = weather_operator_daily.render_learning_cycle_markdown(
+        {
+            "ok": True,
+            "paper_only": True,
+            "live_order_allowed": False,
+            "no_real_order_placed": True,
+            "contract": {"run_id": "cycle-20260430"},
+            "summary": {"policy_count": 2, "backfill_count": 1},
+            "policy": {
+                "actions": [
+                    {"profile_id": "coldmath", "policy_action": "request_resolution_backfill", "reason": "thin sample"},
+                    {"profile_id": "railbird", "policy_action": "reduce_or_disable_shadow_profile", "reason": "negative ROI"},
+                ]
+            },
+            "backfill_plan": {"cases": [{"market_id": "m-threshold", "information_score": 87.5, "hypothesis": "near threshold"}]},
+        }
+    )
+
+    assert "## Automatic learning cycle" in markdown
+    assert "cycle-20260430" in markdown
+    assert "paper_only=true" in markdown
+    assert "live_order_allowed=false" in markdown
+    assert "- Policy actions: 2" in markdown
+    assert "- Backfill cases: 1" in markdown
+    assert "coldmath" in markdown
+    assert "m-threshold" in markdown
+
+
+
+def test_render_daily_markdown_includes_learning_cycle_summary(tmp_path: Path) -> None:
+    refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
+    monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
+    watchlist_md = tmp_path / "watchlist.md"
+    watchlist_md.write_text("# watchlist\n", encoding="utf-8")
+    daily_json = tmp_path / "daily.json"
+    account_summary = _write_json(
+        tmp_path / "account_summary.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "daily_operator_rollup": {"live_ready": False, "live_ready_count": 0, "watchlist_count": 0, "global_recommendation": "watch_only"},
+            "daily_operator_markdown": "- no ready markets",
+        },
+    )
+    paper_watchlist = _write_json(
+        tmp_path / "watchlist.json",
+        {"paper_only": True, "live_order_allowed": False, "summary": {"positions": 0, "total_spend": 0, "total_ev_now": 0, "action_counts": {}}, "watchlist": []},
+    )
+
+    markdown = weather_operator_daily.render_daily_markdown(
+        stamp="20260430T120000Z",
+        refresh_path=refresh,
+        account_summary_path=account_summary,
+        paper_monitor_path=monitor,
+        paper_watchlist_path=paper_watchlist,
+        paper_watchlist_md=watchlist_md,
+        daily_json_path=daily_json,
+        learning_cycle={
+            "paper_only": True,
+            "live_order_allowed": False,
+            "no_real_order_placed": True,
+            "contract": {"run_id": "daily-cycle"},
+            "summary": {"policy_count": 1, "backfill_count": 1},
+            "policy": {"actions": [{"profile_id": "coldmath", "policy_action": "request_resolution_backfill"}]},
+            "backfill_plan": {"cases": [{"market_id": "m1", "information_score": 42}]},
+        },
+    )
+
+    assert "## Automatic learning cycle" in markdown
+    assert "daily-cycle" in markdown
+    assert "paper_only=true" in markdown
+    assert "live_order_allowed=false" in markdown
+
+
+
 def test_render_daily_markdown_exposes_actionable_only_summary(tmp_path: Path) -> None:
     refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
     monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})

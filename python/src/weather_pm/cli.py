@@ -45,6 +45,12 @@ from weather_pm.decision_dataset import write_account_decision_dataset
 from weather_pm.history_client import StationHistoryClient, _latency_operational_fields, _parse_observation_timestamp, build_station_history_bundle
 from weather_pm.live_observer import run_live_observer_fast_collector, run_live_observer_once
 from weather_pm.live_observer_config import load_live_observer_config
+from weather_pm.learning_cycle import (
+    assemble_learning_cycle_result,
+    build_learning_cycle_contract,
+    render_learning_cycle_summary_markdown,
+    validate_learning_cycle_safety,
+)
 from weather_pm.live_observer_storage_estimator import estimate_live_observer_storage
 from weather_pm.live_storage import assert_not_unmounted_truenas_path, write_live_observer_payload_to_storage
 from weather_pm.market_parser import parse_market_question
@@ -168,6 +174,16 @@ def build_parser() -> argparse.ArgumentParser:
     account_learning_backfill.add_argument("--input-json", required=True, help="Public account trade/backfill JSON")
     account_learning_backfill.add_argument("--output-dir", required=True, help="Output directory for account_trades and shadow_profiles artifacts")
     account_learning_backfill.add_argument("--run-id", required=False, help="Optional deterministic artifact run id")
+
+    learning_cycle = subparsers.add_parser("learning-cycle", help="Build a dry-run/no-network learning cycle contract")
+    learning_cycle.add_argument("--run-id", required=True, help="Learning cycle run id")
+    learning_cycle.add_argument("--output-dir", required=True, help="Output directory for learning cycle artifacts")
+    learning_cycle.add_argument("--max-accounts", required=True, type=int, help="Maximum accounts to consider")
+    learning_cycle.add_argument("--trades-per-account", required=True, type=int, help="Maximum trades per account")
+    learning_cycle.add_argument("--lookback-days", required=True, type=int, help="Lookback window in days")
+    learning_cycle.add_argument("--dry-run", action="store_true", help="Required: do not execute side-effectful learning steps")
+    learning_cycle.add_argument("--no-network", action="store_true", help="Required: do not use network access")
+    learning_cycle.add_argument("--learning-report-json", required=False, help="Optional safe learning report JSON for full cycle artifact assembly")
 
     subparsers.add_parser("account-data-source-manifest", help="Summarize read-only data sources for account pattern learning")
 
@@ -775,6 +791,74 @@ def main() -> int:
 
     if args.command == "account-learning-backfill":
         print(json.dumps(write_account_learning_backfill_pipeline(args.input_json, args.output_dir, run_id=args.run_id)))
+        return 0
+
+    if args.command == "learning-cycle":
+        if not args.dry_run:
+            parser.error("learning-cycle requires --dry-run")
+        if not args.no_network:
+            parser.error("learning-cycle requires --no-network")
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        contract = build_learning_cycle_contract(
+            run_id=args.run_id,
+            output_dir=output_dir,
+            max_accounts=args.max_accounts,
+            trades_per_account=args.trades_per_account,
+            lookback_days=args.lookback_days,
+        )
+        safety = validate_learning_cycle_safety(contract)
+        contract_json = output_dir / "learning_cycle_contract.json"
+        contract_json.write_text(json.dumps(contract, sort_keys=True) + "\n", encoding="utf-8")
+        if args.learning_report_json:
+            learning_report = json.loads(Path(args.learning_report_json).read_text(encoding="utf-8"))
+            result = assemble_learning_cycle_result(
+                run_id=args.run_id,
+                output_dir=output_dir,
+                learning_report=learning_report,
+                max_accounts=args.max_accounts,
+                trades_per_account=args.trades_per_account,
+                lookback_days=args.lookback_days,
+            )
+            policy_json = output_dir / "learning_policy_actions.json"
+            backfill_json = output_dir / "learning_backfill_plan.json"
+            cycle_json = output_dir / "learning_cycle_result.json"
+            summary_md = output_dir / "learning_cycle_summary.md"
+            policy_json.write_text(json.dumps(result["policy"], sort_keys=True) + "\n", encoding="utf-8")
+            backfill_json.write_text(json.dumps(result["backfill_plan"], sort_keys=True) + "\n", encoding="utf-8")
+            cycle_json.write_text(json.dumps(result, sort_keys=True) + "\n", encoding="utf-8")
+            summary_md.write_text(render_learning_cycle_summary_markdown(result), encoding="utf-8")
+            print(
+                json.dumps(
+                    {
+                        "ok": result["ok"],
+                        "paper_only": result["paper_only"],
+                        "live_order_allowed": result["live_order_allowed"],
+                        "no_real_order_placed": result["no_real_order_placed"],
+                        "artifacts": {
+                            "contract_json": str(contract_json),
+                            "cycle_json": str(cycle_json),
+                            "policy_json": str(policy_json),
+                            "backfill_json": str(backfill_json),
+                            "summary_md": str(summary_md),
+                            "ledger_jsonl": result["ledger_path"],
+                        },
+                    },
+                    separators=(",", ":"),
+                )
+            )
+            return 0
+        print(
+            json.dumps(
+                {
+                    "ok": safety["ok"],
+                    "paper_only": contract["paper_only"],
+                    "live_order_allowed": contract["live_order_allowed"],
+                    "artifacts": {"contract_json": str(contract_json)},
+                },
+                separators=(",", ":"),
+            )
+        )
         return 0
 
     if args.command == "account-data-source-manifest":

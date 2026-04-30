@@ -114,6 +114,23 @@ def latest_safe_json_artifact(patterns: list[str], data_root: Path = DATA) -> tu
     return None
 
 
+def latest_safe_learning_cycle(data_root: Path = DATA) -> tuple[Path, dict[str, Any]] | None:
+    candidates = sorted(
+        [path for path in (data_root / "learning-cycles").glob("*/learning_cycle_result.json") if path.is_file()],
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for path in candidates:
+        try:
+            payload = load_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if _is_safe_paper_payload(payload):
+            return path, payload
+    return None
+
+
+
 def latest_shadow_skip_diagnostics(data_root: Path = DATA) -> dict[str, Any] | None:
     candidates = sorted(
         [path for path in data_root.rglob("shadow_profile_skip_diagnostics*.json") if path.is_file()],
@@ -450,6 +467,48 @@ def render_learning_report_markdown(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def render_learning_cycle_markdown(payload: dict[str, Any]) -> str:
+    if not _is_safe_paper_payload(payload):
+        return ""
+    contract = payload.get("contract") if isinstance(payload.get("contract"), dict) else {}
+    summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+    policy = payload.get("policy") if isinstance(payload.get("policy"), dict) else {}
+    actions = policy.get("actions") if isinstance(policy.get("actions"), list) else []
+    backfill_plan = payload.get("backfill_plan") if isinstance(payload.get("backfill_plan"), dict) else {}
+    cases = backfill_plan.get("cases") if isinstance(backfill_plan.get("cases"), list) else []
+    run_id = payload.get("run_id") or contract.get("run_id") or "unknown"
+    lines = [
+        "## Automatic learning cycle",
+        "",
+        f"- Run: `{run_id}`",
+        "- Safety: paper_only=true; live_order_allowed=false",
+        f"- Policy actions: {int(summary.get('policy_count', len(actions)) or 0)}",
+        f"- Backfill cases: {int(summary.get('backfill_count', len(cases)) or 0)}",
+        "",
+    ]
+    if actions:
+        lines.append("### Top policy hints")
+        for action in actions[:3]:
+            if not isinstance(action, dict):
+                continue
+            lines.append(
+                f"- `{action.get('profile_id', 'unknown-profile')}` — "
+                f"{action.get('policy_action', action.get('action', 'review'))} — {action.get('reason', action.get('blocked_promotion_reason', 'paper-only review'))}"
+            )
+    if cases:
+        lines.extend(["", "### Top backfill hints"])
+        for case in cases[:3]:
+            if not isinstance(case, dict):
+                continue
+            lines.append(
+                f"- `{case.get('market_id', 'unknown-market')}` — score={case.get('information_score', 0)} — "
+                f"{case.get('hypothesis', case.get('reason', 'high-information case'))}"
+            )
+    lines.append("")
+    return "\n".join(lines)
+
+
+
 def render_shadow_skip_diagnostics_markdown(diagnostics: dict[str, Any]) -> str:
     if not isinstance(diagnostics, dict) or not diagnostics:
         return ""
@@ -502,6 +561,7 @@ def render_daily_markdown(
     paper_watchlist_md: Path,
     daily_json_path: Path,
     learning_report: dict[str, Any] | None = None,
+    learning_cycle: dict[str, Any] | None = None,
 ) -> str:
     account_summary = load_json(account_summary_path)
     paper_watchlist = load_json(paper_watchlist_path)
@@ -544,6 +604,9 @@ def render_daily_markdown(
     learning_report_md = render_learning_report_markdown(learning_report or {})
     if learning_report_md:
         lines.extend([learning_report_md, ""])
+    learning_cycle_md = render_learning_cycle_markdown(learning_cycle or {})
+    if learning_cycle_md:
+        lines.extend([learning_cycle_md, ""])
     lines.extend([
         "## Artifacts",
         f"- Daily JSON: `{daily_json_path}`",
@@ -637,6 +700,8 @@ def main() -> int:
     ], timeout=180)
 
     learning_report = build_daily_learning_report(stamp)
+    learning_cycle_artifact = latest_safe_learning_cycle()
+    learning_cycle_path, learning_cycle = learning_cycle_artifact if learning_cycle_artifact is not None else (None, None)
 
     shadow_skip_diagnostics = latest_shadow_skip_diagnostics()
     if shadow_skip_diagnostics:
@@ -647,6 +712,8 @@ def main() -> int:
             summary_compact.setdefault("artifacts", {})["shadow_skip_diagnostics_json"] = shadow_skip_diagnostics.get("artifacts", {}).get("shadow_skip_diagnostics_json")
 
     learning_artifacts = learning_report.get("artifacts", {}) if isinstance(learning_report, dict) and isinstance(learning_report.get("artifacts"), dict) else {}
+    if learning_cycle_path is not None:
+        learning_artifacts = {**learning_artifacts, "learning_cycle_result_json": str(learning_cycle_path)}
 
     daily_payload = {
         "timestamp": stamp,
@@ -660,6 +727,7 @@ def main() -> int:
         "paper_monitor": monitor_compact,
         "paper_watchlist": paper_watchlist_compact,
         "learning_report": learning_report,
+        "learning_cycle": learning_cycle,
         "artifacts": {
             "operator_refresh_json": str(refresh_path),
             "account_summary_json": str(account_summary_path),
@@ -684,6 +752,7 @@ def main() -> int:
             paper_watchlist_md=paper_watchlist_md,
             daily_json_path=daily_json_path,
             learning_report=learning_report,
+            learning_cycle=learning_cycle,
         ),
         encoding="utf-8",
     )
