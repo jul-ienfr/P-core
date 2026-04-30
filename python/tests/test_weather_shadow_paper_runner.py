@@ -9,6 +9,7 @@ from weather_pm.account_trades import classify_weather_trade
 from weather_pm.shadow_paper_runner import (
     build_account_trade_resolution_dataset,
     build_market_metadata_resolution_dataset,
+    build_shadow_profile_auto_action_plan,
     build_shadow_profile_evaluation,
     build_shadow_profile_learning_report,
     build_shadow_profile_paper_orders,
@@ -682,6 +683,111 @@ def test_build_shadow_profile_learning_report_prioritizes_feedback_loops_and_pro
     assert report["next_experiments"][:2] == [
         "spawn_profile_variants_for_promote_fast",
         "stop_or_tighten_kill_bad",
+    ]
+
+
+def test_build_shadow_profile_auto_action_plan_maps_learning_actions_paper_only_without_mutating_inputs() -> None:
+    learning_report = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "profile_actions": [
+            {
+                "profile_id": "promote_fast",
+                "action": "promote_candidate_paper_only",
+                "reason": "positive_resolved_edge",
+                "resolved_orders": 9,
+                "roi": 0.3,
+                "winrate": 0.777778,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "profile_id": "kill_bad",
+                "action": "disable_or_reduce_shadow_profile",
+                "reason": "negative_resolved_edge",
+                "resolved_orders": 8,
+                "roi": -0.2,
+                "winrate": 0.25,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "profile_id": "needs_more",
+                "action": "collect_more_resolutions",
+                "reason": "insufficient_resolved_feedback",
+                "resolved_orders": 1,
+                "roi": 0.125,
+                "winrate": 1.0,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "profile_id": "steady",
+                "action": "continue_shadow_observation",
+                "reason": "profile_still_calibrating",
+                "resolved_orders": 6,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        ],
+    }
+    existing_profiles = {
+        "promote_fast": {"profile_id": "promote_fast", "enabled": False, "max_order_usdc": 1.0},
+        "kill_bad": {"profile_id": "kill_bad", "enabled": True, "max_order_usdc": 5.0},
+    }
+
+    plan = build_shadow_profile_auto_action_plan(learning_report, existing_profiles=existing_profiles)
+
+    assert learning_report["profile_actions"][0]["action"] == "promote_candidate_paper_only"
+    assert existing_profiles["kill_bad"]["enabled"] is True
+    assert plan["paper_only"] is True
+    assert plan["live_order_allowed"] is False
+    assert plan["summary"] == {
+        "input_profile_actions": 4,
+        "planned_actions": 3,
+        "promote_paper_profile_candidate": 1,
+        "disable_or_reduce_shadow_profile": 1,
+        "prioritize_resolution_backfill": 1,
+        "ignored_actions": 1,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    assert plan["actions"] == [
+        {
+            "profile_id": "promote_fast",
+            "action": "promote_paper_profile_candidate",
+            "source_action": "promote_candidate_paper_only",
+            "reason": "positive_resolved_edge",
+            "resolved_orders": 9,
+            "roi": 0.3,
+            "winrate": 0.777778,
+            "existing_profile": {"profile_id": "promote_fast", "enabled": False, "max_order_usdc": 1.0},
+            "paper_only": True,
+            "live_order_allowed": False,
+        },
+        {
+            "profile_id": "kill_bad",
+            "action": "disable_or_reduce_shadow_profile",
+            "source_action": "disable_or_reduce_shadow_profile",
+            "reason": "negative_resolved_edge",
+            "resolved_orders": 8,
+            "roi": -0.2,
+            "winrate": 0.25,
+            "existing_profile": {"profile_id": "kill_bad", "enabled": True, "max_order_usdc": 5.0},
+            "paper_only": True,
+            "live_order_allowed": False,
+        },
+        {
+            "profile_id": "needs_more",
+            "action": "prioritize_resolution_backfill",
+            "source_action": "collect_more_resolutions",
+            "reason": "insufficient_resolved_feedback",
+            "resolved_orders": 1,
+            "roi": 0.125,
+            "winrate": 1.0,
+            "paper_only": True,
+            "live_order_allowed": False,
+        },
     ]
 
 

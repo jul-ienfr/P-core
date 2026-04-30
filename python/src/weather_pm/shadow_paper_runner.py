@@ -617,6 +617,78 @@ def build_shadow_profile_learning_report(
     }
 
 
+def build_shadow_profile_auto_action_plan(
+    learning_report: dict[str, Any],
+    existing_profiles: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Convert learning-report profile recommendations into a paper-only action plan.
+
+    This is intentionally pure and advisory: it never mutates profile configs and never
+    authorizes live orders.
+    """
+    profile_actions = [row for row in learning_report.get("profile_actions", []) if isinstance(row, dict)]
+    existing_profile_rows = existing_profiles or {}
+    action_map = {
+        "promote_candidate_paper_only": "promote_paper_profile_candidate",
+        "disable_or_reduce_shadow_profile": "disable_or_reduce_shadow_profile",
+        "collect_more_resolutions": "prioritize_resolution_backfill",
+    }
+    planned_actions: list[dict[str, Any]] = []
+    ignored_actions = 0
+    for profile_action in profile_actions:
+        source_action = str(profile_action.get("action") or "")
+        planned_action = action_map.get(source_action)
+        if not planned_action:
+            ignored_actions += 1
+            continue
+        profile_id = str(profile_action.get("profile_id") or "shadow_profile_default")
+        action = {
+            "profile_id": profile_id,
+            "action": planned_action,
+            "source_action": source_action,
+            "reason": str(profile_action.get("reason") or ""),
+            "resolved_orders": int(profile_action.get("resolved_orders") or 0),
+            "roi": round(_to_float(profile_action.get("roi")), 6),
+            "winrate": round(_to_float(profile_action.get("winrate")), 6),
+            "paper_only": True,
+            "live_order_allowed": False,
+        }
+        existing_profile = _existing_shadow_profile_for_plan(profile_id, existing_profile_rows)
+        if existing_profile:
+            action["existing_profile"] = existing_profile
+        planned_actions.append(action)
+    summary = {
+        "input_profile_actions": len(profile_actions),
+        "planned_actions": len(planned_actions),
+        "promote_paper_profile_candidate": sum(1 for action in planned_actions if action["action"] == "promote_paper_profile_candidate"),
+        "disable_or_reduce_shadow_profile": sum(1 for action in planned_actions if action["action"] == "disable_or_reduce_shadow_profile"),
+        "prioritize_resolution_backfill": sum(1 for action in planned_actions if action["action"] == "prioritize_resolution_backfill"),
+        "ignored_actions": ignored_actions,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    return {
+        "source": "shadow_profile_auto_action_plan",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "actions": planned_actions,
+    }
+
+
+def _existing_shadow_profile_for_plan(profile_id: str, existing_profiles: dict[str, Any]) -> dict[str, Any]:
+    direct = existing_profiles.get(profile_id)
+    if isinstance(direct, dict):
+        return dict(direct)
+    normalized_profile_id = profile_id.lower()
+    for key, value in existing_profiles.items():
+        if str(key).lower() == normalized_profile_id and isinstance(value, dict):
+            return dict(value)
+        if isinstance(value, dict) and str(value.get("profile_id") or "").lower() == normalized_profile_id:
+            return dict(value)
+    return {}
+
+
 def _learning_profile_action(profile: dict[str, Any]) -> dict[str, Any]:
     recommendation = str(profile.get("recommendation") or "")
     resolved_orders = int(profile.get("resolved_orders") or 0)
