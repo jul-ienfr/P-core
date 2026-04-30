@@ -168,6 +168,90 @@ def _format_money(value: Any) -> str:
     return f"{float(value):.2f}"
 
 
+SOURCE_WAIT_REASONS = {"official_resolution_unavailable", "history_fetch_failed", "stale_or_empty"}
+QUOTE_OR_DEPTH_WAIT_REASONS = {"missing_tradeable_quote", "insufficient_depth", "extreme_quote", "extreme_price", "high_slippage_risk"}
+MANUAL_REVIEW_REASONS = {"manual_review_required", "ambiguous_rules", "ambiguous_source"}
+
+
+def _operator_bucket_counts(account_summary: dict[str, Any], paper_watchlist: dict[str, Any]) -> dict[str, int]:
+    rollup = account_summary.get("daily_operator_rollup") if isinstance(account_summary.get("daily_operator_rollup"), dict) else {}
+    not_ready = rollup.get("not_ready_reason_counts") if isinstance(rollup.get("not_ready_reason_counts"), dict) else {}
+    wait_source = sum(int(not_ready.get(reason) or 0) for reason in SOURCE_WAIT_REASONS)
+    no_edge = max((int(not_ready.get(reason) or 0) for reason in QUOTE_OR_DEPTH_WAIT_REASONS), default=0)
+    manual_review = sum(int(not_ready.get(reason) or 0) for reason in MANUAL_REVIEW_REASONS)
+    return {
+        "READY_NOW": int(rollup.get("live_ready_count") or 0),
+        "WAIT_SOURCE": wait_source,
+        "NO_EDGE": no_edge,
+        "MANUAL_REVIEW": manual_review,
+    }
+
+
+def _official_latency(row: dict[str, Any]) -> dict[str, Any]:
+    resolution = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    latency = resolution.get("latency") if isinstance(resolution.get("latency"), dict) else {}
+    official = latency.get("official") if isinstance(latency.get("official"), dict) else {}
+    return official
+
+
+def _source_diagnostic_rows(account_summary: dict[str, Any], paper_watchlist: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for collection in (account_summary.get("live_watchlist"), paper_watchlist.get("watchlist")):
+        if not isinstance(collection, list):
+            continue
+        for row in collection:
+            if not isinstance(row, dict):
+                continue
+            official = _official_latency(row)
+            if not official:
+                continue
+            source_health = official.get("source_health")
+            fallback_reason = official.get("fallback_reason")
+            if not source_health and not fallback_reason:
+                continue
+            rows.append(
+                {
+                    "market_id": row.get("market_id") or row.get("condition_id") or row.get("id") or "",
+                    "label": _market_label(row),
+                    "provider": official.get("provider") or "unknown_provider",
+                    "source_health": source_health or "unknown",
+                    "fallback_reason": fallback_reason or "none",
+                    "polling_focus": official.get("polling_focus") or "unknown_polling_focus",
+                    "tier": official.get("tier") or official.get("latency_tier") or "unknown_tier",
+                    "source_url": official.get("source_url") or "",
+                }
+            )
+    return rows
+
+
+def render_operator_summary_markdown(summary: dict[str, Any]) -> str:
+    buckets = summary.get("operator_buckets") if isinstance(summary.get("operator_buckets"), dict) else {}
+    lines = [
+        "## Synthèse opérateur",
+        "",
+        f"- READY_NOW: {buckets.get('READY_NOW', 0)}",
+        f"- WAIT_SOURCE: {buckets.get('WAIT_SOURCE', 0)}",
+        f"- NO_EDGE: {buckets.get('NO_EDGE', 0)}",
+        f"- MANUAL_REVIEW: {buckets.get('MANUAL_REVIEW', 0)}",
+        "- Safety: paper_only=true; live_order_allowed=false",
+        "",
+    ]
+    source_rows = summary.get("source_diagnostic_rows") if isinstance(summary.get("source_diagnostic_rows"), list) else []
+    if source_rows:
+        lines.extend(["## Diagnostics sources officielles", ""])
+        for row in source_rows[:8]:
+            url_suffix = f" — {row.get('source_url')}" if row.get("source_url") else ""
+            lines.append(
+                f"- `{row.get('market_id', '')}` — {row.get('label', '')} — "
+                f"{row.get('provider', '')}/{row.get('tier', '')}: "
+                f"source_health={row.get('source_health', '')}; "
+                f"fallback_reason={row.get('fallback_reason', '')}; "
+                f"polling_focus={row.get('polling_focus', '')}{url_suffix}"
+            )
+        lines.append("")
+    return "\n".join(lines)
+
+
 def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchlist: dict[str, Any]) -> dict[str, Any]:
     rollup = account_summary.get("daily_operator_rollup") if isinstance(account_summary.get("daily_operator_rollup"), dict) else {}
     not_ready = rollup.get("not_ready_reason_counts") if isinstance(rollup.get("not_ready_reason_counts"), dict) else {}
@@ -224,6 +308,8 @@ def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchli
         "WAIT_FOR_QUOTE_OR_DEPTH": wait_for_quote_or_depth,
         "CPR_SIGNAL_ONLY_MARKETS": cpr_markets,
         "CPR_SIGNAL_ONLY_SKIPS": int(diag_summary.get("skipped") or 0),
+        "operator_buckets": _operator_bucket_counts(account_summary, paper_watchlist),
+        "source_diagnostic_rows": _source_diagnostic_rows(account_summary, paper_watchlist),
         "actionable_rows": actionable,
         "monitor_rows": monitor,
         "why_not_actionable_rows": why_not_actionable,
@@ -325,6 +411,7 @@ def render_daily_markdown(
     ready = bool(rollup.get("live_ready")) if isinstance(rollup, dict) else False
     status = "READY" if ready else "NOT READY"
     actionable_summary = build_actionable_only_summary(account_summary if isinstance(account_summary, dict) else {}, paper_watchlist if isinstance(paper_watchlist, dict) else {})
+    operator_summary_md = render_operator_summary_markdown(actionable_summary)
     actionable_md = render_actionable_only_markdown(actionable_summary)
     skip_diagnostics_md = render_shadow_skip_diagnostics_markdown(account_summary.get("shadow_skip_diagnostics", {}) if isinstance(account_summary, dict) else {})
     lines = [
@@ -338,6 +425,8 @@ def render_daily_markdown(
         f"- Normal-size bloqués: {rollup.get('normal_size_blocked_count', 0)}/{rollup.get('watchlist_count', 0)}",
         f"- Raisons NOT READY: {rollup.get('not_ready_reason_counts', {})}",
         "- Garde-fou: live désactivé; paper micro/strict-limit seulement si candidat explicite.",
+        "",
+        operator_summary_md,
         "",
         "## Watchlist papier",
         f"- Positions: {paper_summary.get('positions', 0)}",

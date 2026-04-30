@@ -211,6 +211,106 @@ def test_render_daily_markdown_explains_why_markets_are_not_actionable(tmp_path:
 
 
 
+def test_render_daily_markdown_exposes_operator_buckets_and_source_diagnostics(tmp_path: Path) -> None:
+    refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
+    monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
+    watchlist_md = tmp_path / "watchlist.md"
+    watchlist_md.write_text("# watchlist\n", encoding="utf-8")
+    daily_json = tmp_path / "daily.json"
+    account_summary = _write_json(
+        tmp_path / "account_summary.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "daily_operator_rollup": {
+                "live_ready": False,
+                "live_ready_count": 1,
+                "watchlist_count": 4,
+                "global_recommendation": "paper_micro_only",
+                "normal_size_blocked_count": 3,
+                "not_ready_reason_counts": {
+                    "official_resolution_unavailable": 2,
+                    "missing_tradeable_quote": 1,
+                    "insufficient_depth": 1,
+                    "manual_review_required": 1,
+                },
+            },
+            "daily_operator_markdown": "- no ready markets",
+            "live_watchlist": [
+                {
+                    "market_id": "hk-empty",
+                    "city": "Hong Kong",
+                    "temp": 23,
+                    "unit": "C",
+                    "side": "NO",
+                    "normal_size_gate": {"live_ready": False, "reasons": ["official_resolution_unavailable"], "recommended_action": "paper_strict_limit_only"},
+                    "resolution_status": {
+                        "latency": {
+                            "official": {
+                                "provider": "hong_kong_observatory",
+                                "source_health": "published_empty",
+                                "fallback_reason": "official_source_empty_payload",
+                                "polling_focus": "hko_official_daily_extract",
+                                "tier": "direct_history",
+                                "source_url": "https://data.weather.gov.hk/example",
+                            }
+                        }
+                    },
+                },
+                {
+                    "market_id": "dallas-ready",
+                    "city": "Dallas",
+                    "temp": 35,
+                    "unit": "C",
+                    "side": "YES",
+                    "normal_size_gate": {"live_ready": True, "reasons": []},
+                },
+            ],
+        },
+    )
+    paper_watchlist = _write_json(
+        tmp_path / "watchlist.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "summary": {"positions": 0, "total_spend": 0, "total_ev_now": 0, "action_counts": {}},
+            "watchlist": [
+                {
+                    "market_id": "manual-review",
+                    "city": "Paris",
+                    "temp": 20,
+                    "unit": "C",
+                    "side": "YES",
+                    "normal_size_gate": {"live_ready": False, "reasons": ["manual_review_required"], "verdict": "manual_review"},
+                }
+            ],
+        },
+    )
+
+    markdown = weather_operator_daily.render_daily_markdown(
+        stamp="20260430T120000Z",
+        refresh_path=refresh,
+        account_summary_path=account_summary,
+        paper_monitor_path=monitor,
+        paper_watchlist_path=paper_watchlist,
+        paper_watchlist_md=watchlist_md,
+        daily_json_path=daily_json,
+    )
+
+    assert "## Synthèse opérateur" in markdown
+    assert "- READY_NOW: 1" in markdown
+    assert "- WAIT_SOURCE: 2" in markdown
+    assert "- NO_EDGE: 1" in markdown
+    assert "- MANUAL_REVIEW: 1" in markdown
+    assert "## Diagnostics sources officielles" in markdown
+    assert "hk-empty" in markdown
+    assert "Hong Kong 23C NO" in markdown
+    assert "published_empty" in markdown
+    assert "official_source_empty_payload" in markdown
+    assert "hko_official_daily_extract" in markdown
+
+
+
 def test_render_daily_markdown_includes_shadow_skip_diagnostics(tmp_path: Path) -> None:
     refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
     monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
