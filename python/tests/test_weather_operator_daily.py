@@ -49,6 +49,67 @@ def test_latest_shadow_skip_diagnostics_ignores_unsafe_payloads(tmp_path: Path) 
 
 
 
+def test_render_daily_markdown_exposes_actionable_only_summary(tmp_path: Path) -> None:
+    refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
+    monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
+    watchlist_md = tmp_path / "watchlist.md"
+    watchlist_md.write_text("# watchlist\n", encoding="utf-8")
+    daily_json = tmp_path / "daily.json"
+    account_summary = _write_json(
+        tmp_path / "account_summary.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "daily_operator_rollup": {
+                "live_ready": False,
+                "live_ready_count": 0,
+                "watchlist_count": 8,
+                "global_recommendation": "paper_micro_only",
+                "normal_size_blocked_count": 8,
+                "not_ready_reason_counts": {"missing_tradeable_quote": 5, "insufficient_depth": 8},
+            },
+            "daily_operator_markdown": "- no ready markets",
+            "shadow_skip_diagnostics": {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "summary": {"paper_orders": 0, "skipped": 9, "skip_reasons": {"account_no_trade_label": 9}, "unlock_reasons": {"wait_for_target_account_trade_or_promote_signal_only": 9}},
+                "market_unlocks": [{"market_id": "m-cpr-1"}, {"market_id": "m-cpr-2"}, {"market_id": "m-cpr-3"}],
+            },
+        },
+    )
+    paper_watchlist = _write_json(
+        tmp_path / "watchlist.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "summary": {"positions": 2, "total_spend": 15, "total_ev_now": 3, "action_counts": {"HOLD_MONITOR": 1, "ADD": 1}},
+            "watchlist": [
+                {"city": "Munich", "operator_action": "HOLD_MONITOR", "paper_ev_now_usdc": 1.0},
+                {"city": "Dallas", "operator_action": "ADD", "add_allowed": True, "max_add_usdc": 5, "paper_ev_now_usdc": 2.0},
+            ],
+        },
+    )
+
+    markdown = weather_operator_daily.render_daily_markdown(
+        stamp="20260430T120000Z",
+        refresh_path=refresh,
+        account_summary_path=account_summary,
+        paper_monitor_path=monitor,
+        paper_watchlist_path=paper_watchlist,
+        paper_watchlist_md=watchlist_md,
+        daily_json_path=daily_json,
+    )
+
+    assert "## Actionable-only" in markdown
+    assert "- ACTIONABLE_NOW: 1" in markdown
+    assert "- MONITOR_EXISTING: 1" in markdown
+    assert "- WAIT_FOR_QUOTE_OR_DEPTH: 8" in markdown
+    assert "- CPR_SIGNAL_ONLY: 3 markets / 9 skips" in markdown
+    assert "Dallas" in markdown
+    assert "Munich" in markdown
+
+
+
 def test_render_daily_markdown_includes_shadow_skip_diagnostics(tmp_path: Path) -> None:
     refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
     monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})

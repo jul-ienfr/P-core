@@ -112,6 +112,63 @@ def latest_shadow_skip_diagnostics(data_root: Path = DATA) -> dict[str, Any] | N
     return None
 
 
+def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchlist: dict[str, Any]) -> dict[str, Any]:
+    rollup = account_summary.get("daily_operator_rollup") if isinstance(account_summary.get("daily_operator_rollup"), dict) else {}
+    not_ready = rollup.get("not_ready_reason_counts") if isinstance(rollup.get("not_ready_reason_counts"), dict) else {}
+    watchlist = paper_watchlist.get("watchlist") if isinstance(paper_watchlist.get("watchlist"), list) else []
+    actionable: list[dict[str, Any]] = []
+    monitor: list[dict[str, Any]] = []
+    for row in watchlist:
+        if not isinstance(row, dict):
+            continue
+        action = str(row.get("operator_action") or row.get("action") or "")
+        is_add = bool(row.get("add_allowed")) or (action == "ADD" and float(row.get("max_add_usdc") or 0) > 0)
+        if is_add:
+            actionable.append(row)
+        elif action.startswith("HOLD"):
+            monitor.append(row)
+    diag = account_summary.get("shadow_skip_diagnostics") if isinstance(account_summary.get("shadow_skip_diagnostics"), dict) else {}
+    diag_summary = diag.get("summary") if isinstance(diag.get("summary"), dict) else {}
+    cpr_markets = len(diag.get("market_unlocks") or []) if isinstance(diag.get("market_unlocks"), list) else 0
+    wait_for_quote_or_depth = max(int(not_ready.get("missing_tradeable_quote") or 0), int(not_ready.get("insufficient_depth") or 0))
+    return {
+        "ACTIONABLE_NOW": len(actionable),
+        "MONITOR_EXISTING": len(monitor),
+        "WAIT_FOR_QUOTE_OR_DEPTH": wait_for_quote_or_depth,
+        "CPR_SIGNAL_ONLY_MARKETS": cpr_markets,
+        "CPR_SIGNAL_ONLY_SKIPS": int(diag_summary.get("skipped") or 0),
+        "actionable_rows": actionable,
+        "monitor_rows": monitor,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+
+
+def render_actionable_only_markdown(summary: dict[str, Any]) -> str:
+    lines = [
+        "## Actionable-only",
+        "",
+        f"- ACTIONABLE_NOW: {summary.get('ACTIONABLE_NOW', 0)}",
+        f"- MONITOR_EXISTING: {summary.get('MONITOR_EXISTING', 0)}",
+        f"- WAIT_FOR_QUOTE_OR_DEPTH: {summary.get('WAIT_FOR_QUOTE_OR_DEPTH', 0)}",
+        f"- CPR_SIGNAL_ONLY: {summary.get('CPR_SIGNAL_ONLY_MARKETS', 0)} markets / {summary.get('CPR_SIGNAL_ONLY_SKIPS', 0)} skips",
+        "- Safety: paper_only=true; live_order_allowed=false",
+        "",
+    ]
+    actionable = summary.get("actionable_rows") if isinstance(summary.get("actionable_rows"), list) else []
+    if actionable:
+        lines.append("### Paper-actionable now")
+        for row in actionable[:5]:
+            lines.append(f"- {row.get('city', '')} {row.get('temp', '')}{row.get('unit', '')} {row.get('side', '')} — max_add={row.get('max_add_usdc', 0)} USDC — EV={row.get('paper_ev_now_usdc', 0)}")
+    monitor = summary.get("monitor_rows") if isinstance(summary.get("monitor_rows"), list) else []
+    if monitor:
+        lines.append("### Monitor existing")
+        for row in monitor[:5]:
+            lines.append(f"- {row.get('city', '')} {row.get('temp', '')}{row.get('unit', '')} {row.get('side', '')} — {row.get('operator_action', '')} — EV={row.get('paper_ev_now_usdc', 0)}")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def render_shadow_skip_diagnostics_markdown(diagnostics: dict[str, Any]) -> str:
     if not isinstance(diagnostics, dict) or not diagnostics:
         return ""
@@ -170,6 +227,8 @@ def render_daily_markdown(
     paper_summary = paper_watchlist.get("summary") if isinstance(paper_watchlist, dict) else {}
     ready = bool(rollup.get("live_ready")) if isinstance(rollup, dict) else False
     status = "READY" if ready else "NOT READY"
+    actionable_summary = build_actionable_only_summary(account_summary if isinstance(account_summary, dict) else {}, paper_watchlist if isinstance(paper_watchlist, dict) else {})
+    actionable_md = render_actionable_only_markdown(actionable_summary)
     skip_diagnostics_md = render_shadow_skip_diagnostics_markdown(account_summary.get("shadow_skip_diagnostics", {}) if isinstance(account_summary, dict) else {})
     lines = [
         f"# Daily operator Polymarket météo — {stamp}",
@@ -188,6 +247,8 @@ def render_daily_markdown(
         f"- Spend: {paper_summary.get('total_spend', 0)} USDC",
         f"- EV now: {paper_summary.get('total_ev_now', 0)} USDC",
         f"- Actions: {paper_summary.get('action_counts', {})}",
+        "",
+        actionable_md,
         "",
         "## Signaux live READY/NOT READY",
         account_summary.get("daily_operator_markdown", "_daily_operator_markdown missing_"),
