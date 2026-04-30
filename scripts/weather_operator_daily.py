@@ -75,6 +75,48 @@ def monitor_json_from_result(result: dict[str, Any]) -> Path:
     return latest_file(["weather_paper_cron_monitor_*.json"])
 
 
+def render_shadow_skip_diagnostics_markdown(diagnostics: dict[str, Any]) -> str:
+    if not isinstance(diagnostics, dict) or not diagnostics:
+        return ""
+    summary = diagnostics.get("summary") if isinstance(diagnostics.get("summary"), dict) else {}
+    lines = [
+        "## Diagnostics replay CPR",
+        "",
+        f"- Paper orders: {summary.get('paper_orders', 0)}",
+        f"- Skipped: {summary.get('skipped', 0)}",
+        f"- Skip reasons: {summary.get('skip_reasons', {})}",
+        f"- Unlock reasons: {summary.get('unlock_reasons', {})}",
+        "- Safety: paper_only=true; live_order_allowed=false",
+        "- Décision: CPR reste signal-only tant qu’un compte cible ne trade pas réellement le marché ou qu’un dataset promoted-profile explicite n’est pas utilisé.",
+        "",
+    ]
+    market_unlocks = diagnostics.get("market_unlocks") if isinstance(diagnostics.get("market_unlocks"), list) else []
+    if market_unlocks:
+        lines.append("### Marchés bloqués / conditions d’unlock")
+        for row in market_unlocks[:10]:
+            if not isinstance(row, dict):
+                continue
+            handles = row.get("handles") if isinstance(row.get("handles"), list) else []
+            handle_text = ", ".join(str(handle) for handle in handles)
+            lines.extend(
+                [
+                    f"- `{row.get('market_id', '')}` — {row.get('question', '')}",
+                    f"  - City: {row.get('city', '')}",
+                    f"  - Handles: {handle_text}",
+                    f"  - Skipped: {row.get('skipped', 0)}",
+                    f"  - Unlock: `{row.get('unlock_condition', 'manual_review_required')}`",
+                    f"  - Action: {row.get('operator_action', 'Manual paper-only review required.')}",
+                ]
+            )
+    next_actions = diagnostics.get("operator_next_actions") if isinstance(diagnostics.get("operator_next_actions"), list) else []
+    if next_actions:
+        lines.extend(["", "### Next actions"])
+        lines.extend(f"- `{action}`" for action in next_actions)
+    lines.append("")
+    return "\n".join(lines)
+
+
+
 def render_daily_markdown(
     *,
     stamp: str,
@@ -91,6 +133,7 @@ def render_daily_markdown(
     paper_summary = paper_watchlist.get("summary") if isinstance(paper_watchlist, dict) else {}
     ready = bool(rollup.get("live_ready")) if isinstance(rollup, dict) else False
     status = "READY" if ready else "NOT READY"
+    skip_diagnostics_md = render_shadow_skip_diagnostics_markdown(account_summary.get("shadow_skip_diagnostics", {}) if isinstance(account_summary, dict) else {})
     lines = [
         f"# Daily operator Polymarket météo — {stamp}",
         "",
@@ -112,6 +155,10 @@ def render_daily_markdown(
         "## Signaux live READY/NOT READY",
         account_summary.get("daily_operator_markdown", "_daily_operator_markdown missing_"),
         "",
+    ]
+    if skip_diagnostics_md:
+        lines.extend([skip_diagnostics_md, ""])
+    lines.extend([
         "## Artifacts",
         f"- Daily JSON: `{daily_json_path}`",
         f"- Operator refresh: `{refresh_path}`",
@@ -120,7 +167,7 @@ def render_daily_markdown(
         f"- Paper watchlist JSON: `{paper_watchlist_path}`",
         f"- Paper watchlist MD: `{paper_watchlist_md}`",
         "",
-    ]
+    ])
     return "\n".join(lines)
 
 

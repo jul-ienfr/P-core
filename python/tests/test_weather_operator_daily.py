@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "scripts" / "weather_operator_daily.py"
+_SPEC = importlib.util.spec_from_file_location("weather_operator_daily", SCRIPT)
+assert _SPEC is not None and _SPEC.loader is not None
+weather_operator_daily = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(weather_operator_daily)
+
+
+def _write_json(path: Path, payload: dict) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_render_daily_markdown_includes_shadow_skip_diagnostics(tmp_path: Path) -> None:
+    refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
+    monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
+    watchlist_md = tmp_path / "watchlist.md"
+    watchlist_md.write_text("# watchlist\n", encoding="utf-8")
+    daily_json = tmp_path / "daily.json"
+    account_summary = _write_json(
+        tmp_path / "account_summary.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "daily_operator_rollup": {
+                "live_ready": False,
+                "live_ready_count": 0,
+                "watchlist_count": 3,
+                "global_recommendation": "watch_only",
+                "normal_size_blocked_count": 3,
+                "not_ready_reason_counts": {"account_no_trade_label": 9},
+            },
+            "daily_operator_markdown": "- no ready markets",
+            "shadow_skip_diagnostics": {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "summary": {
+                    "paper_orders": 0,
+                    "skipped": 9,
+                    "skip_reasons": {"account_no_trade_label": 9},
+                    "unlock_reasons": {"wait_for_target_account_trade_or_promote_signal_only": 9},
+                    "paper_only": True,
+                    "live_order_allowed": False,
+                },
+                "market_unlocks": [
+                    {
+                        "market_id": "m-kuala-26",
+                        "question": "Will Kuala Lumpur be 26°C or below?",
+                        "city": "Kuala Lumpur",
+                        "handles": ["ColdMath", "Poligarch"],
+                        "skipped": 2,
+                        "unlock_condition": "wait_for_target_account_trade_or_promote_signal_only",
+                        "operator_action": "Keep CPR as signal-only until one target account actually trades this market; do not synthesize a copy-trade paper order from abstention.",
+                        "paper_only": True,
+                        "live_order_allowed": False,
+                    }
+                ],
+                "operator_next_actions": ["treat_all_no_trade_cpr_replay_as_signal_only_not_orderable"],
+            },
+        },
+    )
+    paper_watchlist = _write_json(
+        tmp_path / "watchlist.json",
+        {"paper_only": True, "live_order_allowed": False, "summary": {"positions": 0, "total_spend": 0, "total_ev_now": 0, "action_counts": {}}},
+    )
+
+    markdown = weather_operator_daily.render_daily_markdown(
+        stamp="20260430T120000Z",
+        refresh_path=refresh,
+        account_summary_path=account_summary,
+        paper_monitor_path=monitor,
+        paper_watchlist_path=paper_watchlist,
+        paper_watchlist_md=watchlist_md,
+        daily_json_path=daily_json,
+    )
+
+    assert "## Diagnostics replay CPR" in markdown
+    assert "Paper orders: 0" in markdown
+    assert "Skipped: 9" in markdown
+    assert "account_no_trade_label" in markdown
+    assert "wait_for_target_account_trade_or_promote_signal_only" in markdown
+    assert "m-kuala-26" in markdown
+    assert "ColdMath, Poligarch" in markdown
+    assert "signal-only" in markdown
+    assert "live_order_allowed=false" in markdown
