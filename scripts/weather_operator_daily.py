@@ -75,6 +75,43 @@ def monitor_json_from_result(result: dict[str, Any]) -> Path:
     return latest_file(["weather_paper_cron_monitor_*.json"])
 
 
+def _contains_live_order_allowed_true(payload: Any) -> bool:
+    if isinstance(payload, dict):
+        if payload.get("live_order_allowed") is True:
+            return True
+        return any(_contains_live_order_allowed_true(value) for value in payload.values())
+    if isinstance(payload, list):
+        return any(_contains_live_order_allowed_true(value) for value in payload)
+    return False
+
+
+def _is_safe_shadow_skip_diagnostics(payload: Any) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    return payload.get("paper_only") is True and payload.get("live_order_allowed") is False and not _contains_live_order_allowed_true(payload)
+
+
+def latest_shadow_skip_diagnostics(data_root: Path = DATA) -> dict[str, Any] | None:
+    candidates = sorted(
+        [path for path in data_root.rglob("shadow_profile_skip_diagnostics*.json") if path.is_file()],
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for path in candidates:
+        try:
+            payload = load_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not _is_safe_shadow_skip_diagnostics(payload):
+            continue
+        payload = dict(payload)
+        artifacts = dict(payload.get("artifacts", {}) if isinstance(payload.get("artifacts"), dict) else {})
+        artifacts["shadow_skip_diagnostics_json"] = str(path)
+        payload["artifacts"] = artifacts
+        return payload
+    return None
+
+
 def render_shadow_skip_diagnostics_markdown(diagnostics: dict[str, Any]) -> str:
     if not isinstance(diagnostics, dict) or not diagnostics:
         return ""
@@ -249,6 +286,14 @@ def main() -> int:
         str(paper_watchlist_md),
         "--compact",
     ], timeout=180)
+
+    shadow_skip_diagnostics = latest_shadow_skip_diagnostics()
+    if shadow_skip_diagnostics:
+        account_summary = load_json(account_summary_path)
+        if isinstance(account_summary, dict) and "shadow_skip_diagnostics" not in account_summary:
+            account_summary["shadow_skip_diagnostics"] = shadow_skip_diagnostics
+            write_json(account_summary_path, account_summary)
+            summary_compact.setdefault("artifacts", {})["shadow_skip_diagnostics_json"] = shadow_skip_diagnostics.get("artifacts", {}).get("shadow_skip_diagnostics_json")
 
     daily_payload = {
         "timestamp": stamp,

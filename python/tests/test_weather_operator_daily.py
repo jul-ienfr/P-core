@@ -19,6 +19,36 @@ def _write_json(path: Path, payload: dict) -> Path:
     return path
 
 
+def test_latest_shadow_skip_diagnostics_ignores_unsafe_payloads(tmp_path: Path) -> None:
+    safe_old = _write_json(
+        tmp_path / "old" / "shadow_profile_skip_diagnostics_old.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "summary": {"skipped": 1, "paper_only": True, "live_order_allowed": False},
+        },
+    )
+    unsafe_new = _write_json(
+        tmp_path / "new" / "shadow_profile_skip_diagnostics_new.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": True,
+            "summary": {"skipped": 99, "paper_only": True, "live_order_allowed": True},
+        },
+    )
+    safe_old.touch()
+    unsafe_new.touch()
+
+    selected = weather_operator_daily.latest_shadow_skip_diagnostics(tmp_path)
+
+    assert selected is not None
+    assert selected["summary"]["skipped"] == 1
+    assert selected["artifacts"]["shadow_skip_diagnostics_json"] == str(safe_old)
+    assert selected["paper_only"] is True
+    assert selected["live_order_allowed"] is False
+
+
+
 def test_render_daily_markdown_includes_shadow_skip_diagnostics(tmp_path: Path) -> None:
     refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
     monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
