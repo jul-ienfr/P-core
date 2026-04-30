@@ -112,12 +112,28 @@ def latest_shadow_skip_diagnostics(data_root: Path = DATA) -> dict[str, Any] | N
     return None
 
 
+def _market_label(row: dict[str, Any]) -> str:
+    city = str(row.get("city") or "").strip()
+    temp = row.get("temp", row.get("temperature", ""))
+    unit = str(row.get("unit") or "").strip()
+    side = str(row.get("side") or "").strip()
+    pieces = [piece for piece in [city, f"{temp}{unit}" if temp != "" else "", side] if piece]
+    return " ".join(pieces) or str(row.get("question") or row.get("market_id") or "unknown market")
+
+
+def _normal_size_gate(row: dict[str, Any]) -> dict[str, Any]:
+    gate = row.get("normal_size_gate")
+    return gate if isinstance(gate, dict) else {}
+
+
 def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchlist: dict[str, Any]) -> dict[str, Any]:
     rollup = account_summary.get("daily_operator_rollup") if isinstance(account_summary.get("daily_operator_rollup"), dict) else {}
     not_ready = rollup.get("not_ready_reason_counts") if isinstance(rollup.get("not_ready_reason_counts"), dict) else {}
     watchlist = paper_watchlist.get("watchlist") if isinstance(paper_watchlist.get("watchlist"), list) else []
+    live_watchlist = account_summary.get("live_watchlist") if isinstance(account_summary.get("live_watchlist"), list) else []
     actionable: list[dict[str, Any]] = []
     monitor: list[dict[str, Any]] = []
+    why_not_actionable: list[dict[str, Any]] = []
     for row in watchlist:
         if not isinstance(row, dict):
             continue
@@ -127,6 +143,33 @@ def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchli
             actionable.append(row)
         elif action.startswith("HOLD"):
             monitor.append(row)
+        gate = _normal_size_gate(row)
+        reasons = gate.get("reasons") if isinstance(gate.get("reasons"), list) else []
+        live_ready = gate.get("live_ready")
+        if reasons and live_ready is not True:
+            why_not_actionable.append(
+                {
+                    "market_id": row.get("market_id") or row.get("condition_id") or row.get("id") or "",
+                    "label": _market_label(row),
+                    "reasons": [str(reason) for reason in reasons],
+                    "verdict": gate.get("verdict") or row.get("normal_size_verdict") or "blocked",
+                }
+            )
+    for row in live_watchlist:
+        if not isinstance(row, dict):
+            continue
+        gate = _normal_size_gate(row)
+        reasons = gate.get("reasons") if isinstance(gate.get("reasons"), list) else []
+        live_ready = gate.get("live_ready")
+        if reasons and live_ready is not True:
+            why_not_actionable.append(
+                {
+                    "market_id": row.get("market_id") or row.get("condition_id") or row.get("id") or "",
+                    "label": _market_label(row),
+                    "reasons": [str(reason) for reason in reasons],
+                    "verdict": gate.get("recommended_action") or row.get("decision_status") or "blocked",
+                }
+            )
     diag = account_summary.get("shadow_skip_diagnostics") if isinstance(account_summary.get("shadow_skip_diagnostics"), dict) else {}
     diag_summary = diag.get("summary") if isinstance(diag.get("summary"), dict) else {}
     cpr_markets = len(diag.get("market_unlocks") or []) if isinstance(diag.get("market_unlocks"), list) else 0
@@ -139,6 +182,7 @@ def build_actionable_only_summary(account_summary: dict[str, Any], paper_watchli
         "CPR_SIGNAL_ONLY_SKIPS": int(diag_summary.get("skipped") or 0),
         "actionable_rows": actionable,
         "monitor_rows": monitor,
+        "why_not_actionable_rows": why_not_actionable,
         "paper_only": True,
         "live_order_allowed": False,
     }
@@ -165,6 +209,13 @@ def render_actionable_only_markdown(summary: dict[str, Any]) -> str:
         lines.append("### Monitor existing")
         for row in monitor[:5]:
             lines.append(f"- {row.get('city', '')} {row.get('temp', '')}{row.get('unit', '')} {row.get('side', '')} — {row.get('operator_action', '')} — EV={row.get('paper_ev_now_usdc', 0)}")
+    why_not = summary.get("why_not_actionable_rows") if isinstance(summary.get("why_not_actionable_rows"), list) else []
+    if why_not:
+        lines.append("### Why not actionable")
+        for row in why_not[:8]:
+            reasons = row.get("reasons") if isinstance(row.get("reasons"), list) else []
+            reasons_text = ", ".join(str(reason) for reason in reasons) or "manual_review_required"
+            lines.append(f"- `{row.get('market_id', '')}` — {row.get('label', '')} — {row.get('verdict', 'blocked')} — {reasons_text}")
     lines.append("")
     return "\n".join(lines)
 

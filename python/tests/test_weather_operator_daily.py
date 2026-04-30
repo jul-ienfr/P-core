@@ -110,6 +110,84 @@ def test_render_daily_markdown_exposes_actionable_only_summary(tmp_path: Path) -
 
 
 
+def test_render_daily_markdown_explains_why_markets_are_not_actionable(tmp_path: Path) -> None:
+    refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
+    monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
+    watchlist_md = tmp_path / "watchlist.md"
+    watchlist_md.write_text("# watchlist\n", encoding="utf-8")
+    daily_json = tmp_path / "daily.json"
+    account_summary = _write_json(
+        tmp_path / "account_summary.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "daily_operator_rollup": {
+                "live_ready": False,
+                "live_ready_count": 0,
+                "watchlist_count": 2,
+                "global_recommendation": "paper_micro_only",
+                "normal_size_blocked_count": 2,
+                "not_ready_reason_counts": {"missing_tradeable_quote": 1, "insufficient_depth": 2},
+            },
+            "daily_operator_markdown": "- no ready markets",
+        },
+    )
+    paper_watchlist = _write_json(
+        tmp_path / "watchlist.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "summary": {"positions": 0, "total_spend": 0, "total_ev_now": 0, "action_counts": {}},
+            "watchlist": [
+                {
+                    "market_id": "2065018",
+                    "city": "Hong Kong",
+                    "temp": 23,
+                    "unit": "C",
+                    "side": "NO",
+                    "normal_size_gate": {
+                        "live_ready": False,
+                        "reasons": ["extreme_quote", "insufficient_depth", "official_resolution_unavailable"],
+                        "verdict": "paper_strict_limit_only",
+                    },
+                },
+                {
+                    "market_id": "2074350",
+                    "city": "Dallas",
+                    "temp": 35,
+                    "unit": "C",
+                    "side": "YES",
+                    "normal_size_gate": {
+                        "live_ready": False,
+                        "reasons": ["missing_tradeable_quote", "insufficient_depth"],
+                        "verdict": "paper_strict_limit_only",
+                    },
+                },
+            ],
+        },
+    )
+
+    markdown = weather_operator_daily.render_daily_markdown(
+        stamp="20260430T120000Z",
+        refresh_path=refresh,
+        account_summary_path=account_summary,
+        paper_monitor_path=monitor,
+        paper_watchlist_path=paper_watchlist,
+        paper_watchlist_md=watchlist_md,
+        daily_json_path=daily_json,
+    )
+
+    assert "### Why not actionable" in markdown
+    assert "2065018" in markdown
+    assert "Hong Kong 23C NO" in markdown
+    assert "extreme_quote, insufficient_depth, official_resolution_unavailable" in markdown
+    assert "2074350" in markdown
+    assert "Dallas 35C YES" in markdown
+    assert "missing_tradeable_quote, insufficient_depth" in markdown
+    assert "paper_strict_limit_only" in markdown
+
+
+
 def test_render_daily_markdown_includes_shadow_skip_diagnostics(tmp_path: Path) -> None:
     refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
     monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
