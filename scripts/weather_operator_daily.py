@@ -10,7 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-REPO = Path("/home/jul/P-core")
+from weather_pm.shadow_paper_runner import build_shadow_profile_learning_report
+
+REPO = Path(__file__).resolve().parents[1]
 PYTHON_SRC = REPO / "python" / "src"
 DATA = REPO / "data" / "polymarket"
 DEFAULT_CLASSIFIED_CSV = DATA / "weather_profitable_accounts_classified_top5000.csv"
@@ -91,6 +93,27 @@ def _is_safe_shadow_skip_diagnostics(payload: Any) -> bool:
     return payload.get("paper_only") is True and payload.get("live_order_allowed") is False and not _contains_live_order_allowed_true(payload)
 
 
+def _is_safe_paper_payload(payload: Any) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    return payload.get("paper_only") is True and payload.get("live_order_allowed") is False and not _contains_live_order_allowed_true(payload)
+
+
+def latest_safe_json_artifact(patterns: list[str], data_root: Path = DATA) -> tuple[Path, dict[str, Any]] | None:
+    candidates: list[Path] = []
+    for pattern in patterns:
+        candidates.extend(path for path in data_root.rglob(pattern) if path.is_file())
+    candidates = sorted(set(candidates), key=lambda path: path.stat().st_mtime, reverse=True)
+    for path in candidates:
+        try:
+            payload = load_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if _is_safe_paper_payload(payload):
+            return path, payload
+    return None
+
+
 def latest_shadow_skip_diagnostics(data_root: Path = DATA) -> dict[str, Any] | None:
     candidates = sorted(
         [path for path in data_root.rglob("shadow_profile_skip_diagnostics*.json") if path.is_file()],
@@ -110,6 +133,41 @@ def latest_shadow_skip_diagnostics(data_root: Path = DATA) -> dict[str, Any] | N
         payload["artifacts"] = artifacts
         return payload
     return None
+
+
+def build_daily_learning_report(stamp: str, data_root: Path | None = None) -> dict[str, Any] | None:
+    root = data_root or DATA
+    evaluation_artifact = latest_safe_json_artifact(
+        ["shadow_profile_evaluation*.json", "*shadow*profile*evaluation*.json"],
+        root,
+    )
+    paper_orders_artifact = latest_safe_json_artifact(
+        ["shadow_paper_orders*.json", "*shadow*paper*orders*.json"],
+        root,
+    )
+    if evaluation_artifact is None or paper_orders_artifact is None:
+        return None
+    evaluation_path, evaluation = evaluation_artifact
+    paper_orders_path, paper_orders = paper_orders_artifact
+    report = build_shadow_profile_learning_report(evaluation, paper_orders=paper_orders)
+    if not _is_safe_paper_payload(report):
+        return None
+    output_json = root / "operator-daily" / f"weather_shadow_profile_learning_report_{stamp}.json"
+    output_md = root / "operator-daily" / f"weather_shadow_profile_learning_report_{stamp}.md"
+    artifacts = dict(report.get("artifacts", {}) if isinstance(report.get("artifacts"), dict) else {})
+    artifacts.update(
+        {
+            "shadow_profile_evaluation_json": str(evaluation_path),
+            "shadow_paper_orders_json": str(paper_orders_path),
+            "learning_report_json": str(output_json),
+            "learning_report_md": str(output_md),
+        }
+    )
+    report["artifacts"] = artifacts
+    write_json(output_json, report)
+    output_md.parent.mkdir(parents=True, exist_ok=True)
+    output_md.write_text(render_learning_report_markdown(report), encoding="utf-8")
+    return report
 
 
 def _market_label(row: dict[str, Any]) -> str:
@@ -352,6 +410,46 @@ def render_actionable_only_markdown(summary: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def render_learning_report_markdown(report: dict[str, Any]) -> str:
+    if not isinstance(report, dict) or not report:
+        return ""
+    lines = ["## Learning report", "", "- Safety: paper_only=true; live_order_allowed=false", ""]
+    profile_actions = report.get("profile_actions") if isinstance(report.get("profile_actions"), list) else []
+    lines.extend(["### Profile actions", ""])
+    if profile_actions:
+        for action in profile_actions[:10]:
+            if not isinstance(action, dict):
+                continue
+            lines.append(
+                f"- `{action.get('profile_id', '')}` — {action.get('action', '')} — "
+                f"{action.get('reason', '')}; resolved={action.get('resolved_orders', 0)}; "
+                f"roi={action.get('roi', 0)}; winrate={action.get('winrate', 0)}"
+            )
+    else:
+        lines.append("- No profile action available yet.")
+    high_information_cases = report.get("high_information_cases") if isinstance(report.get("high_information_cases"), list) else []
+    lines.extend(["", "### High-information cases", ""])
+    if high_information_cases:
+        for case in high_information_cases[:10]:
+            if not isinstance(case, dict):
+                continue
+            lines.append(
+                f"- `{case.get('market_id', '')}` — {case.get('learning_reason', '')} — "
+                f"profile={case.get('profile_id', '')}; price={case.get('price', 0)}; "
+                f"model_probability={case.get('model_probability', 0)}"
+            )
+    else:
+        lines.append("- No high-information case available yet.")
+    next_experiments = report.get("next_experiments") if isinstance(report.get("next_experiments"), list) else []
+    lines.extend(["", "### Next experiments", ""])
+    if next_experiments:
+        lines.extend(f"- `{experiment}`" for experiment in next_experiments[:10])
+    else:
+        lines.append("- Continue collecting paper-only resolution feedback.")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def render_shadow_skip_diagnostics_markdown(diagnostics: dict[str, Any]) -> str:
     if not isinstance(diagnostics, dict) or not diagnostics:
         return ""
@@ -403,6 +501,7 @@ def render_daily_markdown(
     paper_watchlist_path: Path,
     paper_watchlist_md: Path,
     daily_json_path: Path,
+    learning_report: dict[str, Any] | None = None,
 ) -> str:
     account_summary = load_json(account_summary_path)
     paper_watchlist = load_json(paper_watchlist_path)
@@ -442,6 +541,9 @@ def render_daily_markdown(
     ]
     if skip_diagnostics_md:
         lines.extend([skip_diagnostics_md, ""])
+    learning_report_md = render_learning_report_markdown(learning_report or {})
+    if learning_report_md:
+        lines.extend([learning_report_md, ""])
     lines.extend([
         "## Artifacts",
         f"- Daily JSON: `{daily_json_path}`",
@@ -534,6 +636,8 @@ def main() -> int:
         "--compact",
     ], timeout=180)
 
+    learning_report = build_daily_learning_report(stamp)
+
     shadow_skip_diagnostics = latest_shadow_skip_diagnostics()
     if shadow_skip_diagnostics:
         account_summary = load_json(account_summary_path)
@@ -541,6 +645,8 @@ def main() -> int:
             account_summary["shadow_skip_diagnostics"] = shadow_skip_diagnostics
             write_json(account_summary_path, account_summary)
             summary_compact.setdefault("artifacts", {})["shadow_skip_diagnostics_json"] = shadow_skip_diagnostics.get("artifacts", {}).get("shadow_skip_diagnostics_json")
+
+    learning_artifacts = learning_report.get("artifacts", {}) if isinstance(learning_report, dict) and isinstance(learning_report.get("artifacts"), dict) else {}
 
     daily_payload = {
         "timestamp": stamp,
@@ -553,6 +659,7 @@ def main() -> int:
         "account_summary": summary_compact,
         "paper_monitor": monitor_compact,
         "paper_watchlist": paper_watchlist_compact,
+        "learning_report": learning_report,
         "artifacts": {
             "operator_refresh_json": str(refresh_path),
             "account_summary_json": str(account_summary_path),
@@ -562,6 +669,7 @@ def main() -> int:
             "paper_watchlist_md": str(paper_watchlist_md),
             "daily_json": str(daily_json_path),
             "daily_md": str(daily_md_path),
+            **learning_artifacts,
         },
     }
     write_json(daily_json_path, daily_payload)
@@ -575,6 +683,7 @@ def main() -> int:
             paper_watchlist_path=paper_watchlist_path,
             paper_watchlist_md=paper_watchlist_md,
             daily_json_path=daily_json_path,
+            learning_report=learning_report,
         ),
         encoding="utf-8",
     )

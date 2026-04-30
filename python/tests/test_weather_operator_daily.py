@@ -383,3 +383,109 @@ def test_render_daily_markdown_includes_shadow_skip_diagnostics(tmp_path: Path) 
     assert "ColdMath, Poligarch" in markdown
     assert "signal-only" in markdown
     assert "live_order_allowed=false" in markdown
+
+
+def test_learning_report_is_built_from_latest_safe_evaluation_and_paper_orders(tmp_path: Path, monkeypatch) -> None:
+    evaluation = _write_json(
+        tmp_path / "eval" / "shadow_profile_evaluation_20260430.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "profiles": [
+                {"profile_id": "sharp_rain", "recommendation": "promote_to_paper_profile", "resolved_orders": 8, "roi": 0.12, "winrate": 0.75}
+            ],
+        },
+    )
+    paper_orders = _write_json(
+        tmp_path / "orders" / "shadow_paper_orders_20260430.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "orders": [
+                {
+                    "market_id": "rain-1",
+                    "profile_id": "sharp_rain",
+                    "question": "Will it rain?",
+                    "strict_limit_price": 0.52,
+                    "features": {"forecast_context": {"model_probability_at_trade": 0.54}, "resolution": {"available": False}},
+                }
+            ],
+        },
+    )
+    _write_json(
+        tmp_path / "unsafe" / "shadow_profile_evaluation_unsafe.json",
+        {"paper_only": True, "live_order_allowed": False, "nested": {"live_order_allowed": True}, "profiles": []},
+    ).touch()
+    monkeypatch.setattr(weather_operator_daily, "DATA", tmp_path)
+
+    report = weather_operator_daily.build_daily_learning_report("20260430T120000Z")
+
+    assert report is not None
+    assert report["paper_only"] is True
+    assert report["live_order_allowed"] is False
+    assert report["summary"]["promote_profiles"] == 1
+    assert report["summary"]["high_information_cases"] == 1
+    assert report["artifacts"]["shadow_profile_evaluation_json"] == str(evaluation)
+    assert report["artifacts"]["shadow_paper_orders_json"] == str(paper_orders)
+    assert report["artifacts"]["learning_report_json"].endswith("weather_shadow_profile_learning_report_20260430T120000Z.json")
+    assert Path(report["artifacts"]["learning_report_json"]).exists()
+
+
+def test_learning_report_ignores_unsafe_nested_live_order_allowed(tmp_path: Path, monkeypatch) -> None:
+    _write_json(
+        tmp_path / "eval" / "shadow_profile_evaluation_unsafe.json",
+        {"paper_only": True, "live_order_allowed": False, "nested": {"live_order_allowed": True}, "profiles": []},
+    )
+    _write_json(tmp_path / "orders" / "shadow_paper_orders.json", {"paper_only": True, "live_order_allowed": False, "orders": []})
+    monkeypatch.setattr(weather_operator_daily, "DATA", tmp_path)
+
+    assert weather_operator_daily.build_daily_learning_report("20260430T120000Z") is None
+
+
+def test_render_daily_markdown_includes_learning_report_section(tmp_path: Path) -> None:
+    refresh = _write_json(tmp_path / "refresh.json", {"paper_only": True, "live_order_allowed": False})
+    monitor = _write_json(tmp_path / "monitor.json", {"paper_only": True, "live_order_allowed": False})
+    watchlist_md = tmp_path / "watchlist.md"
+    watchlist_md.write_text("# watchlist\n", encoding="utf-8")
+    daily_json = tmp_path / "daily.json"
+    account_summary = _write_json(
+        tmp_path / "account_summary.json",
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "daily_operator_rollup": {"live_ready": False, "watchlist_count": 0, "not_ready_reason_counts": {}},
+            "daily_operator_markdown": "- no ready markets",
+        },
+    )
+    paper_watchlist = _write_json(
+        tmp_path / "watchlist.json",
+        {"paper_only": True, "live_order_allowed": False, "summary": {"positions": 0, "total_spend": 0, "total_ev_now": 0, "action_counts": {}}},
+    )
+    learning_report = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "profile_actions": [{"profile_id": "sharp_rain", "action": "promote_candidate_paper_only", "reason": "positive_resolved_edge"}],
+        "high_information_cases": [{"market_id": "rain-1", "learning_reason": "near_probability_threshold", "profile_id": "sharp_rain"}],
+        "next_experiments": ["spawn_profile_variants_for_sharp_rain"],
+    }
+
+    markdown = weather_operator_daily.render_daily_markdown(
+        stamp="20260430T120000Z",
+        refresh_path=refresh,
+        account_summary_path=account_summary,
+        paper_monitor_path=monitor,
+        paper_watchlist_path=paper_watchlist,
+        paper_watchlist_md=watchlist_md,
+        daily_json_path=daily_json,
+        learning_report=learning_report,
+    )
+
+    assert "## Learning report" in markdown
+    assert "### Profile actions" in markdown
+    assert "sharp_rain" in markdown
+    assert "promote_candidate_paper_only" in markdown
+    assert "### High-information cases" in markdown
+    assert "rain-1" in markdown
+    assert "near_probability_threshold" in markdown
+    assert "### Next experiments" in markdown
+    assert "spawn_profile_variants_for_sharp_rain" in markdown
