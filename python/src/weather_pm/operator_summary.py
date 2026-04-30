@@ -43,6 +43,7 @@ def build_profitable_accounts_operator_summary(
         enriched_watchlist=enriched_watchlist,
     )
     live_market_signal_cards = _live_market_signal_cards(enriched_watchlist)
+    daily_operator_rollup = _daily_operator_rollup(enriched_watchlist)
     return {
         "generated_from": {
             "classified_accounts_csv": str(classified_accounts_csv),
@@ -57,6 +58,8 @@ def build_profitable_accounts_operator_summary(
         "live_matched_profitable_weather_summary": live_match_summary,
         "live_market_signal_cards": live_market_signal_cards,
         "live_matched_profitable_weather_accounts": live_matched_accounts,
+        "daily_operator_rollup": daily_operator_rollup,
+        "daily_operator_markdown": _daily_operator_markdown(daily_operator_rollup, enriched_watchlist),
         "discord_operator_brief": _discord_operator_brief(
             live_market_signal_cards,
             live_match_summary=live_match_summary,
@@ -283,6 +286,53 @@ def _live_market_signal_cards(watchlist: list[dict[str, Any]]) -> list[dict[str,
             card["resolution_status"] = row.get("resolution_status")
         cards.append(card)
     return cards
+
+
+def _daily_operator_rollup(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
+    ready_rows = [row for row in watchlist if (row.get("normal_size_gate") or {}).get("live_ready") is True]
+    not_ready_rows = [row for row in watchlist if (row.get("normal_size_gate") or {}).get("live_ready") is False]
+    reason_counts: Counter[str] = Counter()
+    for row in not_ready_rows:
+        gate = row.get("normal_size_gate") if isinstance(row.get("normal_size_gate"), dict) else {}
+        reason_counts.update(str(reason) for reason in gate.get("reasons") or [] if reason)
+    if ready_rows:
+        global_recommendation = "review_ready_candidates_then_paper_normal_size"
+    elif any((row.get("normal_size_gate") or {}).get("paper_candidate") for row in watchlist):
+        global_recommendation = "paper_micro_only"
+    else:
+        global_recommendation = "watch_only"
+    return {
+        "live_ready": bool(ready_rows),
+        "live_ready_count": len(ready_rows),
+        "normal_size_blocked_count": len(not_ready_rows),
+        "watchlist_count": len(watchlist),
+        "global_recommendation": global_recommendation,
+        "top_ready_market_ids": [str(row.get("market_id")) for row in ready_rows[:5] if row.get("market_id")],
+        "top_not_ready_market_ids": [str(row.get("market_id")) for row in not_ready_rows[:5] if row.get("market_id")],
+        "not_ready_reason_counts": dict(sorted(reason_counts.items())),
+    }
+
+
+def _daily_operator_markdown(rollup: dict[str, Any], watchlist: list[dict[str, Any]]) -> str:
+    status = "READY" if rollup.get("live_ready") else "NOT READY"
+    lines = [
+        f"# Weather operator daily report — {status} {rollup.get('live_ready_count', 0)}/{rollup.get('watchlist_count', 0)}",
+        "",
+        f"- Recommendation: `{rollup.get('global_recommendation')}`",
+        f"- Normal-size blocked: {rollup.get('normal_size_blocked_count', 0)}/{rollup.get('watchlist_count', 0)}",
+        f"- Ready markets: {', '.join(rollup.get('top_ready_market_ids') or []) or 'none'}",
+        "",
+        "| Market | City | Gate | Reasons | Verdict |",
+        "|---|---|---|---|---|",
+    ]
+    for row in watchlist:
+        gate = row.get("normal_size_gate") if isinstance(row.get("normal_size_gate"), dict) else {}
+        verdict = row.get("operator_verdict") if isinstance(row.get("operator_verdict"), dict) else {}
+        lines.append(
+            f"| `{row.get('market_id')}` | {row.get('city') or ''} | `{gate.get('recommended_action')}` | "
+            f"{', '.join(gate.get('reasons') or []) or 'none'} | `{verdict.get('recommended_size') or verdict.get('status') or ''}` |"
+        )
+    return "\n".join(lines)
 
 
 def _live_matched_accounts(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:

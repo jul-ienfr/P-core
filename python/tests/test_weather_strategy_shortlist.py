@@ -421,6 +421,60 @@ def test_profitable_accounts_summary_blocks_normal_size_without_official_resolut
     assert row["operator_verdict"]["recommended_size"] == "paper_strict_limit_only"
 
 
+
+def test_profitable_accounts_operator_summary_exposes_daily_ready_not_ready_rollup(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    operator_path = tmp_path / "operator.json"
+    csv_path = tmp_path / "classified.csv"
+    reverse_path.write_text(json.dumps({"accounts": [{"handle": "SharpWx", "classification": "weather specialist / weather-heavy", "weather_pnl_usd": 4200}]}))
+    csv_path.write_text("rank,userName,classification\n1,SharpWx,weather specialist / weather-heavy\n")
+    operator_path.write_text(
+        json.dumps(
+            {
+                "summary": {"shortlisted": 2},
+                "watchlist": [
+                    {
+                        "market_id": "ready-market",
+                        "city": "Dallas",
+                        "matched_traders": ["SharpWx"],
+                        "decision_status": "trade_small",
+                        "blocker": None,
+                        "execution_snapshot": {"best_ask_yes": 0.55, "best_bid_yes": 0.52, "yes_ask_depth_usd": 250.0},
+                        "resolution_status": {"official_daily_extract": {"available": True, "value": 72.0}},
+                    },
+                    {
+                        "market_id": "blocked-market",
+                        "city": "Hong Kong",
+                        "matched_traders": ["SharpWx"],
+                        "decision_status": "trade_small",
+                        "blocker": None,
+                        "execution_snapshot": {"best_ask_yes": 0.001, "best_bid_yes": 0.0, "yes_ask_depth_usd": 0.0},
+                        "resolution_status": {"official_daily_extract": {"available": False}},
+                    },
+                ],
+            }
+        )
+    )
+
+    summary = build_profitable_accounts_operator_summary(
+        classified_accounts_csv=csv_path,
+        reverse_engineering_json=reverse_path,
+        operator_report_json=operator_path,
+    )
+
+    assert summary["daily_operator_rollup"] == {
+        "live_ready": True,
+        "live_ready_count": 1,
+        "normal_size_blocked_count": 1,
+        "watchlist_count": 2,
+        "global_recommendation": "review_ready_candidates_then_paper_normal_size",
+        "top_ready_market_ids": ["ready-market"],
+        "top_not_ready_market_ids": ["blocked-market"],
+        "not_ready_reason_counts": {"official_resolution_unavailable": 1, "extreme_quote": 1, "insufficient_depth": 1},
+    }
+    assert "READY 1/2" in summary["daily_operator_markdown"]
+    assert "blocked-market" in summary["daily_operator_markdown"]
+
 def _write_json_fixture(payload: dict) -> Path:
     import tempfile
 
