@@ -760,6 +760,112 @@ def _case_has_official_source_gap(forecast_context: dict[str, Any], resolution: 
     return "fallback" in lowered or "official_source_empty" in lowered or "official" in lowered and resolution.get("available") is False
 
 
+def build_high_information_case_backfill_plan(
+    learning_report: dict[str, Any],
+    resolved_markets: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Plan targeted paper-only replay/backfill work from learning-report high-info cases."""
+    resolved_markets = resolved_markets or {}
+    raw_cases = [case for case in learning_report.get("high_information_cases", []) if isinstance(case, dict)]
+    planned_cases = [_backfill_plan_case(case, resolved_markets=resolved_markets) for case in raw_cases]
+    planned_cases.sort(key=lambda case: (int(case.get("priority") or 99), str(case.get("market_id") or "")))
+    reason_counts = Counter(str(case.get("learning_reason") or "unknown") for case in planned_cases)
+    known_reasons = ["near_probability_threshold", "official_source_gap", "pending_resolution_feedback"]
+    summary = {
+        "input_cases": len(raw_cases),
+        "planned_cases": len(planned_cases),
+        **{reason: int(reason_counts.get(reason, 0)) for reason in known_reasons},
+        "resolved_markets": sum(1 for case in planned_cases if case.get("resolution_status") == "resolved_feedback_available"),
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    return {
+        "source": "high_information_case_backfill_plan",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "summary": summary,
+        "cases": planned_cases,
+        "next_steps": _high_information_backfill_next_steps(reason_counts),
+        "commands": _high_information_backfill_commands(reason_counts),
+    }
+
+
+
+def _backfill_plan_case(case: dict[str, Any], *, resolved_markets: dict[str, Any]) -> dict[str, Any]:
+    market_id = str(case.get("market_id") or "")
+    reason = str(case.get("learning_reason") or "unknown")
+    resolved_payload = resolved_markets.get(market_id) if market_id else None
+    is_resolved = isinstance(resolved_payload, dict) and bool(resolved_payload)
+    return {
+        "priority": _high_information_reason_priority(reason),
+        "market_id": case.get("market_id"),
+        "profile_id": case.get("profile_id"),
+        "question": case.get("question"),
+        "learning_reason": reason,
+        "replay_scope": _high_information_replay_scope(reason),
+        "resolution_status": "resolved_feedback_available" if is_resolved else "awaiting_resolution_feedback",
+        "resolved_market": dict(resolved_payload) if isinstance(resolved_payload, dict) else {},
+        "price": round(_to_float(case.get("price")), 6),
+        "model_probability": round(_to_float(case.get("model_probability")), 6),
+        "required_inputs": _high_information_required_inputs(reason, is_resolved=is_resolved),
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+
+
+
+def _high_information_reason_priority(reason: str) -> int:
+    return {"near_probability_threshold": 1, "official_source_gap": 2, "pending_resolution_feedback": 3}.get(reason, 9)
+
+
+
+def _high_information_replay_scope(reason: str) -> str:
+    return {
+        "near_probability_threshold": "threshold_calibration_replay",
+        "official_source_gap": "official_source_backfill_then_replay",
+        "pending_resolution_feedback": "resolution_feedback_replay",
+    }.get(reason, "manual_paper_replay_review")
+
+
+
+def _high_information_required_inputs(reason: str, *, is_resolved: bool) -> list[str]:
+    inputs = ["archived_orderbook_snapshot", "archived_forecast_context"]
+    if reason == "official_source_gap":
+        inputs.append("official_observation_fixture")
+    if is_resolved:
+        inputs.append("resolved_market_feedback")
+    else:
+        inputs.append("archived_resolution_fixture")
+    return inputs
+
+
+
+def _high_information_backfill_next_steps(reason_counts: Counter[str]) -> list[str]:
+    steps: list[str] = []
+    if reason_counts.get("near_probability_threshold"):
+        count = int(reason_counts["near_probability_threshold"])
+        steps.append(f"Run paper-only replay for {count} near_probability_threshold cases after loading archived orderbook/forecast/resolution fixtures.")
+    if reason_counts.get("official_source_gap"):
+        count = int(reason_counts["official_source_gap"])
+        steps.append(f"Backfill official observation fixtures for {count} official_source_gap cases, then rerun paper-only shadow replay.")
+    if reason_counts.get("pending_resolution_feedback"):
+        count = int(reason_counts["pending_resolution_feedback"])
+        steps.append(f"Wait for or ingest archived resolution fixtures for {count} pending_resolution_feedback cases before replay scoring.")
+    if not steps:
+        steps.append("No high-information paper-only replay/backfill cases to schedule.")
+    return steps
+
+
+
+def _high_information_backfill_commands(reason_counts: Counter[str]) -> list[str]:
+    commands: list[str] = []
+    for reason in ("near_probability_threshold", "official_source_gap", "pending_resolution_feedback"):
+        if reason_counts.get(reason):
+            commands.append(f"python -m weather_pm.shadow_paper_runner replay-high-info --reason {reason} --paper-only --no-network --no-live-orders")
+    return commands
+
+
+
 def _learning_next_experiments(profile_actions: list[dict[str, Any]], high_information_cases: list[dict[str, Any]]) -> list[str]:
     experiments: list[str] = []
     for action in profile_actions:
@@ -773,6 +879,7 @@ def _learning_next_experiments(profile_actions: list[dict[str, Any]], high_infor
     if high_information_cases:
         experiments.append("replay_high_information_cases_after_resolution")
     return experiments
+
 
 
 

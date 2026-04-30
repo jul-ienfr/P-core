@@ -11,6 +11,7 @@ from weather_pm.shadow_paper_runner import (
     build_market_metadata_resolution_dataset,
     build_shadow_profile_auto_action_plan,
     build_shadow_profile_evaluation,
+    build_high_information_case_backfill_plan,
     build_shadow_profile_learning_report,
     build_shadow_profile_paper_orders,
     apply_stress_overlay_to_paper_orders,
@@ -788,6 +789,83 @@ def test_build_shadow_profile_auto_action_plan_maps_learning_actions_paper_only_
             "paper_only": True,
             "live_order_allowed": False,
         },
+    ]
+
+
+def test_build_high_information_case_backfill_plan_groups_prioritized_paper_only_replays() -> None:
+    learning_report = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "high_information_cases": [
+            {
+                "market_id": "m-pending",
+                "profile_id": "needs_more",
+                "question": "Will Paris be 20°C?",
+                "learning_reason": "pending_resolution_feedback",
+                "price": 0.39,
+                "model_probability": 0.58,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "market_id": "m-threshold-close",
+                "profile_id": "promote_fast",
+                "question": "Will Dallas be 90°F or above?",
+                "learning_reason": "near_probability_threshold",
+                "price": 0.49,
+                "model_probability": 0.51,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+            {
+                "market_id": "m-source-gap",
+                "profile_id": "needs_more",
+                "question": "Will Hong Kong be 25°C or below?",
+                "learning_reason": "official_source_gap",
+                "price": 0.20,
+                "model_probability": 0.66,
+                "paper_only": True,
+                "live_order_allowed": False,
+            },
+        ],
+    }
+    resolved_markets = {"m-threshold-close": {"resolved_outcome": "Yes", "source": "official_archive"}}
+
+    plan = build_high_information_case_backfill_plan(learning_report, resolved_markets=resolved_markets)
+
+    assert plan["source"] == "high_information_case_backfill_plan"
+    assert plan["paper_only"] is True
+    assert plan["live_order_allowed"] is False
+    assert plan["summary"] == {
+        "input_cases": 3,
+        "planned_cases": 3,
+        "near_probability_threshold": 1,
+        "official_source_gap": 1,
+        "pending_resolution_feedback": 1,
+        "resolved_markets": 1,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+    assert [case["learning_reason"] for case in plan["cases"]] == [
+        "near_probability_threshold",
+        "official_source_gap",
+        "pending_resolution_feedback",
+    ]
+    assert plan["cases"][0]["priority"] == 1
+    assert plan["cases"][0]["resolution_status"] == "resolved_feedback_available"
+    assert plan["cases"][0]["replay_scope"] == "threshold_calibration_replay"
+    assert plan["cases"][1]["replay_scope"] == "official_source_backfill_then_replay"
+    assert plan["cases"][2]["resolution_status"] == "awaiting_resolution_feedback"
+    assert all(case["paper_only"] is True and case["live_order_allowed"] is False for case in plan["cases"])
+    assert plan["next_steps"] == [
+        "Run paper-only replay for 1 near_probability_threshold cases after loading archived orderbook/forecast/resolution fixtures.",
+        "Backfill official observation fixtures for 1 official_source_gap cases, then rerun paper-only shadow replay.",
+        "Wait for or ingest archived resolution fixtures for 1 pending_resolution_feedback cases before replay scoring.",
+    ]
+    assert plan["commands"] == [
+        "python -m weather_pm.shadow_paper_runner replay-high-info --reason near_probability_threshold --paper-only --no-network --no-live-orders",
+        "python -m weather_pm.shadow_paper_runner replay-high-info --reason official_source_gap --paper-only --no-network --no-live-orders",
+        "python -m weather_pm.shadow_paper_runner replay-high-info --reason pending_resolution_feedback --paper-only --no-network --no-live-orders",
     ]
 
 
