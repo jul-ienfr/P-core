@@ -160,6 +160,15 @@ class StationHistoryClient:
                 manual_review_needed=resolution.manual_review_needed,
                 revision_risk=resolution.revision_risk,
             )
+            if not points and _hko_payload_has_empty_daily_extract(payload):
+                return self._bundle(
+                    hko_resolution,
+                    url=url,
+                    points=points,
+                    latency_tier="direct_history",
+                    fallback_reason="official_source_empty_payload",
+                    source_health="published_empty",
+                )
             return self._bundle(hko_resolution, url=url, points=points, latency_tier="direct_history")
 
         if resolution.provider == "meteostat" and (resolution.station_code or structure.city):
@@ -439,7 +448,7 @@ class StationHistoryClient:
         if start_date != end_date:
             raise ValueError("HKO direct daily extract currently supports a single day per request")
         target = _parse_iso_date(start_date)
-        raw_rows = payload.get("data") or payload.get("records") or payload.get("observations")
+        raw_rows = _first_hko_rows(payload)
         if not isinstance(raw_rows, list):
             raise ValueError("HKO daily extract payload missing data rows")
         points: list[StationHistoryPoint] = []
@@ -536,6 +545,8 @@ class StationHistoryClient:
         url: str,
         points: list[StationHistoryPoint],
         latency_tier: str = "direct",
+        fallback_reason: str | None = None,
+        source_health: str | None = None,
     ) -> StationHistoryBundle:
         polling_focus, expected_lag_seconds = _latency_operational_fields(resolution.provider, latency_tier)
         return StationHistoryBundle(
@@ -548,7 +559,8 @@ class StationHistoryClient:
             polling_focus=polling_focus,
             expected_lag_seconds=expected_lag_seconds,
             source_lag_seconds=self._source_lag_seconds(points) if latency_tier.startswith("direct") else None,
-            source_health="healthy" if points else "stale_or_empty",
+            fallback_reason=fallback_reason,
+            source_health=source_health or ("healthy" if points else "stale_or_empty"),
         )
 
     def _source_lag_seconds(self, points: list[StationHistoryPoint]) -> int | None:
@@ -744,6 +756,20 @@ def _extract_accuweather_temperature(raw_value: Any, structure: MarketStructure)
         if isinstance(candidate, dict) and candidate.get("Value") is not None:
             return float(candidate["Value"]), str(candidate.get("Unit") or structure.unit).lower()
     return None
+
+
+def _first_hko_rows(payload: dict[str, Any]) -> list[Any] | None:
+    for key in ("data", "records", "observations"):
+        rows = payload.get(key)
+        if isinstance(rows, list):
+            return rows
+    return None
+
+
+def _hko_payload_has_empty_daily_extract(payload: dict[str, Any]) -> bool:
+    rows = _first_hko_rows(payload)
+    fields = payload.get("fields")
+    return isinstance(rows, list) and len(rows) == 0 and isinstance(fields, list)
 
 
 def _normalize_hko_daily_extract_row(row: Any, payload: dict[str, Any]) -> dict[str, Any] | None:
