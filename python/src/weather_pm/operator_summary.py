@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 from collections import Counter
 from pathlib import Path
@@ -24,8 +25,12 @@ def build_profitable_accounts_operator_summary(
     reverse_path = Path(reverse_engineering_json)
     operator_path = Path(operator_report_json)
     reverse_payload = _load_json_object(reverse_path)
-    operator_payload = _load_json_object(operator_path)
-    accounts = [account for account in reverse_payload.get("accounts", []) if isinstance(account, dict)]
+    raw_operator_payload = _load_json_object(operator_path)
+    operator_payload = _operator_payload(raw_operator_payload)
+    accounts = _merge_csv_classification(
+        [account for account in reverse_payload.get("accounts", []) if isinstance(account, dict)],
+        Path(classified_accounts_csv),
+    )
     watchlist = [row for row in operator_payload.get("watchlist", []) if isinstance(row, dict)]
 
     priority_accounts = _priority_accounts(accounts, limit=priority_limit)
@@ -88,6 +93,81 @@ def _load_json_object(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _operator_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    nested = payload.get("operator")
+    if isinstance(nested, dict) and isinstance(nested.get("watchlist"), list):
+        return nested
+    return payload
+
+
+def _merge_csv_classification(accounts: list[dict[str, Any]], classified_accounts_csv: Path) -> list[dict[str, Any]]:
+    csv_accounts = _classified_accounts_by_handle(classified_accounts_csv)
+    merged: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for account in accounts:
+        handle = _account_handle(account)
+        csv_account = csv_accounts.get(handle)
+        if csv_account:
+            merged_account = {**csv_account, **account}
+            for key, value in csv_account.items():
+                if _is_missing_account_value(merged_account.get(key)):
+                    merged_account[key] = value
+            merged.append(merged_account)
+            seen.add(handle)
+        else:
+            merged.append(account)
+            if handle:
+                seen.add(handle)
+    for handle, account in csv_accounts.items():
+        if handle not in seen:
+            merged.append(account)
+    return merged
+
+
+def _classified_accounts_by_handle(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {}
+    with path.open(newline="") as handle:
+        return {
+            _account_handle(row): _csv_account_snapshot(row)
+            for row in csv.DictReader(handle)
+            if _account_handle(row)
+        }
+
+
+def _csv_account_snapshot(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "handle": row.get("userName") or row.get("handle"),
+        "rank": row.get("rank"),
+        "weather_pnl_usd": row.get("weather_pnl_usd"),
+        "weather_volume_usd": row.get("weather_volume_usd"),
+        "pnl_over_volume_pct": row.get("pnl_over_volume_pct"),
+        "classification": row.get("classification"),
+        "active_weather_positions": row.get("active_weather_positions"),
+        "recent_weather_activity": row.get("recent_weather_activity"),
+        "recent_nonweather_activity": row.get("recent_nonweather_activity"),
+        "recommended_use": row.get("recommended_use"),
+        "profile_url": row.get("profile_url"),
+        "sample_weather_titles": _split_sample_titles(row.get("sample_weather_titles")),
+    }
+
+
+def _account_handle(account: dict[str, Any]) -> str:
+    return str(account.get("handle") or account.get("userName") or "")
+
+
+def _split_sample_titles(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value if item]
+    if not value:
+        return []
+    return [part.strip() for part in str(value).split(" | ") if part.strip()]
+
+
+def _is_missing_account_value(value: Any) -> bool:
+    return value is None or value == "" or value == "unknown" or value == []
+
+
 def _classified_counts(accounts: list[dict[str, Any]]) -> dict[str, int]:
     counts = Counter(str(account.get("classification") or "unknown") for account in accounts)
     return dict(sorted(counts.items()))
@@ -135,6 +215,7 @@ def _watchlist_row(row: dict[str, Any], *, handle_lookup: dict[str, dict[str, An
         "matched_profitable_weather_count": len(matched_accounts),
         "matched_profitable_weather_accounts": matched_accounts,
     }
+    enriched["normal_size_gate"] = _normal_size_gate(enriched)
     enriched["operator_verdict"] = _operator_verdict(enriched)
     return enriched
 
@@ -299,12 +380,20 @@ def _summary_operator_recommendation(
 def _operator_verdict(row: dict[str, Any]) -> dict[str, str]:
     blocker = row.get("blocker") or row.get("execution_blocker")
     matched_count = _to_int(row.get("matched_profitable_weather_count"))
+    normal_size_gate = row.get("normal_size_gate") if isinstance(row.get("normal_size_gate"), dict) else {}
     if blocker == "extreme_price" and matched_count > 0:
         return {
             "status": "paper_micro",
             "confidence": "high_signal_cautious_execution",
             "reason": "profitable_weather_accounts_match_but_extreme_price_requires_micro_paper",
             "recommended_size": "micro_paper_only",
+        }
+    if matched_count > 0 and normal_size_gate.get("recommended_action") == "paper_strict_limit_only":
+        return {
+            "status": "paper_micro",
+            "confidence": "high_signal_cautious_execution",
+            "reason": "profitable_weather_accounts_match_but_normal_size_gate_blocks_live_or_normal_sizing",
+            "recommended_size": "paper_strict_limit_only",
         }
     if matched_count > 0:
         return {
@@ -319,6 +408,47 @@ def _operator_verdict(row: dict[str, Any]) -> dict[str, str]:
         "reason": "live_watchlist_row_has_no_matched_profitable_weather_account",
         "recommended_size": "none",
     }
+
+
+def _normal_size_gate(row: dict[str, Any]) -> dict[str, Any]:
+    reasons: list[str] = []
+    blocker = row.get("blocker") or row.get("execution_blocker")
+    if blocker in {"extreme_price", "high_slippage_risk", "missing_tradeable_quote"}:
+        reasons.append(str(blocker))
+    resolution_status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    official_extract = resolution_status.get("official_daily_extract") if isinstance(resolution_status.get("official_daily_extract"), dict) else {}
+    if official_extract.get("available") is False:
+        reasons.append("official_resolution_unavailable")
+    execution_snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
+    ask_yes = _first_present(execution_snapshot, ["best_ask_yes", "ask_yes", "askY", "yes_ask"])
+    bid_yes = _first_present(execution_snapshot, ["best_bid_yes", "bid_yes", "bidY", "yes_bid"])
+    if _is_extreme_quote(ask_yes) or _is_extreme_quote(bid_yes):
+        reasons.append("extreme_quote")
+    depth = _first_present(execution_snapshot, ["yes_ask_depth_usd", "order_book_depth_usd", "depth_usd", "depth"])
+    if depth is not None and _to_float(depth) < 50.0:
+        reasons.append("insufficient_depth")
+    unique_reasons = _unique(reasons)
+    return {
+        "normal_size_allowed": not unique_reasons,
+        "live_ready": not unique_reasons,
+        "paper_candidate": _to_int(row.get("matched_profitable_weather_count")) > 0,
+        "reasons": unique_reasons,
+        "recommended_action": "paper_strict_limit_only" if unique_reasons else "normal_size_possible_after_operator_review",
+    }
+
+
+def _first_present(payload: dict[str, Any], keys: list[str]) -> Any:
+    for key in keys:
+        if key in payload and payload.get(key) is not None:
+            return payload.get(key)
+    return None
+
+
+def _is_extreme_quote(value: Any) -> bool:
+    if value is None:
+        return False
+    quote = _to_float(value)
+    return quote <= 0.01 or quote >= 0.99
 
 
 def _discord_operator_brief(cards: list[dict[str, Any]], *, live_match_summary: dict[str, Any]) -> str:

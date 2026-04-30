@@ -337,6 +337,90 @@ def test_summary_recommends_watch_only_when_all_matched_markets_are_blocked() ->
     assert recommendation["next_actions"] == ["wait_for_executable_depth", "keep_polling_direct_resolution_sources"]
 
 
+def test_profitable_accounts_summary_accepts_operator_refresh_wrapper_and_csv_classification(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    operator_path = tmp_path / "operator_refresh.json"
+    csv_path = tmp_path / "classified.csv"
+    reverse_path.write_text(json.dumps({"accounts": [{"handle": "SharpWx", "weather_pnl_usd": 4200}]}))
+    csv_path.write_text(
+        "rank,userName,classification,weather_pnl_usd,weather_volume_usd,active_weather_positions,recent_weather_activity\n"
+        "1,SharpWx,weather specialist / weather-heavy,4200,100000,3,9\n"
+    )
+    operator_path.write_text(
+        json.dumps(
+            {
+                "summary": {"paper_only": True, "live_order_allowed": False},
+                "operator": {
+                    "summary": {"shortlisted": 1, "top_blockers": ["missing_tradeable_quote"]},
+                    "operator_focus": ["watch_only: 1"],
+                    "watchlist": [
+                        {
+                            "market_id": "dallas-noquote",
+                            "city": "Dallas",
+                            "matched_traders": ["SharpWx"],
+                            "decision_status": "skip",
+                            "blocker": "missing_tradeable_quote",
+                        }
+                    ],
+                },
+            }
+        )
+    )
+
+    summary = build_profitable_accounts_operator_summary(
+        classified_accounts_csv=csv_path,
+        reverse_engineering_json=reverse_path,
+        operator_report_json=operator_path,
+    )
+
+    assert summary["classified_account_counts"] == {"weather specialist / weather-heavy": 1}
+    assert summary["priority_weather_accounts"][0]["handle"] == "SharpWx"
+    assert summary["live_watchlist"][0]["matched_weather_heavy_traders"] == ["SharpWx"]
+    assert summary["live_watchlist"][0]["matched_profitable_weather_count"] == 1
+    assert summary["live_operator_summary"] == {"shortlisted": 1, "top_blockers": ["missing_tradeable_quote"]}
+
+
+def test_profitable_accounts_summary_blocks_normal_size_without_official_resolution_or_clean_depth(tmp_path: Path) -> None:
+    reverse_path = tmp_path / "reverse.json"
+    operator_path = tmp_path / "operator.json"
+    csv_path = tmp_path / "classified.csv"
+    reverse_path.write_text(json.dumps({"accounts": [{"handle": "SharpWx", "classification": "weather specialist / weather-heavy", "weather_pnl_usd": 4200}]}))
+    csv_path.write_text("rank,userName,classification\n1,SharpWx,weather specialist / weather-heavy\n")
+    operator_path.write_text(
+        json.dumps(
+            {
+                "summary": {"shortlisted": 1},
+                "watchlist": [
+                    {
+                        "market_id": "hk-extreme",
+                        "city": "Hong Kong",
+                        "matched_traders": ["SharpWx"],
+                        "decision_status": "trade_small",
+                        "blocker": None,
+                        "execution_snapshot": {"best_ask_yes": 0.001, "best_bid_yes": 0.0, "yes_ask_depth_usd": 0.0},
+                        "resolution_status": {"official_daily_extract": {"available": False}},
+                    }
+                ],
+            }
+        )
+    )
+
+    row = build_profitable_accounts_operator_summary(
+        classified_accounts_csv=csv_path,
+        reverse_engineering_json=reverse_path,
+        operator_report_json=operator_path,
+    )["live_watchlist"][0]
+
+    assert row["normal_size_gate"] == {
+        "normal_size_allowed": False,
+        "live_ready": False,
+        "paper_candidate": True,
+        "reasons": ["official_resolution_unavailable", "extreme_quote", "insufficient_depth"],
+        "recommended_action": "paper_strict_limit_only",
+    }
+    assert row["operator_verdict"]["recommended_size"] == "paper_strict_limit_only"
+
+
 def _write_json_fixture(payload: dict) -> Path:
     import tempfile
 

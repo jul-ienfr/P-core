@@ -406,6 +406,72 @@ def test_pipeline_counts_historical_decision_weather_context_from_sparse_forecas
     assert historical_weather["examples"][0]["forecast_value_at_decision"] == 17.0
 
 
+def test_pipeline_merges_historical_forecast_threshold_and_resolution_timing(tmp_path: Path) -> None:
+    from weather_pm.winner_pattern_pipeline import run_winner_pattern_pipeline
+
+    trades_path = tmp_path / "historical_weather_trades.json"
+    resolutions_path = tmp_path / "resolutions.json"
+    orderbooks_path = tmp_path / "orderbooks.json"
+    markets_path = tmp_path / "markets.json"
+    forecasts_path = tmp_path / "forecasts.json"
+    output_dir = tmp_path / "run-historical-resolution-context"
+
+    trade = {
+        "account": "weather-wallet",
+        "wallet": "0xweather",
+        "slug": "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+        "title": "Will the highest temperature in Toronto be 16°C or higher on April 30?",
+        "outcome": "Yes",
+        "side": "BUY",
+        "price": 0.35,
+        "size": 20,
+        "notional_usd": 7,
+        "timestamp": "2026-04-29T10:00:00Z",
+        "city": "Toronto",
+        "date": "April 30",
+        "market_type": "threshold",
+        "resolution": {"primary_key": "2112614", "resolved_outcome": "Yes"},
+        "estimated_pnl_usdc": 13.0,
+    }
+    _write_json(trades_path, {"paper_only": True, "live_order_allowed": False, "trades": [trade]})
+    _write_json(
+        resolutions_path,
+        {
+            "paper_only": True,
+            "live_order_allowed": False,
+            "2112614": {
+                "primary_key": "2112614",
+                "slug": "highest-temperature-in-toronto-on-april-30-2026-16c-or-higher",
+                "observation_value": 18.0,
+                "observation_timestamp": "2026-04-30T22:00:00Z",
+                "resolution_timestamp": "2026-05-01T01:00:00Z",
+                "resolution_source": "official_station_history",
+                "official_source_available": True,
+            },
+        },
+    )
+    _write_json(orderbooks_path, {"2112614": {"best_bid": 0.31, "best_ask": 0.37, "depth_usd": 2500}})
+    _write_json(markets_path, {"markets": []})
+    _write_json(forecasts_path, {"2112614": {"forecast_high_c": 17.0, "freshness_minutes": 30, "threshold": 16.0}})
+
+    run_winner_pattern_pipeline(
+        trades_json=trades_path,
+        resolutions_json=resolutions_path,
+        orderbook_snapshots_json=orderbooks_path,
+        market_snapshots_json=markets_path,
+        forecast_snapshots_json=forecasts_path,
+        output_dir=output_dir,
+    )
+
+    decision_payload = json.loads((output_dir / "decision_dataset.json").read_text(encoding="utf-8"))
+    row = decision_payload["examples"][0]
+    assert row["forecast_value_at_decision"] == 17.0
+    assert row["threshold"] == 16.0
+    assert row["observation_value"] == 18.0
+    assert row["resolution_timestamp"] == "2026-05-01T01:00:00Z"
+    assert row["time_to_resolution_minutes"] == 2340
+
+
 def test_pipeline_preserves_embedded_operator_pnl_when_resolution_recomputes_pnl(tmp_path: Path) -> None:
     from weather_pm.winner_pattern_pipeline import run_winner_pattern_pipeline
 

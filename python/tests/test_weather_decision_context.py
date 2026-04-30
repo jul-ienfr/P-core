@@ -268,6 +268,56 @@ def test_sparse_title_backfills_threshold_distance_and_forecast_timestamp() -> N
     assert row["live_order_allowed"] is False
 
 
+def test_sparse_resolution_mapping_enriches_official_timing_by_primary_key() -> None:
+    from weather_pm.weather_decision_context import enrich_decision_weather_context
+
+    decisions = {
+        "examples": [
+            {
+                "market_id": "2082355",
+                "primary_key": "2082355",
+                "timestamp": "2026-04-27T12:00:00Z",
+                "city": "Toronto",
+                "date": "April 28",
+                "market_type": "threshold",
+                "threshold": 19.0,
+            }
+        ]
+    }
+    forecasts = {
+        "2082355": {
+            "forecast_timestamp": "2026-04-27T10:30:00Z",
+            "forecast_high_c": 20.1,
+            "source": "official_station_forecast_archive",
+            "station_id": "TORONTO_CITY",
+        }
+    }
+    resolutions = {
+        "2082355": {
+            "resolution_source": "official_station_history",
+            "station_id": "TORONTO_CITY",
+            "observation_value": 20.4,
+            "observation_timestamp": "2026-04-28T21:00:00Z",
+            "resolution_timestamp": "2026-04-28T22:00:00Z",
+            "official_source_available": True,
+        }
+    }
+
+    payload = enrich_decision_weather_context(decisions, forecasts, resolutions)
+
+    row = payload["examples"][0]
+    assert row["weather_context_available"] is True
+    assert row["forecast_value_at_decision"] == 20.1
+    assert row["forecast_age_minutes"] == 90
+    assert row["observation_value"] == 20.4
+    assert row["resolution_timestamp"] == "2026-04-28T22:00:00Z"
+    assert row["time_to_resolution_minutes"] == 2040
+    assert row["resolution_source"] == "official_station_history"
+    assert row["official_source_available"] is True
+    assert row["paper_only"] is True
+    assert row["live_order_allowed"] is False
+
+
 def test_cli_enrich_decision_weather_context_writes_artifact_and_compact_summary(tmp_path: Path) -> None:
     decisions_path = tmp_path / "decisions.json"
     forecasts_path = tmp_path / "forecasts.json"

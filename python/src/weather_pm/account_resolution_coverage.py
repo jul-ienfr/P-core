@@ -16,6 +16,13 @@ def match_trade_resolution(trade: dict[str, Any], resolutions_payload: dict[str,
         return _unresolved("invalid_trade")
     embedded = _embedded_trade_resolution(trade)
     if embedded is not None:
+        for match_key, trade_values, resolution_fields, normalized in _priority_specs(trade):
+            values = [value for value in trade_values if value]
+            if not values:
+                continue
+            matches = _matches_for_values(rows, values, resolution_fields, normalized=normalized)
+            if len(matches) == 1:
+                return _resolved_result(trade, {**matches[0], **embedded}, "embedded_trade_resolution")
         return _resolved_result(trade, embedded, "embedded_trade_resolution")
     if not rows:
         return _unresolved("no_resolutions_available")
@@ -210,7 +217,16 @@ def _resolution_rows(payload: dict[str, Any] | list[Any]) -> list[dict[str, Any]
             return [row for row in rows if isinstance(row, dict)]
     if any(key in payload for key in ("winning_side", "resolved_outcome", "condition_id", "conditionId", "market_id", "slug")):
         return [payload]
-    return []
+    sparse: list[dict[str, Any]] = []
+    for key, value in payload.items():
+        if isinstance(value, dict):
+            row = dict(value)
+            row.setdefault("matched_key", key)
+            if str(key).strip().isdigit():
+                row.setdefault("primary_key", str(key).strip())
+                row.setdefault("market_id", str(key).strip())
+            sparse.append(row)
+    return sparse
 
 
 def _trade_rows(payload: dict[str, Any] | list[Any]) -> list[dict[str, Any]]:
@@ -335,5 +351,32 @@ def _to_float(value: Any) -> float:
 
 
 def _compact_resolution(row: dict[str, Any]) -> dict[str, Any]:
-    keys = ("market_id", "marketId", "condition_id", "conditionId", "token_id", "tokenId", "slug", "event_slug", "primary_key", "matched_key", "winning_side", "resolved_outcome", "source", "status")
+    keys = (
+        "market_id",
+        "marketId",
+        "condition_id",
+        "conditionId",
+        "token_id",
+        "tokenId",
+        "slug",
+        "event_slug",
+        "primary_key",
+        "matched_key",
+        "winning_side",
+        "resolved_outcome",
+        "source",
+        "resolution_source",
+        "status",
+        "station_id",
+        "station_name",
+        "observation_value",
+        "observed_value",
+        "observation_timestamp",
+        "observed_at",
+        "resolution_value",
+        "value",
+        "resolution_timestamp",
+        "resolved_at",
+        "official_source_available",
+    )
     return {key: row[key] for key in keys if key in row}

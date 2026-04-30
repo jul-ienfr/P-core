@@ -86,7 +86,7 @@ def run_winner_pattern_pipeline(
     decision_dataset = build_account_decision_dataset(orderbook_context, markets_payload)
     _merge_orderbook_context(decision_dataset, orderbook_context)
     _merge_resolution_matches(decision_dataset, resolution_coverage)
-    historical_weather_context = enrich_decision_weather_context(decision_dataset, forecasts_payload)
+    historical_weather_context = enrich_decision_weather_context(decision_dataset, forecasts_payload, resolutions_payload)
     _merge_weather_context(decision_dataset, historical_weather_context)
     decision_path = _write_json(out_dir / "decision_dataset.json", decision_dataset)
     historical_weather_path = _write_json(out_dir / "historical_decision_weather_context.json", historical_weather_context)
@@ -167,6 +167,8 @@ def _merge_weather_context(decision_dataset: dict[str, Any], weather_context: di
             "official_source_available",
             "weather_context_available",
             "missing_reason",
+            "threshold",
+            "bin_center",
             "observation_value",
             "observation_timestamp",
             "resolution_value",
@@ -235,8 +237,23 @@ def _merge_resolution_matches(decision_dataset: dict[str, Any], resolution_cover
             example["out_of_sample_pnl"] = example["pnl"]
             example["outcome"] = match.get("outcome")
             example["winning_side"] = match.get("winning_side")
-            if resolution.get("source"):
-                example["resolution_source"] = resolution.get("source")
+            if resolution.get("source") or resolution.get("resolution_source"):
+                example["resolution_source"] = resolution.get("resolution_source") or resolution.get("source")
+            for key in (
+                "station_id",
+                "station_name",
+                "observation_value",
+                "observed_value",
+                "observation_timestamp",
+                "observed_at",
+                "resolution_value",
+                "value",
+                "resolution_timestamp",
+                "resolved_at",
+                "official_source_available",
+            ):
+                if key in resolution:
+                    example[key] = resolution[key]
             if match.get("resolved") is True:
                 example["resolution_verified"] = True
 

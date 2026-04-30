@@ -15,7 +15,7 @@ def enrich_decision_weather_context(
 ) -> dict[str, Any]:
     examples = _rows_from_payload(decision_dataset_payload, "examples")
     forecasts = _forecast_rows_from_payload(forecast_snapshots_payload)
-    resolutions = _rows_from_payload(resolution_sources_payload or {}, "resolutions")
+    resolutions = _sparse_rows_from_payload(resolution_sources_payload or {}, "resolutions")
     enriched = [_enrich_row(row, forecasts, resolutions) for row in examples]
     with_context = sum(1 for row in enriched if row.get("weather_context_available") is True)
     summary = {
@@ -299,7 +299,11 @@ def _rows_from_payload(payload: dict[str, Any], preferred_key: str) -> list[dict
 
 
 def _forecast_rows_from_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    rows = _rows_from_payload(payload, "forecasts")
+    return _sparse_rows_from_payload(payload, "forecasts")
+
+
+def _sparse_rows_from_payload(payload: dict[str, Any], preferred_key: str) -> list[dict[str, Any]]:
+    rows = _rows_from_payload(payload, preferred_key)
     if rows:
         return rows
     sparse: list[dict[str, Any]] = []
