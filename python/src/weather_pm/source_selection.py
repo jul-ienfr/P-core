@@ -16,6 +16,7 @@ class BestStationSourceReport:
     fallback_latest: list[StationEndpointProbeResult]
     fallback_final: list[StationEndpointCandidate]
     operator_action: str
+    discovery_metrics: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -24,6 +25,7 @@ class BestStationSourceReport:
             "fallback_latest": [item.to_dict() for item in self.fallback_latest],
             "fallback_final": [item.to_dict() for item in self.fallback_final],
             "operator_action": self.operator_action,
+            "discovery_metrics": self.discovery_metrics,
         }
 
 
@@ -56,16 +58,55 @@ def select_best_station_sources(
         operator_action = "poll_best_latest_station_until_threshold_then_confirm_with_official_final"
     elif best_latest:
         operator_action = "poll_best_latest_station_manual_final_review"
+    elif fallback_final:
+        operator_action = "use_fallback_history_for_research_only_until_direct_official_source_found"
     else:
         operator_action = "manual_station_source_review_required"
 
+    discovery_metrics = _discovery_metrics(
+        bindings=bindings,
+        latest_results=latest_results,
+        final_candidates=final_candidates,
+        fallback_final=fallback_final,
+    )
     return BestStationSourceReport(
         best_latest=best_latest,
         best_final=best_final,
         fallback_latest=fallback_latest,
         fallback_final=fallback_final,
         operator_action=operator_action,
+        discovery_metrics=discovery_metrics,
     )
+
+
+def _discovery_metrics(
+    *,
+    bindings: list[StationBinding],
+    latest_results: list[StationEndpointProbeResult],
+    final_candidates: list[StationEndpointCandidate],
+    fallback_final: list[StationEndpointCandidate],
+) -> dict[str, Any]:
+    latest_ok_total = sum(1 for result in latest_results if result.ok)
+    manual_review_total = sum(1 for binding in bindings if binding.manual_review_needed)
+    if latest_ok_total:
+        source_health = "healthy"
+    elif fallback_final:
+        source_health = "fallback_only"
+    elif manual_review_total:
+        source_health = "manual_review_required"
+    else:
+        source_health = "unavailable"
+    return {
+        "bindings_total": len(bindings),
+        "latest_probes_total": len(latest_results),
+        "latest_ok_total": latest_ok_total,
+        "final_candidates_total": len(final_candidates),
+        "fallback_final_total": len(fallback_final),
+        "manual_review_total": manual_review_total,
+        "source_health": source_health,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
 
 
 def _latest_rank_key(result: StationEndpointProbeResult) -> tuple[int, int, int, int]:

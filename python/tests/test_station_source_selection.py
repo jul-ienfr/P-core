@@ -118,7 +118,42 @@ def test_best_station_source_selector_prefers_fresh_exact_official_station_over_
     assert report.best_final.provider == "noaa"
     assert report.best_final.url.startswith("https://www.ncei.noaa.gov/access/services/data/v1?")
     assert report.fallback_latest[0].provider == "aviation_weather"
+    assert report.discovery_metrics == {
+        "bindings_total": 2,
+        "latest_probes_total": 2,
+        "latest_ok_total": 2,
+        "final_candidates_total": 2,
+        "fallback_final_total": 1,
+        "manual_review_total": 0,
+        "source_health": "healthy",
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
     assert report.operator_action == "poll_best_latest_station_until_threshold_then_confirm_with_official_final"
+
+
+def test_best_station_source_selector_falls_back_to_dallas_meteostat_when_official_station_missing() -> None:
+    structure = parse_market_question("Will the highest temperature in Dallas be 90F or higher on April 25?")
+    resolution = _resolution("meteostat", station_code=None)
+    resolution.station_name = None
+    binding = build_station_binding(structure, resolution, start_date="2026-04-25", end_date="2026-04-25")
+
+    report = select_best_station_sources(
+        structure,
+        [binding],
+        client=FakeLatestClient(),
+        now=datetime(2026, 4, 25, 19, 0, tzinfo=timezone.utc),
+    )
+
+    assert report.best_latest is None
+    assert report.best_final is None
+    assert report.fallback_final[0].provider == "meteostat"
+    assert report.fallback_final[0].url == "meteostat://daily?city=Dallas&start=2026-04-25&end=2026-04-25"
+    assert report.discovery_metrics["fallback_final_total"] == 1
+    assert report.discovery_metrics["source_health"] == "fallback_only"
+    assert report.discovery_metrics["paper_only"] is True
+    assert report.discovery_metrics["live_order_allowed"] is False
+    assert report.operator_action == "use_fallback_history_for_research_only_until_direct_official_source_found"
 
 
 def test_probe_class_is_available_for_future_live_http_instrumentation() -> None:
