@@ -95,6 +95,11 @@ def test_paper_autopilot_bridge_converts_only_paper_strict_and_micro_rows_to_app
     strict, micro = ledger["orders"][1:]
     assert strict["run_id"] == "autopilot-smoke"
     assert strict["source"] == "paper_autopilot_strict_limit_bridge"
+    assert strict["append_only"] is True
+    assert strict["would_place_order"] is True
+    assert strict["idempotency_key"]
+    assert strict["can_micro_live"] is False
+    assert strict["micro_live_allowed"] is False
     assert strict["order_type"] == "limit_only_paper"
     assert strict["paper_only"] is True
     assert strict["live_order_allowed"] is False

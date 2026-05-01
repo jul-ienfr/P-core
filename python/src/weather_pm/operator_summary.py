@@ -43,7 +43,8 @@ def build_profitable_accounts_operator_summary(
         enriched_watchlist=enriched_watchlist,
     )
     live_market_signal_cards = _live_market_signal_cards(enriched_watchlist)
-    daily_operator_rollup = _daily_operator_rollup(enriched_watchlist)
+    live_quality_summary = _live_quality_summary(enriched_watchlist)
+    daily_operator_rollup = _daily_operator_rollup(enriched_watchlist, live_quality_summary=live_quality_summary)
     return {
         "generated_from": {
             "classified_accounts_csv": str(classified_accounts_csv),
@@ -59,6 +60,7 @@ def build_profitable_accounts_operator_summary(
         "live_market_signal_cards": live_market_signal_cards,
         "live_matched_profitable_weather_accounts": live_matched_accounts,
         "daily_operator_rollup": daily_operator_rollup,
+        "live_quality_summary": live_quality_summary,
         "daily_operator_markdown": _daily_operator_markdown(daily_operator_rollup, enriched_watchlist),
         "discord_operator_brief": _discord_operator_brief(
             live_market_signal_cards,
@@ -219,6 +221,7 @@ def _watchlist_row(row: dict[str, Any], *, handle_lookup: dict[str, dict[str, An
         "matched_profitable_weather_accounts": matched_accounts,
     }
     enriched["normal_size_gate"] = _normal_size_gate(enriched)
+    enriched["live_quality"] = _live_quality(enriched)
     enriched["operator_verdict"] = _operator_verdict(enriched)
     return enriched
 
@@ -288,7 +291,7 @@ def _live_market_signal_cards(watchlist: list[dict[str, Any]]) -> list[dict[str,
     return cards
 
 
-def _daily_operator_rollup(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
+def _daily_operator_rollup(watchlist: list[dict[str, Any]], *, live_quality_summary: dict[str, Any] | None = None) -> dict[str, Any]:
     ready_rows = [row for row in watchlist if (row.get("normal_size_gate") or {}).get("live_ready") is True]
     not_ready_rows = [row for row in watchlist if (row.get("normal_size_gate") or {}).get("live_ready") is False]
     reason_counts: Counter[str] = Counter()
@@ -301,7 +304,7 @@ def _daily_operator_rollup(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
         global_recommendation = "paper_micro_only"
     else:
         global_recommendation = "watch_only"
-    return {
+    summary = {
         "live_ready": bool(ready_rows),
         "live_ready_count": len(ready_rows),
         "normal_size_blocked_count": len(not_ready_rows),
@@ -310,7 +313,111 @@ def _daily_operator_rollup(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
         "top_ready_market_ids": [str(row.get("market_id")) for row in ready_rows[:5] if row.get("market_id")],
         "top_not_ready_market_ids": [str(row.get("market_id")) for row in not_ready_rows[:5] if row.get("market_id")],
         "not_ready_reason_counts": dict(sorted(reason_counts.items())),
+        "can_micro_live_count": 0,
+        "micro_live_allowed": False,
     }
+    if isinstance(live_quality_summary, dict):
+        summary["live_quality_summary"] = live_quality_summary
+    return summary
+
+
+def _quality_score_bucket(score: float) -> str:
+    if score >= 80.0:
+        return "high"
+    if score >= 50.0:
+        return "medium"
+    if score > 0.0:
+        return "low"
+    return "zero"
+
+
+def _live_quality_summary(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
+    scores = [float((row.get("live_quality") or {}).get("live_quality_score") or 0.0) for row in watchlist]
+    bucket_counts = Counter(_quality_score_bucket(score) for score in scores)
+    return {
+        "rows": len(watchlist),
+        "max_live_quality_score": round(max(scores), 2) if scores else 0.0,
+        "avg_live_quality_score": round(sum(scores) / len(scores), 2) if scores else 0.0,
+        "score_buckets": dict(sorted(bucket_counts.items())),
+        "can_micro_live_count": 0,
+        "can_micro_live": False,
+        "paper_only": True,
+        "live_order_allowed": False,
+    }
+
+
+def _live_quality(row: dict[str, Any]) -> dict[str, Any]:
+    reasons: list[str] = []
+    score = 0.0
+    matched_count = _to_int(row.get("matched_profitable_weather_count"))
+    if matched_count > 0:
+        score += min(25.0, 10.0 + matched_count * 5.0)
+    else:
+        reasons.append("no_profitable_account_match")
+
+    blocker = row.get("blocker") or row.get("execution_blocker")
+    if blocker:
+        reasons.append(str(blocker))
+    else:
+        score += 10.0
+
+    gate = row.get("normal_size_gate") if isinstance(row.get("normal_size_gate"), dict) else {}
+    gate_reasons = [str(reason) for reason in gate.get("reasons") or [] if reason]
+    if not gate_reasons:
+        score += 20.0
+    else:
+        reasons.extend(gate_reasons)
+
+    execution_snapshot = row.get("execution_snapshot") if isinstance(row.get("execution_snapshot"), dict) else {}
+    depth = _max_depth(execution_snapshot)
+    spread = _min_spread(execution_snapshot)
+    if depth >= 50.0:
+        score += min(25.0, 10.0 + depth / 20.0)
+    elif depth > 0.0:
+        score += min(10.0, depth / 5.0)
+        reasons.append("shallow_depth")
+    else:
+        reasons.append("missing_or_zero_depth")
+    if spread is not None and spread <= 0.08:
+        score += max(0.0, 20.0 - spread * 200.0)
+    elif spread is None:
+        reasons.append("missing_spread")
+    else:
+        reasons.append("wide_spread")
+
+    resolution_status = row.get("resolution_status") if isinstance(row.get("resolution_status"), dict) else {}
+    official_extract = resolution_status.get("official_daily_extract") if isinstance(resolution_status.get("official_daily_extract"), dict) else {}
+    if official_extract.get("available") is False:
+        reasons.append("official_resolution_unavailable")
+    else:
+        score += 5.0
+
+    unique_reasons = _unique(reasons)
+    return {
+        "live_quality_score": round(max(0.0, min(score, 100.0)), 2),
+        "score_bucket": _quality_score_bucket(score),
+        "can_micro_live": False,
+        "micro_live_allowed": False,
+        "paper_only": True,
+        "live_order_allowed": False,
+        "reasons": unique_reasons,
+    }
+
+
+def _min_spread(snapshot: dict[str, Any]) -> float | None:
+    values = [_first_present(snapshot, ["spread_yes", "yes_spread"]), _first_present(snapshot, ["spread_no", "no_spread"])]
+    present = [_to_float(value) for value in values if value is not None]
+    return min(present) if present else None
+
+
+def _max_depth(snapshot: dict[str, Any]) -> float:
+    values = [
+        _first_present(snapshot, ["yes_ask_depth_usd", "order_book_depth_usd", "depth_usd", "depth"]),
+        _first_present(snapshot, ["yes_bid_depth_usd"]),
+        _first_present(snapshot, ["no_ask_depth_usd"]),
+        _first_present(snapshot, ["no_bid_depth_usd"]),
+    ]
+    return max([_to_float(value) for value in values if value is not None] or [0.0])
 
 
 def _daily_operator_markdown(rollup: dict[str, Any], watchlist: list[dict[str, Any]]) -> str:
@@ -320,6 +427,7 @@ def _daily_operator_markdown(rollup: dict[str, Any], watchlist: list[dict[str, A
         "",
         f"- Recommendation: `{rollup.get('global_recommendation')}`",
         f"- Normal-size blocked: {rollup.get('normal_size_blocked_count', 0)}/{rollup.get('watchlist_count', 0)}",
+        f"- Micro-live enabled: false ({rollup.get('can_micro_live_count', 0)} candidates)",
         f"- Ready markets: {', '.join(rollup.get('top_ready_market_ids') or []) or 'none'}",
         "",
         "| Market | City | Gate | Reasons | Verdict |",

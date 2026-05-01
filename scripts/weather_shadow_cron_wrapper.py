@@ -10,6 +10,7 @@ state-change artifacts.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -23,6 +24,9 @@ PYTHON_SRC = REPO / "python" / "src"
 DATA = REPO / "data" / "polymarket"
 DEFAULT_CLASSIFIED_CSV = DATA / "weather_profitable_accounts_classified_top5000.csv"
 DEFAULT_REVERSE_JSON = DATA / "weather_heavy_trader_registry_full.json"
+sys.path.insert(0, str(PYTHON_SRC))
+from weather_pm.paper_autopilot_bridge import build_paper_autopilot_ledger  # noqa: E402
+from weather_pm.paper_ledger import PaperLedgerError, load_paper_ledger, write_paper_ledger_artifacts  # noqa: E402
 
 
 def utc_stamp() -> str:
@@ -32,6 +36,42 @@ def utc_stamp() -> str:
 def today_utc() -> str:
     return datetime.now(timezone.utc).date().isoformat()
 
+
+
+def micro_live_marker(data_root: Path) -> Path:
+    return data_root / "shadow-cron" / "MICRO_LIVE_DISABLED.paper_only"
+
+
+def micro_live_safety(data_root: Path) -> dict[str, Any]:
+    marker = micro_live_marker(data_root)
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    if not marker.exists():
+        marker.write_text(
+            "micro_live_allowed=false\n"
+            "paper_only=true\n"
+            "live_order_allowed=false\n"
+            "created_by=weather_shadow_cron_wrapper\n",
+            encoding="utf-8",
+        )
+    return {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "can_micro_live": False,
+        "micro_live_allowed": False,
+        "kill_switch": "forced_disabled",
+        "marker": str(marker),
+    }
+
+
+def shadow_idempotency_key(row: dict[str, Any], *, stamp: str | None = None) -> str:
+    parts = [
+        str(row.get("market_id") or row.get("condition_id") or ""),
+        str(row.get("token_id") or row.get("asset_id") or ""),
+        str(row.get("side") or row.get("action") or ""),
+        str(row.get("strict_limit") or row.get("strict_limit_price") or ""),
+        str(stamp or row.get("run_id") or ""),
+    ]
+    return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:24]
 
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,16 +191,22 @@ def build_shadow_autopilot_bridge(
         else:
             action = "WATCH_ONLY"
             rationale = ", ".join(str(reason) for reason in reasons) or str(row.get("operator_verdict") or "not_live_ready")
+        would_place_order = action == "PAPER_AUTOPILOT_SHADOW_REVIEW"
         actions.append(
             {
                 "market_id": market_id,
                 "label": label or market_id or "unknown_market",
                 "action": action,
+                "would_place_order": would_place_order,
+                "idempotency_key": shadow_idempotency_key(row, stamp=str(readiness.get("timestamp") or "")),
                 "dry_run": True,
                 "shadow": True,
                 "paper_only": True,
+                "can_micro_live": False,
+                "micro_live_allowed": False,
                 "live_order_allowed": False,
                 "no_real_order_placed": True,
+                "live_execution_payload": None,
                 "rationale": rationale,
             }
         )
@@ -173,6 +219,9 @@ def build_shadow_autopilot_bridge(
         "no_real_order_placed": True,
         "messages_allowed": False,
         "orders_allowed": False,
+        "can_micro_live": False,
+        "micro_live_allowed": False,
+        "would_place_order_count": sum(1 for action in selected if action.get("would_place_order") is True),
         "status": readiness.get("status", "NOT_READY"),
         "proposed_action_count": len(selected),
         "action_counts": compact_counts([str(action["action"]) for action in selected]),
@@ -191,6 +240,8 @@ def compact_state(payload: dict[str, Any]) -> dict[str, Any]:
         "paper_only": True,
         "live_order_allowed": False,
         "no_real_order_placed": True,
+        "can_micro_live": False,
+        "micro_live_allowed": False,
         "readiness_status": readiness.get("status"),
         "live_ready_count": readiness.get("live_ready_count", 0),
         "watchlist_count": readiness.get("watchlist_count", 0),
@@ -199,6 +250,7 @@ def compact_state(payload: dict[str, Any]) -> dict[str, Any]:
         "not_ready_reason_counts": readiness.get("not_ready_reason_counts", {}),
         "shadow_action_counts": bridge.get("action_counts", {}),
         "proposed_action_count": bridge.get("proposed_action_count", 0),
+        "would_place_order_count": bridge.get("would_place_order_count", 0),
     }
 
 
@@ -232,6 +284,8 @@ def assert_safety(payload: Any) -> None:
             raise RuntimeError("safety violation: live_order_allowed=true")
         if payload.get("orders_allowed") is True:
             raise RuntimeError("safety violation: orders_allowed=true")
+        if payload.get("can_micro_live") is True or payload.get("micro_live_allowed") is True:
+            raise RuntimeError("safety violation: micro live enabled")
         if payload.get("messages_sent") or payload.get("message_sent"):
             raise RuntimeError("safety violation: message sent flag present")
         for value in payload.values():
@@ -253,6 +307,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--operator-limit", type=int, default=10)
     parser.add_argument("--max-shadow-actions", type=int, default=10)
     parser.add_argument("--source", choices=("fixture", "live"), default="live")
+    parser.add_argument("--ledger-json", default=None, help="Append-only derived paper ledger JSON. Defaults under shadow-cron.")
+    parser.add_argument("--skip-paper-ledger", action="store_true", help="Skip append-only paper ledger derivation for fixture/debug runs.")
     parser.add_argument("--skip-resolution-status", action="store_true", help="Do not refresh direct/latest resolution status; useful for fixture tests.")
     parser.add_argument("--skip-orderbook", action="store_true", help="Do not refresh orderbook metrics; useful for fixture tests.")
     args = parser.parse_args(argv)
@@ -271,6 +327,8 @@ def main(argv: list[str] | None = None) -> int:
     autopilot_path = out_dir / f"weather_shadow_autopilot_bridge_{stamp}.json"
     state_path = out_dir / f"weather_shadow_state_{stamp}.json"
     change_path = out_dir / f"weather_shadow_state_change_{stamp}.json"
+    ledger_path = Path(args.ledger_json) if args.ledger_json else out_dir / "weather_paper_autopilot_ledger_latest.json"
+    ledger_artifact_dir = out_dir / "paper-autopilot-ledger"
 
     refresh_cmd = [
         sys.executable,
@@ -319,13 +377,51 @@ def main(argv: list[str] | None = None) -> int:
     account_summary = load_json(account_summary_path)
     if not isinstance(account_summary, dict):
         raise RuntimeError("account bridge output must be a JSON object")
+    safety = micro_live_safety(data_root)
     readiness = build_live_readiness(account_summary, output_json=readiness_path)
+    readiness["micro_live_safety"] = safety
+    readiness["can_micro_live"] = False
+    readiness["micro_live_allowed"] = False
+    write_json(readiness_path, readiness)
     autopilot = build_shadow_autopilot_bridge(
         readiness=readiness,
         account_summary=account_summary,
         max_actions=args.max_shadow_actions,
         output_json=autopilot_path,
     )
+    paper_ledger_payload: dict[str, Any] = {
+        "paper_only": True,
+        "live_order_allowed": False,
+        "skipped": True,
+        "reason": "skip_paper_ledger_requested" if args.skip_paper_ledger else "no_eligible_rows_or_bridge_error",
+        "ledger_json": str(ledger_path),
+    }
+    if not args.skip_paper_ledger:
+        try:
+            existing_ledger = load_paper_ledger(ledger_path) if ledger_path.exists() else {"orders": []}
+            derived = build_paper_autopilot_ledger(account_summary, ledger=existing_ledger, run_id=stamp)
+            ledger_path.parent.mkdir(parents=True, exist_ok=True)
+            ledger_path.write_text(json.dumps(derived, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+            artifact = write_paper_ledger_artifacts(derived, output_dir=ledger_artifact_dir)
+            paper_ledger_payload = {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "append_only": True,
+                "ledger_json": str(ledger_path),
+                "summary": derived.get("summary", {}),
+                "paper_autopilot_summary": derived.get("paper_autopilot_summary", {}),
+                "paper_autopilot_skipped": derived.get("paper_autopilot_skipped", []),
+                "artifacts": artifact.get("artifacts", {}),
+            }
+        except (OSError, json.JSONDecodeError, PaperLedgerError, ValueError) as exc:
+            paper_ledger_payload = {
+                "paper_only": True,
+                "live_order_allowed": False,
+                "append_only": True,
+                "ledger_json": str(ledger_path),
+                "error": str(exc),
+                "paper_autopilot_summary": {"appended_orders": 0},
+            }
 
     state_payload = {
         "timestamp": stamp,
@@ -334,16 +430,21 @@ def main(argv: list[str] | None = None) -> int:
         "no_real_order_placed": True,
         "messages_sent": False,
         "cron_created": False,
+        "can_micro_live": False,
+        "micro_live_allowed": False,
+        "micro_live_safety": safety,
         "input_json": str(input_path),
         "operator_refresh": refresh_compact,
         "account_bridge": summary_compact,
         "live_readiness": readiness,
         "shadow_autopilot_bridge": autopilot,
+        "paper_autopilot_ledger": paper_ledger_payload,
         "artifacts": {
             "operator_refresh_json": str(refresh_path),
             "account_bridge_json": str(account_summary_path),
             "live_readiness_json": str(readiness_path),
             "shadow_autopilot_bridge_json": str(autopilot_path),
+            "paper_autopilot_ledger_json": str(ledger_path),
             "state_json": str(state_path),
             "state_change_json": str(change_path),
         },
@@ -380,6 +481,7 @@ def main(argv: list[str] | None = None) -> int:
                 "changed": state_payload["state_change"]["changed"],
                 "state_json": str(state_path),
                 "state_change_json": str(change_path),
+                "paper_autopilot_ledger": paper_ledger_payload,
                 "artifacts": state_payload["artifacts"],
             },
             ensure_ascii=False,

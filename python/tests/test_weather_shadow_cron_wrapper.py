@@ -65,7 +65,11 @@ def test_live_readiness_and_shadow_bridge_are_paper_only(tmp_path: Path) -> None
     assert bridge["orders_allowed"] is False
     assert bridge["messages_allowed"] is False
     assert bridge["action_counts"] == {"PAPER_AUTOPILOT_SHADOW_REVIEW": 1, "WATCH_ONLY": 1}
+    assert bridge["would_place_order_count"] == 1
+    assert bridge["can_micro_live"] is False
+    assert bridge["micro_live_allowed"] is False
     assert all(action["no_real_order_placed"] is True for action in bridge["actions"])
+    assert all(action["idempotency_key"] for action in bridge["actions"])
     weather_shadow_cron_wrapper.assert_safety({"live_readiness": readiness, "shadow_autopilot_bridge": bridge})
 
 
@@ -178,6 +182,11 @@ def test_wrapper_main_with_fixture_inputs_writes_artifacts(tmp_path: Path, monke
     assert state["messages_sent"] is False
     assert state["cron_created"] is False
     assert state["shadow_autopilot_bridge"]["orders_allowed"] is False
+    assert state["can_micro_live"] is False
+    assert state["micro_live_allowed"] is False
+    assert state["micro_live_safety"]["kill_switch"] == "forced_disabled"
+    assert state["paper_autopilot_ledger"]["paper_only"] is True
+    assert (data_root / "shadow-cron" / "MICRO_LIVE_DISABLED.paper_only").exists()
 
 
 def _fake_run_json(cmd: list[str], *, repo: Path, timeout: int = 300) -> dict:

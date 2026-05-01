@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from typing import Any
 
@@ -58,6 +59,11 @@ def build_paper_autopilot_ledger(
         order.update(
             {
                 "source": "paper_autopilot_strict_limit_bridge",
+                "append_only": True,
+                "idempotency_key": candidate.get("idempotency_key"),
+                "would_place_order": True,
+                "can_micro_live": False,
+                "micro_live_allowed": False,
                 "source_autopilot_gate": gate,
                 "source_orderbook": candidate["orderbook"],
                 "portfolio_risk": row.get("portfolio_risk", {}),
@@ -147,6 +153,7 @@ def _candidate_from_row(row: dict[str, Any], *, gate: str, run_id: str | None) -
         "orderbook": orderbook,
         "actual_refresh_price": row.get("actual_refresh_price") or (row.get("execution") or {}).get("top_ask"),
         "order_id": row.get("paper_order_id") or row.get("order_id"),
+        "idempotency_key": row.get("idempotency_key") or _idempotency_key(row, gate=gate, run_id=run_id),
     }
 
 
@@ -161,6 +168,18 @@ def _approved_notional(row: dict[str, Any], *, gate: str) -> float:
     if gate == "PAPER_MICRO":
         value = min(value, MICRO_NOTIONAL_USDC)
     return round(value, 6)
+
+
+def _idempotency_key(row: dict[str, Any], *, gate: str, run_id: str | None) -> str:
+    parts = [
+        str(run_id or row.get("run_id") or ""),
+        str(row.get("market_id") or row.get("id") or row.get("condition_id") or ""),
+        str(row.get("token_id") or row.get("asset_id") or ""),
+        str(row.get("side") or row.get("candidate_side") or "YES").upper(),
+        str(row.get("strict_limit", row.get("strict_limit_price")) or ""),
+        str(_approved_notional(row, gate=gate)),
+    ]
+    return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:24]
 
 
 def _risk_controls(row: dict[str, Any]) -> dict[str, Any]:
