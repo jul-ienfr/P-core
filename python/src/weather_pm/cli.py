@@ -51,6 +51,7 @@ from weather_pm.learning_cycle import (
     render_learning_cycle_summary_markdown,
     validate_learning_cycle_safety,
 )
+from weather_pm.live_readiness import attach_live_readiness, live_readiness_summary
 from weather_pm.live_observer_storage_estimator import estimate_live_observer_storage
 from weather_pm.live_storage import assert_not_unmounted_truenas_path, write_live_observer_payload_to_storage
 from weather_pm.market_parser import parse_market_question
@@ -65,6 +66,7 @@ from weather_pm.neighbor_context import build_neighbor_context
 from weather_pm.operator_summary import write_profitable_accounts_operator_summary
 from weather_pm.official_observation_backfill import write_official_observation_backfill
 from weather_pm.orderbook_context import write_orderbook_context_report
+from weather_pm.paper_autopilot_bridge import build_paper_autopilot_ledger
 from weather_pm.paper_ledger import load_candidate, load_paper_ledger, load_refresh_payload, paper_ledger_place, paper_ledger_refresh, write_paper_ledger_artifacts
 from weather_pm.paper_watchlist import compact_paper_watchlist_report, write_paper_watchlist_csv, write_paper_watchlist_markdown, write_paper_watchlist_report
 from weather_pm.pipeline import score_market_from_question
@@ -487,6 +489,13 @@ def build_parser() -> argparse.ArgumentParser:
     paper_ledger_report_parser = subparsers.add_parser("paper-ledger-report", help="Write strict-limit paper ledger JSON/CSV/Markdown artifacts")
     paper_ledger_report_parser.add_argument("--ledger-json", required=True, help="Ledger JSON to report")
     paper_ledger_report_parser.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for ledger JSON/CSV/Markdown artifacts")
+
+    paper_autopilot_bridge = subparsers.add_parser("paper-autopilot-bridge", help="Append PAPER_STRICT/PAPER_MICRO live rows to a derived strict-limit paper ledger only")
+    paper_autopilot_bridge.add_argument("--operator-json", required=True, help="Live readiness/operator artifact containing candidate rows")
+    paper_autopilot_bridge.add_argument("--ledger-json", required=True, help="Derived paper ledger JSON to create or append")
+    paper_autopilot_bridge.add_argument("--run-id", required=False, help="Run id stamped onto appended simulated paper orders")
+    paper_autopilot_bridge.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for derived ledger JSON/CSV/Markdown artifacts")
+    paper_autopilot_bridge.add_argument("--strict-gates", action="store_true", help="Fail if any row asks for a non-paper gate instead of skipping it")
 
     multi_profile_paper = subparsers.add_parser("multi-profile-paper-runner", help="Run the same weather shortlist through separate paper ledgers per StrategyProfile")
     multi_profile_paper.add_argument("--shortlist-json", required=True, help="Strategy shortlist JSON to replay across profiles")
@@ -1352,6 +1361,22 @@ def main() -> int:
         print(json.dumps(payload))
         return 0
 
+    if args.command == "paper-autopilot-bridge":
+        operator_artifact = json.loads(Path(args.operator_json).read_text(encoding="utf-8"))
+        ledger = load_paper_ledger(args.ledger_json) if Path(args.ledger_json).exists() else {"orders": []}
+        payload = build_paper_autopilot_ledger(
+            operator_artifact,
+            ledger=ledger,
+            run_id=args.run_id,
+            allow_unknown_gate=not args.strict_gates,
+        )
+        _write_json_atomic(Path(args.ledger_json), payload)
+        artifact = write_paper_ledger_artifacts(payload, output_dir=args.output_dir)
+        artifact["paper_autopilot_summary"] = payload.get("paper_autopilot_summary", {})
+        artifact["paper_autopilot_skipped"] = payload.get("paper_autopilot_skipped", [])
+        print(json.dumps(artifact))
+        return 0
+
     if args.command == "multi-profile-paper-runner":
         result = run_multi_profile_paper_batch(
             load_shortlist_payload(args.shortlist_json),
@@ -1716,8 +1741,10 @@ def build_operator_refresh_report(
         enrich_shortlist_with_execution_snapshot(shortlist_payload)
         execution_refreshed = _execution_snapshot_refreshed_count(shortlist_payload)
         execution_errors = _execution_snapshot_error_count(shortlist_payload)
+    attach_live_readiness(shortlist_payload)
     operator = build_operator_shortlist_report(shortlist_payload, limit=operator_limit)
     artifacts = {"source_operator_refresh_input": source_input_json}
+    rows = [row for row in shortlist_payload.get("shortlist", []) if isinstance(row, dict)]
     return {
         "summary": {
             "paper_only": True,
@@ -1727,6 +1754,7 @@ def build_operator_refresh_report(
             "execution_snapshot_refreshed": execution_refreshed,
             "execution_snapshot_errors": execution_errors,
             "operator_watchlist_rows": len(operator.get("watchlist", [])),
+            **live_readiness_summary(rows),
         },
         "shortlist": shortlist_payload.get("shortlist", []),
         "operator": operator,
@@ -1948,7 +1976,9 @@ def poll_live_operator_artifact(
             shortlist_payload = _operator_refresh_shortlist_payload(payload)
             if refresh_orderbook:
                 enrich_shortlist_with_execution_snapshot(shortlist_payload)
+            attach_live_readiness(shortlist_payload)
             operator = build_operator_shortlist_report(shortlist_payload, limit=operator_limit)
+            rows = [row for row in shortlist_payload.get("shortlist", []) if isinstance(row, dict)]
             last_payload = {
                 "summary": {
                     "paper_only": True,
@@ -1958,6 +1988,7 @@ def poll_live_operator_artifact(
                     "execution_snapshot_refreshed": _execution_snapshot_refreshed_count(shortlist_payload),
                     "execution_snapshot_errors": _execution_snapshot_error_count(shortlist_payload),
                     "operator_watchlist_rows": len(operator.get("watchlist", [])),
+                    **live_readiness_summary(rows),
                 },
                 "shortlist": shortlist_payload.get("shortlist", []),
                 "operator": operator,

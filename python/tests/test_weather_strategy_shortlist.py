@@ -1461,11 +1461,21 @@ def test_build_operator_refresh_report_refreshes_existing_shortlist_and_rebuilds
         "execution_snapshot_refreshed": 0,
         "execution_snapshot_errors": 0,
         "operator_watchlist_rows": 1,
+        "live_readiness_counts": {"WATCH": 1},
+        "normal_size_allowed_rows": 0,
+        "live_order_allowed": False,
     }
     assert refreshed["shortlist"][0]["resolution_status"]["confirmed_outcome"] == "pending"
     assert refreshed["shortlist"][0]["source_provider"] == "wunderground"
     watch = refreshed["operator"]["watchlist"][0]
     assert watch["resolution_status"]["confirmed_outcome"] == "pending"
+    assert watch["live_readiness"] == {
+        "readiness_action": "WATCH",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "normal_size_allowed": False,
+        "blockers": ["official_pending", "missing_execution_snapshot"],
+    }
     assert watch["monitor_paper_resolution"]["payload"] == {
         "market_id": "dallas-70",
         "source": "live",
@@ -1525,6 +1535,57 @@ def test_build_operator_refresh_report_refreshes_execution_snapshot(monkeypatch)
     assert watch["execution_diagnostic"]["spread"] == 0.02
     assert watch["execution_diagnostic"]["depth_usd"] == 114.0
     assert watch["execution_diagnostic"]["fetched_at"] == "2026-04-25T18:00:00+00:00"
+    assert watch["live_readiness"] == {
+        "readiness_action": "WATCH",
+        "paper_only": True,
+        "live_order_allowed": False,
+        "normal_size_allowed": False,
+        "blockers": ["official_pending"],
+    }
+
+
+def test_operator_refresh_live_readiness_blocks_extreme_price_and_missing_depth(monkeypatch) -> None:
+    monkeypatch.setattr("weather_pm.cli.resolution_status_for_market_id", _fake_resolution_status_for_dallas)
+    monkeypatch.setattr(
+        cli_module,
+        "fetch_market_execution_snapshot",
+        lambda market_id: {
+            "book": {
+                "yes": {"best_bid": 0.96, "best_ask": 0.98, "bid_depth_usd": 0.0, "ask_depth_usd": 0.0},
+                "no": {"best_bid": None, "best_ask": None, "bid_depth_usd": 0.0, "ask_depth_usd": 0.0},
+            },
+            "spread": {"yes": 0.02, "no": None},
+            "fetched_at": "2026-04-25T18:00:00+00:00",
+        },
+    )
+    payload = {
+        "summary": {"shortlisted": 1, "action_counts": {"paper_trade_watch_direct_station": 1}, "execution_blocker_counts": {"extreme_price": 1}},
+        "shortlist": [
+            {
+                "rank": 1,
+                "market_id": "dallas-70",
+                "city": "Dallas",
+                "date": "April 27",
+                "decision_status": "trade_small",
+                "action": "paper_trade_watch_direct_station",
+                "execution_blocker": "extreme_price",
+                "edge_sizing": {"recommendation": "buy", "market_price": 0.98, "side": "buy"},
+            }
+        ],
+    }
+
+    refreshed = build_operator_refresh_report(payload, source="live", resolution_date="2026-04-25", operator_limit=1)
+
+    row_readiness = refreshed["shortlist"][0]["live_readiness"]
+    assert row_readiness["readiness_action"] == "PAPER_MICRO"
+    assert row_readiness["paper_only"] is True
+    assert row_readiness["live_order_allowed"] is False
+    assert row_readiness["normal_size_allowed"] is False
+    assert row_readiness["blockers"] == ["official_pending", "extreme_price", "missing_depth"]
+    assert refreshed["operator"]["watchlist"][0]["live_readiness"] == row_readiness
+    assert refreshed["summary"]["live_readiness_counts"] == {"PAPER_MICRO": 1}
+    assert refreshed["summary"]["normal_size_allowed_rows"] == 0
+    assert refreshed["summary"]["live_order_allowed"] is False
 
 
 def test_operator_shortlist_preserves_execution_snapshot_and_updates_diagnostic() -> None:

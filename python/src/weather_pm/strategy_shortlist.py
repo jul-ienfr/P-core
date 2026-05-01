@@ -98,6 +98,8 @@ def _operator_watch_row(row: dict[str, Any]) -> dict[str, Any]:
     }
     if isinstance(row.get("execution_snapshot"), dict):
         watch_row["execution_snapshot"] = dict(row["execution_snapshot"])
+    if isinstance(row.get("live_readiness"), dict):
+        watch_row["live_readiness"] = dict(row["live_readiness"])
     if isinstance(row.get("edge_sizing"), dict):
         watch_row["edge_sizing"] = row.get("edge_sizing")
     if isinstance(row.get("entry_policy"), dict):
