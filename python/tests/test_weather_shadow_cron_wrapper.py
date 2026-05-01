@@ -186,6 +186,10 @@ def test_wrapper_main_with_fixture_inputs_writes_artifacts(tmp_path: Path, monke
     assert state["micro_live_allowed"] is False
     assert state["micro_live_safety"]["kill_switch"] == "forced_disabled"
     assert state["paper_autopilot_ledger"]["paper_only"] is True
+    assert state["live_canary_preflight"]["live_order_allowed"] is False
+    assert state["live_canary_preflight"]["orders_allowed"] is False
+    assert state["live_canary_preflight"]["eligible_count"] == 0
+    assert Path(state["artifacts"]["live_canary_preflight_json"]).exists()
     assert (data_root / "shadow-cron" / "MICRO_LIVE_DISABLED.paper_only").exists()
 
 

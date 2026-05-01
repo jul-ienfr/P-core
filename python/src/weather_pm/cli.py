@@ -52,6 +52,7 @@ from weather_pm.learning_cycle import (
     validate_learning_cycle_safety,
 )
 from weather_pm.live_readiness import attach_live_readiness, live_readiness_summary
+from weather_pm.live_canary_gate import build_live_canary_preflight, compact_live_canary_preflight, config_from_env
 from weather_pm.live_observer_storage_estimator import estimate_live_observer_storage
 from weather_pm.live_storage import assert_not_unmounted_truenas_path, write_live_observer_payload_to_storage
 from weather_pm.market_parser import parse_market_question
@@ -496,6 +497,11 @@ def build_parser() -> argparse.ArgumentParser:
     paper_autopilot_bridge.add_argument("--run-id", required=False, help="Run id stamped onto appended simulated paper orders")
     paper_autopilot_bridge.add_argument("--output-dir", required=False, default="data/polymarket", help="Directory for derived ledger JSON/CSV/Markdown artifacts")
     paper_autopilot_bridge.add_argument("--strict-gates", action="store_true", help="Fail if any row asks for a non-paper gate instead of skipping it")
+
+    live_canary_preflight = subparsers.add_parser("live-canary-preflight", help="Build a guarded LIVE_CANARY preflight artifact; disabled/dry-run by default and never submits orders")
+    live_canary_preflight.add_argument("--operator-json", required=True, help="Operator/readiness artifact containing candidate rows")
+    live_canary_preflight.add_argument("--output-json", required=True, help="Output preflight JSON artifact")
+    live_canary_preflight.add_argument("--run-id", required=False, help="Run id used for deterministic client order ids")
 
     multi_profile_paper = subparsers.add_parser("multi-profile-paper-runner", help="Run the same weather shortlist through separate paper ledgers per StrategyProfile")
     multi_profile_paper.add_argument("--shortlist-json", required=True, help="Strategy shortlist JSON to replay across profiles")
@@ -1375,6 +1381,16 @@ def main() -> int:
         artifact["paper_autopilot_summary"] = payload.get("paper_autopilot_summary", {})
         artifact["paper_autopilot_skipped"] = payload.get("paper_autopilot_skipped", [])
         print(json.dumps(artifact))
+        return 0
+
+    if args.command == "live-canary-preflight":
+        operator_artifact = json.loads(Path(args.operator_json).read_text(encoding="utf-8"))
+        payload = build_live_canary_preflight(
+            operator_artifact,
+            config=config_from_env(run_id=args.run_id),
+            output_json=args.output_json,
+        )
+        print(json.dumps(compact_live_canary_preflight(payload)))
         return 0
 
     if args.command == "multi-profile-paper-runner":

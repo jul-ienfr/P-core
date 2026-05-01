@@ -25,6 +25,7 @@ DATA = REPO / "data" / "polymarket"
 DEFAULT_CLASSIFIED_CSV = DATA / "weather_profitable_accounts_classified_top5000.csv"
 DEFAULT_REVERSE_JSON = DATA / "weather_heavy_trader_registry_full.json"
 sys.path.insert(0, str(PYTHON_SRC))
+from weather_pm.live_canary_gate import build_live_canary_preflight, compact_live_canary_preflight, config_from_env  # noqa: E402
 from weather_pm.paper_autopilot_bridge import build_paper_autopilot_ledger  # noqa: E402
 from weather_pm.paper_ledger import PaperLedgerError, load_paper_ledger, write_paper_ledger_artifacts  # noqa: E402
 
@@ -325,6 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     account_summary_path = out_dir / f"weather_account_bridge_{stamp}.json"
     readiness_path = out_dir / f"weather_live_readiness_{stamp}.json"
     autopilot_path = out_dir / f"weather_shadow_autopilot_bridge_{stamp}.json"
+    live_canary_path = out_dir / f"weather_live_canary_preflight_{stamp}.json"
     state_path = out_dir / f"weather_shadow_state_{stamp}.json"
     change_path = out_dir / f"weather_shadow_state_change_{stamp}.json"
     ledger_path = Path(args.ledger_json) if args.ledger_json else out_dir / "weather_paper_autopilot_ledger_latest.json"
@@ -389,6 +391,11 @@ def main(argv: list[str] | None = None) -> int:
         max_actions=args.max_shadow_actions,
         output_json=autopilot_path,
     )
+    live_canary = build_live_canary_preflight(
+        account_summary,
+        config=config_from_env(run_id=stamp),
+        output_json=live_canary_path,
+    )
     paper_ledger_payload: dict[str, Any] = {
         "paper_only": True,
         "live_order_allowed": False,
@@ -438,12 +445,14 @@ def main(argv: list[str] | None = None) -> int:
         "account_bridge": summary_compact,
         "live_readiness": readiness,
         "shadow_autopilot_bridge": autopilot,
+        "live_canary_preflight": live_canary,
         "paper_autopilot_ledger": paper_ledger_payload,
         "artifacts": {
             "operator_refresh_json": str(refresh_path),
             "account_bridge_json": str(account_summary_path),
             "live_readiness_json": str(readiness_path),
             "shadow_autopilot_bridge_json": str(autopilot_path),
+            "live_canary_preflight_json": str(live_canary_path),
             "paper_autopilot_ledger_json": str(ledger_path),
             "state_json": str(state_path),
             "state_change_json": str(change_path),
@@ -482,6 +491,7 @@ def main(argv: list[str] | None = None) -> int:
                 "state_json": str(state_path),
                 "state_change_json": str(change_path),
                 "paper_autopilot_ledger": paper_ledger_payload,
+                "live_canary_preflight": compact_live_canary_preflight(live_canary),
                 "artifacts": state_payload["artifacts"],
             },
             ensure_ascii=False,
