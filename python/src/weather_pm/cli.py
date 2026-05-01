@@ -52,6 +52,7 @@ from weather_pm.learning_cycle import (
     validate_learning_cycle_safety,
 )
 from weather_pm.live_readiness import attach_live_readiness, live_readiness_summary
+from weather_pm.live_canary_executor import compact_live_canary_execution, execute_live_canary_preflight_from_env
 from weather_pm.live_canary_gate import build_live_canary_preflight, compact_live_canary_preflight, config_from_env
 from weather_pm.live_observer_storage_estimator import estimate_live_observer_storage
 from weather_pm.live_storage import assert_not_unmounted_truenas_path, write_live_observer_payload_to_storage
@@ -502,6 +503,10 @@ def build_parser() -> argparse.ArgumentParser:
     live_canary_preflight.add_argument("--operator-json", required=True, help="Operator/readiness artifact containing candidate rows")
     live_canary_preflight.add_argument("--output-json", required=True, help="Output preflight JSON artifact")
     live_canary_preflight.add_argument("--run-id", required=False, help="Run id used for deterministic client order ids")
+
+    live_canary_execute = subparsers.add_parser("live-canary-execute", help="Execute a live-canary preflight; noop unless WEATHER_LIVE_CANARY_MODE=live and client secrets are configured")
+    live_canary_execute.add_argument("--preflight-json", required=True, help="Input preflight JSON artifact")
+    live_canary_execute.add_argument("--output-json", required=True, help="Output execution JSON artifact")
 
     multi_profile_paper = subparsers.add_parser("multi-profile-paper-runner", help="Run the same weather shortlist through separate paper ledgers per StrategyProfile")
     multi_profile_paper.add_argument("--shortlist-json", required=True, help="Strategy shortlist JSON to replay across profiles")
@@ -1391,6 +1396,12 @@ def main() -> int:
             output_json=args.output_json,
         )
         print(json.dumps(compact_live_canary_preflight(payload)))
+        return 0
+
+    if args.command == "live-canary-execute":
+        preflight = json.loads(Path(args.preflight_json).read_text(encoding="utf-8"))
+        payload = execute_live_canary_preflight_from_env(preflight, output_json=args.output_json)
+        print(json.dumps(compact_live_canary_execution(payload)))
         return 0
 
     if args.command == "multi-profile-paper-runner":

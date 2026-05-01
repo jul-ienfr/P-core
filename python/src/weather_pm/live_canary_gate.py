@@ -16,6 +16,8 @@ class LiveCanaryGateError(ValueError):
 
 @dataclass(frozen=True)
 class LiveCanaryConfig:
+    # One-switch operational mode. Only "live" can arm/submit; default remains shadow/noop.
+    mode: str = "shadow"
     enabled: bool = False
     kill_switch: bool = True
     dry_run: bool = True
@@ -27,6 +29,23 @@ class LiveCanaryConfig:
     min_depth_usdc: float = 25.0
     run_id: str | None = None
     confirmation_phrase: str | None = None
+
+    def __post_init__(self) -> None:
+        normalized = self.mode if self.mode in {"shadow", "live"} else "shadow"
+        # Backward-compatible explicit construction: older tests/callers that set the
+        # full three-part live guard still mean live mode. Env-driven operation uses
+        # WEATHER_LIVE_CANARY_MODE as the single switch.
+        if normalized == "shadow" and self.enabled and not self.kill_switch and not self.dry_run:
+            normalized = "live"
+        object.__setattr__(self, "mode", normalized)
+        if normalized == "live":
+            object.__setattr__(self, "enabled", True)
+            object.__setattr__(self, "kill_switch", False)
+            object.__setattr__(self, "dry_run", False)
+        else:
+            object.__setattr__(self, "enabled", False)
+            object.__setattr__(self, "kill_switch", True)
+            object.__setattr__(self, "dry_run", True)
 
 
 def build_live_canary_preflight(
@@ -118,10 +137,13 @@ def evaluate_live_canary_row(row: dict[str, Any], *, config: LiveCanaryConfig | 
 def config_from_env(*, run_id: str | None = None) -> LiveCanaryConfig:
     allowlist_raw = os.environ.get("WEATHER_LIVE_CANARY_ALLOWLIST", "")
     allowlist = {item.strip() for item in allowlist_raw.replace(";", ",").split(",") if item.strip()}
+    mode = _env_mode("WEATHER_LIVE_CANARY_MODE", "shadow")
+    live_mode = mode == "live"
     return LiveCanaryConfig(
-        enabled=_env_bool("WEATHER_LIVE_CANARY_ENABLED", False),
-        kill_switch=_env_bool("WEATHER_LIVE_CANARY_KILL_SWITCH", True),
-        dry_run=_env_bool("WEATHER_LIVE_CANARY_DRY_RUN", True),
+        mode=mode,
+        enabled=live_mode,
+        kill_switch=not live_mode,
+        dry_run=not live_mode,
         allowlist_market_ids=allowlist,
         max_order_usdc=_env_float("WEATHER_LIVE_CANARY_MAX_ORDER_USDC", 1.0),
         max_daily_usdc=_env_float("WEATHER_LIVE_CANARY_MAX_DAILY_USDC", 1.0),
@@ -260,6 +282,11 @@ def _depth(snapshot: dict[str, Any]) -> float:
         for key in ("yes_ask_depth_usd", "no_ask_depth_usd", "yes_bid_depth_usd", "no_bid_depth_usd", "order_book_depth_usd", "depth_usd")
     ]
     return max([value for value in values if value is not None] or [0.0])
+
+
+def _env_mode(key: str, default: str) -> str:
+    value = os.environ.get(key, default).strip().lower()
+    return value if value in {"shadow", "live"} else default
 
 
 def _env_bool(key: str, default: bool) -> bool:

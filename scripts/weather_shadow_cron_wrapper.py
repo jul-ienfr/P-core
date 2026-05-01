@@ -25,6 +25,7 @@ DATA = REPO / "data" / "polymarket"
 DEFAULT_CLASSIFIED_CSV = DATA / "weather_profitable_accounts_classified_top5000.csv"
 DEFAULT_REVERSE_JSON = DATA / "weather_heavy_trader_registry_full.json"
 sys.path.insert(0, str(PYTHON_SRC))
+from weather_pm.live_canary_executor import compact_live_canary_execution, execute_live_canary_preflight_from_env  # noqa: E402
 from weather_pm.live_canary_gate import build_live_canary_preflight, compact_live_canary_preflight, config_from_env  # noqa: E402
 from weather_pm.paper_autopilot_bridge import build_paper_autopilot_ledger  # noqa: E402
 from weather_pm.paper_ledger import PaperLedgerError, load_paper_ledger, write_paper_ledger_artifacts  # noqa: E402
@@ -327,6 +328,7 @@ def main(argv: list[str] | None = None) -> int:
     readiness_path = out_dir / f"weather_live_readiness_{stamp}.json"
     autopilot_path = out_dir / f"weather_shadow_autopilot_bridge_{stamp}.json"
     live_canary_path = out_dir / f"weather_live_canary_preflight_{stamp}.json"
+    live_canary_execute_path = out_dir / f"weather_live_canary_execute_{stamp}.json"
     state_path = out_dir / f"weather_shadow_state_{stamp}.json"
     change_path = out_dir / f"weather_shadow_state_change_{stamp}.json"
     ledger_path = Path(args.ledger_json) if args.ledger_json else out_dir / "weather_paper_autopilot_ledger_latest.json"
@@ -396,6 +398,7 @@ def main(argv: list[str] | None = None) -> int:
         config=config_from_env(run_id=stamp),
         output_json=live_canary_path,
     )
+    live_canary_execution = execute_live_canary_preflight_from_env(live_canary, output_json=live_canary_execute_path)
     paper_ledger_payload: dict[str, Any] = {
         "paper_only": True,
         "live_order_allowed": False,
@@ -446,6 +449,7 @@ def main(argv: list[str] | None = None) -> int:
         "live_readiness": readiness,
         "shadow_autopilot_bridge": autopilot,
         "live_canary_preflight": live_canary,
+        "live_canary_execution": live_canary_execution,
         "paper_autopilot_ledger": paper_ledger_payload,
         "artifacts": {
             "operator_refresh_json": str(refresh_path),
@@ -453,6 +457,7 @@ def main(argv: list[str] | None = None) -> int:
             "live_readiness_json": str(readiness_path),
             "shadow_autopilot_bridge_json": str(autopilot_path),
             "live_canary_preflight_json": str(live_canary_path),
+            "live_canary_execute_json": str(live_canary_execute_path),
             "paper_autopilot_ledger_json": str(ledger_path),
             "state_json": str(state_path),
             "state_change_json": str(change_path),
@@ -492,6 +497,7 @@ def main(argv: list[str] | None = None) -> int:
                 "state_change_json": str(change_path),
                 "paper_autopilot_ledger": paper_ledger_payload,
                 "live_canary_preflight": compact_live_canary_preflight(live_canary),
+                "live_canary_execution": compact_live_canary_execution(live_canary_execution),
                 "artifacts": state_payload["artifacts"],
             },
             ensure_ascii=False,
