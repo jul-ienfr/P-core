@@ -25,8 +25,8 @@ DATA = REPO / "data" / "polymarket"
 DEFAULT_CLASSIFIED_CSV = DATA / "weather_profitable_accounts_classified_top5000.csv"
 DEFAULT_REVERSE_JSON = DATA / "weather_heavy_trader_registry_full.json"
 sys.path.insert(0, str(PYTHON_SRC))
-from weather_pm.live_canary_executor import compact_live_canary_execution, execute_live_canary_preflight_from_env  # noqa: E402
-from weather_pm.live_canary_gate import build_live_canary_preflight, compact_live_canary_preflight, config_from_env  # noqa: E402
+from weather_pm.live_canary_executor import compact_live_canary_execution, execute_live_canary_preflight  # noqa: E402
+from weather_pm.live_canary_gate import LiveCanaryConfig, build_live_canary_preflight, compact_live_canary_preflight  # noqa: E402
 from weather_pm.paper_autopilot_bridge import build_paper_autopilot_ledger  # noqa: E402
 from weather_pm.paper_ledger import PaperLedgerError, load_paper_ledger, write_paper_ledger_artifacts  # noqa: E402
 
@@ -286,11 +286,18 @@ def assert_safety(payload: Any) -> None:
             raise RuntimeError("safety violation: live_order_allowed=true")
         if payload.get("orders_allowed") is True:
             raise RuntimeError("safety violation: orders_allowed=true")
+        if payload.get("live_order_submitted") is True:
+            raise RuntimeError("safety violation: live_order_submitted=true")
+        if payload.get("messages_allowed") is True:
+            raise RuntimeError("safety violation: messages_allowed=true")
         if payload.get("can_micro_live") is True or payload.get("micro_live_allowed") is True:
             raise RuntimeError("safety violation: micro live enabled")
         if payload.get("messages_sent") or payload.get("message_sent"):
             raise RuntimeError("safety violation: message sent flag present")
-        for value in payload.values():
+        for key, value in payload.items():
+            key_l = str(key).lower()
+            if "message" in key_l and key_l not in {"messages_allowed", "messages_sent", "message_sent"} and value:
+                raise RuntimeError(f"safety violation: message marker {key}=true")
             assert_safety(value)
     elif isinstance(payload, list):
         for value in payload:
@@ -393,12 +400,13 @@ def main(argv: list[str] | None = None) -> int:
         max_actions=args.max_shadow_actions,
         output_json=autopilot_path,
     )
+    shadow_canary_config = LiveCanaryConfig(mode="shadow", run_id=stamp)
     live_canary = build_live_canary_preflight(
         account_summary,
-        config=config_from_env(run_id=stamp),
+        config=shadow_canary_config,
         output_json=live_canary_path,
     )
-    live_canary_execution = execute_live_canary_preflight_from_env(live_canary, output_json=live_canary_execute_path)
+    live_canary_execution = execute_live_canary_preflight(live_canary, config=shadow_canary_config, client=None, output_json=live_canary_execute_path)
     paper_ledger_payload: dict[str, Any] = {
         "paper_only": True,
         "live_order_allowed": False,

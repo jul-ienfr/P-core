@@ -36,6 +36,8 @@ def _operator_artifact() -> dict[str, object]:
                 "station": "RKSI",
                 "source_url": "https://example.test/station/RKSI",
                 "account_consensus": {"unique_accounts": 3, "dominant_side": "NO"},
+                "source_metadata": {"station_provider": "official", "refresh_age_seconds": 30},
+                "gate_payload": {"gate": "PAPER_STRICT", "checks": ["source_confirmed", "risk_approved"]},
                 "portfolio_risk": {"cap_status": "approved", "approved_size_usdc": 5.0, "recommendation": "paper_small_capped"},
                 "orderbook": {"no_asks": [{"price": 0.28, "size": 100.0}], "no_bids": [{"price": 0.27, "size": 100.0}]},
                 "actual_refresh_price": 0.28,
@@ -110,6 +112,8 @@ def test_paper_autopilot_bridge_converts_only_paper_strict_and_micro_rows_to_app
     assert strict["requested_spend_usdc"] == 5.0
     assert strict["source_orderbook"] == {"no_asks": [{"price": 0.28, "size": 100.0}], "no_bids": [{"price": 0.27, "size": 100.0}]}
     assert strict["source_autopilot_gate"] == "PAPER_STRICT"
+    assert strict["source_metadata"] == {"station_provider": "official", "refresh_age_seconds": 30}
+    assert strict["source_gate_payload"] == {"gate": "PAPER_STRICT", "checks": ["source_confirmed", "risk_approved"]}
     assert strict["portfolio_risk"]["cap_status"] == "approved"
     assert strict["live_execution_payload"] is None
 
@@ -122,6 +126,25 @@ def test_paper_autopilot_bridge_refuses_live_or_real_order_gate() -> None:
 
     with pytest.raises(PaperAutopilotBridgeError, match="refuses non-paper autopilot gate"):
         build_paper_autopilot_ledger(artifact, allow_unknown_gate=False)
+
+
+def test_paper_autopilot_bridge_always_refuses_live_order_markers_even_on_paper_gate() -> None:
+    artifact = {
+        "live_rows": [
+            {
+                "market_id": "m",
+                "token_id": "t",
+                "autopilot_gate": "PAPER_MICRO",
+                "strict_limit": 0.2,
+                "paper_notional_usdc": 1.0,
+                "live_order_allowed": True,
+                "orderbook": {"asks": [{"price": 0.2, "size": 10}]},
+            }
+        ]
+    }
+
+    with pytest.raises(PaperAutopilotBridgeError, match="refuses live/real-order marker"):
+        build_paper_autopilot_ledger(artifact)
 
 
 def test_paper_autopilot_bridge_requires_refresh_orderbook_and_strict_limit() -> None:

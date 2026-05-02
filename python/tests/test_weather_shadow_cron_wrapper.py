@@ -111,6 +111,20 @@ def test_assert_safety_rejects_live_orders() -> None:
         raise AssertionError("expected live_order_allowed safety violation")
 
 
+def test_assert_safety_rejects_submitted_orders_and_message_markers() -> None:
+    for payload, marker in [
+        ({"nested": {"live_order_submitted": True}}, "live_order_submitted=true"),
+        ({"nested": {"messages_allowed": True}}, "messages_allowed=true"),
+        ({"nested": {"discord_message_sent": True}}, "message marker"),
+    ]:
+        try:
+            weather_shadow_cron_wrapper.assert_safety(payload)
+        except RuntimeError as exc:
+            assert marker in str(exc)
+        else:
+            raise AssertionError(f"expected safety violation for {payload}")
+
+
 def test_wrapper_main_with_fixture_inputs_writes_artifacts(tmp_path: Path, monkeypatch) -> None:
     data_root = tmp_path / "data" / "polymarket"
     input_json = data_root / "strategy-shortlists" / "weather_strategy_shortlist_fixture.json"

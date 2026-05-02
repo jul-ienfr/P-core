@@ -38,6 +38,7 @@ def build_paper_autopilot_ledger(
 
     for row in rows:
         gate = _gate(row)
+        _assert_no_live_order_markers(row)
         if gate not in PAPER_AUTOPILOT_GATES:
             if gate and not allow_unknown_gate:
                 raise PaperAutopilotBridgeError(f"refuses non-paper autopilot gate: {gate}")
@@ -68,6 +69,8 @@ def build_paper_autopilot_ledger(
                 "source_orderbook": candidate["orderbook"],
                 "portfolio_risk": row.get("portfolio_risk", {}),
                 "risk_controls": _risk_controls(row),
+                "source_metadata": _source_metadata(row),
+                "source_gate_payload": _gate_payload(row),
                 "live_execution_payload": None,
                 "paper_only": True,
                 "live_order_allowed": False,
@@ -189,6 +192,38 @@ def _risk_controls(row: dict[str, Any]) -> dict[str, Any]:
         "execution_blocker": row.get("execution_blocker"),
         "paper_size_label": row.get("paper_size_label"),
     }
+
+
+def _source_metadata(row: dict[str, Any]) -> dict[str, Any]:
+    for key in ("source_metadata", "metadata"):
+        value = row.get(key)
+        if isinstance(value, dict):
+            return dict(value)
+    return {
+        key: row.get(key)
+        for key in ("source_status", "station_status", "station", "source_url", "actual_refresh_price")
+        if row.get(key) is not None
+    }
+
+
+def _gate_payload(row: dict[str, Any]) -> dict[str, Any]:
+    for key in ("gate_payload", "autopilot_gate_payload", "readiness_gate_payload", "paper_gate_payload"):
+        value = row.get(key)
+        if isinstance(value, dict):
+            return dict(value)
+    return {
+        key: row.get(key)
+        for key in ("autopilot_gate", "strict_next_action", "execution_gate", "decision")
+        if row.get(key) is not None
+    }
+
+
+def _assert_no_live_order_markers(row: dict[str, Any]) -> None:
+    if row.get("live_order_allowed") is True or row.get("orders_allowed") is True or row.get("live_order_submitted") is True:
+        raise PaperAutopilotBridgeError("refuses live/real-order marker in paper autopilot row")
+    payload = row.get("live_execution_payload")
+    if isinstance(payload, dict) and payload:
+        raise PaperAutopilotBridgeError("refuses live/real-order marker in paper autopilot row")
 
 
 def _initial_ledger(ledger: dict[str, Any] | None) -> dict[str, Any]:
