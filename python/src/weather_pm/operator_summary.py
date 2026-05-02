@@ -222,6 +222,7 @@ def _watchlist_row(row: dict[str, Any], *, handle_lookup: dict[str, dict[str, An
     }
     enriched["normal_size_gate"] = _normal_size_gate(enriched)
     enriched["live_quality"] = _live_quality(enriched)
+    enriched["live_readiness"] = _live_readiness_gate(enriched)
     enriched["operator_verdict"] = _operator_verdict(enriched)
     return enriched
 
@@ -315,6 +316,10 @@ def _daily_operator_rollup(watchlist: list[dict[str, Any]], *, live_quality_summ
         "not_ready_reason_counts": dict(sorted(reason_counts.items())),
         "can_micro_live_count": 0,
         "micro_live_allowed": False,
+        "paper_only": True,
+        "live_order_allowed": False,
+        "normal_size_allowed": False,
+        "live_readiness_summary": _live_readiness_summary(watchlist),
     }
     if isinstance(live_quality_summary, dict):
         summary["live_quality_summary"] = live_quality_summary
@@ -334,6 +339,7 @@ def _quality_score_bucket(score: float) -> str:
 def _live_quality_summary(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
     scores = [float((row.get("live_quality") or {}).get("live_quality_score") or 0.0) for row in watchlist]
     bucket_counts = Counter(_quality_score_bucket(score) for score in scores)
+    readiness_summary = _live_readiness_summary(watchlist)
     return {
         "rows": len(watchlist),
         "max_live_quality_score": round(max(scores), 2) if scores else 0.0,
@@ -343,6 +349,27 @@ def _live_quality_summary(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
         "can_micro_live": False,
         "paper_only": True,
         "live_order_allowed": False,
+        "normal_size_allowed": False,
+        "live_readiness_summary": readiness_summary,
+    }
+
+
+def _live_readiness_summary(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
+    action_counts: Counter[str] = Counter()
+    blocker_counts: Counter[str] = Counter()
+    for row in watchlist:
+        if not isinstance(row, dict):
+            continue
+        readiness = row.get("live_readiness") if isinstance(row.get("live_readiness"), dict) else _live_readiness_gate(row)
+        action_counts[str(readiness.get("action") or "WATCH")] += 1
+        blocker_counts.update(str(blocker) for blocker in readiness.get("blockers") or [] if blocker)
+    return {
+        "rows": len([row for row in watchlist if isinstance(row, dict)]),
+        "action_counts": dict(sorted(action_counts.items())),
+        "blocker_counts": dict(sorted(blocker_counts.items())),
+        "paper_only": True,
+        "live_order_allowed": False,
+        "normal_size_allowed": False,
     }
 
 
@@ -532,6 +559,41 @@ def _summary_operator_recommendation(
         "confidence": "no_profitable_account_signal",
         "reason": "no_unique_profitable_weather_accounts_match_live_markets",
         "next_actions": ["wait_for_profitable_weather_account_match"],
+    }
+
+
+def _live_readiness_gate(row: dict[str, Any]) -> dict[str, Any]:
+    blockers: list[str] = ["paper_only_safety_gate", "live_execution_disabled", "normal_size_disabled"]
+    blocker = row.get("blocker") or row.get("execution_blocker")
+    if blocker:
+        blockers.append(str(blocker))
+    normal_size_gate = row.get("normal_size_gate") if isinstance(row.get("normal_size_gate"), dict) else {}
+    blockers.extend(str(reason) for reason in normal_size_gate.get("reasons") or [] if reason)
+    live_quality = row.get("live_quality") if isinstance(row.get("live_quality"), dict) else {}
+    blockers.extend(str(reason) for reason in live_quality.get("reasons") or [] if reason)
+
+    matched_count = _to_int(row.get("matched_profitable_weather_count"))
+    if matched_count <= 0:
+        blockers.append("no_profitable_account_match")
+
+    row_action = str(row.get("action") or row.get("operator_action") or "").upper()
+    if row_action == "BLOCKED" or blocker:
+        action = "BLOCKED"
+    elif matched_count <= 0:
+        action = "WATCH"
+    elif normal_size_gate.get("recommended_action") == "paper_strict_limit_only":
+        action = "PAPER_STRICT"
+    elif live_quality.get("score_bucket") in {"high", "medium"}:
+        action = "PAPER_STRICT"
+    else:
+        action = "PAPER_MICRO"
+
+    return {
+        "action": action,
+        "blockers": _unique(blockers),
+        "paper_only": True,
+        "live_order_allowed": False,
+        "normal_size_allowed": False,
     }
 
 

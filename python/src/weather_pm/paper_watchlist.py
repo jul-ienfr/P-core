@@ -46,6 +46,9 @@ def build_paper_watchlist_report(payload: dict[str, Any]) -> dict[str, Any]:
             "total_mtm_bid": round(sum(float(row["paper_mtm_bid_usdc"] or 0.0) for row in watchlist), 2),
             "action_counts": dict(Counter(row["operator_action"] for row in watchlist)),
             "paper_only": True,
+            "live_order_allowed": False,
+            "normal_size_allowed": False,
+            "live_readiness_summary": _paper_live_readiness_summary(watchlist),
         },
         "watchlist": watchlist,
     }
@@ -333,7 +336,7 @@ def build_paper_watch_row(
     add_allowed = legacy_add_signal and dynamic_action in {"PROBE", "OPEN", "ADD"} and dynamic_recommended_size > 0.0
     max_add_usdc = round(min(5.0, dynamic_recommended_size), 4) if add_allowed else 0
 
-    return {
+    row = {
         "city": position.get("city"),
         "date": position.get("date"),
         "station": position.get("station"),
@@ -360,6 +363,60 @@ def build_paper_watch_row(
         "add_limit": round(min(best_ask, p_side - 0.15), 4) if add_allowed and best_ask is not None else None,
         "dynamic_sizing": dynamic_sizing,
     }
+    row["live_readiness"] = _paper_live_readiness_gate(row)
+    return row
+
+
+def _paper_live_readiness_gate(row: dict[str, Any]) -> dict[str, Any]:
+    blockers = ["paper_only_safety_gate", "live_execution_disabled", "normal_size_disabled"]
+    reason = row.get("reason")
+    operator_action = str(row.get("operator_action") or "")
+    if reason and reason != "OK":
+        blockers.append(str(reason))
+    dynamic_sizing = row.get("dynamic_sizing") if isinstance(row.get("dynamic_sizing"), dict) else {}
+    blockers.extend(str(item) for item in dynamic_sizing.get("reasons") or [] if item)
+
+    if operator_action == "EXIT_PAPER":
+        action = "BLOCKED"
+    elif row.get("add_allowed"):
+        action = "PAPER_MICRO"
+    elif operator_action in {"HOLD_MONITOR", "HOLD_CAPPED", "TRIM_REVIEW", "TAKE_PROFIT_REVIEW"}:
+        action = "PAPER_STRICT"
+    else:
+        action = "WATCH"
+    return {
+        "action": action,
+        "blockers": _paper_unique(blockers),
+        "paper_only": True,
+        "live_order_allowed": False,
+        "normal_size_allowed": False,
+    }
+
+
+def _paper_live_readiness_summary(watchlist: list[dict[str, Any]]) -> dict[str, Any]:
+    action_counts: Counter[str] = Counter()
+    blocker_counts: Counter[str] = Counter()
+    rows = [row for row in watchlist if isinstance(row, dict)]
+    for row in rows:
+        readiness = row.get("live_readiness") if isinstance(row.get("live_readiness"), dict) else _paper_live_readiness_gate(row)
+        action_counts[str(readiness.get("action") or "WATCH")] += 1
+        blocker_counts.update(str(blocker) for blocker in readiness.get("blockers") or [] if blocker)
+    return {
+        "rows": len(rows),
+        "action_counts": dict(sorted(action_counts.items())),
+        "blocker_counts": dict(sorted(blocker_counts.items())),
+        "paper_only": True,
+        "live_order_allowed": False,
+        "normal_size_allowed": False,
+    }
+
+
+def _paper_unique(values: list[str]) -> list[str]:
+    unique_values: list[str] = []
+    for value in values:
+        if value not in unique_values:
+            unique_values.append(value)
+    return unique_values
 
 
 def _calculate_paper_dynamic_sizing(
